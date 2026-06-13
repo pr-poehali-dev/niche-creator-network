@@ -4,6 +4,7 @@ import { useLang, t, LANGS, type Lang } from "@/lib/i18n";
 import { dataExtra } from "@/lib/i18n-extra";
 import { downloadReceipt } from "@/lib/receipt";
 import { useGeo, haversineKm } from "@/lib/geo";
+import { useProviders, type Provider } from "@/lib/providers";
 import func2url from "../../backend/func2url.json";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/e0e84afb-8e88-40ff-81b2-c3597f9a8371.jpg";
@@ -47,6 +48,37 @@ const L = (v: LS, lang: Lang) => {
   if (lang === "en") return v.en;
   return dataExtra[lang as keyof typeof dataExtra]?.[v.en] ?? v.en;
 };
+
+function ContactButtons({ p, onChat, compact }: { p: Provider; onChat: () => void; compact?: boolean }) {
+  const { tr } = useLang();
+  const c = p.contacts;
+  if (!c) return null;
+  const size = compact ? 14 : 16;
+  const btn = "flex items-center justify-center gap-1.5 rounded-sm font-montserrat font-semibold transition-all";
+  const pad = compact ? "px-2.5 py-2 text-[11px]" : "px-3 py-2.5 text-xs";
+  return (
+    <div className={`grid ${compact ? "grid-cols-4" : "grid-cols-2"} gap-2`} onClick={(e) => e.stopPropagation()}>
+      {c.phone && (
+        <a href={`tel:${c.phone}`} className={`${btn} ${pad} gold-gradient text-[hsl(220,20%,6%)] hover:opacity-90`} aria-label={tr("contactCall")}>
+          <Icon name="Phone" size={size} />{!compact && tr("contactCall")}
+        </a>
+      )}
+      <button onClick={onChat} className={`${btn} ${pad} border border-gold text-gold hover:bg-gold hover:text-[hsl(220,20%,6%)]`} aria-label={tr("contactChat")}>
+        <Icon name="MessageCircle" size={size} />{!compact && tr("contactChat")}
+      </button>
+      {c.whatsapp && (
+        <a href={`https://wa.me/${c.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className={`${btn} ${pad} border border-border text-foreground hover:border-green-500 hover:text-green-400`} aria-label="WhatsApp">
+          <Icon name="MessageSquare" size={size} />{!compact && tr("contactWhatsApp")}
+        </a>
+      )}
+      {c.telegram && (
+        <a href={`https://t.me/${c.telegram.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className={`${btn} ${pad} border border-border text-foreground hover:border-blue-500 hover:text-blue-400`} aria-label="Telegram">
+          <Icon name="Send" size={size} />{!compact && tr("contactTelegram")}
+        </a>
+      )}
+    </div>
+  );
+}
 
 function LangSwitcher({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
   const [open, setOpen] = useState(false);
@@ -539,13 +571,20 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
   const { lang, tr } = useLang();
   const isClient = role === "client";
   const { geo } = useGeo();
+  const { providers } = useProviders();
 
+  const base = providers.length ? providers : [];
   const sortedSpecialists = (() => {
     if (!geo || geo.lat == null || geo.lon == null) {
-      return specialists.map((s) => ({ ...s, distance: null as number | null }));
+      return base.map((s) => ({ ...s, distance: null as number | null }));
     }
-    return specialists
-      .map((s) => ({ ...s, distance: haversineKm(geo.lat as number, geo.lon as number, s.lat, s.lon) }))
+    return base
+      .map((s) => ({
+        ...s,
+        distance: s.lat != null && s.lon != null
+          ? haversineKm(geo.lat as number, geo.lon as number, s.lat, s.lon)
+          : null,
+      }))
       .sort((a, b) => (a.distance ?? 1e9) - (b.distance ?? 1e9));
   })();
 
@@ -585,26 +624,50 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
             <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-xl">
               {tr(isClient ? "heroClientDesc" : "heroProviderDesc")}
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 items-center">
               <button
                 onClick={() => setActive(isClient ? "services" : "pricing")}
-                className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-8 py-3.5 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm flex items-center gap-2"
+                className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-9 py-4 font-montserrat font-extrabold text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm flex items-center gap-2.5"
               >
-                <Icon name={isClient ? "Search" : "Wallet"} size={16} />
+                <Icon name={isClient ? "Search" : "Wallet"} size={18} />
                 {tr(isClient ? "heroClientCta1" : "heroProviderCta1")}
+                <Icon name="ArrowRight" size={18} />
               </button>
               <button
                 onClick={() => setActive(isClient ? "profile" : "pricing")}
-                className="border border-border text-foreground px-8 py-3.5 font-montserrat font-semibold text-sm tracking-wide hover:border-gold hover:text-gold transition-all rounded-sm flex items-center gap-2"
+                className="border border-border text-foreground px-7 py-4 font-montserrat font-semibold text-sm tracking-wide hover:border-gold hover:text-gold transition-all rounded-sm flex items-center gap-2"
               >
                 {tr(isClient ? "heroClientCta2" : "heroProviderCta2")}
-                <Icon name="ArrowRight" size={16} />
               </button>
             </div>
-            <div className="flex items-center gap-6 mt-10 flex-wrap">
+            <div className="flex items-center gap-1.5 mt-3 text-xs text-gold font-montserrat font-semibold">
+              <Icon name="Zap" size={13} />
+              {tr(isClient ? "heroFast" : "ctaUrgency")}
+            </div>
+
+            {/* Social proof */}
+            <div className="flex items-center gap-4 mt-8 flex-wrap">
+              <div className="flex -space-x-3">
+                {[DETECTIVE_IMAGE, HERO_IMAGE, POLYGRAPH_IMAGE].map((img, i) => (
+                  <div key={i} className="w-9 h-9 rounded-full border-2 border-background overflow-hidden">
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </div>
+                ))}
+                <div className="w-9 h-9 rounded-full border-2 border-background bg-gold flex items-center justify-center text-[10px] font-montserrat font-extrabold text-[hsl(220,20%,6%)]">1k+</div>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <StarRating rating={5} />
+                  <span className="text-sm font-montserrat font-bold text-foreground">4.9</span>
+                </div>
+                <div className="text-[11px] text-muted-foreground font-montserrat">{tr("heroProofReviews")}</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-x-6 gap-y-2 mt-6 flex-wrap">
               {(isClient
-                ? [{ icon: "Wallet", t: "noFees" as const }, { icon: "BadgeCheck", t: "trust1" as const }, { icon: "Lock", t: "trust2" as const }]
-                : [{ icon: "BadgeCheck", t: "trust1" as const }, { icon: "Users", t: "statClients" as const }, { icon: "Scale", t: "trust3" as const }]
+                ? [{ icon: "Wallet", t: "heroNoFeeBig" as const }, { icon: "BadgeCheck", t: "heroGuarantee" as const }]
+                : [{ icon: "BadgeCheck", t: "trust1" as const }, { icon: "Users", t: "heroProofTrusted" as const }]
               ).map((b) => (
                 <div key={b.t} className="flex items-center gap-2 text-xs text-muted-foreground font-montserrat">
                   <Icon name={b.icon} size={14} className="text-gold" />
@@ -687,10 +750,16 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
           </div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
-          {sortedSpecialists.map((s) => (
-            <div key={s.name.en} onClick={() => setActive("profile")} className="card-hover shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group">
+          {sortedSpecialists.map((s) => {
+            const tags = lang === "ru" ? s.tags.ru : s.tags.en;
+            return s.active ? (
+            <div key={s.slug} onClick={() => setActive("profile")} className="card-hover shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group flex flex-col">
               <div className="h-48 overflow-hidden relative">
-                <img src={s.img} alt={L(s.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                {s.img ? (
+                  <img src={s.img} alt={L(s.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full bg-secondary flex items-center justify-center"><Icon name="UserRound" size={48} className="text-muted-foreground/40" /></div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
                 {s.verified && (
                   <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
@@ -704,7 +773,7 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
                     <span className="text-[10px] font-montserrat font-bold text-[hsl(220,20%,6%)]">{tr("geoNearYou")}</span>
                   </div>
                 )}
-                <div className="absolute bottom-3 left-4 right-4">
+                <div className="absolute bottom-3 start-4 end-4">
                   <div className="font-montserrat font-bold text-base text-foreground">{L(s.name, lang)}</div>
                   <div className="text-xs text-gold font-montserrat font-medium flex items-center gap-2">
                     {L(s.title, lang)}
@@ -712,33 +781,52 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
                   </div>
                 </div>
               </div>
-              <div className="p-5">
+              <div className="p-5 flex flex-col flex-1">
                 <div className="flex items-center gap-3 mb-4">
                   <StarRating rating={s.rating} />
                   <span className="text-xs text-muted-foreground">{s.rating} ({s.reviews})</span>
-                  <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
+                  <span className="text-xs text-muted-foreground ms-auto flex items-center gap-1">
                     <Icon name="MapPin" size={11} />{L(s.city, lang)}
                     {s.distance != null && <span className="text-gold font-semibold">· {s.distance} {tr("geoKm")}</span>}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-4">
-                  {s.tags.map((t) => (
-                    <span key={t.en} className="tag-security">{L(t, lang)}</span>
+                  {tags.map((tg) => (
+                    <span key={tg} className="tag-security">{tg}</span>
                   ))}
                 </div>
                 <div className="divider-gold mb-4" />
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-4">
                   <div>
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("cost")}</div>
                     <div className="font-montserrat font-bold text-sm text-gold">{L(s.price, lang)}</div>
                   </div>
-                  <button className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">
-                    {tr("profileBtn")}
-                  </button>
+                </div>
+                <div className="mt-auto">
+                  <ContactButtons p={s} onChat={() => setActive("chat")} compact />
                 </div>
               </div>
             </div>
-          ))}
+          ) : (
+            <div key={s.slug} className="border border-dashed border-border rounded-sm bg-card/50 overflow-hidden flex flex-col">
+              <div className="h-48 overflow-hidden relative bg-secondary flex items-center justify-center">
+                <Icon name="EyeOff" size={44} className="text-muted-foreground/30" />
+                <div className="absolute top-3 end-3 flex items-center gap-1 bg-secondary border border-border px-2 py-1 rounded-sm">
+                  <Icon name="Lock" size={11} className="text-muted-foreground" />
+                  <span className="text-[10px] font-montserrat font-semibold text-muted-foreground">{tr("subInactiveBadge")}</span>
+                </div>
+              </div>
+              <div className="p-5 flex flex-col flex-1">
+                <div className="font-montserrat font-bold text-base text-muted-foreground mb-1">{tr("subInactiveTitle")}</div>
+                <div className="text-xs text-gold font-montserrat font-medium mb-3">{L(s.title, lang)}</div>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-4">{tr("subInactiveDesc")}</p>
+                <div className="mt-auto flex items-center gap-2 text-[11px] text-muted-foreground/70 border-t border-border pt-3">
+                  <Icon name="Info" size={12} />
+                  {tr("subRenewHint")}
+                </div>
+              </div>
+            </div>
+          );})}
         </div>
       </section>
       )}
@@ -1413,13 +1501,27 @@ function PaymentModal({ plan, onClose, defaultEmail = "" }: { plan: PayPlan; onC
   const [email, setEmail] = useState(defaultEmail);
   const [emailState, setEmailState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [autoSent, setAutoSent] = useState(false);
+  const [period, setPeriod] = useState<"month" | "year">("month");
+
+  // Parse the monthly price string ("2 490 ₽" / "from $90") into number + currency formatting
+  const priceStr = tr(plan.price);
+  const priceNum = parseFloat(priceStr.replace(/[^\d.,]/g, "").replace(/\s/g, "").replace(",", ".")) || 0;
+  const fmt = (n: number) => {
+    const rounded = Math.round(n);
+    const grouped = rounded.toLocaleString(lang === "ru" ? "ru-RU" : "en-US");
+    return priceStr.replace(/[\d\s.,]+/, grouped);
+  };
+  const yearlyFull = priceNum * 12;
+  const yearlyDiscounted = Math.round(yearlyFull * 0.83);
+  const yearlySaving = Math.round(yearlyFull - yearlyDiscounted);
+  const amountStr = period === "year" ? fmt(yearlyDiscounted) : priceStr;
 
   const receipt = (to?: string) => ({
     receiptNo: "SN-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + Math.floor(Math.random() * 900 + 100),
     date: new Date().toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US"),
     plan: tr(plan.name),
-    period: tr("payOneMonth"),
-    amount: tr(plan.price),
+    period: period === "year" ? tr("payOneYear") : tr("payOneMonth"),
+    amount: amountStr,
     payer: (to || email) || L(specialists[0].name, lang),
     method: tr(method === "card" ? "payCard" : "paySbp"),
     lang,
@@ -1524,6 +1626,22 @@ function PaymentModal({ plan, onClose, defaultEmail = "" }: { plan: PayPlan; onC
               <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors"><Icon name="X" size={20} /></button>
             </div>
 
+            <div className="grid grid-cols-2 gap-2 mb-4 p-1 bg-secondary rounded-sm">
+              <button
+                onClick={() => setPeriod("month")}
+                className={`py-2.5 text-xs font-montserrat font-bold rounded-sm transition-all ${period === "month" ? "bg-card text-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {tr("billMonthly")}
+              </button>
+              <button
+                onClick={() => setPeriod("year")}
+                className={`relative py-2.5 text-xs font-montserrat font-bold rounded-sm transition-all ${period === "year" ? "gold-gradient text-[hsl(220,20%,6%)]" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {tr("billYearly")}
+                <span className={`absolute -top-2 end-1 text-[9px] px-1.5 py-0.5 rounded-sm font-bold ${period === "year" ? "bg-[hsl(220,20%,6%)] text-gold" : "bg-gold text-[hsl(220,20%,6%)]"}`}>−17%</span>
+              </button>
+            </div>
+
             <div className="border border-border rounded-sm bg-card p-4 mb-5 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">{tr("payPlan")}</span>
@@ -1531,12 +1649,24 @@ function PaymentModal({ plan, onClose, defaultEmail = "" }: { plan: PayPlan; onC
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">{tr("payPeriod")}</span>
-                <span className="font-montserrat font-semibold text-foreground">{tr("payOneMonth")}</span>
+                <span className="font-montserrat font-semibold text-foreground">{period === "year" ? tr("payOneYear") : tr("payOneMonth")}</span>
               </div>
+              {period === "year" && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">{tr("billYearSaveLine")}</span>
+                  <span className="font-montserrat font-bold text-green-400">−{fmt(yearlySaving)}</span>
+                </div>
+              )}
               <div className="divider-gold my-1" />
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">{tr("payAmount")}</span>
-                <span className="font-montserrat font-extrabold text-2xl text-gold">{tr(plan.price)}</span>
+                <div className="text-end">
+                  {period === "year" && (
+                    <div className="text-xs text-muted-foreground line-through">{fmt(yearlyFull)}</div>
+                  )}
+                  <span className="font-montserrat font-extrabold text-2xl text-gold">{amountStr}</span>
+                  <span className="text-xs text-muted-foreground ms-1">{period === "year" ? tr("billPerYear") : tr("perMonth")}</span>
+                </div>
               </div>
             </div>
 
@@ -1574,7 +1704,7 @@ function PaymentModal({ plan, onClose, defaultEmail = "" }: { plan: PayPlan; onC
               {status === "processing" ? (
                 <><Icon name="Loader" size={16} className="animate-spin" /> {tr("payProcessing")}</>
               ) : (
-                <><Icon name="Lock" size={15} /> {tr("payButton")} {tr(plan.price)}</>
+                <><Icon name="Lock" size={15} /> {tr("payButton")} {amountStr}</>
               )}
             </button>
             <div className="flex items-center justify-center gap-1.5 mt-3 text-[10px] text-muted-foreground">
@@ -1703,6 +1833,8 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
 function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
   const { lang, tr } = useLang();
   const [activeTab, setActiveTab] = useState<"cases" | "services" | "reviews">("cases");
+  const { providers } = useProviders();
+  const provider = providers.find((p) => p.active);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
@@ -1740,7 +1872,8 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
                 <div><div className="stat-number text-xl">134</div><div className="text-[10px] text-muted-foreground">{tr("reviewsCount")}</div></div>
                 <div><div className="stat-number text-xl">98%</div><div className="text-[10px] text-muted-foreground">{tr("success")}</div></div>
               </div>
-              <button className="w-full gold-gradient text-[hsl(220,20%,6%)] py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("contactBtn")}</button>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-montserrat font-semibold mb-2">{tr("contactTitle")}</div>
+              {provider && <ContactButtons p={provider} onChat={() => setActive("chat")} />}
               <button className="w-full mt-2 border border-border text-muted-foreground py-2.5 text-xs font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">{tr("orderService")}</button>
             </div>
           </div>

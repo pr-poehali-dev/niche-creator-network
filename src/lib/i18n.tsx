@@ -519,6 +519,39 @@ export const t: Dict = {
   geoKm: { ru: "км", en: "km" },
   geoSortNearby: { ru: "Сначала ближайшие", en: "Nearest first" },
   geoNearbyHint: { ru: "Исполнители отсортированы по удалённости от вас", en: "Providers sorted by distance from you" },
+
+  // Contacts & subscription
+  contactCall: { ru: "Позвонить", en: "Call" },
+  contactChat: { ru: "Написать", en: "Message" },
+  contactWhatsApp: { ru: "WhatsApp", en: "WhatsApp" },
+  contactTelegram: { ru: "Telegram", en: "Telegram" },
+  contactEmail: { ru: "Email", en: "Email" },
+  contactWebsite: { ru: "Сайт", en: "Website" },
+  contactTitle: { ru: "Связаться с исполнителем", en: "Contact the provider" },
+  subInactiveBadge: { ru: "Профиль неактивен", en: "Profile inactive" },
+  subInactiveTitle: { ru: "Профиль скрыт", en: "Profile hidden" },
+  subInactiveDesc: { ru: "Исполнитель не продлил подписку. Контакты временно недоступны.", en: "The provider hasn't renewed their subscription. Contacts are temporarily unavailable." },
+  subRenewHint: { ru: "Это ваш профиль? Продлите тариф, чтобы клиенты снова вас видели.", en: "Is this your profile? Renew your plan so clients can find you again." },
+  chatWithProvider: { ru: "Чат на сайте", en: "On-site chat" },
+
+  // Billing period
+  billMonthly: { ru: "Помесячно", en: "Monthly" },
+  billYearly: { ru: "На год", en: "Yearly" },
+  billSave: { ru: "Выгода 17%", en: "Save 17%" },
+  billPerYear: { ru: "/год", en: "/year" },
+  billYearOld: { ru: "вместо", en: "instead of" },
+  billYearSaveLine: { ru: "Экономия", en: "You save" },
+  billBestValue: { ru: "Выгоднее всего", en: "Best value" },
+  payOneYear: { ru: "1 год", en: "1 year" },
+
+  // Sales / social proof
+  heroProofRating: { ru: "4.9 из 5 — средняя оценка", en: "4.9 out of 5 — average rating" },
+  heroProofReviews: { ru: "на основе 2 800+ отзывов", en: "based on 2,800+ reviews" },
+  heroProofTrusted: { ru: "Нам доверяют 1 240+ специалистов и сотни компаний", en: "Trusted by 1,240+ specialists and hundreds of companies" },
+  heroFast: { ru: "Подбор за 5 минут", en: "Matched in 5 minutes" },
+  heroNoFeeBig: { ru: "Без комиссии для клиентов", en: "No fees for clients" },
+  heroGuarantee: { ru: "Проверенные лицензии и гарантия качества", en: "Verified licenses & quality guarantee" },
+  ctaUrgency: { ru: "Начните сегодня — первый контакт бесплатно", en: "Start today — first contact is free" },
 };
 
 interface LangCtx {
