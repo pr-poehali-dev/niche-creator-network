@@ -11,7 +11,7 @@ const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237
 const POLYGRAPH_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/c211bedb-fcf6-49e0-abb2-ad98fcf0bdac.jpg";
 const DETECTIVE_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b893f56c-cd01-49d7-b962-7f78f87ace2c.jpg";
 const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/0b2c5db2-c85b-4009-99db-6b023ed84bf5.jpg";
-const PROVIDER_EMAIL = "a.morozov@securenet.ru";
+const PROVIDER_EMAIL = "a.morozov@shchit.ru";
 const DEMO_CLIENT = {
   name: { ru: "Дмитрий Орлов", en: "Dmitry Orlov" },
   city: { ru: "Москва", en: "Moscow" },
@@ -426,7 +426,7 @@ export default function Index() {
               <Icon name="Shield" size={16} className="text-[hsl(220,20%,6%)]" />
             </div>
             <div>
-              <span className="font-montserrat font-bold text-lg tracking-tight text-foreground">SECURE<span className="text-gold">NET</span></span>
+              <span className="font-montserrat font-bold text-lg tracking-[0.2em] text-foreground">Щ<span className="text-gold">ИТ</span></span>
               <div className="text-[9px] text-muted-foreground font-montserrat tracking-widest uppercase leading-none">{tr("brandSub")}</div>
             </div>
           </div>
@@ -529,7 +529,7 @@ export default function Index() {
                 <div className="w-6 h-6 gold-gradient rounded flex items-center justify-center">
                   <Icon name="Shield" size={12} className="text-[hsl(220,20%,6%)]" />
                 </div>
-                <span className="font-montserrat font-bold text-sm text-foreground">SECURE<span className="text-gold">NET</span></span>
+                <span className="font-montserrat font-bold text-sm text-foreground tracking-[0.2em]">Щ<span className="text-gold">ИТ</span></span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">{tr("footerDesc")}</p>
             </div>
@@ -2222,13 +2222,12 @@ function ServicesSection() {
 
       <div className="mt-10 border border-gold/30 rounded-sm bg-card p-6 flex flex-col md:flex-row items-start md:items-center gap-4">
         <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">
-          <Icon name="Percent" size={18} className="text-[hsl(220,20%,6%)]" />
+          <Icon name="HandCoins" size={18} className="text-[hsl(220,20%,6%)]" />
         </div>
         <div>
-          <div className="font-montserrat font-semibold text-sm text-foreground mb-1">{tr("commission")}</div>
-          <div className="text-xs text-muted-foreground">{tr("commissionDesc")}</div>
+          <div className="font-montserrat font-semibold text-sm text-foreground mb-1">{tr("noCommissionTitle")}</div>
+          <div className="text-xs text-muted-foreground">{tr("noCommissionDesc")}</div>
         </div>
-        <button className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 hover:border-gold hover:text-gold transition-all rounded-sm ms-auto">{tr("more")}</button>
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ export type ReceiptData = {
 const TEXT = {
   ru: {
     title: "Чек об оплате",
-    company: "ООО «СекьюрНет»",
+    company: "ООО «ЩИТ»",
     requisites: "ИНН 7701234567 · 125009, Москва, ул. Тверская, д. 1",
     receiptNo: "Чек №",
     date: "Дата оплаты",
@@ -28,7 +28,7 @@ const TEXT = {
   },
   en: {
     title: "Payment receipt",
-    company: "SecureNet LLC",
+    company: "SHCHIT LLC",
     requisites: "VAT 7701234567 · 1 Tverskaya St., Moscow, 125009",
     receiptNo: "Receipt No.",
     date: "Payment date",
@@ -78,7 +78,7 @@ export function downloadReceipt(data: ReceiptData) {
   <div class="sheet">
     <div class="head">
       <div>
-        <div class="brand">SECURE<span>NET</span></div>
+        <div class="brand" style="letter-spacing:0.2em;">Щ<span>ИТ</span></div>
         <div class="sub">${t.company}<br/>${t.requisites}</div>
       </div>
       <div class="title">

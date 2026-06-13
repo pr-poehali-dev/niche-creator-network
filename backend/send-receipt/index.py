@@ -41,9 +41,9 @@ def handler(event: dict, context) -> dict:
     pay_method = body.get('method', '')
 
     if lang == 'en':
-        subject = f'SecureNet — Payment receipt {receipt_no}'
+        subject = f'SHCHIT — Payment receipt {receipt_no}'
         labels = {
-            'title': 'Payment receipt', 'company': 'SecureNet LLC',
+            'title': 'Payment receipt', 'company': 'SHCHIT LLC',
             'req': 'VAT 7701234567 · 1 Tverskaya St., Moscow, 125009',
             'no': 'Receipt No.', 'date': 'Payment date', 'payer': 'Payer',
             'service': 'Payment purpose', 'serviceVal': 'Membership fee (plan)',
@@ -51,9 +51,9 @@ def handler(event: dict, context) -> dict:
             'total': 'Total paid', 'note': 'This document is generated automatically and requires no signature or seal.',
         }
     else:
-        subject = f'SecureNet — Чек об оплате {receipt_no}'
+        subject = f'ЩИТ — Чек об оплате {receipt_no}'
         labels = {
-            'title': 'Чек об оплате', 'company': 'ООО «СекьюрНет»',
+            'title': 'Чек об оплате', 'company': 'ООО «ЩИТ»',
             'req': 'ИНН 7701234567 · 125009, Москва, ул. Тверская, д. 1',
             'no': 'Чек №', 'date': 'Дата оплаты', 'payer': 'Плательщик',
             'service': 'Назначение платежа', 'serviceVal': 'Членский взнос (тариф)',
@@ -70,7 +70,7 @@ def handler(event: dict, context) -> dict:
     html = f'''<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#f4f5f7;font-family:Arial,Helvetica,sans-serif;color:#1a1d24;">
 <div style="max-width:600px;margin:0 auto;background:#fff;border:1px solid #e4e6eb;border-radius:10px;overflow:hidden;">
   <div style="padding:26px 30px;background:#1a1d24;color:#fff;">
-    <div style="font-weight:800;font-size:20px;">SECURE<span style="color:#d4af37;">NET</span></div>
+    <div style="font-weight:800;font-size:20px;letter-spacing:0.2em;">Щ<span style="color:#d4af37;">ИТ</span></div>
     <div style="font-size:11px;opacity:.65;margin-top:6px;">{labels['company']}<br/>{labels['req']}</div>
     <div style="margin-top:14px;font-size:15px;font-weight:700;">{labels['title']}</div>
     <div style="font-size:12px;color:#d4af37;margin-top:3px;">{labels['no']}{receipt_no}</div>

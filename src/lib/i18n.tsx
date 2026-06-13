@@ -99,13 +99,13 @@ export const t: Dict = {
 
   // Features
   features: { ru: "Возможности", en: "Features" },
-  whyUs: { ru: "Почему выбирают SecureNet", en: "Why choose SecureNet" },
+  whyUs: { ru: "Почему выбирают ЩИТ", en: "Why choose SHCHIT" },
   feat1Title: { ru: "Верификация специалистов", en: "Specialist verification" },
   feat1Desc: { ru: "Каждый участник проходит проверку документов, лицензий и профессиональной репутации", en: "Every member is screened for documents, licenses and professional reputation" },
   feat2Title: { ru: "Закрытое сообщество", en: "Private community" },
   feat2Desc: { ru: "Доступ только для практикующих специалистов в сфере безопасности. Без посторонних", en: "Access for practicing security professionals only. No outsiders" },
-  feat3Title: { ru: "Безопасные платежи", en: "Secure payments" },
-  feat3Desc: { ru: "Интегрированная система расчётов с автоматическим распределением комиссий", en: "Integrated payment system with automatic commission distribution" },
+  feat3Title: { ru: "Прямые контакты", en: "Direct contacts" },
+  feat3Desc: { ru: "Связывайтесь с исполнителем напрямую — звонок, чат и мессенджеры без посредников и комиссий", en: "Reach providers directly — call, chat and messengers, no middlemen or fees" },
   feat4Title: { ru: "База знаний", en: "Knowledge base" },
   feat4Desc: { ru: "Тысячи кейсов, методических материалов и обучающих программ от практиков", en: "Thousands of cases, methodologies and training programs from practitioners" },
   feat5Title: { ru: "Деловые связи", en: "Business network" },
@@ -160,8 +160,8 @@ export const t: Dict = {
   searchServices: { ru: "Поиск услуг...", en: "Search services..." },
   search: { ru: "Найти", en: "Search" },
   order: { ru: "Заказать", en: "Order" },
-  commission: { ru: "Комиссия платформы", en: "Platform commission" },
-  commissionDesc: { ru: "Платформа берёт комиссию 8–12% от суммы сделки. Оплата через безопасную сделку — ваши деньги защищены до подтверждения выполнения заказа", en: "The platform charges an 8–12% commission of the deal amount. Payment via secure escrow — your money is protected until the order is confirmed completed" },
+  noCommissionTitle: { ru: "Без комиссии за сделки", en: "Zero deal commission" },
+  noCommissionDesc: { ru: "Платформа не берёт процент с заказов. Вы общаетесь с исполнителем напрямую и платите ему напрямую — мы зарабатываем только на тарифах для специалистов.", en: "The platform takes no percentage from orders. You deal and pay the provider directly — we earn only from specialist subscription plans." },
   more: { ru: "Подробнее", en: "Learn more" },
 
   // Courses
@@ -273,7 +273,7 @@ export const t: Dict = {
   polTag: { ru: "Документ", en: "Document" },
   polTitle: { ru: "Политика безопасности", en: "Security Policy" },
   polUpdated: { ru: "Последнее обновление: 13 июня 2026", en: "Last updated: June 13, 2026" },
-  polIntro: { ru: "Настоящая Политика описывает меры, которые SecureNet применяет для защиты данных клиентов и специалистов. Безопасность — основа доверия в нашей профессиональной нише, поэтому мы используем многоуровневую защиту на каждом этапе работы платформы.", en: "This Policy describes the measures SecureNet applies to protect the data of clients and specialists. Security is the foundation of trust in our professional niche, so we use multi-layered protection at every stage of the platform." },
+  polIntro: { ru: "Настоящая Политика описывает меры, которые «ЩИТ» применяет для защиты данных клиентов и специалистов. Безопасность — основа доверия в нашей профессиональной нише, поэтому мы используем многоуровневую защиту на каждом этапе работы платформы.", en: "This Policy describes the measures SHCHIT applies to protect the data of clients and specialists. Security is the foundation of trust in our professional niche, so we use multi-layered protection at every stage of the platform." },
 
   polNav: { ru: "Содержание", en: "Contents" },
 
@@ -501,7 +501,7 @@ export const t: Dict = {
   footerPlatform: { ru: "Платформа", en: "Platform" },
   footerCommunity: { ru: "Сообщество", en: "Community" },
   footerDocs: { ru: "Документы", en: "Legal" },
-  rights: { ru: "© 2024 SecureNet. Все права защищены.", en: "© 2024 SecureNet. All rights reserved." },
+  rights: { ru: "© 2024 «ЩИТ». Все права защищены.", en: "© 2024 SHCHIT. All rights reserved." },
   forVerified: { ru: "Платформа для верифицированных специалистов", en: "A platform for verified professionals" },
   fAbout: { ru: "О нас", en: "About" },
   fSpecialists: { ru: "Специалисты", en: "Specialists" },
