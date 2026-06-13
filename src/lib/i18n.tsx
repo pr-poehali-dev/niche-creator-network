@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
+import "./i18n-extra";
 
 export type Lang = "ru" | "en";
 
