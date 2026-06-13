@@ -254,6 +254,7 @@ export default function Index() {
   const [active, setActive] = useState<Section>("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
+  const [secBannerOpen, setSecBannerOpen] = useState(true);
 
   const go = (s: Section) => {
     setActive(s);
@@ -400,6 +401,35 @@ export default function Index() {
           </div>
         </div>
       </footer>
+
+      {secBannerOpen && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 animate-fade-in">
+          <div className="max-w-7xl mx-auto px-4 pb-4">
+            <div className="glass-card border border-gold/40 rounded-sm security-glow flex items-center gap-4 px-5 py-3.5">
+              <div className="w-9 h-9 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
+                <Icon name="ShieldCheck" size={18} className="text-[hsl(220,20%,6%)]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-montserrat font-bold text-sm text-foreground leading-tight">{tr("secBanner")}</div>
+                <div className="text-xs text-muted-foreground truncate">{tr("secBannerSub")}</div>
+              </div>
+              <button
+                onClick={() => go("home")}
+                className="hidden sm:block shrink-0 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity"
+              >
+                {tr("secTag")}
+              </button>
+              <button
+                onClick={() => setSecBannerOpen(false)}
+                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="close"
+              >
+                <Icon name="X" size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -616,6 +646,69 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
                 <Icon name="BadgeCheck" size={14} className="text-gold" />
               </div>
               <div className="text-xs text-muted-foreground">{L(specialists[0].title, lang)} · {specialists[0].experience} {tr("yearsShort")}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Security / Encryption */}
+      <section className="border-t border-border py-24 relative overflow-hidden ambient-gold">
+        <div className="absolute inset-0 grid-line-bg opacity-40" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.07) 0%, transparent 70%)" }} />
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center justify-center mb-6">
+              <div className="pulse-ring w-16 h-16 gold-gradient rounded-full flex items-center justify-center security-glow">
+                <Icon name="ShieldCheck" size={28} className="text-[hsl(220,20%,6%)]" />
+              </div>
+            </div>
+            <div className="tag-security mb-4 inline-block">{tr("secTag")}</div>
+            <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-4">{tr("secTitle")}</h2>
+            <p className="text-muted-foreground text-base leading-relaxed max-w-2xl mx-auto">{tr("secDesc")}</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 stagger mb-12">
+            {[
+              { icon: "KeyRound", title: "sec1Title" as const, desc: "sec1Desc" as const },
+              { icon: "DatabaseZap", title: "sec2Title" as const, desc: "sec2Desc" as const },
+              { icon: "MessageSquareLock", title: "sec3Title" as const, desc: "sec3Desc" as const },
+              { icon: "Globe", title: "sec4Title" as const, desc: "sec4Desc" as const },
+              { icon: "FileLock2", title: "sec5Title" as const, desc: "sec5Desc" as const },
+              { icon: "BadgeCheck", title: "sec6Title" as const, desc: "sec6Desc" as const },
+            ].map((f) => (
+              <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-hover shine-on-hover cursor-default">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shrink-0">
+                    <Icon name={f.icon} fallback="Lock" size={18} className="text-[hsl(220,20%,6%)]" />
+                  </div>
+                  <div className="font-montserrat font-bold text-sm text-foreground">{tr(f.title)}</div>
+                </div>
+                <div className="text-xs text-muted-foreground leading-relaxed">{tr(f.desc)}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Trust badges + stats */}
+          <div className="border border-gold/30 rounded-sm glass-card p-8 security-glow">
+            <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+              {(["secBadge1", "secBadge2", "secBadge3", "secBadge4"] as const).map((b) => (
+                <div key={b} className="flex items-center gap-2 border border-border bg-background px-4 py-2 rounded-sm">
+                  <Icon name="ShieldCheck" size={14} className="text-gold" />
+                  <span className="text-xs font-montserrat font-semibold text-foreground">{tr(b)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border">
+              {[
+                { n: "256-bit", l: "secStat1" as const },
+                { n: "0", l: "secStat2" as const },
+                { n: "24/7", l: "secStat3" as const },
+              ].map((s) => (
+                <div key={s.n} className="py-4 sm:py-0 px-6 text-center">
+                  <div className="stat-number text-3xl mb-1">{s.n}</div>
+                  <div className="text-xs text-muted-foreground">{tr(s.l)}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
