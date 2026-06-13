@@ -1066,6 +1066,31 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   ];
   const statusMap = { active: { key: "cdStatusActive" as const, cls: "text-gold border-gold/40" }, new: { key: "cdStatusNew" as const, cls: "text-blue-400 border-blue-500/40" } };
 
+  const emailReceipt = async (row: { date: string; plan: keyof typeof t; amount: string; i: number }) => {
+    const email = window.prompt(tr("pdHistEmailPrompt"), "");
+    if (!email || !email.includes("@")) return;
+    try {
+      const res = await fetch(func2url["send-receipt"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          receiptNo: "SN-" + row.date.split(".").reverse().join("") + "-" + (row.i + 1),
+          date: row.date,
+          plan: tr(row.plan),
+          period: tr("payOneMonth"),
+          amount: row.amount,
+          payer: L(specialists[0].name, lang),
+          method: tr("payCard") + " •••• 4242",
+          lang,
+          email,
+        }),
+      });
+      window.alert(res.ok ? `${tr("pdHistEmailSent")} ${email}` : tr("pdHistEmailFail"));
+    } catch {
+      window.alert(tr("pdHistEmailFail"));
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       {/* Header card */}
@@ -1193,21 +1218,29 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                         <span className="sm:text-center"><span className={`tag-security ${st.cls}`}>{tr(st.key)}</span></span>
                         <span className="sm:text-right">
                           {row.status === "paid" ? (
-                            <button
-                              onClick={() => downloadReceipt({
-                                receiptNo: "SN-" + row.date.split(".").reverse().join("") + "-" + (i + 1),
-                                date: row.date,
-                                plan: tr(row.plan),
-                                period: tr("payOneMonth"),
-                                amount: row.amount,
-                                payer: L(specialists[0].name, lang),
-                                method: tr("payCard") + " •••• 4242",
-                                lang,
-                              })}
-                              className="inline-flex items-center gap-1 text-muted-foreground hover:text-gold transition-colors font-montserrat font-semibold"
-                            >
-                              <Icon name="Download" size={13} /> <span className="hidden md:inline">{tr("pdHistDownload")}</span>
-                            </button>
+                            <span className="inline-flex items-center gap-3">
+                              <button
+                                onClick={() => downloadReceipt({
+                                  receiptNo: "SN-" + row.date.split(".").reverse().join("") + "-" + (i + 1),
+                                  date: row.date,
+                                  plan: tr(row.plan),
+                                  period: tr("payOneMonth"),
+                                  amount: row.amount,
+                                  payer: L(specialists[0].name, lang),
+                                  method: tr("payCard") + " •••• 4242",
+                                  lang,
+                                })}
+                                className="inline-flex items-center gap-1 text-muted-foreground hover:text-gold transition-colors font-montserrat font-semibold"
+                              >
+                                <Icon name="Download" size={13} /> <span className="hidden lg:inline">{tr("pdHistDownload")}</span>
+                              </button>
+                              <button
+                                onClick={() => emailReceipt({ date: row.date, plan: row.plan, amount: row.amount, i })}
+                                className="inline-flex items-center gap-1 text-muted-foreground hover:text-gold transition-colors font-montserrat font-semibold"
+                              >
+                                <Icon name="Mail" size={13} /> <span className="hidden lg:inline">{tr("pdHistEmail")}</span>
+                              </button>
+                            </span>
                           ) : (
                             <span className="text-muted-foreground/40">—</span>
                           )}

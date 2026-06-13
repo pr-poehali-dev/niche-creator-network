@@ -475,6 +475,10 @@ export const t: Dict = {
   payEmailSent: { ru: "Чек отправлен на почту", en: "Receipt sent to your email" },
   payEmailError: { ru: "Не удалось отправить. Попробуйте позже.", en: "Failed to send. Try again later." },
   payDownloadPdf: { ru: "Скачать PDF-чек", en: "Download PDF receipt" },
+  pdHistEmail: { ru: "На почту", en: "Email" },
+  pdHistEmailPrompt: { ru: "Укажите email для отправки чека:", en: "Enter email to send the receipt:" },
+  pdHistEmailSent: { ru: "Чек отправлен на", en: "Receipt sent to" },
+  pdHistEmailFail: { ru: "Не удалось отправить чек", en: "Failed to send receipt" },
 
   // Footer
   footerDesc: { ru: "Международное закрытое сообщество для специалистов в сфере безопасности", en: "International private community for security professionals" },
