@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Icon from "@/components/ui/icon";
 import { useLang, t, LANGS, type Lang } from "@/lib/i18n";
 import { dataExtra } from "@/lib/i18n-extra";
@@ -314,12 +314,17 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function Index() {
-  const { lang, setLang, tr } = useLang();
+  const { lang, setLang, tr, applyGeoLang } = useLang();
   const [active, setActive] = useState<Section>("home");
   const [role, setRole] = useState<Role>("client");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [secBannerOpen, setSecBannerOpen] = useState(true);
+  const { geo } = useGeo();
+
+  useEffect(() => {
+    if (geo?.countryCode) applyGeoLang(geo.countryCode);
+  }, [geo?.countryCode]);
 
   const NAV_ITEMS = role === "client" ? CLIENT_NAV : PROVIDER_NAV;
 

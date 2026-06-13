@@ -526,7 +526,19 @@ interface LangCtx {
   setLang: (l: Lang) => void;
   tr: (key: keyof typeof t) => string;
   rtl: boolean;
+  applyGeoLang: (countryCode: string) => void;
 }
+
+// Country code (ISO-2) → preferred site language
+const COUNTRY_LANG: Record<string, Lang> = {
+  RU: "ru", BY: "ru", KZ: "ru", KG: "ru", UA: "ru",
+  FR: "fr", BE: "fr", MC: "fr", LU: "fr",
+  DE: "de", AT: "de", CH: "de", LI: "de",
+  JP: "ja",
+  SA: "ar", AE: "ar", EG: "ar", QA: "ar", KW: "ar", BH: "ar", OM: "ar",
+  JO: "ar", LB: "ar", IQ: "ar", MA: "ar", DZ: "ar", TN: "ar", LY: "ar",
+  IL: "he",
+};
 
 function translate(key: string, lang: Lang): string {
   if (lang !== "ru" && lang !== "en") {
@@ -542,6 +554,7 @@ const LanguageContext = createContext<LangCtx>({
   setLang: () => {},
   tr: (k) => String(k),
   rtl: false,
+  applyGeoLang: () => {},
 });
 
 function getInitialLang(): Lang {
@@ -559,7 +572,22 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLang = (l: Lang) => {
     setLangState(l);
-    if (typeof window !== "undefined") window.localStorage.setItem("lang", l);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("lang", l);
+      window.localStorage.setItem("langChosen", "1");
+    }
+  };
+
+  // Auto-select language by user's country (only if not chosen manually before)
+  const applyGeoLang = (countryCode: string) => {
+    if (typeof window === "undefined") return;
+    if (window.localStorage.getItem("langChosen") === "1") return;
+    if (window.localStorage.getItem("lang")) return;
+    const code = (countryCode || "").toUpperCase();
+    const geoLang = COUNTRY_LANG[code];
+    if (geoLang && LANGS.some((l) => l.code === geoLang)) {
+      setLangState(geoLang);
+    }
   };
 
   useEffect(() => {
@@ -572,7 +600,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const tr = (key: keyof typeof t) => translate(key as string, lang);
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, tr, rtl }}>
+    <LanguageContext.Provider value={{ lang, setLang, tr, rtl, applyGeoLang }}>
       {children}
     </LanguageContext.Provider>
   );
