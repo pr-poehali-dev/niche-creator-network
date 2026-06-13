@@ -53,6 +53,7 @@ const L = (v: LS, lang: Lang) => {
 
 const spyAvatar = (gender?: string) => (gender === "f" ? SPY_AVATAR_F : SPY_AVATAR_M);
 const resolveAvatar = (img: string | null | undefined, gender?: string) => (img && img.trim() ? img : spyAvatar(gender));
+const isImageUrl = (url?: string) => !!url && /\.(png|jpe?g|webp|gif)(\?|$)/i.test(url);
 
 function DocFileButton({ slug, url, onUploaded }: { slug: string; url: string; onUploaded: (url: string) => void }) {
   const { tr } = useLang();
@@ -92,6 +93,11 @@ function DocFileButton({ slug, url, onUploaded }: { slug: string; url: string; o
         {tr(busy ? "pdVfDocUploading" : url ? "pdVfDocReplace" : "pdVfDocAttach")}
         <input type="file" accept=".pdf,image/png,image/jpeg,image/webp" className="hidden" disabled={busy} onChange={(e) => { const f = e.target.files?.[0]; if (f) pick(f); }} />
       </label>
+      {url && isImageUrl(url) && (
+        <a href={url} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-sm overflow-hidden border border-border hover:border-gold transition-colors shrink-0">
+          <img src={url} alt="" className="w-full h-full object-cover" />
+        </a>
+      )}
       {url && <a href={url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-green-400 inline-flex items-center gap-1"><Icon name="Check" size={11} />{tr("pdVfDocAttached")}</a>}
       {!url && !busy && <span className="text-[10px] text-muted-foreground">{tr("pdVfDocHint")}</span>}
       {err && <span className="text-[11px] text-destructive">{tr("pdVfDocError")}</span>}
@@ -243,17 +249,24 @@ function VerificationBlock({ v }: { v: NonNullable<Provider["verification"]> }) 
           {documents.length > 0 && (
             <div className="flex items-start gap-2">
               <Icon name="FileText" size={13} className="text-gold mt-0.5 shrink-0" />
-              <div>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("verifyDocuments")}</div>
-                <div className="flex flex-wrap gap-1.5 mt-1">
+              <div className="min-w-0">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5">{tr("verifyDocuments")}</div>
+                <div className="flex flex-wrap gap-2">
                   {documents.map((d, i) => (
-                    d.url ? (
-                      <a key={i} href={d.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-foreground bg-secondary border border-border rounded-sm px-2 py-1 hover:border-gold hover:text-gold transition-colors">
-                        <Icon name="FileCheck2" size={11} className="text-gold" />{d.title || tr("docOpen")}
+                    isImageUrl(d.url) ? (
+                      <a key={i} href={d.url} target="_blank" rel="noopener noreferrer" title={d.title || tr("docOpen")} className="group/doc relative w-16 h-16 rounded-sm overflow-hidden border border-border hover:border-gold transition-colors">
+                        <img src={d.url} alt={d.title || ""} className="w-full h-full object-cover" />
+                        <span className="absolute inset-0 bg-background/60 opacity-0 group-hover/doc:opacity-100 transition-opacity flex items-center justify-center">
+                          <Icon name="ZoomIn" size={16} className="text-gold" />
+                        </span>
+                      </a>
+                    ) : d.url ? (
+                      <a key={i} href={d.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-foreground bg-secondary border border-border rounded-sm px-2 py-1 hover:border-gold hover:text-gold transition-colors self-start">
+                        <Icon name="FileText" size={11} className="text-gold" />{d.title || tr("docOpen")}
                         <Icon name="ExternalLink" size={10} className="opacity-60" />
                       </a>
                     ) : (
-                      <span key={i} className="inline-flex items-center gap-1 text-[11px] text-foreground bg-secondary border border-border rounded-sm px-2 py-1">
+                      <span key={i} className="inline-flex items-center gap-1 text-[11px] text-foreground bg-secondary border border-border rounded-sm px-2 py-1 self-start">
                         <Icon name="Paperclip" size={11} className="text-gold" />{d.title}
                       </span>
                     )
