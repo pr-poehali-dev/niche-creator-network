@@ -1854,10 +1854,29 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="text-center mb-12">
+      <div className="text-center mb-8">
         <div className="tag-security mb-3 inline-block">{tr("pricingTag")}</div>
-        <h1 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-3">{tr("pricingTitle")}</h1>
+        <h1 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-3 max-w-3xl mx-auto">{tr("pricingTitle")}</h1>
         <p className="text-muted-foreground text-sm max-w-2xl mx-auto">{tr("pricingDesc")}</p>
+      </div>
+
+      {/* No-commission highlights */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-10 max-w-4xl mx-auto">
+        {[
+          { icon: "BadgePercent", title: "priceNoCommission" as const, desc: "priceNoCommissionDesc" as const },
+          { icon: "HandCoins", title: "priceKeepAll" as const, desc: "priceKeepAllDesc" as const },
+          { icon: "Tag", title: "priceFixed" as const, desc: "priceFixedDesc" as const },
+        ].map((h) => (
+          <div key={h.title} className="flex items-start gap-3 border border-gold/30 rounded-sm bg-card p-4">
+            <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
+              <Icon name={h.icon} size={16} className="text-[hsl(220,20%,6%)]" />
+            </div>
+            <div>
+              <div className="font-montserrat font-bold text-sm text-foreground leading-tight">{tr(h.title)}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{tr(h.desc)}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 stagger">
@@ -1874,8 +1893,16 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
               <div className="text-xs text-muted-foreground">{tr(p.for)}</div>
             </div>
             <div className="mb-6">
-              <span className="font-montserrat font-extrabold text-3xl text-gold">{tr(p.price)}</span>
-              {!p.enterprise && <span className="text-xs text-muted-foreground ms-1">{tr("perMonth")}</span>}
+              <div>
+                <span className="font-montserrat font-extrabold text-3xl text-gold">{tr(p.price)}</span>
+                {!p.enterprise && <span className="text-xs text-muted-foreground ms-1">{tr("perMonth")}</span>}
+              </div>
+              {!p.enterprise && (
+                <div className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-montserrat font-semibold text-green-400">
+                  <Icon name="Check" size={11} />
+                  {tr("priceOnlySub")} · {tr("priceNoCommission")}
+                </div>
+              )}
             </div>
             <div className="divider-gold mb-5" />
             <div className="space-y-2.5 flex-1 mb-6">
@@ -1904,14 +1931,14 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
 
       {payPlan && <PaymentModal plan={payPlan} onClose={() => setPayPlan(null)} defaultEmail={PROVIDER_EMAIL} />}
 
-      {/* Commission note */}
+      {/* No-commission promise */}
       <div className="mt-10 border border-gold/30 rounded-sm glass-card p-6 flex flex-col md:flex-row items-start md:items-center gap-4 security-glow">
         <div className="w-10 h-10 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
-          <Icon name="Wallet" size={18} className="text-[hsl(220,20%,6%)]" />
+          <Icon name="HandCoins" size={18} className="text-[hsl(220,20%,6%)]" />
         </div>
         <div>
-          <div className="font-montserrat font-semibold text-sm text-foreground mb-1">{tr("freeForClients")}</div>
-          <div className="text-xs text-muted-foreground">{tr("heroClientDesc")}</div>
+          <div className="font-montserrat font-semibold text-sm text-foreground mb-1">{tr("pricingBottomTitle")}</div>
+          <div className="text-xs text-muted-foreground">{tr("pricingBottomDesc")}</div>
         </div>
         <button onClick={() => setActive("contacts")} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 hover:border-gold hover:text-gold transition-all rounded-sm ms-auto">
           {tr("contactUs")}

@@ -337,8 +337,19 @@ export const t: Dict = {
 
   // Pricing
   pricingTag: { ru: "Членство", en: "Membership" },
-  pricingTitle: { ru: "Тарифы для исполнителей", en: "Plans for providers" },
-  pricingDesc: { ru: "Выберите уровень присутствия на платформе. Клиенты ищут бесплатно — вы платите только за видимость и инструменты продвижения.", en: "Choose your level of presence on the platform. Clients search for free — you only pay for visibility and promotion tools." },
+  pricingTitle: { ru: "Платите только за подписку — без комиссии за заказы", en: "Pay only for your plan — zero order commission" },
+  pricingDesc: { ru: "Никаких процентов со сделок и скрытых платежей. Фиксированный тариф — и весь доход с заказов остаётся у вас. Клиенты ищут и связываются бесплатно.", en: "No deal percentages, no hidden fees. A fixed plan — and you keep 100% of what you earn from orders. Clients search and contact for free." },
+
+  // Pricing — no-commission highlights
+  priceNoCommission: { ru: "0% комиссии с заказов", en: "0% commission on orders" },
+  priceNoCommissionDesc: { ru: "Платформа не берёт ни рубля с ваших сделок", en: "The platform takes nothing from your deals" },
+  priceKeepAll: { ru: "100% дохода — ваши", en: "Keep 100% of earnings" },
+  priceKeepAllDesc: { ru: "Клиент платит вам напрямую, без посредников", en: "Clients pay you directly, no middlemen" },
+  priceFixed: { ru: "Фиксированная цена", en: "Fixed price" },
+  priceFixedDesc: { ru: "Понятная подписка без сюрпризов в счёте", en: "A clear subscription with no billing surprises" },
+  priceOnlySub: { ru: "Только подписка", en: "Subscription only" },
+  pricingBottomTitle: { ru: "Мы зарабатываем вместе с вами, а не на вас", en: "We grow with you, not off you" },
+  pricingBottomDesc: { ru: "Единственный платёж — ваша подписка. Все деньги за выполненные заказы остаются у вас полностью. Для клиентов платформа всегда бесплатна.", en: "Your only payment is the subscription. All money for completed orders stays fully yours. For clients the platform is always free." },
   perMonth: { ru: "/ мес", en: "/ mo" },
   mostPopular: { ru: "Популярный", en: "Most popular" },
   choosePlan: { ru: "Выбрать тариф", en: "Choose plan" },
