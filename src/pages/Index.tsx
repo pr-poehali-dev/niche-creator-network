@@ -604,13 +604,18 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
   const isClient = role === "client";
   const { geo } = useGeo();
   const { providers } = useProviders();
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+
+  const hasVerifiedDocs = (s: Provider) =>
+    !!s.verification && (!!s.verification.license || !!s.verification.registry || !!s.verification.fullName);
 
   const base = providers.length ? providers : [];
+  const filtered = verifiedOnly ? base.filter(hasVerifiedDocs) : base;
   const sortedSpecialists = (() => {
     if (!geo || geo.lat == null || geo.lon == null) {
-      return base.map((s) => ({ ...s, distance: null as number | null }));
+      return filtered.map((s) => ({ ...s, distance: null as number | null }));
     }
-    return base
+    return filtered
       .map((s) => ({
         ...s,
         distance: s.lat != null && s.lon != null
@@ -773,14 +778,29 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
             {tr("allSpecialists")} <Icon name="ArrowRight" size={14} />
           </button>
         </div>
-        {geo && geo.city && (
-          <div className="flex items-center gap-2 mb-8 text-xs text-muted-foreground bg-card border border-gold/30 rounded-sm px-3 py-2 w-fit">
-            <Icon name="MapPin" size={13} className="text-gold" />
-            <span>{tr("geoYourLocation")}: <span className="text-foreground font-semibold">{geo.city}{geo.country ? `, ${geo.country}` : ""}</span></span>
-            <span className="text-muted-foreground/60">·</span>
-            <span className="text-gold">{tr("geoSortNearby")}</span>
+        <div className="flex flex-wrap items-center gap-3 mb-8">
+          {geo && geo.city && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-card border border-gold/30 rounded-sm px-3 py-2">
+              <Icon name="MapPin" size={13} className="text-gold" />
+              <span>{tr("geoYourLocation")}: <span className="text-foreground font-semibold">{geo.city}{geo.country ? `, ${geo.country}` : ""}</span></span>
+              <span className="text-muted-foreground/60">·</span>
+              <span className="text-gold">{tr("geoSortNearby")}</span>
+            </div>
+          )}
+          <button
+            onClick={() => setVerifiedOnly((v) => !v)}
+            className={`flex items-center gap-2 text-xs font-montserrat font-semibold rounded-sm px-3 py-2 border transition-all ${verifiedOnly ? "bg-green-500/15 border-green-500/40 text-green-400" : "bg-card border-border text-muted-foreground hover:border-gold hover:text-foreground"}`}
+          >
+            <Icon name={verifiedOnly ? "ShieldCheck" : "Shield"} size={14} />
+            {tr("filterVerifiedOnly")}
+          </button>
+        </div>
+        {sortedSpecialists.length === 0 ? (
+          <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
+            <Icon name="SearchX" size={40} className="text-muted-foreground/30" />
+            <span className="text-sm text-muted-foreground">{tr("filterNoResults")}</span>
           </div>
-        )}
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
           {sortedSpecialists.map((s) => {
             const tags = lang === "ru" ? s.tags.ru : s.tags.en;
@@ -866,6 +886,7 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
             </div>
           );})}
         </div>
+        )}
       </section>
       )}
 

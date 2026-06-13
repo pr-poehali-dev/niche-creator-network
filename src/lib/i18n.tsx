@@ -602,6 +602,8 @@ export const t: Dict = {
   verifyLicense: { ru: "Лицензия", en: "License" },
   verifyRegistry: { ru: "Реквизиты", en: "Registration" },
   verifyDocsConfirmed: { ru: "Документы подтверждены", en: "Documents verified" },
+  filterVerifiedOnly: { ru: "Только с подтверждёнными документами", en: "Verified documents only" },
+  filterNoResults: { ru: "Нет исполнителей с подтверждёнными документами", en: "No providers with verified documents" },
 
   // Client data
   cdClientData: { ru: "Ваши данные", en: "Your details" },
