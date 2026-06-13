@@ -8,6 +8,7 @@ const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237
 const POLYGRAPH_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/c211bedb-fcf6-49e0-abb2-ad98fcf0bdac.jpg";
 const DETECTIVE_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b893f56c-cd01-49d7-b962-7f78f87ace2c.jpg";
 const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/0b2c5db2-c85b-4009-99db-6b023ed84bf5.jpg";
+const PROVIDER_EMAIL = "a.morozov@securenet.ru";
 
 type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard";
 type Role = "client" | "provider";
@@ -1331,43 +1332,52 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
 
 type PayPlan = { name: keyof typeof t; price: keyof typeof t };
 
-function PaymentModal({ plan, onClose }: { plan: PayPlan; onClose: () => void }) {
+function PaymentModal({ plan, onClose, defaultEmail = "" }: { plan: PayPlan; onClose: () => void; defaultEmail?: string }) {
   const { lang, tr } = useLang();
   const [method, setMethod] = useState<"card" | "sbp">("card");
   const [status, setStatus] = useState<"form" | "processing" | "success">("form");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(defaultEmail);
   const [emailState, setEmailState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [autoSent, setAutoSent] = useState(false);
 
-  const receipt = () => ({
+  const receipt = (to?: string) => ({
     receiptNo: "SN-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + Math.floor(Math.random() * 900 + 100),
     date: new Date().toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US"),
     plan: tr(plan.name),
     period: tr("payOneMonth"),
     amount: tr(plan.price),
-    payer: email || L(specialists[0].name, lang),
+    payer: (to || email) || L(specialists[0].name, lang),
     method: tr(method === "card" ? "payCard" : "paySbp"),
     lang,
   });
 
-  const pay = () => {
-    setStatus("processing");
-    setTimeout(() => setStatus("success"), 1600);
-  };
-
-  const sendEmail = async () => {
-    if (!email || !email.includes("@")) return;
+  const sendTo = async (to: string) => {
+    if (!to || !to.includes("@")) return;
     setEmailState("sending");
     try {
       const res = await fetch(func2url["send-receipt"], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...receipt(), email }),
+        body: JSON.stringify({ ...receipt(to), email: to }),
       });
       setEmailState(res.ok ? "sent" : "error");
     } catch {
       setEmailState("error");
     }
   };
+
+  const pay = () => {
+    setStatus("processing");
+    setTimeout(() => {
+      setStatus("success");
+      if (defaultEmail && defaultEmail.includes("@")) {
+        setAutoSent(true);
+        sendTo(defaultEmail);
+      }
+    }, 1600);
+  };
+
+  const sendEmail = () => sendTo(email);
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-fade-in">
@@ -1384,32 +1394,44 @@ function PaymentModal({ plan, onClose }: { plan: PayPlan; onClose: () => void })
             </div>
 
             <div className="border border-border rounded-sm bg-card p-4 mb-4">
-              <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("payEmailLabel")}</label>
-              {emailState === "sent" ? (
-                <div className="flex items-center gap-2 text-sm text-green-400 py-2">
-                  <Icon name="MailCheck" size={16} />
-                  {tr("payEmailSent")}
+              {autoSent && emailState === "sending" ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                  <Icon name="Loader" size={16} className="animate-spin text-gold" />
+                  {tr("payAutoSending")}
                 </div>
-              ) : (
-                <div className="flex gap-2">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); setEmailState("idle"); }}
-                    placeholder={tr("payEmailPlaceholder")}
-                    className="flex-1 min-w-0 bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
-                  />
-                  <button
-                    onClick={sendEmail}
-                    disabled={emailState === "sending" || !email.includes("@")}
-                    className="shrink-0 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-1.5"
-                  >
-                    {emailState === "sending" ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="Send" size={14} />}
-                    <span className="hidden sm:inline">{tr(emailState === "sending" ? "payEmailSending" : "payEmailSend")}</span>
+              ) : emailState === "sent" ? (
+                <>
+                  <div className="flex items-center gap-2 text-sm text-green-400 py-2">
+                    <Icon name="MailCheck" size={16} />
+                    {autoSent ? `${tr("payAutoSent")} ${email}` : tr("payEmailSent")}
+                  </div>
+                  <button onClick={() => { setEmail(""); setAutoSent(false); setEmailState("idle"); }} className="text-xs text-gold hover:underline mt-1">
+                    {tr("payResend")}
                   </button>
-                </div>
+                </>
+              ) : (
+                <>
+                  <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("payEmailLabel")}</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); setEmailState("idle"); }}
+                      placeholder={tr("payEmailPlaceholder")}
+                      className="flex-1 min-w-0 bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+                    />
+                    <button
+                      onClick={sendEmail}
+                      disabled={emailState === "sending" || !email.includes("@")}
+                      className="shrink-0 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-1.5"
+                    >
+                      {emailState === "sending" ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="Send" size={14} />}
+                      <span className="hidden sm:inline">{tr(emailState === "sending" ? "payEmailSending" : "payEmailSend")}</span>
+                    </button>
+                  </div>
+                  {emailState === "error" && <div className="text-xs text-destructive mt-2">{tr("payEmailError")}</div>}
+                </>
               )}
-              {emailState === "error" && <div className="text-xs text-destructive mt-2">{tr("payEmailError")}</div>}
             </div>
 
             <button onClick={() => downloadReceipt(receipt())} className="w-full border border-gold text-gold py-2.5 text-sm font-montserrat font-semibold rounded-sm hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all flex items-center justify-center gap-2 mb-2.5">
@@ -1585,7 +1607,7 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
         ))}
       </div>
 
-      {payPlan && <PaymentModal plan={payPlan} onClose={() => setPayPlan(null)} />}
+      {payPlan && <PaymentModal plan={payPlan} onClose={() => setPayPlan(null)} defaultEmail={PROVIDER_EMAIL} />}
 
       {/* Commission note */}
       <div className="mt-10 border border-gold/30 rounded-sm glass-card p-6 flex flex-col md:flex-row items-start md:items-center gap-4 security-glow">
