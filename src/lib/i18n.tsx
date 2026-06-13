@@ -15,6 +15,8 @@ export const t: Dict = {
   roleProvider: { ru: "Я исполнитель", en: "I'm a provider" },
   navPricing: { ru: "Тарифы", en: "Pricing" },
   crumbPricing: { ru: "Тарифы", en: "Pricing" },
+  navDashboard: { ru: "Кабинет", en: "Dashboard" },
+  crumbDashboard: { ru: "Личный кабинет", en: "Dashboard" },
 
   // Nav
   navHome: { ru: "Главная", en: "Home" },
@@ -355,6 +357,78 @@ export const t: Dict = {
   feat5cases: { ru: "До 5 кейсов", en: "Up to 5 cases" },
   feat20cases: { ru: "До 20 кейсов", en: "Up to 20 cases" },
   featUnlimCases: { ru: "Безлимит кейсов", en: "Unlimited cases" },
+
+  // Dashboard — common
+  dashWelcome: { ru: "С возвращением", en: "Welcome back" },
+  dashEdit: { ru: "Редактировать", en: "Edit" },
+  dashSave: { ru: "Сохранить", en: "Save" },
+  dashLogout: { ru: "Выйти", en: "Log out" },
+  dashSince: { ru: "На платформе с", en: "Member since" },
+
+  // Client dashboard tabs
+  cdTab1: { ru: "Профиль и рейтинг", en: "Profile & rating" },
+  cdTab2: { ru: "Мои заявки", en: "My requests" },
+  cdTab3: { ru: "Избранное", en: "Favorites" },
+  cdTab4: { ru: "Настройки", en: "Settings" },
+  // Client profile
+  cdRatingTitle: { ru: "Ваш рейтинг как клиента", en: "Your rating as a client" },
+  cdRatingDesc: { ru: "Исполнители оценивают клиентов после выполнения заказа. Высокий рейтинг повышает доверие специалистов к вам.", en: "Providers rate clients after a completed order. A high rating increases specialists' trust in you." },
+  cdReviewsTitle: { ru: "Отзывы от исполнителей", en: "Reviews from providers" },
+  cdOrdersDone: { ru: "Заказов завершено", en: "Orders completed" },
+  cdReviewsCount: { ru: "Отзывов", en: "Reviews" },
+  cdResponseRate: { ru: "Скорость ответа", en: "Response rate" },
+  // Client requests
+  cdReqTitle: { ru: "История заявок", en: "Request history" },
+  cdStatusActive: { ru: "В работе", en: "In progress" },
+  cdStatusDone: { ru: "Завершено", en: "Completed" },
+  cdStatusNew: { ru: "Новая", en: "New" },
+  cdReqEmpty: { ru: "Открыть каталог услуг", en: "Open services catalog" },
+  // Client favorites
+  cdFavTitle: { ru: "Избранные специалисты", en: "Favorite specialists" },
+  cdViewProfile: { ru: "Открыть профиль", en: "Open profile" },
+  cdRemove: { ru: "Убрать", en: "Remove" },
+  // Settings
+  cdSetTitle: { ru: "Настройки аккаунта", en: "Account settings" },
+  cdFullName: { ru: "Имя и фамилия", en: "Full name" },
+  cdCity: { ru: "Город", en: "City" },
+  cdNotifications: { ru: "Уведомления на email", en: "Email notifications" },
+  cd2fa: { ru: "Двухфакторная аутентификация", en: "Two-factor authentication" },
+  cdEnabled: { ru: "Включено", en: "Enabled" },
+  cdDisabled: { ru: "Выключено", en: "Disabled" },
+
+  // Provider dashboard tabs
+  pdTab1: { ru: "Профиль и статистика", en: "Profile & stats" },
+  pdTab2: { ru: "Мой тариф", en: "My plan" },
+  pdTab3: { ru: "Кейсы и услуги", en: "Cases & services" },
+  pdTab4: { ru: "Заявки от клиентов", en: "Client requests" },
+  // Provider stats
+  pdStatViews: { ru: "Просмотров профиля", en: "Profile views" },
+  pdStatRequests: { ru: "Откликов", en: "Requests" },
+  pdStatRating: { ru: "Рейтинг", en: "Rating" },
+  pdStatConversion: { ru: "Конверсия", en: "Conversion" },
+  pdThisMonth: { ru: "за месяц", en: "this month" },
+  pdProfileFill: { ru: "Заполненность профиля", en: "Profile completeness" },
+  pdVerified: { ru: "Документы проверены", en: "Documents verified" },
+  // Provider plan
+  pdCurrentPlan: { ru: "Текущий тариф", en: "Current plan" },
+  pdRenews: { ru: "Продление", en: "Renews on" },
+  pdActive: { ru: "Активен", en: "Active" },
+  pdChangePlan: { ru: "Сменить тариф", en: "Change plan" },
+  pdPaymentMethod: { ru: "Способ оплаты", en: "Payment method" },
+  pdAutoRenew: { ru: "Автопродление", en: "Auto-renewal" },
+  // Provider cases
+  pdMyCases: { ru: "Мои кейсы", en: "My cases" },
+  pdMyServices: { ru: "Мои услуги", en: "My services" },
+  pdAddCase: { ru: "+ Добавить кейс", en: "+ Add case" },
+  pdAddService: { ru: "+ Добавить услугу", en: "+ Add service" },
+  pdPublished: { ru: "Опубликовано", en: "Published" },
+  pdDraft: { ru: "Черновик", en: "Draft" },
+  // Provider requests
+  pdReqTitle: { ru: "Входящие заявки", en: "Incoming requests" },
+  pdAccept: { ru: "Принять", en: "Accept" },
+  pdDecline: { ru: "Отклонить", en: "Decline" },
+  pdReqService: { ru: "Услуга", en: "Service" },
+  pdReqBudget: { ru: "Бюджет", en: "Budget" },
 
   // Footer
   footerDesc: { ru: "Международное закрытое сообщество для специалистов в сфере безопасности", en: "International private community for security professionals" },

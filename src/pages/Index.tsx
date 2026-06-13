@@ -7,7 +7,7 @@ const POLYGRAPH_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b
 const DETECTIVE_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b893f56c-cd01-49d7-b962-7f78f87ace2c.jpg";
 const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/0b2c5db2-c85b-4009-99db-6b023ed84bf5.jpg";
 
-type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing";
+type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard";
 type Role = "client" | "provider";
 
 type NavItem = { id: Section; key: keyof typeof t; icon: string };
@@ -17,6 +17,7 @@ const CLIENT_NAV: NavItem[] = [
   { id: "services", key: "navServices", icon: "Briefcase" },
   { id: "profile", key: "navProfile", icon: "User" },
   { id: "guards", key: "navGuards", icon: "ShieldCheck" },
+  { id: "dashboard", key: "navDashboard", icon: "LayoutDashboard" },
   { id: "contacts", key: "navContacts", icon: "Phone" },
 ];
 
@@ -26,6 +27,7 @@ const PROVIDER_NAV: NavItem[] = [
   { id: "courses", key: "navCourses", icon: "GraduationCap" },
   { id: "chat", key: "navChat", icon: "MessageSquare" },
   { id: "forum", key: "navForum", icon: "MessagesSquare" },
+  { id: "dashboard", key: "navDashboard", icon: "LayoutDashboard" },
   { id: "contacts", key: "navContacts", icon: "Phone" },
 ];
 
@@ -157,6 +159,7 @@ const SECTION_CRUMB: Record<Section, keyof typeof t> = {
   contacts: "crumbContacts",
   policy: "crumbPolicy",
   pricing: "crumbPricing",
+  dashboard: "crumbDashboard",
 };
 
 const cases = [
@@ -294,6 +297,7 @@ export default function Index() {
       case "contacts": return <ContactsSection />;
       case "policy": return <SecurityPolicySection setActive={go} />;
       case "pricing": return <PricingSection setActive={go} />;
+      case "dashboard": return role === "client" ? <ClientDashboard setActive={go} /> : <ProviderDashboard setActive={go} />;
       default: return <HomeSection setActive={go} role={role} switchRole={switchRole} />;
     }
   };
@@ -834,6 +838,404 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
+  const { lang, tr } = useLang();
+  const [tab, setTab] = useState<"profile" | "requests" | "favorites" | "settings">("profile");
+
+  const tabs = [
+    { id: "profile" as const, key: "cdTab1" as const, icon: "User" },
+    { id: "requests" as const, key: "cdTab2" as const, icon: "Inbox" },
+    { id: "favorites" as const, key: "cdTab3" as const, icon: "Heart" },
+    { id: "settings" as const, key: "cdTab4" as const, icon: "Settings" },
+  ];
+
+  const providerReviews = [
+    { name: { ru: "А. Морозов", en: "A. Morozov" }, role: { ru: "Полиграфолог", en: "Polygraph examiner" }, rating: 5, text: { ru: "Корректный и пунктуальный клиент. Чёткое ТЗ, оплата без задержек. Рекомендую коллегам.", en: "Correct and punctual client. Clear brief, payment without delays. Recommended." }, date: { ru: "1 неделю назад", en: "1 week ago" }, img: DETECTIVE_IMAGE },
+    { name: { ru: "И. Семёнов", en: "I. Semenov" }, role: { ru: "TSCM-специалист", en: "TSCM specialist" }, rating: 5, text: { ru: "Приятно работать — предоставил весь доступ к объекту, не вмешивался в процесс.", en: "A pleasure to work with — provided full site access, didn't interfere with the process." }, date: { ru: "3 недели назад", en: "3 weeks ago" }, img: POLYGRAPH_IMAGE },
+    { name: { ru: "Е. Власова", en: "E. Vlasova" }, role: { ru: "Частный детектив", en: "Private investigator" }, rating: 4, text: { ru: "Хорошая коммуникация. В следующий раз желательно более детальное ТЗ заранее.", en: "Good communication. Next time a more detailed brief in advance would help." }, date: { ru: "2 месяца назад", en: "2 months ago" }, img: HERO_IMAGE },
+  ];
+
+  const requests = [
+    { service: { ru: "Полиграф-проверка персонала", en: "Staff polygraph check" }, provider: { ru: "А. Морозов", en: "A. Morozov" }, date: { ru: "12 июня 2026", en: "Jun 12, 2026" }, status: "active" as const },
+    { service: { ru: "Поиск прослушки в офисе", en: "Office bug sweep" }, provider: { ru: "И. Семёнов", en: "I. Semenov" }, date: { ru: "28 мая 2026", en: "May 28, 2026" }, status: "done" as const },
+    { service: { ru: "Сбор досье на контрагента", en: "Counterparty dossier" }, provider: { ru: "Е. Власова", en: "E. Vlasova" }, date: { ru: "15 мая 2026", en: "May 15, 2026" }, status: "done" as const },
+  ];
+
+  const statusMap = { active: { key: "cdStatusActive" as const, cls: "text-gold border-gold/40" }, done: { key: "cdStatusDone" as const, cls: "text-green-400 border-green-500/40" }, new: { key: "cdStatusNew" as const, cls: "text-blue-400 border-blue-500/40" } };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      {/* Header card */}
+      <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-5 security-glow">
+        <div className="w-16 h-16 rounded-sm overflow-hidden border-2 border-gold shrink-0">
+          <img src={HERO_IMAGE} alt="avatar" className="w-full h-full object-cover" />
+        </div>
+        <div className="flex-1">
+          <div className="text-xs text-muted-foreground font-montserrat mb-1">{tr("dashWelcome")},</div>
+          <div className="font-montserrat font-extrabold text-2xl text-foreground flex items-center gap-2">
+            Дмитрий Орлов
+            <Icon name="BadgeCheck" size={18} className="text-gold" />
+          </div>
+          <div className="flex items-center gap-3 mt-2">
+            <StarRating rating={4.9} />
+            <span className="text-xs text-muted-foreground">4.9 · {tr("dashSince")} 2024</span>
+          </div>
+        </div>
+        <button onClick={() => setActive("home")} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-gold hover:text-gold transition-all flex items-center gap-1.5">
+          <Icon name="LogOut" size={13} />
+          {tr("dashLogout")}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Tabs sidebar */}
+        <aside className="lg:col-span-1">
+          <div className="border border-border rounded-sm bg-card p-2 lg:sticky lg:top-24 flex lg:flex-col gap-1 overflow-x-auto">
+            {tabs.map((tb) => (
+              <button key={tb.id} onClick={() => setTab(tb.id)}
+                className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(220,20%,6%)]" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                <Icon name={tb.icon} size={15} />
+                {tr(tb.key)}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        {/* Content */}
+        <div className="lg:col-span-3 space-y-5">
+          {tab === "profile" && (
+            <>
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { n: "27", l: "cdOrdersDone" as const },
+                  { n: "19", l: "cdReviewsCount" as const },
+                  { n: "96%", l: "cdResponseRate" as const },
+                ].map((s) => (
+                  <div key={s.n} className="border border-border rounded-sm bg-card p-5 text-center">
+                    <div className="stat-number text-2xl mb-1">{s.n}</div>
+                    <div className="text-[10px] text-muted-foreground">{tr(s.l)}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="border border-gold/30 rounded-sm bg-card p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <Icon name="Award" size={18} className="text-gold" />
+                  <div className="font-montserrat font-bold text-sm text-foreground">{tr("cdRatingTitle")}</div>
+                </div>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="stat-number text-4xl">4.9</span>
+                  <StarRating rating={4.9} />
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{tr("cdRatingDesc")}</p>
+              </div>
+              <div className="border border-border rounded-sm bg-card p-6">
+                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("cdReviewsTitle")}</div>
+                <div className="space-y-4">
+                  {providerReviews.map((r) => (
+                    <div key={r.name.en} className="flex gap-3 pb-4 border-b border-border last:border-0 last:pb-0">
+                      <div className="w-9 h-9 rounded-sm overflow-hidden shrink-0">
+                        <img src={r.img} alt={L(r.name, lang)} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <div>
+                            <span className="text-xs font-montserrat font-bold text-foreground">{L(r.name, lang)}</span>
+                            <span className="text-[10px] text-gold ml-2">{L(r.role, lang)}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <StarRating rating={r.rating} />
+                            <span className="text-[10px] text-muted-foreground">{L(r.date, lang)}</span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{L(r.text, lang)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {tab === "requests" && (
+            <div className="border border-border rounded-sm bg-card p-6">
+              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("cdReqTitle")}</div>
+              <div className="space-y-3">
+                {requests.map((r) => (
+                  <div key={r.service.en} className="flex items-center gap-4 p-4 border border-border rounded-sm hover:border-gold/40 transition-colors">
+                    <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
+                      <Icon name="FileText" size={15} className="text-[hsl(220,20%,6%)]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(r.service, lang)}</div>
+                      <div className="text-xs text-muted-foreground">{L(r.provider, lang)} · {L(r.date, lang)}</div>
+                    </div>
+                    <span className={`tag-security shrink-0 ${statusMap[r.status].cls}`}>{tr(statusMap[r.status].key)}</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setActive("services")} className="w-full mt-4 border border-gold text-gold text-xs font-montserrat font-semibold py-2.5 rounded-sm hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all">
+                {tr("cdReqEmpty")}
+              </button>
+            </div>
+          )}
+
+          {tab === "favorites" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {specialists.map((s) => (
+                <div key={s.name.en} className="border border-border rounded-sm bg-card p-5 card-hover">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-11 h-11 rounded-sm overflow-hidden shrink-0">
+                      <img src={s.img} alt={L(s.name, lang)} className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <div className="font-montserrat font-bold text-sm text-foreground">{L(s.name, lang)}</div>
+                      <div className="text-xs text-gold">{L(s.title, lang)}</div>
+                    </div>
+                    <Icon name="Heart" size={16} className="text-gold fill-current ml-auto shrink-0" />
+                  </div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <StarRating rating={s.rating} />
+                    <span className="text-xs text-muted-foreground">{s.rating} ({s.reviews})</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setActive("profile")} className="flex-1 gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity">{tr("cdViewProfile")}</button>
+                    <button className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-3 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all">{tr("cdRemove")}</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === "settings" && (
+            <div className="border border-border rounded-sm bg-card p-6 space-y-5">
+              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("cdSetTitle")}</div>
+              <div>
+                <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("cdFullName")}</label>
+                <input defaultValue="Дмитрий Орлов" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">Email</label>
+                  <input defaultValue="d.orlov@email.com" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+                </div>
+                <div>
+                  <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("cdCity")}</label>
+                  <input defaultValue="Москва" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+                </div>
+              </div>
+              <div className="divider-gold" />
+              {[
+                { label: "cdNotifications" as const, on: true },
+                { label: "cd2fa" as const, on: false },
+              ].map((row) => (
+                <div key={row.label} className="flex items-center justify-between">
+                  <span className="text-sm text-foreground">{tr(row.label)}</span>
+                  <span className={`text-xs font-montserrat font-semibold px-3 py-1 rounded-sm ${row.on ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"}`}>{tr(row.on ? "cdEnabled" : "cdDisabled")}</span>
+                </div>
+              ))}
+              <button className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("dashSave")}</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
+  const { lang, tr } = useLang();
+  const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests">("stats");
+
+  const tabs = [
+    { id: "stats" as const, key: "pdTab1" as const, icon: "ChartNoAxesColumn" },
+    { id: "plan" as const, key: "pdTab2" as const, icon: "Wallet" },
+    { id: "cases" as const, key: "pdTab3" as const, icon: "FolderOpen" },
+    { id: "requests" as const, key: "pdTab4" as const, icon: "Inbox" },
+  ];
+
+  const incoming = [
+    { client: { ru: "ООО «АльфаТех»", en: "AlphaTech LLC" }, service: { ru: "Полиграф для 12 сотрудников", en: "Polygraph for 12 staff" }, budget: { ru: "от 90 000 ₽", en: "from $1,000" }, date: { ru: "сегодня", en: "today" }, status: "new" as const },
+    { client: { ru: "Дмитрий О.", en: "Dmitry O." }, service: { ru: "Проверка кандидата", en: "Candidate check" }, budget: { ru: "8 000 ₽", en: "$90" }, date: { ru: "вчера", en: "yesterday" }, status: "new" as const },
+    { client: { ru: "ЧОП «Барьер»", en: "Barrier Security" }, service: { ru: "Аудит безопасности офиса", en: "Office security audit" }, budget: { ru: "45 000 ₽", en: "$520" }, date: { ru: "2 дня назад", en: "2 days ago" }, status: "active" as const },
+  ];
+  const statusMap = { active: { key: "cdStatusActive" as const, cls: "text-gold border-gold/40" }, new: { key: "cdStatusNew" as const, cls: "text-blue-400 border-blue-500/40" } };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      {/* Header card */}
+      <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-5 security-glow">
+        <div className="w-16 h-16 rounded-sm overflow-hidden border-2 border-gold shrink-0">
+          <img src={DETECTIVE_IMAGE} alt="avatar" className="w-full h-full object-cover" />
+        </div>
+        <div className="flex-1">
+          <div className="text-xs text-muted-foreground font-montserrat mb-1">{tr("dashWelcome")},</div>
+          <div className="font-montserrat font-extrabold text-2xl text-foreground flex items-center gap-2">
+            {L(specialists[0].name, lang)}
+            <Icon name="BadgeCheck" size={18} className="text-gold" />
+          </div>
+          <div className="flex items-center gap-3 mt-2">
+            <StarRating rating={specialists[0].rating} />
+            <span className="text-xs text-muted-foreground">{specialists[0].rating} · {L(specialists[0].title, lang)}</span>
+          </div>
+        </div>
+        <button onClick={() => setActive("home")} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-gold hover:text-gold transition-all flex items-center gap-1.5">
+          <Icon name="LogOut" size={13} />
+          {tr("dashLogout")}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <aside className="lg:col-span-1">
+          <div className="border border-border rounded-sm bg-card p-2 lg:sticky lg:top-24 flex lg:flex-col gap-1 overflow-x-auto">
+            {tabs.map((tb) => (
+              <button key={tb.id} onClick={() => setTab(tb.id)}
+                className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(220,20%,6%)]" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                <Icon name={tb.icon} fallback="LayoutDashboard" size={15} />
+                {tr(tb.key)}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <div className="lg:col-span-3 space-y-5">
+          {tab === "stats" && (
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { n: "2 480", l: "pdStatViews" as const, icon: "Eye" },
+                  { n: "34", l: "pdStatRequests" as const, icon: "Inbox" },
+                  { n: "4.9", l: "pdStatRating" as const, icon: "Star" },
+                  { n: "18%", l: "pdStatConversion" as const, icon: "TrendingUp" },
+                ].map((s) => (
+                  <div key={s.l} className="border border-border rounded-sm bg-card p-5">
+                    <div className="flex items-center justify-between mb-2">
+                      <Icon name={s.icon} size={15} className="text-gold" />
+                      <span className="text-[10px] text-muted-foreground">{tr("pdThisMonth")}</span>
+                    </div>
+                    <div className="stat-number text-2xl mb-1">{s.n}</div>
+                    <div className="text-[10px] text-muted-foreground">{tr(s.l)}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="border border-border rounded-sm bg-card p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdProfileFill")}</span>
+                  <span className="text-sm font-montserrat font-bold text-gold">85%</span>
+                </div>
+                <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                  <div className="h-full gold-gradient rounded-full" style={{ width: "85%" }} />
+                </div>
+                <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
+                  <Icon name="ShieldCheck" size={14} className="text-green-400" />
+                  {tr("pdVerified")}
+                </div>
+              </div>
+            </>
+          )}
+
+          {tab === "plan" && (
+            <>
+              <div className="border border-gold/30 rounded-sm glass-card p-6 security-glow">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdCurrentPlan")}</div>
+                  <span className="text-xs font-montserrat font-semibold px-3 py-1 rounded-sm bg-gold/15 text-gold">{tr("pdActive")}</span>
+                </div>
+                <div className="flex items-end gap-2 mb-1">
+                  <span className="font-montserrat font-extrabold text-2xl text-foreground">{tr("planProName")}</span>
+                  <span className="font-montserrat font-bold text-lg text-gold">{tr("planProPrice")}{tr("perMonth")}</span>
+                </div>
+                <div className="text-xs text-muted-foreground mb-5">{tr("pdRenews")}: 13.07.2026</div>
+                <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("pdChangePlan")}</button>
+              </div>
+              <div className="border border-border rounded-sm bg-card p-6 space-y-4">
+                <div className="flex items-center justify-between py-2 border-b border-border">
+                  <span className="text-sm text-muted-foreground">{tr("pdPaymentMethod")}</span>
+                  <span className="text-sm font-montserrat font-semibold text-foreground flex items-center gap-2"><Icon name="CreditCard" size={15} className="text-gold" /> •••• 4242</span>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-muted-foreground">{tr("pdAutoRenew")}</span>
+                  <span className="text-xs font-montserrat font-semibold px-3 py-1 rounded-sm bg-gold/15 text-gold">{tr("cdEnabled")}</span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {tab === "cases" && (
+            <>
+              <div className="border border-border rounded-sm bg-card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdMyCases")}</div>
+                  <button className="gold-gradient text-[hsl(220,20%,6%)] px-3 py-1.5 text-[10px] font-montserrat font-bold rounded-sm">{tr("pdAddCase")}</button>
+                </div>
+                <div className="space-y-3">
+                  {cases.map((c, i) => (
+                    <div key={c.title.en} className="flex items-center gap-3 p-3 border border-border rounded-sm">
+                      <div className="w-8 h-8 gold-gradient rounded flex items-center justify-center shrink-0">
+                        <Icon name="FolderOpen" size={14} className="text-[hsl(220,20%,6%)]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(c.title, lang)}</div>
+                        <div className="text-[10px] text-muted-foreground">{c.views} · {L(c.category, lang)}</div>
+                      </div>
+                      <span className={`tag-security shrink-0 ${i === 0 ? "text-yellow-500 border-yellow-600/40" : "text-green-400 border-green-500/40"}`}>{tr(i === 0 ? "pdDraft" : "pdPublished")}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="border border-border rounded-sm bg-card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdMyServices")}</div>
+                  <button className="gold-gradient text-[hsl(220,20%,6%)] px-3 py-1.5 text-[10px] font-montserrat font-bold rounded-sm">{tr("pdAddService")}</button>
+                </div>
+                <div className="space-y-3">
+                  {services.slice(0, 3).map((s) => (
+                    <div key={s.title.en} className="flex items-center gap-3 p-3 border border-border rounded-sm">
+                      <div className="w-8 h-8 gold-gradient rounded flex items-center justify-center shrink-0">
+                        <Icon name={s.icon} size={14} className="text-[hsl(220,20%,6%)]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(s.title, lang)}</div>
+                      </div>
+                      <span className="font-montserrat font-bold text-sm text-gold shrink-0">{L(s.price, lang)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {tab === "requests" && (
+            <div className="border border-border rounded-sm bg-card p-6">
+              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("pdReqTitle")}</div>
+              <div className="space-y-3">
+                {incoming.map((r) => (
+                  <div key={r.service.en} className="p-4 border border-border rounded-sm hover:border-gold/40 transition-colors">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div>
+                        <div className="font-montserrat font-bold text-sm text-foreground">{L(r.client, lang)}</div>
+                        <div className="text-xs text-muted-foreground">{tr("pdReqService")}: {L(r.service, lang)}</div>
+                      </div>
+                      <span className={`tag-security shrink-0 ${statusMap[r.status].cls}`}>{tr(statusMap[r.status].key)}</span>
+                    </div>
+                    <div className="flex items-center gap-4 mb-3">
+                      <span className="text-xs text-muted-foreground">{tr("pdReqBudget")}: <span className="text-gold font-semibold">{L(r.budget, lang)}</span></span>
+                      <span className="text-[10px] text-muted-foreground ml-auto">{L(r.date, lang)}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button className="flex-1 gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity">{tr("pdAccept")}</button>
+                      <button className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all">{tr("pdDecline")}</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
