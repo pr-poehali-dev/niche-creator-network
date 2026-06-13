@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
 import { useLang, t } from "@/lib/i18n";
+import { downloadReceipt } from "@/lib/receipt";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/e0e84afb-8e88-40ff-81b2-c3597f9a8371.jpg";
 const POLYGRAPH_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/c211bedb-fcf6-49e0-abb2-ad98fcf0bdac.jpg";
@@ -1191,7 +1192,19 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                         <span className="sm:text-center"><span className={`tag-security ${st.cls}`}>{tr(st.key)}</span></span>
                         <span className="sm:text-right">
                           {row.status === "paid" ? (
-                            <button className="inline-flex items-center gap-1 text-muted-foreground hover:text-gold transition-colors font-montserrat font-semibold">
+                            <button
+                              onClick={() => downloadReceipt({
+                                receiptNo: "SN-" + row.date.split(".").reverse().join("") + "-" + (i + 1),
+                                date: row.date,
+                                plan: tr(row.plan),
+                                period: tr("payOneMonth"),
+                                amount: row.amount,
+                                payer: L(specialists[0].name, lang),
+                                method: tr("payCard") + " •••• 4242",
+                                lang,
+                              })}
+                              className="inline-flex items-center gap-1 text-muted-foreground hover:text-gold transition-colors font-montserrat font-semibold"
+                            >
                               <Icon name="Download" size={13} /> <span className="hidden md:inline">{tr("pdHistDownload")}</span>
                             </button>
                           ) : (
