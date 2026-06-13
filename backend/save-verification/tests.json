@@ -17,7 +17,14 @@
       "name": "Save verification for morozov",
       "method": "POST",
       "path": "/",
-      "body": {"slug": "morozov", "fullName": "Морозов Александр Сергеевич", "passportNumber": "4500 123456", "legalStatus": "ip", "license": "Лицензия № ПЛ-7701", "registry": "ОГРНИП 319774600123456", "showFullName": true, "showLegalStatus": true, "showLicense": true, "showRegistry": true},
+      "body": {"slug": "morozov", "fullName": "Морозов Александр Сергеевич", "passportNumber": "4500 123456", "legalStatus": "ip", "registry": "ОГРНИП 319774600123456", "showFullName": true, "showLegalStatus": true, "showLicense": true, "showRegistry": true, "gender": "m", "licenses": ["Лицензия № ПЛ-7701", "Свидетельство АПП № 4521"], "documents": [{"title": "Диплом", "url": ""}], "bio": "15 лет практики", "age": 42, "showBio": true, "showAge": true, "showDocuments": true},
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET verification for morozov",
+      "method": "GET",
+      "path": "/?slug=morozov",
+      "queryStringParameters": {"slug": "morozov"},
       "expectedStatus": 200
     }
   ]

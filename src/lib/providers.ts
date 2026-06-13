@@ -15,7 +15,10 @@ export type ProviderVerification = {
   fullName?: string;
   legalStatus?: string;
   license?: string;
+  licenses?: string[];
   registry?: string;
+  documents?: { title: string }[];
+  bio?: string;
 };
 
 export type Provider = {
@@ -38,6 +41,7 @@ export type Provider = {
   verification: ProviderVerification | null;
   gender?: "m" | "f";
   isPseudonym?: boolean;
+  age?: number | null;
 };
 
 export function useProviders() {

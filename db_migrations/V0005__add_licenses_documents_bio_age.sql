@@ -1,0 +1,19 @@
+ALTER TABLE t_p50633472_niche_creator_networ.providers
+  ADD COLUMN IF NOT EXISTS licenses JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS documents JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS bio TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS age INTEGER,
+  ADD COLUMN IF NOT EXISTS show_bio BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS show_age BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS show_documents BOOLEAN NOT NULL DEFAULT false;
+
+-- Seed demo data for Morozov
+UPDATE t_p50633472_niche_creator_networ.providers
+SET licenses = '["\u041b\u0438\u0446\u0435\u043d\u0437\u0438\u044f \u043d\u0430 \u043f\u043e\u043b\u0438\u0433\u0440\u0430\u0444\u043e\u043b\u043e\u0433\u0438\u044e \u2116 \u041f\u041b-7701 \u043e\u0442 12.03.2019","\u0421\u0432\u0438\u0434\u0435\u0442\u0435\u043b\u044c\u0441\u0442\u0432\u043e \u0410\u041f\u041f \u2116 4521"]'::jsonb,
+    documents = '[{"title":"\u0414\u0438\u043f\u043b\u043e\u043c \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0441\u0442\u0430","url":""},{"title":"\u0421\u0435\u0440\u0442\u0438\u0444\u0438\u043a\u0430\u0442 AAPP","url":""}]'::jsonb,
+    bio = '15 \u043b\u0435\u0442 \u043f\u0440\u0430\u043a\u0442\u0438\u043a\u0438 \u0432 \u043e\u0431\u043b\u0430\u0441\u0442\u0438 \u043f\u043e\u043b\u0438\u0433\u0440\u0430\u0444\u043e\u043b\u043e\u0433\u0438\u0438 \u0438 \u043a\u043e\u0440\u043f\u043e\u0440\u0430\u0442\u0438\u0432\u043d\u043e\u0439 \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u0438. \u041f\u0440\u043e\u0432\u0451\u043b \u0431\u043e\u043b\u0435\u0435 300 \u043f\u0440\u043e\u0432\u0435\u0440\u043e\u043a, \u0440\u0430\u0431\u043e\u0442\u0430\u043b \u0441 \u043a\u0440\u0443\u043f\u043d\u0435\u0439\u0448\u0438\u043c\u0438 \u0445\u043e\u043b\u0434\u0438\u043d\u0433\u0430\u043c\u0438.',
+    age = 42,
+    show_bio = true,
+    show_age = true,
+    show_documents = true
+WHERE slug = 'morozov';

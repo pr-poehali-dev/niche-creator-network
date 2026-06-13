@@ -612,6 +612,26 @@ export const t: Dict = {
   genderFemale: { ru: "Женский", en: "Female" },
   aliasBadge: { ru: "Псевдоним", en: "Alias" },
 
+  // Verification: gender, licenses, documents, bio, age
+  pdVfGender: { ru: "Пол", en: "Gender" },
+  pdVfGenderM: { ru: "Мужской", en: "Male" },
+  pdVfGenderF: { ru: "Женский", en: "Female" },
+  pdVfAge: { ru: "Возраст", en: "Age" },
+  pdVfLicenses: { ru: "Лицензии", en: "Licenses" },
+  pdVfAddLicense: { ru: "Добавить лицензию", en: "Add license" },
+  pdVfLicensePh: { ru: "Название и номер лицензии", en: "License name & number" },
+  pdVfDocuments: { ru: "Документы (дипломы, сертификаты)", en: "Documents (diplomas, certificates)" },
+  pdVfAddDocument: { ru: "Добавить документ", en: "Add document" },
+  pdVfDocTitlePh: { ru: "Название документа", en: "Document title" },
+  pdVfBio: { ru: "О себе и достижениях", en: "About yourself & achievements" },
+  pdVfBioPh: { ru: "Краткая справка: опыт, специализация, ключевые достижения...", en: "Short summary: experience, specialization, key achievements..." },
+  remove: { ru: "Удалить", en: "Remove" },
+
+  // Public profile/card
+  verifyBio: { ru: "О специалисте", en: "About" },
+  verifyDocuments: { ru: "Документы", en: "Documents" },
+  yearsOld: { ru: "лет", en: "y.o." },
+
   // Public verification block (on card/profile)
   verifyBlockTitle: { ru: "Подтверждённые данные", en: "Verified details" },
   verifyName: { ru: "ФИО", en: "Name" },

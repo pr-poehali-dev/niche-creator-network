@@ -34,7 +34,8 @@ def handler(event: dict, context) -> dict:
         f'verified, subscription_active, '
         f'full_name, legal_status, license_info, registry_number, '
         f'show_full_name, show_legal_status, show_license, show_registry, '
-        f'pseudonym, use_pseudonym, avatar_url, gender '
+        f'pseudonym, use_pseudonym, avatar_url, gender, '
+        f'licenses, documents, bio, age, show_bio, show_age, show_documents '
         f'FROM {SCHEMA}.providers ORDER BY subscription_active DESC, rating DESC, reviews DESC'
     )
     rows = cur.fetchall()
@@ -82,22 +83,38 @@ def handler(event: dict, context) -> dict:
             }
             # Публичная верификация: только поля с включённой видимостью.
             # Номер паспорта не отдаётся никогда.
+            licenses_raw = r[37] if isinstance(r[37], list) else (json.loads(r[37]) if r[37] else [])
+            documents_raw = r[38] if isinstance(r[38], list) else (json.loads(r[38]) if r[38] else [])
             public_verification = {}
             if bool(r[29]) and r[25]:
                 public_verification['fullName'] = r[25]
             if bool(r[30]) and r[26]:
                 public_verification['legalStatus'] = r[26]
-            if bool(r[31]) and r[27]:
-                public_verification['license'] = r[27]
+            if bool(r[31]):
+                # Несколько лицензий + поддержка старого одиночного поля
+                lic_list = [str(x).strip() for x in licenses_raw if str(x).strip()]
+                if not lic_list and (r[27] or '').strip():
+                    lic_list = [r[27].strip()]
+                if lic_list:
+                    public_verification['licenses'] = lic_list
             if bool(r[32]) and r[28]:
                 public_verification['registry'] = r[28]
+            if bool(r[43]) and documents_raw:
+                docs = [{'title': str(d.get('title', '')).strip()} for d in documents_raw if isinstance(d, dict) and str(d.get('title', '')).strip()]
+                if docs:
+                    public_verification['documents'] = docs
+            if bool(r[41]) and (r[39] or '').strip():
+                public_verification['bio'] = r[39].strip()
             item['verification'] = public_verification or None
+            # Возраст показываем, если включена видимость
+            item['age'] = r[40] if (bool(r[42]) and r[40]) else None
         else:
             # Обезличиваем: скрываем имя, фото, контакты и верификацию
             item['name'] = {'ru': 'Профиль скрыт', 'en': 'Profile hidden'}
             item['img'] = None
             item['contacts'] = None
             item['verification'] = None
+            item['age'] = None
         providers.append(item)
 
     return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'providers': providers})}

@@ -146,30 +146,71 @@ function ContactButtons({ p, onChat, compact }: { p: Provider; onChat: () => voi
 
 function VerificationBlock({ v }: { v: NonNullable<Provider["verification"]> }) {
   const { tr } = useLang();
-  if (!v || (!v.fullName && !v.legalStatus && !v.license && !v.registry)) return null;
+  const licenses = v.licenses && v.licenses.length ? v.licenses : (v.license ? [v.license] : []);
+  const documents = v.documents || [];
+  const hasAny = v.fullName || v.legalStatus || licenses.length || v.registry || documents.length || v.bio;
+  if (!hasAny) return null;
   const statusLabel = v.legalStatus === "self" ? tr("pdVfStatusSelf") : v.legalStatus === "ip" ? tr("pdVfStatusIp") : v.legalStatus === "company" ? tr("pdVfStatusCompany") : v.legalStatus;
   const rows = [
     v.fullName ? { icon: "User", label: tr("verifyName"), value: v.fullName } : null,
     v.legalStatus ? { icon: "Briefcase", label: tr("verifyStatus"), value: statusLabel } : null,
-    v.license ? { icon: "FileBadge", label: tr("verifyLicense"), value: v.license } : null,
     v.registry ? { icon: "Hash", label: tr("verifyRegistry"), value: v.registry } : null,
   ].filter(Boolean) as { icon: string; label: string; value: string }[];
   return (
-    <div className="border border-gold/30 rounded-sm bg-card p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <Icon name="BadgeCheck" size={15} className="text-gold" />
-        <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("verifyBlockTitle")}</div>
-      </div>
-      <div className="space-y-3">
-        {rows.map((r) => (
-          <div key={r.label} className="flex items-start gap-2">
-            <Icon name={r.icon} size={13} className="text-gold mt-0.5 shrink-0" />
-            <div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{r.label}</div>
-              <div className="text-xs text-foreground font-montserrat font-medium">{r.value}</div>
-            </div>
+    <div className="space-y-4">
+      {v.bio && (
+        <div className="border border-border rounded-sm bg-card p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon name="UserRound" size={15} className="text-gold" />
+            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("verifyBio")}</div>
           </div>
-        ))}
+          <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{v.bio}</p>
+        </div>
+      )}
+      <div className="border border-gold/30 rounded-sm bg-card p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Icon name="BadgeCheck" size={15} className="text-gold" />
+          <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("verifyBlockTitle")}</div>
+        </div>
+        <div className="space-y-3">
+          {rows.map((r) => (
+            <div key={r.label} className="flex items-start gap-2">
+              <Icon name={r.icon} size={13} className="text-gold mt-0.5 shrink-0" />
+              <div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{r.label}</div>
+                <div className="text-xs text-foreground font-montserrat font-medium">{r.value}</div>
+              </div>
+            </div>
+          ))}
+          {licenses.length > 0 && (
+            <div className="flex items-start gap-2">
+              <Icon name="FileBadge" size={13} className="text-gold mt-0.5 shrink-0" />
+              <div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("verifyLicense")}</div>
+                <div className="space-y-1 mt-0.5">
+                  {licenses.map((lic, i) => (
+                    <div key={i} className="text-xs text-foreground font-montserrat font-medium">{lic}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          {documents.length > 0 && (
+            <div className="flex items-start gap-2">
+              <Icon name="FileText" size={13} className="text-gold mt-0.5 shrink-0" />
+              <div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("verifyDocuments")}</div>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {documents.map((d, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 text-[11px] text-foreground bg-secondary border border-border rounded-sm px-2 py-1">
+                      <Icon name="Paperclip" size={11} className="text-gold" />{d.title}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -893,9 +934,10 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
                 )}
                 <div className="absolute bottom-3 start-4 end-4">
                   <div className="font-montserrat font-bold text-base text-foreground">{L(s.name, lang)}</div>
-                  <div className="text-xs text-gold font-montserrat font-medium flex items-center gap-2">
+                  <div className="text-xs text-gold font-montserrat font-medium flex items-center gap-2 flex-wrap">
                     {L(s.title, lang)}
                     <span className="text-muted-foreground">· {s.experience} {tr("yearsShort")}</span>
+                    {s.age != null && <span className="text-muted-foreground">· {s.age} {tr("yearsOld")}</span>}
                   </div>
                 </div>
               </div>
@@ -908,7 +950,7 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
                     {s.distance != null && <span className="text-gold font-semibold">· {s.distance} {tr("geoKm")}</span>}
                   </span>
                 </div>
-                {s.verification && (s.verification.license || s.verification.registry || s.verification.fullName) && (
+                {s.verification && ((s.verification.licenses && s.verification.licenses.length > 0) || s.verification.registry || s.verification.fullName) && (
                   <div className="inline-flex items-center gap-1.5 mb-4 px-2.5 py-1.5 rounded-sm bg-green-500/10 border border-green-500/30 w-fit">
                     <Icon name="ShieldCheck" size={13} className="text-green-400" />
                     <span className="text-[11px] font-montserrat font-bold text-green-400">{tr("verifyDocsConfirmed")}</span>
@@ -1410,20 +1452,48 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   };
 
   const [vf, setVf] = useState({
-    fullName: "", passportNumber: "", legalStatus: "ip", license: "", registry: "",
+    fullName: "", passportNumber: "", legalStatus: "ip", registry: "",
     showFullName: true, showLegalStatus: true, showLicense: true, showRegistry: true,
     pseudonym: "", usePseudonym: false,
+    gender: "m" as "m" | "f", age: "" as string,
+    licenses: [""] as string[],
+    documents: [] as { title: string; url: string }[],
+    bio: "",
+    showBio: true, showAge: true, showDocuments: true,
   });
   const [vfState, setVfState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
 
+  useEffect(() => {
+    fetch(`${func2url["save-verification"]}?slug=morozov`)
+      .then((r) => r.json())
+      .then((d) => {
+        const v = d.verification;
+        if (!v) return;
+        setVf({
+          fullName: v.fullName || "", passportNumber: v.passportNumber || "", legalStatus: v.legalStatus || "ip",
+          registry: v.registry || "",
+          showFullName: !!v.showFullName, showLegalStatus: !!v.showLegalStatus, showLicense: !!v.showLicense, showRegistry: !!v.showRegistry,
+          pseudonym: v.pseudonym || "", usePseudonym: !!v.usePseudonym,
+          gender: v.gender === "f" ? "f" : "m", age: v.age != null ? String(v.age) : "",
+          licenses: Array.isArray(v.licenses) && v.licenses.length ? v.licenses : [""],
+          documents: Array.isArray(v.documents) ? v.documents : [],
+          bio: v.bio || "",
+          showBio: !!v.showBio, showAge: !!v.showAge, showDocuments: !!v.showDocuments,
+        });
+        if (v.avatarUrl) setAvatarUrl(v.avatarUrl);
+      })
+      .catch(() => {});
+  }, []);
+
   const saveVerification = async () => {
     setVfState("saving");
     try {
+      const payload = { ...vf, licenses: vf.licenses.filter((l) => l.trim()), age: vf.age ? parseInt(vf.age) : null };
       const res = await fetch(func2url["save-verification"], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: "morozov", ...vf }),
+        body: JSON.stringify({ slug: "morozov", ...payload }),
       });
       setVfState(res.ok ? "saved" : "error");
     } catch {
@@ -1704,7 +1774,33 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
               </div>
 
               {/* Avatar upload */}
-              <AvatarUploader current={avatarUrl} gender="m" role="provider" recordId="morozov" onUploaded={setAvatarUrl} />
+              <AvatarUploader current={avatarUrl} gender={vf.gender} role="provider" recordId="morozov" onUploaded={setAvatarUrl} />
+
+              {/* Gender + Age */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-montserrat font-semibold text-foreground block mb-2">{tr("pdVfGender")}</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([{ v: "m", k: "pdVfGenderM" as const }, { v: "f", k: "pdVfGenderF" as const }]).map((g) => (
+                      <button key={g.v} onClick={() => { setVf({ ...vf, gender: g.v as "m" | "f" }); setVfState("idle"); }}
+                        className={`py-2.5 text-xs font-montserrat font-semibold rounded-sm border transition-all ${vf.gender === g.v ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                        {tr(g.k)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfAge")}</label>
+                    <button onClick={() => setVf({ ...vf, showAge: !vf.showAge })}
+                      className={`flex items-center gap-1 text-[10px] font-montserrat font-bold px-2 py-1 rounded-sm transition-colors ${vf.showAge ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"}`}>
+                      <Icon name={vf.showAge ? "Eye" : "EyeOff"} size={12} />
+                      {tr(vf.showAge ? "pdVfShow" : "pdVfHidden")}
+                    </button>
+                  </div>
+                  <input type="number" min={18} max={100} value={vf.age} onChange={(e) => { setVf({ ...vf, age: e.target.value }); setVfState("idle"); }} placeholder="—" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                </div>
+              </div>
               <div className="divider-gold" />
 
               {/* Full name (with visibility toggle) */}
@@ -1779,10 +1875,10 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 </div>
               </div>
 
-              {/* License (with visibility toggle) */}
+              {/* Licenses — multiple (with visibility toggle) */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfLicense")}</label>
+                  <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfLicenses")}</label>
                   <button
                     onClick={() => setVf({ ...vf, showLicense: !vf.showLicense })}
                     className={`flex items-center gap-1 text-[10px] font-montserrat font-bold px-2 py-1 rounded-sm transition-colors ${vf.showLicense ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"}`}
@@ -1791,7 +1887,63 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                     {tr(vf.showLicense ? "pdVfShow" : "pdVfHidden")}
                   </button>
                 </div>
-                <input value={vf.license} onChange={(e) => { setVf({ ...vf, license: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfLicense")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                <div className="space-y-2">
+                  {vf.licenses.map((lic, i) => (
+                    <div key={i} className="flex gap-2">
+                      <input value={lic} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = e.target.value; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr("pdVfLicensePh")} className="flex-1 min-w-0 bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                      {vf.licenses.length > 1 && (
+                        <button onClick={() => { setVf({ ...vf, licenses: vf.licenses.filter((_, idx) => idx !== i) }); setVfState("idle"); }} className="shrink-0 px-3 border border-border rounded-sm text-muted-foreground hover:border-destructive hover:text-destructive transition-colors" aria-label={tr("remove")}>
+                          <Icon name="Trash2" size={14} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => { setVf({ ...vf, licenses: [...vf.licenses, ""] }); setVfState("idle"); }} className="mt-2 inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-gold hover:underline">
+                  <Icon name="Plus" size={13} />{tr("pdVfAddLicense")}
+                </button>
+              </div>
+
+              {/* Documents — diplomas, certificates */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfDocuments")}</label>
+                  <button
+                    onClick={() => setVf({ ...vf, showDocuments: !vf.showDocuments })}
+                    className={`flex items-center gap-1 text-[10px] font-montserrat font-bold px-2 py-1 rounded-sm transition-colors ${vf.showDocuments ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"}`}
+                  >
+                    <Icon name={vf.showDocuments ? "Eye" : "EyeOff"} size={12} />
+                    {tr(vf.showDocuments ? "pdVfShow" : "pdVfHidden")}
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {vf.documents.map((doc, i) => (
+                    <div key={i} className="flex gap-2">
+                      <input value={doc.title} onChange={(e) => { const arr = [...vf.documents]; arr[i] = { ...arr[i], title: e.target.value }; setVf({ ...vf, documents: arr }); setVfState("idle"); }} placeholder={tr("pdVfDocTitlePh")} className="flex-1 min-w-0 bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                      <button onClick={() => { setVf({ ...vf, documents: vf.documents.filter((_, idx) => idx !== i) }); setVfState("idle"); }} className="shrink-0 px-3 border border-border rounded-sm text-muted-foreground hover:border-destructive hover:text-destructive transition-colors" aria-label={tr("remove")}>
+                        <Icon name="Trash2" size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => { setVf({ ...vf, documents: [...vf.documents, { title: "", url: "" }] }); setVfState("idle"); }} className="mt-2 inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-gold hover:underline">
+                  <Icon name="Plus" size={13} />{tr("pdVfAddDocument")}
+                </button>
+              </div>
+
+              {/* Bio */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfBio")}</label>
+                  <button
+                    onClick={() => setVf({ ...vf, showBio: !vf.showBio })}
+                    className={`flex items-center gap-1 text-[10px] font-montserrat font-bold px-2 py-1 rounded-sm transition-colors ${vf.showBio ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"}`}
+                  >
+                    <Icon name={vf.showBio ? "Eye" : "EyeOff"} size={12} />
+                    {tr(vf.showBio ? "pdVfShow" : "pdVfHidden")}
+                  </button>
+                </div>
+                <textarea value={vf.bio} onChange={(e) => { setVf({ ...vf, bio: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfBioPh")} rows={4} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none" />
               </div>
 
               {/* Registry (with visibility toggle) */}

@@ -23,13 +23,51 @@ def handler(event: dict, context) -> dict:
 
     cors = {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
     }
 
     if method == 'OPTIONS':
         return {'statusCode': 200, 'headers': cors, 'body': ''}
+
+    # GET: владелец загружает свои данные в форму редактирования (с паспортом).
+    if method == 'GET':
+        params = event.get('queryStringParameters') or {}
+        slug = esc(params.get('slug'))
+        if not slug:
+            return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'slug required'})}
+        conn = psycopg2.connect(os.environ['DATABASE_URL'])
+        cur = conn.cursor()
+        cur.execute(
+            f"SELECT full_name, passport_number, legal_status, license_info, registry_number, "
+            f"show_full_name, show_legal_status, show_license, show_registry, "
+            f"pseudonym, use_pseudonym, licenses, documents, bio, age, "
+            f"show_bio, show_age, show_documents, gender, avatar_url "
+            f"FROM {SCHEMA}.providers WHERE slug='{slug}'"
+        )
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if not row:
+            return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'verification': None})}
+        lic = row[11] if isinstance(row[11], list) else (json.loads(row[11]) if row[11] else [])
+        if not lic and (row[3] or '').strip():
+            lic = [row[3].strip()]
+        docs = row[12] if isinstance(row[12], list) else (json.loads(row[12]) if row[12] else [])
+        data = {
+            'fullName': row[0] or '', 'passportNumber': row[1] or '', 'legalStatus': row[2] or 'ip',
+            'registry': row[4] or '',
+            'showFullName': bool(row[5]), 'showLegalStatus': bool(row[6]),
+            'showLicense': bool(row[7]), 'showRegistry': bool(row[8]),
+            'pseudonym': row[9] or '', 'usePseudonym': bool(row[10]),
+            'licenses': [str(x) for x in lic],
+            'documents': [{'title': str(d.get('title', '')), 'url': str(d.get('url', ''))} for d in docs if isinstance(d, dict)],
+            'bio': row[13] or '', 'age': row[14],
+            'showBio': bool(row[15]), 'showAge': bool(row[16]), 'showDocuments': bool(row[17]),
+            'gender': row[18] or 'm', 'avatarUrl': row[19] or '',
+        }
+        return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'verification': data})}
 
     if method != 'POST':
         return {'statusCode': 405, 'headers': cors, 'body': json.dumps({'error': 'Method not allowed'})}
@@ -58,6 +96,42 @@ def handler(event: dict, context) -> dict:
     pseudonym = esc(body.get('pseudonym'))
     use_pseudonym = b(body.get('usePseudonym'))
 
+    gender = esc(body.get('gender')) or 'm'
+    if gender not in ('m', 'f'):
+        gender = 'm'
+
+    # Несколько лицензий
+    raw_licenses = body.get('licenses') or []
+    licenses = [str(x).strip()[:300] for x in raw_licenses if str(x).strip()] if isinstance(raw_licenses, list) else []
+    licenses_json = json.dumps(licenses, ensure_ascii=False).replace("'", "''")
+
+    # Документы (дипломы/сертификаты)
+    raw_docs = body.get('documents') or []
+    documents = []
+    if isinstance(raw_docs, list):
+        for d in raw_docs:
+            if isinstance(d, dict):
+                t = str(d.get('title', '')).strip()[:200]
+                u = str(d.get('url', '')).strip()[:500]
+                if t or u:
+                    documents.append({'title': t, 'url': u})
+    documents_json = json.dumps(documents, ensure_ascii=False).replace("'", "''")
+
+    bio = str(body.get('bio') or '').strip()[:2000].replace("'", "''")
+
+    age_val = body.get('age')
+    try:
+        age = int(age_val)
+        if age < 18 or age > 100:
+            age = None
+    except (TypeError, ValueError):
+        age = None
+    age_sql = str(age) if age is not None else 'NULL'
+
+    show_bio = b(body.get('showBio'))
+    show_age = b(body.get('showAge'))
+    show_documents = b(body.get('showDocuments'))
+
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     cur.execute(
@@ -72,7 +146,15 @@ def handler(event: dict, context) -> dict:
         f"show_license={show_license}, "
         f"show_registry={show_registry}, "
         f"pseudonym='{pseudonym}', "
-        f"use_pseudonym={use_pseudonym} "
+        f"use_pseudonym={use_pseudonym}, "
+        f"gender='{gender}', "
+        f"licenses='{licenses_json}'::jsonb, "
+        f"documents='{documents_json}'::jsonb, "
+        f"bio='{bio}', "
+        f"age={age_sql}, "
+        f"show_bio={show_bio}, "
+        f"show_age={show_age}, "
+        f"show_documents={show_documents} "
         f"WHERE slug='{slug}'"
     )
     updated = cur.rowcount
