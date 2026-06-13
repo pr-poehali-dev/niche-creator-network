@@ -1161,6 +1161,48 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                   <span className="text-xs font-montserrat font-semibold px-3 py-1 rounded-sm bg-gold/15 text-gold">{tr("cdEnabled")}</span>
                 </div>
               </div>
+
+              <div className="border border-border rounded-sm bg-card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdHistoryTitle")}</div>
+                  <div className="text-xs text-muted-foreground">{tr("pdHistTotal")}: <span className="font-montserrat font-bold text-gold">14 940 ₽</span></div>
+                </div>
+                <div className="hidden sm:grid grid-cols-[1fr_1fr_auto_auto_auto] gap-3 px-3 pb-2 mb-1 border-b border-border text-[10px] font-montserrat font-semibold text-muted-foreground uppercase tracking-widest">
+                  <span>{tr("pdHistDate")}</span>
+                  <span>{tr("pdHistPlan")}</span>
+                  <span className="text-right">{tr("pdHistAmount")}</span>
+                  <span className="text-center">{tr("pdHistStatus")}</span>
+                  <span className="text-right">{tr("pdHistReceipt")}</span>
+                </div>
+                <div className="space-y-1">
+                  {([
+                    { date: "13.06.2026", plan: "planProName", amount: "2 490 ₽", status: "paid" },
+                    { date: "13.05.2026", plan: "planProName", amount: "2 490 ₽", status: "paid" },
+                    { date: "13.04.2026", plan: "planProName", amount: "2 490 ₽", status: "paid" },
+                    { date: "13.03.2026", plan: "planStartName", amount: "990 ₽", status: "paid" },
+                    { date: "13.02.2026", plan: "planStartName", amount: "990 ₽", status: "failed" },
+                  ] as const).map((row, i) => {
+                    const st = { paid: { key: "pdHistPaid" as const, cls: "text-green-400 border-green-500/40" }, pending: { key: "pdHistPending" as const, cls: "text-gold border-gold/40" }, failed: { key: "pdHistFailed" as const, cls: "text-destructive border-destructive/40" } }[row.status];
+                    return (
+                      <div key={i} className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_auto_auto_auto] gap-2 sm:gap-3 items-center px-3 py-3 rounded-sm hover:bg-secondary transition-colors text-xs">
+                        <span className="text-muted-foreground">{row.date}</span>
+                        <span className="font-montserrat font-semibold text-foreground">{tr(row.plan)}</span>
+                        <span className="font-montserrat font-bold text-gold sm:text-right">{row.amount}</span>
+                        <span className="sm:text-center"><span className={`tag-security ${st.cls}`}>{tr(st.key)}</span></span>
+                        <span className="sm:text-right">
+                          {row.status === "paid" ? (
+                            <button className="inline-flex items-center gap-1 text-muted-foreground hover:text-gold transition-colors font-montserrat font-semibold">
+                              <Icon name="Download" size={13} /> <span className="hidden md:inline">{tr("pdHistDownload")}</span>
+                            </button>
+                          ) : (
+                            <span className="text-muted-foreground/40">—</span>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </>
           )}
 

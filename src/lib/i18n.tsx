@@ -454,6 +454,19 @@ export const t: Dict = {
   payDone: { ru: "Готово", en: "Done" },
   payDemo: { ru: "Демо-режим: реальное списание не производится", en: "Demo mode: no real charge is made" },
 
+  // Payment history
+  pdHistoryTitle: { ru: "История оплат", en: "Payment history" },
+  pdHistDate: { ru: "Дата", en: "Date" },
+  pdHistPlan: { ru: "Тариф", en: "Plan" },
+  pdHistAmount: { ru: "Сумма", en: "Amount" },
+  pdHistStatus: { ru: "Статус", en: "Status" },
+  pdHistReceipt: { ru: "Чек", en: "Receipt" },
+  pdHistPaid: { ru: "Оплачено", en: "Paid" },
+  pdHistPending: { ru: "В обработке", en: "Pending" },
+  pdHistFailed: { ru: "Отклонено", en: "Failed" },
+  pdHistDownload: { ru: "Скачать", en: "Download" },
+  pdHistTotal: { ru: "Всего оплачено", en: "Total paid" },
+
   // Footer
   footerDesc: { ru: "Международное закрытое сообщество для специалистов в сфере безопасности", en: "International private community for security professionals" },
   footerPlatform: { ru: "Платформа", en: "Platform" },
