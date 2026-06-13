@@ -7,8 +7,17 @@ interface IconProps extends LucideProps {
   fallback?: string;
 }
 
-const Icon: React.FC<IconProps> = ({ name, fallback = 'CircleAlert', ...props }) => {
+const DIRECTIONAL_ICONS = new Set([
+  'ArrowRight', 'ArrowLeft', 'ChevronRight', 'ChevronLeft',
+  'ArrowUpRight', 'ArrowDownRight', 'ArrowUpLeft', 'ArrowDownLeft',
+  'ChevronsRight', 'ChevronsLeft', 'CornerDownRight', 'CornerDownLeft',
+  'MoveRight', 'MoveLeft', 'LogIn', 'LogOut', 'Reply', 'Send',
+]);
+
+const Icon: React.FC<IconProps> = ({ name, fallback = 'CircleAlert', className, ...props }) => {
   const IconComponent = (LucideIcons as Record<string, React.FC<LucideProps>>)[name];
+  const dirClass = DIRECTIONAL_ICONS.has(name) ? 'rtl-flip' : '';
+  const mergedClass = [className, dirClass].filter(Boolean).join(' ') || undefined;
 
   if (!IconComponent) {
     // Если иконка не найдена, используем fallback иконку
@@ -19,10 +28,10 @@ const Icon: React.FC<IconProps> = ({ name, fallback = 'CircleAlert', ...props })
       return <span className="text-xs text-gray-400">[icon]</span>;
     }
 
-    return <FallbackIcon {...props} />;
+    return <FallbackIcon className={mergedClass} {...props} />;
   }
 
-  return <IconComponent {...props} />;
+  return <IconComponent className={mergedClass} {...props} />;
 };
 
 export default Icon;

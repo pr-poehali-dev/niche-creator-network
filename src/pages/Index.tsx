@@ -63,12 +63,12 @@ function LangSwitcher({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => voi
         <Icon name="ChevronDown" size={12} className="text-muted-foreground" />
       </button>
       {open && (
-        <div className="absolute right-0 mt-1 z-50 min-w-[160px] border border-border rounded-sm bg-card shadow-lg overflow-hidden animate-fade-in">
+        <div className="absolute end-0 mt-1 z-50 min-w-[160px] border border-border rounded-sm bg-card shadow-lg overflow-hidden animate-fade-in">
           {LANGS.map((l) => (
             <button
               key={l.code}
               onClick={() => { setLang(l.code); setOpen(false); }}
-              className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-xs font-montserrat text-left transition-colors ${l.code === lang ? "bg-gold text-[hsl(220,20%,6%)] font-bold" : "text-foreground hover:bg-secondary"}`}
+              className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-xs font-montserrat text-start transition-colors ${l.code === lang ? "bg-gold text-[hsl(220,20%,6%)] font-bold" : "text-foreground hover:bg-secondary"}`}
             >
               <span>{l.label}</span>
               <span className="uppercase opacity-60">{l.code}</span>
@@ -688,13 +688,13 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
                 <img src={s.img} alt={L(s.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
                 {s.verified && (
-                  <div className="absolute top-3 right-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
+                  <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
                     <Icon name="BadgeCheck" size={12} className="text-gold" />
                     <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licensed")}</span>
                   </div>
                 )}
                 {s.distance != null && s.distance <= 100 && (
-                  <div className="absolute top-3 left-3 flex items-center gap-1 bg-gold/90 backdrop-blur-sm px-2 py-1 rounded-sm">
+                  <div className="absolute top-3 start-3 flex items-center gap-1 bg-gold/90 backdrop-blur-sm px-2 py-1 rounded-sm">
                     <Icon name="Navigation" size={11} className="text-[hsl(220,20%,6%)]" />
                     <span className="text-[10px] font-montserrat font-bold text-[hsl(220,20%,6%)]">{tr("geoNearYou")}</span>
                   </div>
@@ -805,7 +805,7 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
             <div className="w-11 h-11 rounded-sm overflow-hidden border border-gold/40">
               <img src={DETECTIVE_IMAGE} alt="Alexander Morozov" className="w-full h-full object-cover" />
             </div>
-            <div className="text-left">
+            <div className="text-start">
               <div className="font-montserrat font-bold text-sm text-foreground flex items-center gap-1.5">
                 {L(specialists[0].name, lang)}
                 <Icon name="BadgeCheck" size={14} className="text-gold" />
@@ -1649,7 +1649,7 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
             </div>
             <div className="mb-6">
               <span className="font-montserrat font-extrabold text-3xl text-gold">{tr(p.price)}</span>
-              {!p.enterprise && <span className="text-xs text-muted-foreground ml-1">{tr("perMonth")}</span>}
+              {!p.enterprise && <span className="text-xs text-muted-foreground ms-1">{tr("perMonth")}</span>}
             </div>
             <div className="divider-gold mb-5" />
             <div className="space-y-2.5 flex-1 mb-6">
@@ -1687,7 +1687,7 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
           <div className="font-montserrat font-semibold text-sm text-foreground mb-1">{tr("freeForClients")}</div>
           <div className="text-xs text-muted-foreground">{tr("heroClientDesc")}</div>
         </div>
-        <button onClick={() => setActive("contacts")} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 hover:border-gold hover:text-gold transition-all rounded-sm ml-auto">
+        <button onClick={() => setActive("contacts")} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 hover:border-gold hover:text-gold transition-all rounded-sm ms-auto">
           {tr("contactUs")}
         </button>
       </div>
@@ -1999,7 +1999,7 @@ function ServicesSection() {
           <div className="font-montserrat font-semibold text-sm text-foreground mb-1">{tr("commission")}</div>
           <div className="text-xs text-muted-foreground">{tr("commissionDesc")}</div>
         </div>
-        <button className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 hover:border-gold hover:text-gold transition-all rounded-sm ml-auto">{tr("more")}</button>
+        <button className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 hover:border-gold hover:text-gold transition-all rounded-sm ms-auto">{tr("more")}</button>
       </div>
     </div>
   );
@@ -2021,7 +2021,7 @@ function CoursesSection() {
             <div className="h-44 overflow-hidden relative">
               <img src={c.img} alt={L(c.title, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
-              <div className="absolute top-3 left-3"><span className="badge-pro">{L(c.level, lang)}</span></div>
+              <div className="absolute top-3 start-3"><span className="badge-pro">{L(c.level, lang)}</span></div>
             </div>
             <div className="p-5">
               <h3 className="font-montserrat font-bold text-sm text-foreground mb-2 leading-snug">{L(c.title, lang)}</h3>
@@ -2029,7 +2029,7 @@ function CoursesSection() {
               <div className="flex items-center gap-2 mb-4">
                 <StarRating rating={c.rating} />
                 <span className="text-xs text-muted-foreground">{c.rating}</span>
-                <span className="text-xs text-muted-foreground ml-auto">{c.students} {tr("students")}</span>
+                <span className="text-xs text-muted-foreground ms-auto">{c.students} {tr("students")}</span>
               </div>
               <div className="divider-gold mb-4" />
               <div className="flex items-center justify-between">
@@ -2087,11 +2087,11 @@ function GuardsSection() {
             <div className="h-48 overflow-hidden relative">
               <img src={g.img} alt={L(g.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
-              <div className="absolute top-3 right-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
+              <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
                 <Icon name="BadgeCheck" size={12} className="text-gold" />
                 <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licensed")}</span>
               </div>
-              <div className="absolute bottom-3 left-4 right-4">
+              <div className="absolute bottom-3 start-4 end-4">
                 <div className="font-montserrat font-bold text-base text-foreground">{L(g.name, lang)}</div>
                 <div className="text-xs text-gold font-montserrat font-medium">{L(g.type, lang)}</div>
               </div>
@@ -2162,7 +2162,7 @@ function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatIn
       </div>
       <div className="border border-border rounded-sm bg-card overflow-hidden" style={{ height: "600px" }}>
         <div className="flex h-full">
-          <div className="w-56 border-r border-border flex-col hidden md:flex">
+          <div className="w-56 border-e border-border flex-col hidden md:flex">
             <div className="p-4 border-b border-border">
               <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("channels")}</div>
             </div>
@@ -2182,7 +2182,7 @@ function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatIn
           <div className="flex-1 flex flex-col">
             <div className="p-4 border-b border-border flex items-center gap-3">
               <div className="text-sm font-montserrat font-semibold text-foreground"># {L(rooms[0].name, lang)}</div>
-              <div className="flex items-center gap-1 ml-auto">
+              <div className="flex items-center gap-1 ms-auto">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
                 <span className="text-xs text-muted-foreground">24 {tr("online")}</span>
               </div>
@@ -2265,8 +2265,8 @@ function ForumSection() {
                   <div className="text-xs font-montserrat font-bold text-foreground">{tp.views}</div>
                   <div className="text-[10px] text-muted-foreground">{tr("viewsLower")}</div>
                 </div>
-                <div className="col-span-1 text-right">
-                  <Icon name="ChevronRight" size={14} className="text-muted-foreground ml-auto" />
+                <div className="col-span-1 text-end">
+                  <Icon name="ChevronRight" size={14} className="text-muted-foreground ms-auto" />
                 </div>
               </div>
             </div>

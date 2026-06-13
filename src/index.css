@@ -395,3 +395,30 @@
     border-radius: 2px;
   }
 }
+
+/* ===== RTL support (Arabic, Hebrew) ===== */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* Decorative gold glow flips to the other side */
+[dir="rtl"] .ambient-gold::after {
+  right: auto;
+  left: -100px;
+}
+
+/* Shine sweep direction reversed */
+[dir="rtl"] .shine-on-hover::before {
+  left: auto;
+  right: -100%;
+  transition: right 0.6s ease;
+}
+[dir="rtl"] .shine-on-hover:hover::before {
+  right: 130%;
+}
+
+/* Nav underline starts from the right */
+[dir="rtl"] .nav-link::after {
+  left: auto;
+  right: 0;
+}
