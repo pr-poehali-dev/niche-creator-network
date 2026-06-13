@@ -1240,8 +1240,109 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   );
 }
 
+type PayPlan = { name: keyof typeof t; price: keyof typeof t };
+
+function PaymentModal({ plan, onClose }: { plan: PayPlan; onClose: () => void }) {
+  const { tr } = useLang();
+  const [method, setMethod] = useState<"card" | "sbp">("card");
+  const [status, setStatus] = useState<"form" | "processing" | "success">("form");
+
+  const pay = () => {
+    setStatus("processing");
+    setTimeout(() => setStatus("success"), 1600);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-fade-in">
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md border border-gold/40 rounded-sm glass-card security-glow max-h-[90vh] overflow-y-auto">
+        {status === "success" ? (
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center mx-auto mb-5 glow-gold-sm">
+              <Icon name="Check" size={32} className="text-[hsl(220,20%,6%)]" />
+            </div>
+            <h3 className="font-montserrat font-extrabold text-xl text-foreground mb-2">{tr("paySuccess")}</h3>
+            <p className="text-sm text-muted-foreground mb-6">{tr("paySuccessDesc")}</p>
+            <button onClick={onClose} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("payDone")}</button>
+          </div>
+        ) : (
+          <div className="p-6">
+            <div className="flex items-start justify-between mb-5">
+              <div>
+                <h3 className="font-montserrat font-bold text-lg text-foreground">{tr("payTitle")}</h3>
+                <p className="text-xs text-muted-foreground">{tr("paySubtitle")}</p>
+              </div>
+              <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors"><Icon name="X" size={20} /></button>
+            </div>
+
+            <div className="border border-border rounded-sm bg-card p-4 mb-5 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">{tr("payPlan")}</span>
+                <span className="font-montserrat font-semibold text-foreground">{tr(plan.name)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">{tr("payPeriod")}</span>
+                <span className="font-montserrat font-semibold text-foreground">{tr("payOneMonth")}</span>
+              </div>
+              <div className="divider-gold my-1" />
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{tr("payAmount")}</span>
+                <span className="font-montserrat font-extrabold text-2xl text-gold">{tr(plan.price)}</span>
+              </div>
+            </div>
+
+            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-2">{tr("payMethod")}</div>
+            <div className="grid grid-cols-2 gap-2 mb-5">
+              {(["card", "sbp"] as const).map((m) => (
+                <button key={m} onClick={() => setMethod(m)}
+                  className={`flex items-center justify-center gap-2 py-2.5 text-xs font-montserrat font-semibold rounded-sm border transition-all ${method === m ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                  <Icon name={m === "card" ? "CreditCard" : "QrCode"} size={15} />
+                  {tr(m === "card" ? "payCard" : "paySbp")}
+                </button>
+              ))}
+            </div>
+
+            {method === "card" ? (
+              <div className="space-y-3 mb-5">
+                <input placeholder="0000 0000 0000 0000" inputMode="numeric" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                <div className="grid grid-cols-2 gap-3">
+                  <input placeholder="MM / YY" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                  <input placeholder="CVC" inputMode="numeric" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                </div>
+                <input placeholder={tr("payCardName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3 mb-5 py-4">
+                <div className="w-36 h-36 bg-secondary border border-border rounded-sm flex items-center justify-center">
+                  <Icon name="QrCode" size={90} className="text-gold" />
+                </div>
+                <p className="text-xs text-muted-foreground text-center max-w-[220px]">{tr("paySbpHint")}</p>
+              </div>
+            )}
+
+            <button onClick={pay} disabled={status === "processing"}
+              className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3.5 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+              {status === "processing" ? (
+                <><Icon name="Loader" size={16} className="animate-spin" /> {tr("payProcessing")}</>
+              ) : (
+                <><Icon name="Lock" size={15} /> {tr("payButton")} {tr(plan.price)}</>
+              )}
+            </button>
+            <div className="flex items-center justify-center gap-1.5 mt-3 text-[10px] text-muted-foreground">
+              <Icon name="ShieldCheck" size={12} className="text-gold" />
+              {tr("paySecure")}
+            </div>
+            <div className="text-center text-[10px] text-muted-foreground/70 mt-1">{tr("payDemo")}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
   const { tr } = useLang();
+  const [payPlan, setPayPlan] = useState<PayPlan | null>(null);
   const plans = [
     {
       name: "planStartName" as const,
@@ -1322,7 +1423,7 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
               ))}
             </div>
             <button
-              onClick={() => setActive(p.enterprise ? "contacts" : "contacts")}
+              onClick={() => p.enterprise ? setActive("contacts") : setPayPlan({ name: p.name, price: p.price })}
               className={`w-full py-3 text-xs font-montserrat font-bold rounded-sm transition-all ${p.featured ? "gold-gradient text-[hsl(220,20%,6%)] hover:opacity-90 glow-gold-sm" : "border border-gold text-gold hover:bg-gold hover:text-[hsl(220,20%,6%)]"}`}
             >
               {p.enterprise ? tr("contactSales") : tr("choosePlan")}
@@ -1330,6 +1431,8 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
           </div>
         ))}
       </div>
+
+      {payPlan && <PaymentModal plan={payPlan} onClose={() => setPayPlan(null)} />}
 
       {/* Commission note */}
       <div className="mt-10 border border-gold/30 rounded-sm glass-card p-6 flex flex-col md:flex-row items-start md:items-center gap-4 security-glow">
