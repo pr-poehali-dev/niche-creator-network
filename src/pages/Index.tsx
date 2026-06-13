@@ -80,6 +80,37 @@ function ContactButtons({ p, onChat, compact }: { p: Provider; onChat: () => voi
   );
 }
 
+function VerificationBlock({ v }: { v: NonNullable<Provider["verification"]> }) {
+  const { tr } = useLang();
+  if (!v || (!v.fullName && !v.legalStatus && !v.license && !v.registry)) return null;
+  const statusLabel = v.legalStatus === "self" ? tr("pdVfStatusSelf") : v.legalStatus === "ip" ? tr("pdVfStatusIp") : v.legalStatus === "company" ? tr("pdVfStatusCompany") : v.legalStatus;
+  const rows = [
+    v.fullName ? { icon: "User", label: tr("verifyName"), value: v.fullName } : null,
+    v.legalStatus ? { icon: "Briefcase", label: tr("verifyStatus"), value: statusLabel } : null,
+    v.license ? { icon: "FileBadge", label: tr("verifyLicense"), value: v.license } : null,
+    v.registry ? { icon: "Hash", label: tr("verifyRegistry"), value: v.registry } : null,
+  ].filter(Boolean) as { icon: string; label: string; value: string }[];
+  return (
+    <div className="border border-gold/30 rounded-sm bg-card p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <Icon name="BadgeCheck" size={15} className="text-gold" />
+        <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("verifyBlockTitle")}</div>
+      </div>
+      <div className="space-y-3">
+        {rows.map((r) => (
+          <div key={r.label} className="flex items-start gap-2">
+            <Icon name={r.icon} size={13} className="text-gold mt-0.5 shrink-0" />
+            <div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{r.label}</div>
+              <div className="text-xs text-foreground font-montserrat font-medium">{r.value}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function LangSwitcher({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
   const [open, setOpen] = useState(false);
   const current = LANGS.find((l) => l.code === lang) ?? LANGS[0];
@@ -1019,6 +1050,30 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
     { id: "settings" as const, key: "cdTab4" as const, icon: "Settings" },
   ];
 
+  const [clientData, setClientData] = useState({ fullName: "", phone: "", email: "" });
+  const [clientState, setClientState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  useEffect(() => {
+    fetch(`${func2url["clients"]}?clientId=demo-client`)
+      .then((r) => r.json())
+      .then((d) => { if (d.client) setClientData({ fullName: d.client.fullName || "", phone: d.client.phone || "", email: d.client.email || "" }); })
+      .catch(() => {});
+  }, []);
+
+  const saveClient = async () => {
+    setClientState("saving");
+    try {
+      const res = await fetch(func2url["clients"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId: "demo-client", ...clientData }),
+      });
+      setClientState(res.ok ? "saved" : "error");
+    } catch {
+      setClientState("error");
+    }
+  };
+
   const providerReviews = [
     { name: { ru: "А. Морозов", en: "A. Morozov" }, role: { ru: "Полиграфолог", en: "Polygraph examiner" }, rating: 5, text: { ru: "Корректный и пунктуальный клиент. Чёткое ТЗ, оплата без задержек. Рекомендую коллегам.", en: "Correct and punctual client. Clear brief, payment without delays. Recommended." }, date: { ru: "1 неделю назад", en: "1 week ago" }, img: DETECTIVE_IMAGE },
     { name: { ru: "И. Семёнов", en: "I. Semenov" }, role: { ru: "TSCM-специалист", en: "TSCM specialist" }, rating: 5, text: { ru: "Приятно работать — предоставил весь доступ к объекту, не вмешивался в процесс.", en: "A pleasure to work with — provided full site access, didn't interfere with the process." }, date: { ru: "3 недели назад", en: "3 weeks ago" }, img: POLYGRAPH_IMAGE },
@@ -1178,32 +1233,30 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
 
           {tab === "settings" && (
             <div className="border border-border rounded-sm bg-card p-6 space-y-5">
-              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("cdSetTitle")}</div>
               <div>
-                <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("cdFullName")}</label>
-                <input key={lang} defaultValue={L(DEMO_CLIENT.name, lang)} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("cdClientData")}</div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{tr("cdClientDataHint")}</p>
+              </div>
+              <div>
+                <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2"><Icon name="User" size={13} className="text-gold" />{tr("cdClientName")}</label>
+                <input value={clientData.fullName} onChange={(e) => { setClientData({ ...clientData, fullName: e.target.value }); setClientState("idle"); }} placeholder={tr("cdClientName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">Email</label>
-                  <input defaultValue="d.orlov@email.com" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+                  <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2"><Icon name="Phone" size={13} className="text-gold" />{tr("cdClientPhone")}</label>
+                  <input type="tel" value={clientData.phone} onChange={(e) => { setClientData({ ...clientData, phone: e.target.value }); setClientState("idle"); }} placeholder="+7 999 000-00-00" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
                 </div>
                 <div>
-                  <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("cdCity")}</label>
-                  <input key={lang} defaultValue={L(DEMO_CLIENT.city, lang)} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+                  <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2"><Icon name="Mail" size={13} className="text-gold" />Email</label>
+                  <input type="email" value={clientData.email} onChange={(e) => { setClientData({ ...clientData, email: e.target.value }); setClientState("idle"); }} placeholder="you@email.com" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
                 </div>
               </div>
-              <div className="divider-gold" />
-              {[
-                { label: "cdNotifications" as const, on: true },
-                { label: "cd2fa" as const, on: false },
-              ].map((row) => (
-                <div key={row.label} className="flex items-center justify-between">
-                  <span className="text-sm text-foreground">{tr(row.label)}</span>
-                  <span className={`text-xs font-montserrat font-semibold px-3 py-1 rounded-sm ${row.on ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"}`}>{tr(row.on ? "cdEnabled" : "cdDisabled")}</span>
-                </div>
-              ))}
-              <button className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("dashSave")}</button>
+              {clientState === "saved" && <div className="flex items-center gap-2 text-sm text-green-400"><Icon name="CheckCircle2" size={16} />{tr("cdClientSaved")}</div>}
+              {clientState === "error" && <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("cdClientSaveErr")}</div>}
+              <button onClick={saveClient} disabled={clientState === "saving"} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+                {clientState === "saving" ? <Icon name="Loader" size={15} className="animate-spin" /> : <Icon name="Save" size={15} />}
+                {tr("dashSave")}
+              </button>
             </div>
           )}
         </div>
@@ -1214,13 +1267,14 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
 
 function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const { lang, tr } = useLang();
-  const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts">("stats");
+  const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts" | "verify">("stats");
 
   const tabs = [
     { id: "stats" as const, key: "pdTab1" as const, icon: "ChartNoAxesColumn" },
     { id: "plan" as const, key: "pdTab2" as const, icon: "Wallet" },
     { id: "cases" as const, key: "pdTab3" as const, icon: "FolderOpen" },
     { id: "requests" as const, key: "pdTab4" as const, icon: "Inbox" },
+    { id: "verify" as const, key: "pdTabVerify" as const, icon: "BadgeCheck" },
     { id: "contacts" as const, key: "pdTabContacts" as const, icon: "Contact" },
   ];
 
@@ -1238,6 +1292,26 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
       setSaveState(res.ok ? "saved" : "error");
     } catch {
       setSaveState("error");
+    }
+  };
+
+  const [vf, setVf] = useState({
+    fullName: "", passportNumber: "", legalStatus: "ip", license: "", registry: "",
+    showFullName: true, showLegalStatus: true, showLicense: true, showRegistry: true,
+  });
+  const [vfState, setVfState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  const saveVerification = async () => {
+    setVfState("saving");
+    try {
+      const res = await fetch(func2url["save-verification"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: "morozov", ...vf }),
+      });
+      setVfState(res.ok ? "saved" : "error");
+    } catch {
+      setVfState("error");
     }
   };
 
@@ -1503,6 +1577,106 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {tab === "verify" && (
+            <div className="border border-border rounded-sm bg-card p-6 space-y-5">
+              <div>
+                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("pdVerifyTitle")}</div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{tr("pdVerifyHint")}</p>
+              </div>
+
+              {/* Full name (with visibility toggle) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfFullName")}</label>
+                  <button
+                    onClick={() => setVf({ ...vf, showFullName: !vf.showFullName })}
+                    className={`flex items-center gap-1 text-[10px] font-montserrat font-bold px-2 py-1 rounded-sm transition-colors ${vf.showFullName ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"}`}
+                  >
+                    <Icon name={vf.showFullName ? "Eye" : "EyeOff"} size={12} />
+                    {tr(vf.showFullName ? "pdVfShow" : "pdVfHidden")}
+                  </button>
+                </div>
+                <input value={vf.fullName} onChange={(e) => { setVf({ ...vf, fullName: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfFullName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+              </div>
+
+              {/* Passport — never public */}
+              <div>
+                <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2">
+                  <Icon name="Lock" size={13} className="text-muted-foreground" />
+                  {tr("pdVfPassport")}
+                </label>
+                <input value={vf.passportNumber} onChange={(e) => { setVf({ ...vf, passportNumber: e.target.value }); setVfState("idle"); }} placeholder="0000 000000" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                <div className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1"><Icon name="ShieldCheck" size={11} className="text-green-400" />{tr("pdVfPassportNote")}</div>
+              </div>
+
+              {/* Legal status (with visibility toggle) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfStatus")}</label>
+                  <button
+                    onClick={() => setVf({ ...vf, showLegalStatus: !vf.showLegalStatus })}
+                    className={`flex items-center gap-1 text-[10px] font-montserrat font-bold px-2 py-1 rounded-sm transition-colors ${vf.showLegalStatus ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"}`}
+                  >
+                    <Icon name={vf.showLegalStatus ? "Eye" : "EyeOff"} size={12} />
+                    {tr(vf.showLegalStatus ? "pdVfShow" : "pdVfHidden")}
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { v: "self", k: "pdVfStatusSelf" as const },
+                    { v: "ip", k: "pdVfStatusIp" as const },
+                    { v: "company", k: "pdVfStatusCompany" as const },
+                  ]).map((s) => (
+                    <button
+                      key={s.v}
+                      onClick={() => { setVf({ ...vf, legalStatus: s.v }); setVfState("idle"); }}
+                      className={`py-2.5 text-xs font-montserrat font-semibold rounded-sm border transition-all ${vf.legalStatus === s.v ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:text-foreground"}`}
+                    >
+                      {tr(s.k)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* License (with visibility toggle) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfLicense")}</label>
+                  <button
+                    onClick={() => setVf({ ...vf, showLicense: !vf.showLicense })}
+                    className={`flex items-center gap-1 text-[10px] font-montserrat font-bold px-2 py-1 rounded-sm transition-colors ${vf.showLicense ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"}`}
+                  >
+                    <Icon name={vf.showLicense ? "Eye" : "EyeOff"} size={12} />
+                    {tr(vf.showLicense ? "pdVfShow" : "pdVfHidden")}
+                  </button>
+                </div>
+                <input value={vf.license} onChange={(e) => { setVf({ ...vf, license: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfLicense")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+              </div>
+
+              {/* Registry (with visibility toggle) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfRegistry")}</label>
+                  <button
+                    onClick={() => setVf({ ...vf, showRegistry: !vf.showRegistry })}
+                    className={`flex items-center gap-1 text-[10px] font-montserrat font-bold px-2 py-1 rounded-sm transition-colors ${vf.showRegistry ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"}`}
+                  >
+                    <Icon name={vf.showRegistry ? "Eye" : "EyeOff"} size={12} />
+                    {tr(vf.showRegistry ? "pdVfShow" : "pdVfHidden")}
+                  </button>
+                </div>
+                <input value={vf.registry} onChange={(e) => { setVf({ ...vf, registry: e.target.value }); setVfState("idle"); }} placeholder="ОГРНИП / ИНН" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+              </div>
+
+              {vfState === "saved" && <div className="flex items-center gap-2 text-sm text-green-400"><Icon name="CheckCircle2" size={16} />{tr("pdVfSaved")}</div>}
+              {vfState === "error" && <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("pdVfSaveErr")}</div>}
+              <button onClick={saveVerification} disabled={vfState === "saving"} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+                {vfState === "saving" ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Save" size={16} />}
+                {tr("dashSave")}
+              </button>
             </div>
           )}
 
@@ -2028,6 +2202,8 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
               </div>
             ))}
           </div>
+
+          {provider?.verification && <VerificationBlock v={provider.verification} />}
         </div>
 
         <div className="lg:col-span-2 space-y-5">

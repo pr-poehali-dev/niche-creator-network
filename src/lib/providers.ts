@@ -11,6 +11,13 @@ export type ProviderContacts = {
   website: string | null;
 };
 
+export type ProviderVerification = {
+  fullName?: string;
+  legalStatus?: string;
+  license?: string;
+  registry?: string;
+};
+
 export type Provider = {
   slug: string;
   name: LS;
@@ -28,6 +35,7 @@ export type Provider = {
   verified: boolean;
   active: boolean;
   contacts: ProviderContacts | null;
+  verification: ProviderVerification | null;
 };
 
 export function useProviders() {

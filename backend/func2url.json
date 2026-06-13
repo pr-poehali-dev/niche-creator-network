@@ -1,4 +1,6 @@
 {
+  "clients": "https://functions.poehali.dev/b769d02e-abcc-439c-97b0-b7d2df83b89e",
+  "save-verification": "https://functions.poehali.dev/180235ac-1778-486e-aee8-e6ea4b14736b",
   "save-contacts": "https://functions.poehali.dev/a547719a-29e2-461b-9b2d-c464b8de6c20",
   "providers": "https://functions.poehali.dev/ec9b19d7-932a-4390-a8f0-e993245c22c4",
   "geolocate": "https://functions.poehali.dev/fd6259d5-6da8-4d77-8890-fb31fc5839b7",

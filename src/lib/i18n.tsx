@@ -576,6 +576,39 @@ export const t: Dict = {
   pdSocialTitle: { ru: "Социальные сети", en: "Social networks" },
   pdContactsSaved: { ru: "Контакты сохранены", en: "Contacts saved" },
   pdContactsSaveErr: { ru: "Не удалось сохранить. Попробуйте ещё раз.", en: "Failed to save. Please try again." },
+
+  // Provider verification
+  pdTabVerify: { ru: "Верификация", en: "Verification" },
+  pdVerifyTitle: { ru: "Документы и реквизиты", en: "Documents & details" },
+  pdVerifyHint: { ru: "Эти данные нужны для проверки. Включите переключатель рядом с полем, чтобы клиенты видели его в вашей карточке. Номер паспорта никогда не показывается публично.", en: "This data is required for verification. Toggle the switch next to a field to show it on your public card. The passport number is never shown publicly." },
+  pdVfFullName: { ru: "ФИО полностью", en: "Full name" },
+  pdVfPassport: { ru: "Серия и номер паспорта", en: "Passport series & number" },
+  pdVfPassportNote: { ru: "Хранится защищённо, не показывается клиентам", en: "Stored securely, never shown to clients" },
+  pdVfStatus: { ru: "Статус", en: "Legal status" },
+  pdVfStatusSelf: { ru: "Самозанятый", en: "Self-employed" },
+  pdVfStatusIp: { ru: "ИП", en: "Sole proprietor" },
+  pdVfStatusCompany: { ru: "Юр. лицо", en: "Company" },
+  pdVfLicense: { ru: "Лицензия на вид деятельности", en: "Activity license" },
+  pdVfRegistry: { ru: "ОГРНИП / ИНН", en: "Registration number / Tax ID" },
+  pdVfShow: { ru: "Показывать клиентам", en: "Show to clients" },
+  pdVfHidden: { ru: "Скрыто", en: "Hidden" },
+  pdVfSaved: { ru: "Данные верификации сохранены", en: "Verification saved" },
+  pdVfSaveErr: { ru: "Не удалось сохранить. Попробуйте ещё раз.", en: "Failed to save. Please try again." },
+
+  // Public verification block (on card/profile)
+  verifyBlockTitle: { ru: "Подтверждённые данные", en: "Verified details" },
+  verifyName: { ru: "ФИО", en: "Name" },
+  verifyStatus: { ru: "Статус", en: "Status" },
+  verifyLicense: { ru: "Лицензия", en: "License" },
+  verifyRegistry: { ru: "Реквизиты", en: "Registration" },
+
+  // Client data
+  cdClientData: { ru: "Ваши данные", en: "Your details" },
+  cdClientDataHint: { ru: "Эти данные нужны для оформления заявок исполнителям.", en: "These details are used when you place orders with providers." },
+  cdClientName: { ru: "ФИО", en: "Full name" },
+  cdClientPhone: { ru: "Номер телефона", en: "Phone number" },
+  cdClientSaved: { ru: "Данные сохранены", en: "Details saved" },
+  cdClientSaveErr: { ru: "Не удалось сохранить. Попробуйте ещё раз.", en: "Failed to save. Please try again." },
 };
 
 interface LangCtx {

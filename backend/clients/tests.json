@@ -1,0 +1,30 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET without clientId returns 400",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 400
+    },
+    {
+      "name": "Save client data",
+      "method": "POST",
+      "path": "/",
+      "body": {"clientId": "demo-client", "fullName": "Дмитрий Орлов", "phone": "+79990000000", "email": "d.orlov@email.com"},
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET saved client",
+      "method": "GET",
+      "path": "/?clientId=demo-client",
+      "queryStringParameters": {"clientId": "demo-client"},
+      "expectedStatus": 200
+    }
+  ]
+}

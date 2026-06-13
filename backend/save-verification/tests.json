@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Missing slug returns 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"fullName": "Test"},
+      "expectedStatus": 400
+    },
+    {
+      "name": "Save verification for morozov",
+      "method": "POST",
+      "path": "/",
+      "body": {"slug": "morozov", "fullName": "Морозов Александр Сергеевич", "passportNumber": "4500 123456", "legalStatus": "ip", "license": "Лицензия № ПЛ-7701", "registry": "ОГРНИП 319774600123456", "showFullName": true, "showLegalStatus": true, "showLicense": true, "showRegistry": true},
+      "expectedStatus": 200
+    }
+  ]
+}

@@ -26,11 +26,14 @@ def handler(event: dict, context) -> dict:
 
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
+    # ВНИМАНИЕ: passport_number НИКОГДА не выбираем в публичный ответ.
     cur.execute(
         f'SELECT slug, name_ru, name_en, title_ru, title_en, city_ru, city_en, '
         f'lat, lon, price_ru, price_en, rating, reviews, cases, experience, img, '
         f'tags_ru, tags_en, phone, email, whatsapp, telegram, website, '
-        f'verified, subscription_active '
+        f'verified, subscription_active, '
+        f'full_name, legal_status, license_info, registry_number, '
+        f'show_full_name, show_legal_status, show_license, show_registry '
         f'FROM {SCHEMA}.providers ORDER BY subscription_active DESC, rating DESC, reviews DESC'
     )
     rows = cur.fetchall()
@@ -68,11 +71,24 @@ def handler(event: dict, context) -> dict:
                 'telegram': r[21],
                 'website': r[22],
             }
+            # Публичная верификация: только поля с включённой видимостью.
+            # Номер паспорта не отдаётся никогда.
+            public_verification = {}
+            if bool(r[29]) and r[25]:
+                public_verification['fullName'] = r[25]
+            if bool(r[30]) and r[26]:
+                public_verification['legalStatus'] = r[26]
+            if bool(r[31]) and r[27]:
+                public_verification['license'] = r[27]
+            if bool(r[32]) and r[28]:
+                public_verification['registry'] = r[28]
+            item['verification'] = public_verification or None
         else:
-            # Обезличиваем: скрываем имя, фото и контакты
+            # Обезличиваем: скрываем имя, фото, контакты и верификацию
             item['name'] = {'ru': 'Профиль скрыт', 'en': 'Profile hidden'}
             item['img'] = None
             item['contacts'] = None
+            item['verification'] = None
         providers.append(item)
 
     return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'providers': providers})}
