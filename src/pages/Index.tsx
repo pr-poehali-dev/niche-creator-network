@@ -1,142 +1,220 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
+import { useLang, t } from "@/lib/i18n";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/e0e84afb-8e88-40ff-81b2-c3597f9a8371.jpg";
 const POLYGRAPH_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/c211bedb-fcf6-49e0-abb2-ad98fcf0bdac.jpg";
 const DETECTIVE_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b893f56c-cd01-49d7-b962-7f78f87ace2c.jpg";
+const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/0b2c5db2-c85b-4009-99db-6b023ed84bf5.jpg";
 
-type Section = "home" | "profile" | "cases" | "services" | "courses" | "chat" | "forum" | "contacts";
+type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts";
 
-const NAV_ITEMS: { id: Section; label: string; icon: string }[] = [
-  { id: "home", label: "Главная", icon: "Home" },
-  { id: "profile", label: "Профиль", icon: "User" },
-  { id: "cases", label: "Кейсы", icon: "FolderOpen" },
-  { id: "services", label: "Услуги", icon: "Briefcase" },
-  { id: "courses", label: "Курсы", icon: "GraduationCap" },
-  { id: "chat", label: "Чат", icon: "MessageSquare" },
-  { id: "forum", label: "Форум", icon: "MessagesSquare" },
-  { id: "contacts", label: "Контакты", icon: "Phone" },
+const NAV_ITEMS: { id: Section; key: keyof typeof t; icon: string }[] = [
+  { id: "home", key: "navHome", icon: "Home" },
+  { id: "profile", key: "navProfile", icon: "User" },
+  { id: "cases", key: "navCases", icon: "FolderOpen" },
+  { id: "services", key: "navServices", icon: "Briefcase" },
+  { id: "courses", key: "navCourses", icon: "GraduationCap" },
+  { id: "guards", key: "navGuards", icon: "ShieldCheck" },
+  { id: "chat", key: "navChat", icon: "MessageSquare" },
+  { id: "forum", key: "navForum", icon: "MessagesSquare" },
+  { id: "contacts", key: "navContacts", icon: "Phone" },
 ];
+
+type Lang = "ru" | "en";
+type LS = { ru: string; en: string };
+const L = (v: LS, lang: Lang) => v[lang];
 
 const specialists = [
   {
-    name: "Александр Морозов",
-    title: "Полиграфолог",
+    name: { ru: "Александр Морозов", en: "Alexander Morozov" },
+    title: { ru: "Полиграфолог", en: "Polygraph examiner" },
     rating: 4.9,
     reviews: 134,
     cases: 312,
     experience: 12,
-    city: "Москва",
-    price: "от 8 000 ₽",
+    city: { ru: "Москва", en: "Moscow" },
+    price: { ru: "от 8 000 ₽", en: "from $90" },
     verified: true,
-    tags: ["Полиграф", "HR-проверки", "Корпоративная безопасность"],
+    tags: [
+      { ru: "Полиграф", en: "Polygraph" },
+      { ru: "HR-проверки", en: "HR screening" },
+      { ru: "Корпоративная безопасность", en: "Corporate security" },
+    ],
     img: DETECTIVE_IMAGE,
   },
   {
-    name: "Елена Власова",
-    title: "Частный детектив",
+    name: { ru: "Елена Власова", en: "Elena Vlasova" },
+    title: { ru: "Частный детектив", en: "Private investigator" },
     rating: 4.8,
     reviews: 87,
     cases: 198,
     experience: 9,
-    city: "Санкт-Петербург",
-    price: "от 12 000 ₽",
+    city: { ru: "Лондон", en: "London" },
+    price: { ru: "от 12 000 ₽", en: "from $140" },
     verified: true,
-    tags: ["Розыск", "Наружное наблюдение", "Сбор доказательств"],
+    tags: [
+      { ru: "Розыск", en: "Tracing" },
+      { ru: "Наружное наблюдение", en: "Surveillance" },
+      { ru: "Сбор доказательств", en: "Evidence gathering" },
+    ],
     img: HERO_IMAGE,
   },
   {
-    name: "Игорь Семёнов",
-    title: "Специалист по TSCM",
+    name: { ru: "Игорь Семёнов", en: "Igor Semenov" },
+    title: { ru: "Специалист по TSCM", en: "TSCM specialist" },
     rating: 5.0,
     reviews: 62,
     cases: 145,
     experience: 15,
-    city: "Москва",
-    price: "от 25 000 ₽",
+    city: { ru: "Дубай", en: "Dubai" },
+    price: { ru: "от 25 000 ₽", en: "from $280" },
     verified: true,
-    tags: ["Поиск жучков", "Контрразведка", "Защита переговоров"],
+    tags: [
+      { ru: "Поиск жучков", en: "Bug sweeping" },
+      { ru: "Контрразведка", en: "Counterintelligence" },
+      { ru: "Защита переговоров", en: "Meeting protection" },
+    ],
     img: POLYGRAPH_IMAGE,
   },
 ];
 
-const SECTION_META: Record<Section, { title: string; crumb: string }> = {
-  home: { title: "Главная", crumb: "Главная" },
-  profile: { title: "Профиль специалиста", crumb: "Специалисты" },
-  cases: { title: "Профессиональные кейсы", crumb: "Кейсы" },
-  services: { title: "Каталог услуг", crumb: "Услуги" },
-  courses: { title: "Курсы и тренинги", crumb: "Курсы" },
-  chat: { title: "Профессиональный чат", crumb: "Чат" },
-  forum: { title: "Профессиональный форум", crumb: "Форум" },
-  contacts: { title: "Контакты и поддержка", crumb: "Контакты" },
+const guards = [
+  {
+    name: { ru: "ЧОО «Легион Секьюрити»", en: "Legion Security Ltd." },
+    type: { ru: "Физическая охрана · Москва", en: "Physical security · Moscow" },
+    rating: 4.9,
+    reviews: 210,
+    employees: 480,
+    objects: 320,
+    founded: 2008,
+    price: { ru: "от 180 ₽/час", en: "from $2/hour" },
+    tags: [
+      { ru: "Охрана объектов", en: "Site guarding" },
+      { ru: "Пультовая охрана", en: "Alarm monitoring" },
+      { ru: "Инкассация", en: "Cash-in-transit" },
+    ],
+    img: GUARDS_IMAGE,
+  },
+  {
+    name: { ru: "Global Shield Group", en: "Global Shield Group" },
+    type: { ru: "Личная охрана · Дубай", en: "Close protection · Dubai" },
+    rating: 5.0,
+    reviews: 96,
+    employees: 260,
+    objects: 140,
+    founded: 2012,
+    price: { ru: "от 9 000 ₽/смена", en: "from $100/shift" },
+    tags: [
+      { ru: "Телохранители", en: "Bodyguards" },
+      { ru: "VIP-сопровождение", en: "VIP escort" },
+      { ru: "Анализ угроз", en: "Threat analysis" },
+    ],
+    img: HERO_IMAGE,
+  },
+  {
+    name: { ru: "Sentinel Protective Services", en: "Sentinel Protective Services" },
+    type: { ru: "Корпоративная охрана · Лондон", en: "Corporate security · London" },
+    rating: 4.8,
+    reviews: 154,
+    employees: 620,
+    objects: 410,
+    founded: 2005,
+    price: { ru: "от 220 ₽/час", en: "from $2.5/hour" },
+    tags: [
+      { ru: "Бизнес-центры", en: "Business centres" },
+      { ru: "Видеонаблюдение", en: "CCTV monitoring" },
+      { ru: "Контроль доступа", en: "Access control" },
+    ],
+    img: GUARDS_IMAGE,
+  },
+];
+
+const guardServices = [
+  { icon: "Building2", title: { ru: "Охрана объектов", en: "Site security" }, desc: { ru: "Круглосуточная физическая охрана офисов, складов, ТЦ и промышленных объектов", en: "24/7 physical security for offices, warehouses, malls and industrial sites" } },
+  { icon: "UserCog", title: { ru: "Личная охрана", en: "Close protection" }, desc: { ru: "Профессиональные телохранители и VIP-сопровождение для руководителей и публичных персон", en: "Professional bodyguards and VIP escort for executives and public figures" } },
+  { icon: "Radio", title: { ru: "Пультовая охрана", en: "Alarm monitoring" }, desc: { ru: "Мониторинг сигнализации с выездом групп быстрого реагирования", en: "Alarm monitoring with rapid response team dispatch" } },
+  { icon: "Video", title: { ru: "Видеонаблюдение", en: "Video surveillance" }, desc: { ru: "Проектирование, монтаж и обслуживание систем видеонаблюдения и контроля доступа", en: "Design, installation and maintenance of CCTV and access control systems" } },
+];
+
+const SECTION_CRUMB: Record<Section, keyof typeof t> = {
+  home: "crumbHome",
+  profile: "crumbProfile",
+  cases: "crumbCases",
+  services: "crumbServices",
+  courses: "crumbCourses",
+  guards: "crumbGuards",
+  chat: "crumbChat",
+  forum: "crumbForum",
+  contacts: "crumbContacts",
 };
 
 const cases = [
   {
-    title: "Корпоративный шпионаж: обнаружение прослушки в переговорной",
-    category: "TSCM",
-    date: "март 2024",
+    title: { ru: "Корпоративный шпионаж: обнаружение прослушки в переговорной", en: "Corporate espionage: bugs found in a boardroom" },
+    category: { ru: "TSCM", en: "TSCM" },
+    date: { ru: "март 2024", en: "March 2024" },
     views: 1240,
     likes: 87,
-    summary: "В ходе плановой проверки переговорной комнаты крупного холдинга были обнаружены 3 замаскированных устройства...",
-    author: "И. Семёнов",
+    summary: { ru: "В ходе плановой проверки переговорной комнаты крупного холдинга были обнаружены 3 замаскированных устройства...", en: "During a routine sweep of a large holding's boardroom, 3 concealed devices were discovered..." },
+    author: { ru: "И. Семёнов", en: "I. Semenov" },
   },
   {
-    title: "Верификация кандидата на должность финансового директора",
-    category: "Полиграф",
-    date: "февраль 2024",
+    title: { ru: "Верификация кандидата на должность финансового директора", en: "Vetting a candidate for a CFO position" },
+    category: { ru: "Полиграф", en: "Polygraph" },
+    date: { ru: "февраль 2024", en: "February 2024" },
     views: 890,
     likes: 64,
-    summary: "Проведена комплексная психофизиологическая экспертиза кандидата с применением компьютерного полиграфа...",
-    author: "А. Морозов",
+    summary: { ru: "Проведена комплексная психофизиологическая экспертиза кандидата с применением компьютерного полиграфа...", en: "A comprehensive psychophysiological examination of the candidate was conducted using a computer polygraph..." },
+    author: { ru: "А. Морозов", en: "A. Morozov" },
   },
   {
-    title: "Розыск пропавшего без вести лица: методика и результат",
-    category: "Детективная деятельность",
-    date: "январь 2024",
+    title: { ru: "Розыск пропавшего без вести лица: методика и результат", en: "Tracing a missing person: method and result" },
+    category: { ru: "Детективная деятельность", en: "Investigation" },
+    date: { ru: "январь 2024", en: "January 2024" },
     views: 2100,
     likes: 142,
-    summary: "Успешное завершение розыскного дела за 11 суток. Применение OSINT-методов и агентурных источников...",
-    author: "Е. Власова",
+    summary: { ru: "Успешное завершение розыскного дела за 11 суток. Применение OSINT-методов и агентурных источников...", en: "A search case successfully closed in 11 days using OSINT methods and human sources..." },
+    author: { ru: "Е. Власова", en: "E. Vlasova" },
   },
 ];
 
 const services = [
-  { icon: "Activity", title: "Полиграф-проверка", price: "от 8 000 ₽", time: "2–3 часа", desc: "Психофизиологическое исследование с применением компьютерного полиграфа для HR и корпоративных нужд" },
-  { icon: "Search", title: "Поиск прослушивающих устройств", price: "от 25 000 ₽", time: "от 4 часов", desc: "Профессиональное радиочастотное сканирование помещений, офисов и транспортных средств" },
-  { icon: "Eye", title: "Наружное наблюдение", price: "от 12 000 ₽/день", time: "от 1 дня", desc: "Профессиональная слежка силами сертифицированных детективов с фото- и видеофиксацией" },
-  { icon: "FileSearch", title: "Сбор досье", price: "от 15 000 ₽", time: "3–7 дней", desc: "Комплексная проверка физических и юридических лиц по открытым и закрытым источникам" },
-  { icon: "Shield", title: "Защита переговоров", price: "от 30 000 ₽", time: "под ключ", desc: "Обеспечение защищённого периметра для конфиденциальных встреч на вашей или нейтральной территории" },
-  { icon: "UserCheck", title: "HR-безопасность", price: "от 5 000 ₽", time: "1–2 дня", desc: "Проверка соискателей, мониторинг персонала, расследование инцидентов внутри компании" },
+  { icon: "Activity", title: { ru: "Полиграф-проверка", en: "Polygraph examination" }, price: { ru: "от 8 000 ₽", en: "from $90" }, time: { ru: "2–3 часа", en: "2–3 hours" }, desc: { ru: "Психофизиологическое исследование с применением компьютерного полиграфа для HR и корпоративных нужд", en: "Psychophysiological examination with a computer polygraph for HR and corporate needs" } },
+  { icon: "Search", title: { ru: "Поиск прослушивающих устройств", en: "Bug detection sweep" }, price: { ru: "от 25 000 ₽", en: "from $280" }, time: { ru: "от 4 часов", en: "from 4 hours" }, desc: { ru: "Профессиональное радиочастотное сканирование помещений, офисов и транспортных средств", en: "Professional RF sweeping of premises, offices and vehicles" } },
+  { icon: "Eye", title: { ru: "Наружное наблюдение", en: "Surveillance" }, price: { ru: "от 12 000 ₽/день", en: "from $140/day" }, time: { ru: "от 1 дня", en: "from 1 day" }, desc: { ru: "Профессиональная слежка силами сертифицированных детективов с фото- и видеофиксацией", en: "Professional surveillance by certified investigators with photo and video evidence" } },
+  { icon: "FileSearch", title: { ru: "Сбор досье", en: "Background dossier" }, price: { ru: "от 15 000 ₽", en: "from $170" }, time: { ru: "3–7 дней", en: "3–7 days" }, desc: { ru: "Комплексная проверка физических и юридических лиц по открытым и закрытым источникам", en: "Comprehensive checks of individuals and companies via open and closed sources" } },
+  { icon: "Shield", title: { ru: "Защита переговоров", en: "Meeting protection" }, price: { ru: "от 30 000 ₽", en: "from $340" }, time: { ru: "под ключ", en: "turnkey" }, desc: { ru: "Обеспечение защищённого периметра для конфиденциальных встреч на вашей или нейтральной территории", en: "A secure perimeter for confidential meetings on your or neutral territory" } },
+  { icon: "UserCheck", title: { ru: "HR-безопасность", en: "HR security" }, price: { ru: "от 5 000 ₽", en: "from $60" }, time: { ru: "1–2 дня", en: "1–2 days" }, desc: { ru: "Проверка соискателей, мониторинг персонала, расследование инцидентов внутри компании", en: "Applicant screening, staff monitoring and internal incident investigations" } },
 ];
 
 const courses = [
   {
-    title: "Основы полиграфологии",
-    instructor: "А. Морозов",
-    level: "Начинающий",
-    duration: "32 часа",
-    price: "24 900 ₽",
+    title: { ru: "Основы полиграфологии", en: "Polygraph fundamentals" },
+    instructor: { ru: "А. Морозов", en: "A. Morozov" },
+    level: { ru: "Начинающий", en: "Beginner" },
+    duration: { ru: "32 часа", en: "32 hours" },
+    price: { ru: "24 900 ₽", en: "$280" },
     students: 312,
     rating: 4.8,
     img: POLYGRAPH_IMAGE,
   },
   {
-    title: "TSCM: технический поиск средств наблюдения",
-    instructor: "И. Семёнов",
-    level: "Продвинутый",
-    duration: "48 часов",
-    price: "49 900 ₽",
+    title: { ru: "TSCM: технический поиск средств наблюдения", en: "TSCM: technical surveillance counter-measures" },
+    instructor: { ru: "И. Семёнов", en: "I. Semenov" },
+    level: { ru: "Продвинутый", en: "Advanced" },
+    duration: { ru: "48 часов", en: "48 hours" },
+    price: { ru: "49 900 ₽", en: "$560" },
     students: 187,
     rating: 4.9,
     img: HERO_IMAGE,
   },
   {
-    title: "Частная детективная деятельность: с нуля до лицензии",
-    instructor: "Е. Власова",
-    level: "С нуля",
-    duration: "60 часов",
-    price: "39 900 ₽",
+    title: { ru: "Частная детективная деятельность: с нуля до лицензии", en: "Private investigation: from zero to license" },
+    instructor: { ru: "Е. Власова", en: "E. Vlasova" },
+    level: { ru: "С нуля", en: "From scratch" },
+    duration: { ru: "60 часов", en: "60 hours" },
+    price: { ru: "39 900 ₽", en: "$450" },
     students: 248,
     rating: 4.7,
     img: DETECTIVE_IMAGE,
@@ -144,19 +222,19 @@ const courses = [
 ];
 
 const messages = [
-  { user: "А. Морозов", time: "10:42", text: "Игорь, можете порекомендовать анализатор нелинейностей для работы в полевых условиях?" },
-  { user: "И. Семёнов", time: "10:48", text: "Рекомендую НЕЛАН-В. Компактный, хорошая чувствительность. Использую его уже 3 года." },
-  { user: "Е. Власова", time: "11:02", text: "Коллеги, вопрос по документированию. Как оформляете итоговый отчёт при комплексной проверке?" },
-  { user: "А. Морозов", time: "11:15", text: "Есть готовый шаблон, соответствующий требованиям. Скину в личку." },
-  { user: "К. Петров", time: "11:28", text: "Добрый день всем! Новый участник, специализация — корпоративная разведка и безопасность бизнеса." },
+  { user: { ru: "А. Морозов", en: "A. Morozov" }, time: "10:42", text: { ru: "Игорь, можете порекомендовать анализатор нелинейностей для работы в полевых условиях?", en: "Igor, can you recommend a non-linear junction detector for field work?" } },
+  { user: { ru: "И. Семёнов", en: "I. Semenov" }, time: "10:48", text: { ru: "Рекомендую НЕЛАН-В. Компактный, хорошая чувствительность. Использую его уже 3 года.", en: "I recommend the NELAN-V. Compact, good sensitivity. I've used it for 3 years." } },
+  { user: { ru: "Е. Власова", en: "E. Vlasova" }, time: "11:02", text: { ru: "Коллеги, вопрос по документированию. Как оформляете итоговый отчёт при комплексной проверке?", en: "Colleagues, a documentation question. How do you format the final report for a full audit?" } },
+  { user: { ru: "А. Морозов", en: "A. Morozov" }, time: "11:15", text: { ru: "Есть готовый шаблон, соответствующий требованиям. Скину в личку.", en: "I have a ready-made compliant template. I'll send it in DM." } },
+  { user: { ru: "К. Петров", en: "K. Petrov" }, time: "11:28", text: { ru: "Добрый день всем! Новый участник, специализация — корпоративная разведка и безопасность бизнеса.", en: "Hello everyone! New member here, specializing in corporate intelligence and business security." } },
 ];
 
 const forumTopics = [
-  { title: "Легитимность OSINT в РФ 2024: что можно, что нельзя", replies: 34, views: 1820, hot: true, category: "Право" },
-  { title: "Сертификация полиграфологов: какой курс выбрать?", replies: 21, views: 940, hot: false, category: "Обучение" },
-  { title: "Оборудование для TSCM: рейтинг 2024", replies: 58, views: 3210, hot: true, category: "Оборудование" },
-  { title: "Работа с корпоративными клиентами: договорная база", replies: 17, views: 720, hot: false, category: "Бизнес" },
-  { title: "Этика частного детектива: сложные случаи", replies: 43, views: 2100, hot: true, category: "Практика" },
+  { title: { ru: "Легитимность OSINT в разных юрисдикциях: что можно, что нельзя", en: "OSINT legality across jurisdictions: what's allowed, what's not" }, replies: 34, views: 1820, hot: true, category: { ru: "Право", en: "Law" } },
+  { title: { ru: "Сертификация полиграфологов: какой курс выбрать?", en: "Polygraph certification: which course to choose?" }, replies: 21, views: 940, hot: false, category: { ru: "Обучение", en: "Training" } },
+  { title: { ru: "Оборудование для TSCM: рейтинг 2024", en: "TSCM equipment: 2024 ranking" }, replies: 58, views: 3210, hot: true, category: { ru: "Оборудование", en: "Equipment" } },
+  { title: { ru: "Работа с корпоративными клиентами: договорная база", en: "Working with corporate clients: contract framework" }, replies: 17, views: 720, hot: false, category: { ru: "Бизнес", en: "Business" } },
+  { title: { ru: "Этика частного детектива: сложные случаи", en: "Private investigator ethics: hard cases" }, replies: 43, views: 2100, hot: true, category: { ru: "Практика", en: "Practice" } },
 ];
 
 function StarRating({ rating }: { rating: number }) {
@@ -172,6 +250,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function Index() {
+  const { lang, setLang, tr } = useLang();
   const [active, setActive] = useState<Section>("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
@@ -188,6 +267,7 @@ export default function Index() {
       case "cases": return <CasesSection />;
       case "services": return <ServicesSection />;
       case "courses": return <CoursesSection />;
+      case "guards": return <GuardsSection />;
       case "chat": return <ChatSection chatInput={chatInput} setChatInput={setChatInput} />;
       case "forum": return <ForumSection />;
       case "contacts": return <ContactsSection />;
@@ -205,31 +285,39 @@ export default function Index() {
             </div>
             <div>
               <span className="font-montserrat font-bold text-lg tracking-tight text-foreground">SECURE<span className="text-gold">NET</span></span>
-              <div className="text-[9px] text-muted-foreground font-montserrat tracking-widest uppercase leading-none">Профессиональная платформа</div>
+              <div className="text-[9px] text-muted-foreground font-montserrat tracking-widest uppercase leading-none">{tr("brandSub")}</div>
             </div>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-6">
+          <nav className="hidden lg:flex items-center gap-5">
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
                 onClick={() => go(item.id)}
                 className={`nav-link text-sm font-montserrat font-medium tracking-wide transition-colors ${active === item.id ? "text-gold active" : "text-muted-foreground hover:text-foreground"}`}
               >
-                {item.label}
+                {tr(item.key)}
               </button>
             ))}
           </nav>
 
           <div className="flex items-center gap-3">
-            <button className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-              <Icon name="Bell" size={16} />
-            </button>
+            <div className="flex items-center border border-border rounded-sm overflow-hidden">
+              {(["ru", "en"] as const).map((lng) => (
+                <button
+                  key={lng}
+                  onClick={() => setLang(lng)}
+                  className={`px-2.5 py-1.5 text-xs font-montserrat font-bold uppercase transition-colors ${lang === lng ? "bg-gold text-[hsl(220,20%,6%)]" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  {lng}
+                </button>
+              ))}
+            </div>
             <button className="hidden sm:flex items-center gap-2 px-4 py-2 border border-gold text-gold text-sm font-montserrat font-semibold hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all duration-200 rounded-sm">
-              Войти
+              {tr("login")}
             </button>
-            <button className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
-              Вступить
+            <button className="hidden sm:block gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+              {tr("join")}
             </button>
             <button className="lg:hidden text-muted-foreground" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               <Icon name={mobileMenuOpen ? "X" : "Menu"} size={22} />
@@ -246,7 +334,7 @@ export default function Index() {
                 className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-montserrat border-b border-border last:border-0 ${active === item.id ? "text-gold bg-secondary" : "text-muted-foreground"}`}
               >
                 <Icon name={item.icon} size={16} />
-                {item.label}
+                {tr(item.key)}
               </button>
             ))}
           </div>
@@ -259,10 +347,10 @@ export default function Index() {
             <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2 text-xs font-montserrat">
               <button onClick={() => go("home")} className="text-muted-foreground hover:text-gold transition-colors flex items-center gap-1">
                 <Icon name="Home" size={12} />
-                Главная
+                {tr("crumbHome")}
               </button>
               <Icon name="ChevronRight" size={12} className="text-muted-foreground" />
-              <span className="text-gold font-medium">{SECTION_META[active].crumb}</span>
+              <span className="text-gold font-medium">{tr(SECTION_CRUMB[active])}</span>
             </div>
           </div>
         </div>
@@ -284,31 +372,31 @@ export default function Index() {
                 </div>
                 <span className="font-montserrat font-bold text-sm text-foreground">SECURE<span className="text-gold">NET</span></span>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">Закрытое профессиональное сообщество для специалистов в сфере безопасности России</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{tr("footerDesc")}</p>
             </div>
             <div>
-              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">Платформа</div>
-              {["О нас", "Специалисты", "Кейсы", "Услуги", "Курсы"].map(l => (
-                <div key={l} className="text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2">{l}</div>
+              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerPlatform")}</div>
+              {(["fAbout", "fSpecialists", "navCases", "navServices", "navCourses"] as const).map(l => (
+                <div key={l} className="text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2">{tr(l)}</div>
               ))}
             </div>
             <div>
-              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">Сообщество</div>
-              {["Форум", "Чат", "Мероприятия", "Новости отрасли"].map(l => (
-                <div key={l} className="text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2">{l}</div>
+              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerCommunity")}</div>
+              {(["navForum", "navChat", "fEvents", "fNews"] as const).map(l => (
+                <div key={l} className="text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2">{tr(l)}</div>
               ))}
             </div>
             <div>
-              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">Документы</div>
-              {["Политика конфиденциальности", "Условия использования", "Пользовательское соглашение", "Оферта"].map(l => (
-                <div key={l} className="text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2">{l}</div>
+              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerDocs")}</div>
+              {(["fPrivacy", "fTerms", "fAgreement", "fOffer"] as const).map(l => (
+                <div key={l} className="text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2">{tr(l)}</div>
               ))}
             </div>
           </div>
           <div className="divider-gold mt-8 mb-6" />
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-            <div className="text-xs text-muted-foreground">© 2024 SecureNet. Все права защищены.</div>
-            <div className="text-xs text-muted-foreground">Платформа для верифицированных специалистов</div>
+            <div className="text-xs text-muted-foreground">{tr("rights")}</div>
+            <div className="text-xs text-muted-foreground">{tr("forVerified")}</div>
           </div>
         </div>
       </footer>
@@ -317,34 +405,35 @@ export default function Index() {
 }
 
 function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
+  const { lang, tr } = useLang();
   return (
     <div>
       <section className="relative overflow-hidden grid-line-bg min-h-[92vh] flex items-center vignette">
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/40 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
         <div className="absolute inset-0">
-          <img src={HERO_IMAGE} alt="Специалист по безопасности" className="w-full h-full object-cover opacity-25" />
+          <img src={HERO_IMAGE} alt="Security" className="w-full h-full object-cover opacity-25" />
         </div>
         <div className="absolute top-1/4 -left-40 w-[500px] h-[500px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.1) 0%, transparent 70%)" }} />
         <div className="relative z-20 max-w-7xl mx-auto px-4 py-24">
           <div className="max-w-2xl stagger">
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-6 flex-wrap">
               <div className="tag-security inline-flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse-gold" />
-                Закрытая платформа
+                {tr("closedPlatform")}
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-montserrat">
                 <Icon name="ShieldCheck" size={13} className="text-gold" />
-                Верификация всех участников
+                {tr("verifyAll")}
               </div>
             </div>
             <h1 className="font-montserrat font-extrabold text-5xl md:text-6xl lg:text-7xl text-foreground leading-[0.95] mb-6 tracking-tight">
-              Профессионалы<br />
-              <span className="gold-text-gradient">безопасности</span><br />
-              России
+              {tr("heroTitle1")}<br />
+              <span className="gold-text-gradient">{tr("heroTitle2")}</span><br />
+              {tr("heroTitle3")}
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-xl">
-              Верифицированное сообщество полиграфологов, частных детективов, TSCM-специалистов и экспертов корпоративной безопасности. Кейсы, услуги, курсы и деловые связи — в одном месте.
+              {tr("heroDesc")}
             </p>
             <div className="flex flex-wrap gap-3">
               <button
@@ -352,25 +441,25 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
                 className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-8 py-3.5 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm flex items-center gap-2"
               >
                 <Icon name="Search" size={16} />
-                Найти специалиста
+                {tr("findSpecialist")}
               </button>
               <button
                 onClick={() => setActive("cases")}
                 className="border border-border text-foreground px-8 py-3.5 font-montserrat font-semibold text-sm tracking-wide hover:border-gold hover:text-gold transition-all rounded-sm flex items-center gap-2"
               >
-                Смотреть кейсы
+                {tr("viewCases")}
                 <Icon name="ArrowRight" size={16} />
               </button>
             </div>
             <div className="flex items-center gap-6 mt-10 flex-wrap">
               {[
-                { icon: "BadgeCheck", t: "Проверенные лицензии" },
-                { icon: "Lock", t: "Конфиденциальность" },
-                { icon: "Scale", t: "Работа в правовом поле" },
+                { icon: "BadgeCheck", t: "trust1" as const },
+                { icon: "Lock", t: "trust2" as const },
+                { icon: "Scale", t: "trust3" as const },
               ].map((b) => (
                 <div key={b.t} className="flex items-center gap-2 text-xs text-muted-foreground font-montserrat">
                   <Icon name={b.icon} size={14} className="text-gold" />
-                  {b.t}
+                  {tr(b.t)}
                 </div>
               ))}
             </div>
@@ -380,14 +469,14 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
           <div className="max-w-7xl mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
               {[
-                { n: "1 240+", l: "Верифицированных специалистов" },
-                { n: "4 800+", l: "Реализованных кейсов" },
-                { n: "320+", l: "Доступных услуг" },
-                { n: "98%", l: "Довольных клиентов" },
+                { n: "1 240+", l: "statSpecialists" as const },
+                { n: "4 800+", l: "statCases" as const },
+                { n: "320+", l: "statServices" as const },
+                { n: "98%", l: "statClients" as const },
               ].map((s) => (
                 <div key={s.n} className="py-5 px-6 text-center">
                   <div className="stat-number text-2xl mb-1">{s.n}</div>
-                  <div className="text-xs text-muted-foreground">{s.l}</div>
+                  <div className="text-xs text-muted-foreground">{tr(s.l)}</div>
                 </div>
               ))}
             </div>
@@ -398,30 +487,30 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
       <section className="max-w-7xl mx-auto px-4 py-20">
         <div className="flex items-end justify-between mb-10">
           <div>
-            <div className="tag-security mb-3 inline-block">Специалисты</div>
-            <h2 className="font-montserrat font-bold text-3xl text-foreground">Топ-эксперты платформы</h2>
+            <div className="tag-security mb-3 inline-block">{tr("specialists")}</div>
+            <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("topExperts")}</h2>
           </div>
           <button onClick={() => setActive("profile")} className="text-sm text-gold hover:gap-2 font-montserrat hidden md:flex items-center gap-1 transition-all">
-            Все специалисты <Icon name="ArrowRight" size={14} />
+            {tr("allSpecialists")} <Icon name="ArrowRight" size={14} />
           </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
           {specialists.map((s) => (
-            <div key={s.name} onClick={() => setActive("profile")} className="card-hover shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group">
+            <div key={s.name.en} onClick={() => setActive("profile")} className="card-hover shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group">
               <div className="h-48 overflow-hidden relative">
-                <img src={s.img} alt={s.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <img src={s.img} alt={L(s.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
                 {s.verified && (
                   <div className="absolute top-3 right-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
                     <Icon name="BadgeCheck" size={12} className="text-gold" />
-                    <span className="text-[10px] font-montserrat font-semibold text-gold">ВЕРИФИЦИРОВАН</span>
+                    <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licensed")}</span>
                   </div>
                 )}
                 <div className="absolute bottom-3 left-4 right-4">
-                  <div className="font-montserrat font-bold text-base text-foreground">{s.name}</div>
+                  <div className="font-montserrat font-bold text-base text-foreground">{L(s.name, lang)}</div>
                   <div className="text-xs text-gold font-montserrat font-medium flex items-center gap-2">
-                    {s.title}
-                    <span className="text-muted-foreground">· {s.experience} лет</span>
+                    {L(s.title, lang)}
+                    <span className="text-muted-foreground">· {s.experience} {tr("yearsShort")}</span>
                   </div>
                 </div>
               </div>
@@ -430,22 +519,22 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
                   <StarRating rating={s.rating} />
                   <span className="text-xs text-muted-foreground">{s.rating} ({s.reviews})</span>
                   <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
-                    <Icon name="MapPin" size={11} />{s.city}
+                    <Icon name="MapPin" size={11} />{L(s.city, lang)}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {s.tags.map((t) => (
-                    <span key={t} className="tag-security">{t}</span>
+                    <span key={t.en} className="tag-security">{L(t, lang)}</span>
                   ))}
                 </div>
                 <div className="divider-gold mb-4" />
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Стоимость услуг</div>
-                    <div className="font-montserrat font-bold text-sm text-gold">{s.price}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("cost")}</div>
+                    <div className="font-montserrat font-bold text-sm text-gold">{L(s.price, lang)}</div>
                   </div>
                   <button className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">
-                    Профиль
+                    {tr("profileBtn")}
                   </button>
                 </div>
               </div>
@@ -458,23 +547,23 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
       <section className="border-t border-border bg-card py-20 relative overflow-hidden ambient-gold">
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           <div className="text-center mb-14">
-            <div className="tag-security mb-3 inline-block">Процесс</div>
-            <h2 className="font-montserrat font-bold text-3xl text-foreground">Как работает платформа</h2>
+            <div className="tag-security mb-3 inline-block">{tr("process")}</div>
+            <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("howItWorks")}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-5 stagger">
             {[
-              { n: "01", icon: "UserPlus", title: "Регистрация", desc: "Подаёте заявку и проходите верификацию документов и лицензий" },
-              { n: "02", icon: "FolderOpen", title: "Профиль и кейсы", desc: "Публикуете портфолио, кейсы и формируете профессиональную репутацию" },
-              { n: "03", icon: "Handshake", title: "Сделки", desc: "Получаете заказы от клиентов через защищённую систему расчётов" },
-              { n: "04", icon: "TrendingUp", title: "Рост", desc: "Развиваетесь, обучаетесь и расширяете сеть деловых контактов" },
+              { n: "01", icon: "UserPlus", title: "step1Title" as const, desc: "step1Desc" as const },
+              { n: "02", icon: "FolderOpen", title: "step2Title" as const, desc: "step2Desc" as const },
+              { n: "03", icon: "Handshake", title: "step3Title" as const, desc: "step3Desc" as const },
+              { n: "04", icon: "TrendingUp", title: "step4Title" as const, desc: "step4Desc" as const },
             ].map((step) => (
               <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-hover">
                 <div className="font-montserrat font-extrabold text-4xl text-gold/15 absolute top-4 right-5">{step.n}</div>
                 <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
                   <Icon name={step.icon} size={19} className="text-[hsl(220,20%,6%)]" />
                 </div>
-                <div className="font-montserrat font-bold text-sm text-foreground mb-2">{step.title}</div>
-                <div className="text-xs text-muted-foreground leading-relaxed">{step.desc}</div>
+                <div className="font-montserrat font-bold text-sm text-foreground mb-2">{tr(step.title)}</div>
+                <div className="text-xs text-muted-foreground leading-relaxed">{tr(step.desc)}</div>
               </div>
             ))}
           </div>
@@ -485,24 +574,24 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
-            <div className="tag-security mb-3 inline-block">Возможности</div>
-            <h2 className="font-montserrat font-bold text-3xl text-foreground">Почему выбирают SecureNet</h2>
+            <div className="tag-security mb-3 inline-block">{tr("features")}</div>
+            <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("whyUs")}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
-              { icon: "ShieldCheck", title: "Верификация специалистов", desc: "Каждый участник проходит проверку документов, лицензий и профессиональной репутации" },
-              { icon: "Lock", title: "Закрытое сообщество", desc: "Доступ только для практикующих специалистов в сфере безопасности. Без посторонних" },
-              { icon: "CreditCard", title: "Безопасные платежи", desc: "Интегрированная система расчётов с автоматическим распределением комиссий" },
-              { icon: "BookOpen", title: "База знаний", desc: "Тысячи кейсов, методических материалов и обучающих программ от практиков" },
-              { icon: "Users", title: "Деловые связи", desc: "Находите партнёров, коллег и клиентов в своей профессиональной нише" },
-              { icon: "Star", title: "Репутация и рейтинг", desc: "Прозрачная система оценки и отзывов для формирования профессиональной репутации" },
+              { icon: "ShieldCheck", title: "feat1Title" as const, desc: "feat1Desc" as const },
+              { icon: "Lock", title: "feat2Title" as const, desc: "feat2Desc" as const },
+              { icon: "CreditCard", title: "feat3Title" as const, desc: "feat3Desc" as const },
+              { icon: "BookOpen", title: "feat4Title" as const, desc: "feat4Desc" as const },
+              { icon: "Users", title: "feat5Title" as const, desc: "feat5Desc" as const },
+              { icon: "Star", title: "feat6Title" as const, desc: "feat6Desc" as const },
             ].map((f) => (
               <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-hover cursor-default">
                 <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110">
                   <Icon name={f.icon} size={18} className="text-[hsl(220,20%,6%)]" />
                 </div>
-                <div className="font-montserrat font-semibold text-sm text-foreground mb-2">{f.title}</div>
-                <div className="text-xs text-muted-foreground leading-relaxed">{f.desc}</div>
+                <div className="font-montserrat font-semibold text-sm text-foreground mb-2">{tr(f.title)}</div>
+                <div className="text-xs text-muted-foreground leading-relaxed">{tr(f.desc)}</div>
               </div>
             ))}
           </div>
@@ -515,18 +604,18 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
         <div className="max-w-4xl mx-auto px-4 relative z-10 text-center">
           <Icon name="Quote" size={40} className="text-gold/30 mx-auto mb-6" />
           <p className="font-montserrat font-medium text-xl md:text-2xl text-foreground leading-relaxed mb-8">
-            «За год на платформе я полностью закрыл вопрос поиска корпоративных клиентов. Закрытое сообщество профессионалов — это совсем другой уровень доверия и качества заказов».
+            {tr("testimonialText")}
           </p>
           <div className="flex items-center justify-center gap-3">
             <div className="w-11 h-11 rounded-sm overflow-hidden border border-gold/40">
-              <img src={DETECTIVE_IMAGE} alt="Александр Морозов" className="w-full h-full object-cover" />
+              <img src={DETECTIVE_IMAGE} alt="Alexander Morozov" className="w-full h-full object-cover" />
             </div>
             <div className="text-left">
               <div className="font-montserrat font-bold text-sm text-foreground flex items-center gap-1.5">
-                Александр Морозов
+                {L(specialists[0].name, lang)}
                 <Icon name="BadgeCheck" size={14} className="text-gold" />
               </div>
-              <div className="text-xs text-muted-foreground">Полиграфолог · 12 лет опыта</div>
+              <div className="text-xs text-muted-foreground">{L(specialists[0].title, lang)} · {specialists[0].experience} {tr("yearsShort")}</div>
             </div>
           </div>
         </div>
@@ -535,19 +624,19 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
       <section className="max-w-7xl mx-auto px-4 py-20">
         <div className="border border-gold/30 rounded-sm glass-card p-10 md:p-16 text-center relative overflow-hidden grid-line-bg glow-gold ambient-gold">
           <div className="relative z-10">
-            <div className="tag-security mb-4 inline-block">Закрытый доступ</div>
+            <div className="tag-security mb-4 inline-block">{tr("closedAccess")}</div>
             <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-4">
-              Вступите в профессиональное<br /><span className="gold-text-gradient">сообщество сегодня</span>
+              {tr("ctaTitle1")}<br /><span className="gold-text-gradient">{tr("ctaTitle2")}</span>
             </h2>
             <p className="text-muted-foreground text-sm mb-8 max-w-xl mx-auto">
-              Оставьте заявку на верификацию — наша команда свяжется с вами в течение 24 часов для проверки профессиональных документов
+              {tr("ctaDesc")}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <button className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm">
-                Подать заявку на вступление
+                {tr("applyJoin")}
               </button>
               <button onClick={() => setActive("contacts")} className="border border-border text-foreground px-8 py-4 font-montserrat font-semibold text-sm hover:border-gold hover:text-gold transition-all rounded-sm">
-                Связаться с нами
+                {tr("contactUs")}
               </button>
             </div>
           </div>
@@ -558,15 +647,16 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
 }
 
 function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
+  const { lang, tr } = useLang();
   const [activeTab, setActiveTab] = useState<"cases" | "services" | "reviews">("cases");
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="flex items-center justify-between mb-6">
-        <div className="tag-security inline-block">Профиль специалиста</div>
+        <div className="tag-security inline-block">{tr("profileSection")}</div>
         <button onClick={() => setActive("home")} className="text-xs text-muted-foreground hover:text-gold transition-colors font-montserrat flex items-center gap-1">
           <Icon name="ArrowLeft" size={13} />
-          Назад
+          {tr("back")}
         </button>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -581,43 +671,53 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
                 <img src={DETECTIVE_IMAGE} alt="Аватар" className="w-full h-full object-cover" />
               </div>
               <div className="flex items-center gap-2 mb-1">
-                <div className="font-montserrat font-bold text-lg text-foreground">Александр Морозов</div>
+                <div className="font-montserrat font-bold text-lg text-foreground">{L(specialists[0].name, lang)}</div>
                 <Icon name="BadgeCheck" size={16} className="text-gold" />
               </div>
-              <div className="text-gold text-xs font-montserrat font-medium mb-1">Полиграфолог · 12 лет опыта</div>
-              <div className="text-xs text-muted-foreground mb-4">Москва · Россия</div>
+              <div className="text-gold text-xs font-montserrat font-medium mb-1">{L(specialists[0].title, lang)} · 12 {tr("yearsShort")}</div>
+              <div className="text-xs text-muted-foreground mb-4">{L(specialists[0].city, lang)}</div>
               <div className="flex items-center gap-2 mb-4">
                 <StarRating rating={4.9} />
                 <span className="text-xs text-muted-foreground">4.9 (134 отзыва)</span>
               </div>
               <div className="divider-gold mb-4" />
               <div className="grid grid-cols-3 text-center gap-2 mb-4">
-                <div><div className="stat-number text-xl">312</div><div className="text-[10px] text-muted-foreground">Кейсов</div></div>
-                <div><div className="stat-number text-xl">134</div><div className="text-[10px] text-muted-foreground">Отзывов</div></div>
-                <div><div className="stat-number text-xl">98%</div><div className="text-[10px] text-muted-foreground">Успех</div></div>
+                <div><div className="stat-number text-xl">312</div><div className="text-[10px] text-muted-foreground">{tr("casesCount")}</div></div>
+                <div><div className="stat-number text-xl">134</div><div className="text-[10px] text-muted-foreground">{tr("reviewsCount")}</div></div>
+                <div><div className="stat-number text-xl">98%</div><div className="text-[10px] text-muted-foreground">{tr("success")}</div></div>
               </div>
-              <button className="w-full gold-gradient text-[hsl(220,20%,6%)] py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">Связаться</button>
-              <button className="w-full mt-2 border border-border text-muted-foreground py-2.5 text-xs font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">Заказать услугу</button>
+              <button className="w-full gold-gradient text-[hsl(220,20%,6%)] py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("contactBtn")}</button>
+              <button className="w-full mt-2 border border-border text-muted-foreground py-2.5 text-xs font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">{tr("orderService")}</button>
             </div>
           </div>
 
           <div className="border border-border rounded-sm bg-card p-5">
-            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">Специализация</div>
-            {["Компьютерная полиграфология", "HR-проверки персонала", "Корпоративная безопасность", "Психофизиологическая экспертиза", "Работа с ложными воспоминаниями"].map((skill) => (
-              <div key={skill} className="flex items-center gap-2 py-2 border-b border-border last:border-0">
+            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("specialization")}</div>
+            {[
+              { ru: "Компьютерная полиграфология", en: "Computer polygraphy" },
+              { ru: "HR-проверки персонала", en: "HR staff screening" },
+              { ru: "Корпоративная безопасность", en: "Corporate security" },
+              { ru: "Психофизиологическая экспертиза", en: "Psychophysiological examination" },
+              { ru: "Работа с ложными воспоминаниями", en: "Handling false memories" },
+            ].map((skill) => (
+              <div key={skill.en} className="flex items-center gap-2 py-2 border-b border-border last:border-0">
                 <div className="w-1.5 h-1.5 rounded-full bg-gold" />
-                <span className="text-xs text-muted-foreground">{skill}</span>
+                <span className="text-xs text-muted-foreground">{L(skill, lang)}</span>
               </div>
             ))}
           </div>
 
           <div className="border border-border rounded-sm bg-card p-5">
-            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">Сертификаты</div>
-            {[{ title: "Лицензия ФСИН", year: "2019" }, { title: "AAPP Certified Polygraphist", year: "2021" }, { title: "Частный детектив РФ", year: "2018" }].map((c) => (
-              <div key={c.title} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("certificates")}</div>
+            {[
+              { title: { ru: "Лицензия ФСИН", en: "FSIN License" }, year: "2019" },
+              { title: { ru: "AAPP Certified Polygraphist", en: "AAPP Certified Polygraphist" }, year: "2021" },
+              { title: { ru: "Частный детектив РФ", en: "Licensed PI" }, year: "2018" },
+            ].map((c) => (
+              <div key={c.title.en} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                 <div className="flex items-center gap-2">
                   <Icon name="Award" size={12} className="text-gold" />
-                  <span className="text-xs text-muted-foreground">{c.title}</span>
+                  <span className="text-xs text-muted-foreground">{L(c.title, lang)}</span>
                 </div>
                 <span className="text-[10px] text-muted-foreground">{c.year}</span>
               </div>
@@ -627,14 +727,14 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
 
         <div className="lg:col-span-2 space-y-5">
           <div className="border border-border rounded-sm bg-card p-6">
-            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">О специалисте</div>
-            <p className="text-sm text-muted-foreground leading-relaxed">Профессиональный полиграфолог с 12-летним опытом проведения психофизиологических исследований. Специализируюсь на корпоративных проверках, HR-скрининге при приёме на работу и расследовании инцидентов. Провёл более 3 000 индивидуальных сессий. Сотрудничаю с юридическими компаниями, банками и крупными корпорациями.</p>
+            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("aboutSpecialist")}</div>
+            <p className="text-sm text-muted-foreground leading-relaxed">{tr("aboutText")}</p>
           </div>
 
           <div className="border border-border rounded-sm bg-card">
             <div className="flex border-b border-border">
               {(["cases", "services", "reviews"] as const).map((t) => {
-                const labels = { cases: "Кейсы (28)", services: "Услуги (5)", reviews: "Отзывы (134)" };
+                const labels = { cases: tr("tabCases") + " (28)", services: tr("tabServices") + " (5)", reviews: tr("tabReviews") + " (134)" };
                 return (
                   <button key={t} onClick={() => setActiveTab(t)}
                     className={`flex-1 py-3.5 text-xs font-montserrat font-semibold tracking-wide uppercase transition-colors ${activeTab === t ? "text-gold border-b-2 border-gold -mb-px" : "text-muted-foreground"}`}>
@@ -647,14 +747,14 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
               {activeTab === "cases" && (
                 <div className="space-y-3">
                   {cases.slice(0, 2).map((c) => (
-                    <div key={c.title} className="p-4 border border-border rounded-sm hover:border-gold/40 transition-colors cursor-pointer">
+                    <div key={c.title.en} className="p-4 border border-border rounded-sm hover:border-gold/40 transition-colors cursor-pointer">
                       <div className="flex items-start justify-between gap-3 mb-2">
-                        <div className="font-montserrat font-semibold text-sm text-foreground">{c.title}</div>
-                        <span className="tag-security whitespace-nowrap shrink-0">{c.category}</span>
+                        <div className="font-montserrat font-semibold text-sm text-foreground">{L(c.title, lang)}</div>
+                        <span className="tag-security whitespace-nowrap shrink-0">{L(c.category, lang)}</span>
                       </div>
-                      <div className="text-xs text-muted-foreground">{c.summary}</div>
+                      <div className="text-xs text-muted-foreground">{L(c.summary, lang)}</div>
                       <div className="flex items-center gap-4 mt-3">
-                        <span className="text-[10px] text-muted-foreground">{c.date}</span>
+                        <span className="text-[10px] text-muted-foreground">{L(c.date, lang)}</span>
                         <span className="flex items-center gap-1 text-[10px] text-muted-foreground"><Icon name="Eye" size={10} />{c.views}</span>
                         <span className="flex items-center gap-1 text-[10px] text-muted-foreground"><Icon name="Heart" size={10} />{c.likes}</span>
                       </div>
@@ -665,17 +765,17 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
               {activeTab === "services" && (
                 <div className="space-y-3">
                   {services.slice(0, 3).map((s) => (
-                    <div key={s.title} className="flex items-center gap-4 p-4 border border-border rounded-sm hover:border-gold/40 transition-colors cursor-pointer">
+                    <div key={s.title.en} className="flex items-center gap-4 p-4 border border-border rounded-sm hover:border-gold/40 transition-colors cursor-pointer">
                       <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
                         <Icon name={s.icon} size={15} className="text-[hsl(220,20%,6%)]" />
                       </div>
                       <div className="flex-1">
-                        <div className="font-montserrat font-semibold text-sm text-foreground">{s.title}</div>
-                        <div className="text-xs text-muted-foreground">{s.desc.slice(0, 60)}...</div>
+                        <div className="font-montserrat font-semibold text-sm text-foreground">{L(s.title, lang)}</div>
+                        <div className="text-xs text-muted-foreground">{L(s.desc, lang).slice(0, 60)}...</div>
                       </div>
                       <div className="text-right shrink-0">
-                        <div className="text-sm font-montserrat font-bold text-gold">{s.price}</div>
-                        <div className="text-[10px] text-muted-foreground">{s.time}</div>
+                        <div className="text-sm font-montserrat font-bold text-gold">{L(s.price, lang)}</div>
+                        <div className="text-[10px] text-muted-foreground">{L(s.time, lang)}</div>
                       </div>
                     </div>
                   ))}
@@ -684,19 +784,19 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
               {activeTab === "reviews" && (
                 <div className="space-y-4">
                   {[
-                    { name: "ООО «АльфаТех»", rating: 5, text: "Провёл полный HR-скрининг нашей команды (18 человек). Профессионально, дискретно, в срок. Нашли двух проблемных кандидатов.", date: "2 недели назад" },
-                    { name: "Иван К.", rating: 5, text: "Проверка предполагаемой утечки данных. Чёткая работа, понятный отчёт. Рекомендую коллегам.", date: "1 месяц назад" },
-                    { name: "ЧОП «Легион»", rating: 4, text: "Регулярно пользуемся услугами при отборе персонала. Надёжный специалист.", date: "2 месяца назад" },
+                    { name: { ru: "ООО «АльфаТех»", en: "AlphaTech LLC" }, rating: 5, text: { ru: "Провёл полный HR-скрининг нашей команды (18 человек). Профессионально, дискретно, в срок. Нашли двух проблемных кандидатов.", en: "Ran a full HR screening of our team (18 people). Professional, discreet, on time. Found two problem candidates." }, date: { ru: "2 недели назад", en: "2 weeks ago" } },
+                    { name: { ru: "Иван К.", en: "Ivan K." }, rating: 5, text: { ru: "Проверка предполагаемой утечки данных. Чёткая работа, понятный отчёт. Рекомендую коллегам.", en: "Investigation of a suspected data leak. Clear work, a readable report. Recommend to colleagues." }, date: { ru: "1 месяц назад", en: "1 month ago" } },
+                    { name: { ru: "ЧОП «Легион»", en: "Legion PSC" }, rating: 4, text: { ru: "Регулярно пользуемся услугами при отборе персонала. Надёжный специалист.", en: "We regularly use the services for staff recruitment. A reliable specialist." }, date: { ru: "2 месяца назад", en: "2 months ago" } },
                   ].map((r) => (
-                    <div key={r.name} className="p-4 border border-border rounded-sm">
+                    <div key={r.name.en} className="p-4 border border-border rounded-sm">
                       <div className="flex items-center justify-between mb-2">
-                        <div className="font-montserrat font-semibold text-sm text-foreground">{r.name}</div>
+                        <div className="font-montserrat font-semibold text-sm text-foreground">{L(r.name, lang)}</div>
                         <div className="flex items-center gap-2">
                           <StarRating rating={r.rating} />
-                          <span className="text-[10px] text-muted-foreground">{r.date}</span>
+                          <span className="text-[10px] text-muted-foreground">{L(r.date, lang)}</span>
                         </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">{r.text}</div>
+                      <div className="text-xs text-muted-foreground">{L(r.text, lang)}</div>
                     </div>
                   ))}
                 </div>
@@ -710,26 +810,33 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
 }
 
 function CasesSection() {
-  const [filter, setFilter] = useState("Все");
-  const cats = ["Все", "Полиграф", "TSCM", "Детективная деятельность", "Корпоративная безопасность"];
+  const { lang, tr } = useLang();
+  const [filter, setFilter] = useState("All");
+  const cats = [
+    { ru: "Все", en: "All" },
+    { ru: "Полиграф", en: "Polygraph" },
+    { ru: "TSCM", en: "TSCM" },
+    { ru: "Детективная деятельность", en: "Investigation" },
+    { ru: "Корпоративная безопасность", en: "Corporate security" },
+  ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
-          <div className="tag-security mb-3 inline-block">База знаний</div>
-          <h2 className="font-montserrat font-bold text-3xl text-foreground">Профессиональные кейсы</h2>
+          <div className="tag-security mb-3 inline-block">{tr("knowledgeBase")}</div>
+          <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("proCases")}</h2>
         </div>
         <button className="gold-gradient text-[hsl(220,20%,6%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm self-start md:self-auto">
-          + Опубликовать кейс
+          {tr("publishCase")}
         </button>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-8">
         {cats.map((c) => (
-          <button key={c} onClick={() => setFilter(c)}
-            className={`px-4 py-1.5 text-xs font-montserrat font-semibold rounded-sm border transition-all ${filter === c ? "border-gold bg-gold/10 text-gold" : "border-border text-muted-foreground hover:border-gold/40"}`}>
-            {c}
+          <button key={c.en} onClick={() => setFilter(c.en)}
+            className={`px-4 py-1.5 text-xs font-montserrat font-semibold rounded-sm border transition-all ${filter === c.en ? "border-gold bg-gold/10 text-gold" : "border-border text-muted-foreground hover:border-gold/40"}`}>
+            {L(c, lang)}
           </button>
         ))}
       </div>
@@ -737,19 +844,19 @@ function CasesSection() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-4 stagger">
           {cases.map((c) => (
-            <div key={c.title} className="border border-border rounded-sm bg-card p-6 card-hover shine-on-hover cursor-pointer">
+            <div key={c.title.en} className="border border-border rounded-sm bg-card p-6 card-hover shine-on-hover cursor-pointer">
               <div className="flex items-start gap-3 mb-3">
-                <span className="tag-security">{c.category}</span>
-                <span className="text-[10px] text-muted-foreground ml-auto">{c.date}</span>
+                <span className="tag-security">{L(c.category, lang)}</span>
+                <span className="text-[10px] text-muted-foreground ml-auto">{L(c.date, lang)}</span>
               </div>
-              <h3 className="font-montserrat font-bold text-base text-foreground mb-2 leading-snug">{c.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-4">{c.summary}</p>
+              <h3 className="font-montserrat font-bold text-base text-foreground mb-2 leading-snug">{L(c.title, lang)}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">{L(c.summary, lang)}</p>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <div className="w-5 h-5 gold-gradient rounded-sm flex items-center justify-center">
                     <Icon name="User" size={10} className="text-[hsl(220,20%,6%)]" />
                   </div>
-                  <span className="text-xs text-muted-foreground">{c.author}</span>
+                  <span className="text-xs text-muted-foreground">{L(c.author, lang)}</span>
                 </div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground ml-auto"><Icon name="Eye" size={12} /><span>{c.views}</span></div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground"><Icon name="Heart" size={12} /><span>{c.likes}</span></div>
@@ -761,22 +868,22 @@ function CasesSection() {
 
         <div className="space-y-5">
           <div className="border border-border rounded-sm bg-card p-5">
-            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">Топ авторов</div>
+            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("topAuthors")}</div>
             {specialists.map((s, i) => (
-              <div key={s.name} className="flex items-center gap-3 py-2.5 border-b border-border last:border-0">
+              <div key={s.name.en} className="flex items-center gap-3 py-2.5 border-b border-border last:border-0">
                 <div className="font-montserrat font-bold text-xs text-gold w-4">{i + 1}</div>
                 <div className="w-7 h-7 rounded-sm overflow-hidden">
-                  <img src={s.img} alt={s.name} className="w-full h-full object-cover" />
+                  <img src={s.img} alt={L(s.name, lang)} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <div className="text-xs font-montserrat font-semibold text-foreground">{s.name}</div>
-                  <div className="text-[10px] text-muted-foreground">{s.cases} кейсов</div>
+                  <div className="text-xs font-montserrat font-semibold text-foreground">{L(s.name, lang)}</div>
+                  <div className="text-[10px] text-muted-foreground">{s.cases} {tr("navCases")}</div>
                 </div>
               </div>
             ))}
           </div>
           <div className="border border-border rounded-sm bg-card p-5">
-            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">Популярные теги</div>
+            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("popularTags")}</div>
             <div className="flex flex-wrap gap-2">
               {["OSINT", "Полиграф", "TSCM", "HR-безопасность", "Корпоративный шпионаж", "RF-сканирование", "Детектив", "Расследование"].map((t) => (
                 <span key={t} className="tag-security cursor-pointer hover:bg-gold/10 transition-colors">{t}</span>
@@ -790,25 +897,26 @@ function CasesSection() {
 }
 
 function ServicesSection() {
+  const { lang, tr } = useLang();
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="mb-10">
-        <div className="tag-security mb-3 inline-block">Каталог</div>
-        <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">Услуги специалистов</h2>
-        <p className="text-muted-foreground text-sm">Профессиональные услуги верифицированных экспертов с гарантией качества</p>
+        <div className="tag-security mb-3 inline-block">{tr("catalog")}</div>
+        <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">{tr("servicesTitle")}</h2>
+        <p className="text-muted-foreground text-sm">{tr("servicesDesc")}</p>
       </div>
 
       <div className="flex gap-3 mb-10">
         <div className="flex-1 flex items-center gap-3 border border-border bg-card rounded-sm px-4">
           <Icon name="Search" size={16} className="text-muted-foreground" />
-          <input placeholder="Поиск услуг..." className="flex-1 bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
+          <input placeholder={tr("searchServices")} className="flex-1 bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
         </div>
-        <button className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 text-xs font-montserrat font-bold rounded-sm">Найти</button>
+        <button className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 text-xs font-montserrat font-bold rounded-sm">{tr("search")}</button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
         {services.map((s) => (
-          <div key={s.title} className="group border border-border rounded-sm bg-card p-6 card-hover shine-on-hover cursor-pointer">
+          <div key={s.title.en} className="group border border-border rounded-sm bg-card p-6 card-hover shine-on-hover cursor-pointer">
             <div className="flex items-start justify-between mb-5">
               <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
                 <Icon name={s.icon} size={20} className="text-[hsl(220,20%,6%)]" />
@@ -818,17 +926,17 @@ function ServicesSection() {
                 4.9
               </div>
             </div>
-            <h3 className="font-montserrat font-bold text-sm text-foreground mb-2">{s.title}</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed mb-5">{s.desc}</p>
+            <h3 className="font-montserrat font-bold text-sm text-foreground mb-2">{L(s.title, lang)}</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-5">{L(s.desc, lang)}</p>
             <div className="divider-gold mb-4" />
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-montserrat font-extrabold text-base text-gold">{s.price}</div>
+                <div className="font-montserrat font-extrabold text-base text-gold">{L(s.price, lang)}</div>
                 <div className="text-[10px] text-muted-foreground flex items-center gap-1">
-                  <Icon name="Clock" size={10} />{s.time}
+                  <Icon name="Clock" size={10} />{L(s.time, lang)}
                 </div>
               </div>
-              <button className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">Заказать</button>
+              <button className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">{tr("order")}</button>
             </div>
           </div>
         ))}
@@ -839,44 +947,45 @@ function ServicesSection() {
           <Icon name="Percent" size={18} className="text-[hsl(220,20%,6%)]" />
         </div>
         <div>
-          <div className="font-montserrat font-semibold text-sm text-foreground mb-1">Комиссия платформы</div>
-          <div className="text-xs text-muted-foreground">Платформа берёт комиссию 8–12% от суммы сделки. Оплата через безопасную сделку — ваши деньги защищены до подтверждения выполнения заказа</div>
+          <div className="font-montserrat font-semibold text-sm text-foreground mb-1">{tr("commission")}</div>
+          <div className="text-xs text-muted-foreground">{tr("commissionDesc")}</div>
         </div>
-        <button className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 hover:border-gold hover:text-gold transition-all rounded-sm ml-auto">Подробнее</button>
+        <button className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 hover:border-gold hover:text-gold transition-all rounded-sm ml-auto">{tr("more")}</button>
       </div>
     </div>
   );
 }
 
 function CoursesSection() {
+  const { lang, tr } = useLang();
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="mb-10">
-        <div className="tag-security mb-3 inline-block">Обучение</div>
-        <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">Курсы и тренинги</h2>
-        <p className="text-muted-foreground text-sm">Обучающие программы от действующих практиков отрасли</p>
+        <div className="tag-security mb-3 inline-block">{tr("education")}</div>
+        <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">{tr("coursesTitle")}</h2>
+        <p className="text-muted-foreground text-sm">{tr("coursesDesc")}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10 stagger">
         {courses.map((c) => (
-          <div key={c.title} className="group border border-border rounded-sm bg-card overflow-hidden card-hover shine-on-hover cursor-pointer">
+          <div key={c.title.en} className="group border border-border rounded-sm bg-card overflow-hidden card-hover shine-on-hover cursor-pointer">
             <div className="h-44 overflow-hidden relative">
-              <img src={c.img} alt={c.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <img src={c.img} alt={L(c.title, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
-              <div className="absolute top-3 left-3"><span className="badge-pro">{c.level}</span></div>
+              <div className="absolute top-3 left-3"><span className="badge-pro">{L(c.level, lang)}</span></div>
             </div>
             <div className="p-5">
-              <h3 className="font-montserrat font-bold text-sm text-foreground mb-2 leading-snug">{c.title}</h3>
-              <div className="text-xs text-muted-foreground mb-3">{c.instructor} · {c.duration}</div>
+              <h3 className="font-montserrat font-bold text-sm text-foreground mb-2 leading-snug">{L(c.title, lang)}</h3>
+              <div className="text-xs text-muted-foreground mb-3">{L(c.instructor, lang)} · {L(c.duration, lang)}</div>
               <div className="flex items-center gap-2 mb-4">
                 <StarRating rating={c.rating} />
                 <span className="text-xs text-muted-foreground">{c.rating}</span>
-                <span className="text-xs text-muted-foreground ml-auto">{c.students} студентов</span>
+                <span className="text-xs text-muted-foreground ml-auto">{c.students} {tr("students")}</span>
               </div>
               <div className="divider-gold mb-4" />
               <div className="flex items-center justify-between">
-                <div className="font-montserrat font-extrabold text-lg text-gold">{c.price}</div>
-                <button className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">Записаться</button>
+                <div className="font-montserrat font-extrabold text-lg text-gold">{L(c.price, lang)}</div>
+                <button className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("enroll")}</button>
               </div>
             </div>
           </div>
@@ -885,10 +994,10 @@ function CoursesSection() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { icon: "BookOpen", n: "47", l: "Курсов" },
-          { icon: "Users", n: "2 800+", l: "Выпускников" },
-          { icon: "Award", n: "31", l: "Преподавателей" },
-          { icon: "Star", n: "4.8", l: "Средний рейтинг" },
+          { icon: "BookOpen", n: "47", l: tr("coursesStat") },
+          { icon: "Users", n: "2 800+", l: tr("graduates") },
+          { icon: "Award", n: "31", l: tr("instructors") },
+          { icon: "Star", n: "4.8", l: tr("avgRating") },
         ].map((s) => (
           <div key={s.l} className="border border-border rounded-sm bg-card p-5 flex items-center gap-4">
             <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
@@ -905,34 +1014,116 @@ function CoursesSection() {
   );
 }
 
+function GuardsSection() {
+  const { lang, tr } = useLang();
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      <div className="mb-10">
+        <div className="tag-security mb-3 inline-block">{tr("guardsTag")}</div>
+        <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">{tr("guardsTitle")}</h2>
+        <p className="text-muted-foreground text-sm">{tr("guardsDesc")}</p>
+      </div>
+
+      <div className="flex gap-3 mb-10">
+        <div className="flex-1 flex items-center gap-3 border border-border bg-card rounded-sm px-4">
+          <Icon name="Search" size={16} className="text-muted-foreground" />
+          <input placeholder={tr("searchGuards")} className="flex-1 bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
+        </div>
+        <button className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 text-xs font-montserrat font-bold rounded-sm">{tr("search")}</button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+        {guards.map((g) => (
+          <div key={g.name.en} className="card-hover shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group">
+            <div className="h-48 overflow-hidden relative">
+              <img src={g.img} alt={L(g.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+              <div className="absolute top-3 right-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
+                <Icon name="BadgeCheck" size={12} className="text-gold" />
+                <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licensed")}</span>
+              </div>
+              <div className="absolute bottom-3 left-4 right-4">
+                <div className="font-montserrat font-bold text-base text-foreground">{L(g.name, lang)}</div>
+                <div className="text-xs text-gold font-montserrat font-medium">{L(g.type, lang)}</div>
+              </div>
+            </div>
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <StarRating rating={g.rating} />
+                <span className="text-xs text-muted-foreground">{g.rating} ({g.reviews})</span>
+              </div>
+              <div className="flex items-center gap-3 mb-4 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1"><Icon name="Users" size={11} />{g.employees} {tr("employees")}</span>
+                <span className="flex items-center gap-1"><Icon name="Building2" size={11} />{g.objects} {tr("objects")}</span>
+                <span className="flex items-center gap-1"><Icon name="Calendar" size={11} />{tr("founded")} {g.founded}</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {g.tags.map((tag) => (
+                  <span key={tag.en} className="tag-security">{L(tag, lang)}</span>
+                ))}
+              </div>
+              <div className="divider-gold mb-4" />
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("cost")}</div>
+                  <div className="font-montserrat font-bold text-sm text-gold">{L(g.price, lang)}</div>
+                </div>
+                <button className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">
+                  {tr("requestQuote")}
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-14">
+        <h3 className="font-montserrat font-bold text-2xl text-foreground mb-6">{tr("guardServices")}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {guardServices.map((x) => (
+            <div key={x.title.en} className="group border border-border rounded-sm bg-card p-6 card-hover shine-on-hover cursor-default">
+              <div className="w-11 h-11 gold-gradient rounded-full flex items-center justify-center mb-4 glow-gold-sm transition-transform duration-300 group-hover:scale-110">
+                <Icon name={x.icon} size={19} className="text-[hsl(220,20%,6%)]" />
+              </div>
+              <div className="font-montserrat font-bold text-sm text-foreground mb-2">{L(x.title, lang)}</div>
+              <div className="text-xs text-muted-foreground leading-relaxed">{L(x.desc, lang)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatInput: (v: string) => void }) {
+  const { lang, tr } = useLang();
   const rooms = [
-    { name: "Общий чат", online: 24 },
-    { name: "Полиграфологи", online: 8 },
-    { name: "TSCM-специалисты", online: 5 },
-    { name: "Детективы", online: 11 },
-    { name: "Новости отрасли", online: 32 },
+    { name: { ru: "Общий чат", en: "General" }, online: 24 },
+    { name: { ru: "Полиграфологи", en: "Polygraph examiners" }, online: 8 },
+    { name: { ru: "TSCM-специалисты", en: "TSCM specialists" }, online: 5 },
+    { name: { ru: "Детективы", en: "Investigators" }, online: 11 },
+    { name: { ru: "Новости отрасли", en: "Industry news" }, online: 32 },
   ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="mb-6">
-        <div className="tag-security mb-3 inline-block">Сообщество</div>
-        <h2 className="font-montserrat font-bold text-3xl text-foreground">Профессиональный чат</h2>
+        <div className="tag-security mb-3 inline-block">{tr("community")}</div>
+        <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("proChat")}</h2>
       </div>
       <div className="border border-border rounded-sm bg-card overflow-hidden" style={{ height: "600px" }}>
         <div className="flex h-full">
           <div className="w-56 border-r border-border flex-col hidden md:flex">
             <div className="p-4 border-b border-border">
-              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">Каналы</div>
+              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("channels")}</div>
             </div>
             <div className="flex-1 overflow-y-auto scrollbar-thin">
-              {rooms.map((r) => (
-                <div key={r.name} className={`px-4 py-3 cursor-pointer hover:bg-secondary transition-colors border-b border-border last:border-0 ${r.name === "Общий чат" ? "bg-secondary" : ""}`}>
-                  <div className="text-xs font-montserrat font-medium text-foreground mb-1"># {r.name}</div>
+              {rooms.map((r, i) => (
+                <div key={r.name.en} className={`px-4 py-3 cursor-pointer hover:bg-secondary transition-colors border-b border-border last:border-0 ${i === 0 ? "bg-secondary" : ""}`}>
+                  <div className="text-xs font-montserrat font-medium text-foreground mb-1"># {L(r.name, lang)}</div>
                   <div className="flex items-center gap-1">
                     <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                    <span className="text-[10px] text-muted-foreground">{r.online} онлайн</span>
+                    <span className="text-[10px] text-muted-foreground">{r.online} {tr("online")}</span>
                   </div>
                 </div>
               ))}
@@ -941,10 +1132,10 @@ function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatIn
 
           <div className="flex-1 flex flex-col">
             <div className="p-4 border-b border-border flex items-center gap-3">
-              <div className="text-sm font-montserrat font-semibold text-foreground"># Общий чат</div>
+              <div className="text-sm font-montserrat font-semibold text-foreground"># {L(rooms[0].name, lang)}</div>
               <div className="flex items-center gap-1 ml-auto">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                <span className="text-xs text-muted-foreground">24 онлайн</span>
+                <span className="text-xs text-muted-foreground">24 {tr("online")}</span>
               </div>
             </div>
 
@@ -952,14 +1143,14 @@ function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatIn
               {messages.map((m, i) => (
                 <div key={i} className="flex gap-3">
                   <div className="w-8 h-8 gold-gradient rounded-sm flex items-center justify-center shrink-0 font-montserrat font-bold text-xs text-[hsl(220,20%,6%)]">
-                    {m.user[0]}
+                    {L(m.user, lang)[0]}
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-montserrat font-semibold text-foreground">{m.user}</span>
+                      <span className="text-xs font-montserrat font-semibold text-foreground">{L(m.user, lang)}</span>
                       <span className="text-[10px] text-muted-foreground">{m.time}</span>
                     </div>
-                    <div className="text-sm text-muted-foreground leading-relaxed">{m.text}</div>
+                    <div className="text-sm text-muted-foreground leading-relaxed">{L(m.text, lang)}</div>
                   </div>
                 </div>
               ))}
@@ -970,7 +1161,7 @@ function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatIn
                 <input
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Написать в #общий-чат..."
+                  placeholder={tr("writeMessage")}
                   className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
                 />
                 <button className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
@@ -986,43 +1177,44 @@ function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatIn
 }
 
 function ForumSection() {
+  const { lang, tr } = useLang();
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
-          <div className="tag-security mb-3 inline-block">Дискуссии</div>
-          <h2 className="font-montserrat font-bold text-3xl text-foreground">Профессиональный форум</h2>
+          <div className="tag-security mb-3 inline-block">{tr("discussions")}</div>
+          <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("proForum")}</h2>
         </div>
         <button className="gold-gradient text-[hsl(220,20%,6%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm self-start">
-          + Создать тему
+          {tr("createTopic")}
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3 space-y-3">
           <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-[10px] font-montserrat font-semibold uppercase tracking-widest text-muted-foreground border-b border-border">
-            <div className="col-span-7">Тема</div>
-            <div className="col-span-2 text-center">Ответы</div>
-            <div className="col-span-2 text-center">Просмотры</div>
+            <div className="col-span-7">{tr("topic")}</div>
+            <div className="col-span-2 text-center">{tr("replies")}</div>
+            <div className="col-span-2 text-center">{tr("views")}</div>
             <div className="col-span-1" />
           </div>
-          {forumTopics.map((t) => (
-            <div key={t.title} className="border border-border rounded-sm bg-card p-4 card-hover cursor-pointer">
+          {forumTopics.map((tp) => (
+            <div key={tp.title.en} className="border border-border rounded-sm bg-card p-4 card-hover cursor-pointer">
               <div className="md:grid grid-cols-12 gap-4 items-center">
                 <div className="col-span-7">
                   <div className="flex items-center gap-2 mb-1">
-                    {t.hot && <Icon name="Flame" size={12} className="text-orange-400" />}
-                    <span className="tag-security">{t.category}</span>
+                    {tp.hot && <Icon name="Flame" size={12} className="text-orange-400" />}
+                    <span className="tag-security">{L(tp.category, lang)}</span>
                   </div>
-                  <div className="font-montserrat font-semibold text-sm text-foreground mt-2">{t.title}</div>
+                  <div className="font-montserrat font-semibold text-sm text-foreground mt-2">{L(tp.title, lang)}</div>
                 </div>
                 <div className="col-span-2 text-center mt-3 md:mt-0">
-                  <div className="text-xs font-montserrat font-bold text-foreground">{t.replies}</div>
-                  <div className="text-[10px] text-muted-foreground">ответов</div>
+                  <div className="text-xs font-montserrat font-bold text-foreground">{tp.replies}</div>
+                  <div className="text-[10px] text-muted-foreground">{tr("repliesLower")}</div>
                 </div>
                 <div className="col-span-2 text-center">
-                  <div className="text-xs font-montserrat font-bold text-foreground">{t.views}</div>
-                  <div className="text-[10px] text-muted-foreground">просмотров</div>
+                  <div className="text-xs font-montserrat font-bold text-foreground">{tp.views}</div>
+                  <div className="text-[10px] text-muted-foreground">{tr("viewsLower")}</div>
                 </div>
                 <div className="col-span-1 text-right">
                   <Icon name="ChevronRight" size={14} className="text-muted-foreground ml-auto" />
@@ -1034,8 +1226,8 @@ function ForumSection() {
 
         <div className="space-y-4">
           <div className="border border-border rounded-sm bg-card p-5">
-            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">Статистика</div>
-            {[{ l: "Тем", v: "248" }, { l: "Ответов", v: "4 120" }, { l: "Участников", v: "1 240" }].map((s) => (
+            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("statistics")}</div>
+            {[{ l: tr("topics"), v: "248" }, { l: tr("answers"), v: "4 120" }, { l: tr("members"), v: "1 240" }].map((s) => (
               <div key={s.l} className="flex justify-between py-2 border-b border-border last:border-0">
                 <span className="text-xs text-muted-foreground">{s.l}</span>
                 <span className="text-xs font-montserrat font-bold text-gold">{s.v}</span>
@@ -1043,11 +1235,17 @@ function ForumSection() {
             ))}
           </div>
           <div className="border border-border rounded-sm bg-card p-5">
-            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">Разделы</div>
-            {["Право и лицензирование", "Оборудование", "Методики", "Обучение", "Бизнес"].map((r) => (
-              <div key={r} className="flex items-center gap-2 py-2 border-b border-border last:border-0 cursor-pointer">
+            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("sections")}</div>
+            {[
+              { ru: "Право и лицензирование", en: "Law & licensing" },
+              { ru: "Оборудование", en: "Equipment" },
+              { ru: "Методики", en: "Methodologies" },
+              { ru: "Обучение", en: "Training" },
+              { ru: "Бизнес", en: "Business" },
+            ].map((r) => (
+              <div key={r.en} className="flex items-center gap-2 py-2 border-b border-border last:border-0 cursor-pointer">
                 <div className="w-1 h-1 rounded-full bg-gold" />
-                <span className="text-xs text-muted-foreground hover:text-gold transition-colors">{r}</span>
+                <span className="text-xs text-muted-foreground hover:text-gold transition-colors">{L(r, lang)}</span>
               </div>
             ))}
           </div>
@@ -1058,52 +1256,53 @@ function ForumSection() {
 }
 
 function ContactsSection() {
+  const { tr } = useLang();
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="mb-10">
-        <div className="tag-security mb-3 inline-block">Поддержка</div>
-        <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">Контакты</h2>
-        <p className="text-muted-foreground text-sm">Мы готовы помочь вам по любым вопросам работы платформы</p>
+        <div className="tag-security mb-3 inline-block">{tr("support")}</div>
+        <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">{tr("contactsTitle")}</h2>
+        <p className="text-muted-foreground text-sm">{tr("contactsDesc")}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="border border-border rounded-sm bg-card p-8">
-          <div className="text-sm font-montserrat font-bold text-foreground mb-6">Написать в поддержку</div>
+          <div className="text-sm font-montserrat font-bold text-foreground mb-6">{tr("writeSupport")}</div>
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">Имя</label>
-              <input placeholder="Ваше имя" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+              <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("name")}</label>
+              <input placeholder={tr("yourName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
             </div>
             <div>
               <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">Email</label>
               <input placeholder="your@email.com" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
             </div>
             <div>
-              <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">Тема</label>
+              <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("subject")}</label>
               <select className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-muted-foreground outline-none focus:border-gold transition-colors">
-                <option>Верификация аккаунта</option>
-                <option>Вопрос об оплате</option>
-                <option>Технические проблемы</option>
-                <option>Жалоба на специалиста</option>
-                <option>Другое</option>
+                <option>{tr("subjVerify")}</option>
+                <option>{tr("subjPayment")}</option>
+                <option>{tr("subjTech")}</option>
+                <option>{tr("subjComplaint")}</option>
+                <option>{tr("subjOther")}</option>
               </select>
             </div>
             <div>
-              <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">Сообщение</label>
-              <textarea rows={4} placeholder="Опишите ваш вопрос..." className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none" />
+              <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("message")}</label>
+              <textarea rows={4} placeholder={tr("describeQuestion")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none" />
             </div>
             <button className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity">
-              Отправить сообщение
+              {tr("sendMessage")}
             </button>
           </div>
         </div>
 
         <div className="space-y-5">
           {[
-            { icon: "Mail", title: "Email поддержки", val: "support@securenet.ru", desc: "Ответим в течение 4 рабочих часов" },
-            { icon: "Phone", title: "Телефон", val: "+7 (495) 123-45-67", desc: "Пн–Пт, 09:00–18:00 МСК" },
-            { icon: "MessageSquare", title: "Telegram", val: "@securenet_support", desc: "Быстрые ответы в рабочие часы" },
-            { icon: "MapPin", title: "Юридический адрес", val: "125009, Москва, ул. Тверская, д. 1", desc: "ООО «СекьюрНет», ИНН 7701234567" },
+            { icon: "Mail", title: tr("emailSupport"), val: "support@securenet.ru", desc: tr("emailSupportDesc") },
+            { icon: "Phone", title: tr("phone"), val: "+7 (495) 123-45-67", desc: tr("phoneDesc") },
+            { icon: "MessageSquare", title: "Telegram", val: "@securenet_support", desc: tr("telegramDesc") },
+            { icon: "MapPin", title: tr("legalAddress"), val: "125009, Москва, ул. Тверская, д. 1", desc: "ООО «СекьюрНет», ИНН 7701234567" },
           ].map((c) => (
             <div key={c.title} className="border border-border rounded-sm bg-card p-5 flex gap-4 card-hover">
               <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">
@@ -1120,14 +1319,14 @@ function ContactsSection() {
           <div className="border border-gold/30 rounded-sm bg-card p-5">
             <div className="flex items-center gap-2 mb-3">
               <Icon name="Clock" size={14} className="text-gold" />
-              <div className="text-xs font-montserrat font-semibold text-gold">Время работы поддержки</div>
+              <div className="text-xs font-montserrat font-semibold text-gold">{tr("workHours")}</div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { d: "Понедельник–Пятница", t: "09:00 – 20:00" },
-                { d: "Суббота", t: "10:00 – 16:00" },
-                { d: "Воскресенье", t: "Выходной" },
-                { d: "Праздники", t: "По расписанию" },
+                { d: tr("monFri"), t: "09:00 – 20:00" },
+                { d: tr("sat"), t: "10:00 – 16:00" },
+                { d: tr("sun"), t: tr("dayOff") },
+                { d: tr("holidays"), t: tr("bySchedule") },
               ].map((w) => (
                 <div key={w.d}>
                   <div className="text-[10px] text-muted-foreground">{w.d}</div>
