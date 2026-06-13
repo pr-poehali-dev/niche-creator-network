@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Missing slug returns 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"phone": "+700"},
+      "expectedStatus": 400
+    },
+    {
+      "name": "Save contacts for morozov",
+      "method": "POST",
+      "path": "/",
+      "body": {"slug": "morozov", "phone": "+74951234567", "email": "a.morozov@securenet.ru", "whatsapp": "+74951234567", "telegram": "morozov_polygraph", "website": "https://securenet.ru/morozov"},
+      "expectedStatus": 200
+    }
+  ]
+}

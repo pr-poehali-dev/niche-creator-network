@@ -552,6 +552,19 @@ export const t: Dict = {
   heroNoFeeBig: { ru: "Без комиссии для клиентов", en: "No fees for clients" },
   heroGuarantee: { ru: "Проверенные лицензии и гарантия качества", en: "Verified licenses & quality guarantee" },
   ctaUrgency: { ru: "Начните сегодня — первый контакт бесплатно", en: "Start today — first contact is free" },
+
+  // Provider contacts editor
+  pdTabContacts: { ru: "Контакты", en: "Contacts" },
+  pdContactsTitle: { ru: "Контакты и мессенджеры", en: "Contacts & messengers" },
+  pdContactsHint: { ru: "Эти данные видят клиенты на вашей карточке. Заполните, чтобы с вами могли связаться.", en: "Clients see these on your profile card. Fill them in so they can reach you." },
+  pdFieldPhone: { ru: "Телефон", en: "Phone" },
+  pdFieldEmail: { ru: "Email", en: "Email" },
+  pdFieldWhatsApp: { ru: "WhatsApp", en: "WhatsApp" },
+  pdFieldTelegram: { ru: "Telegram (без @)", en: "Telegram (without @)" },
+  pdFieldWebsite: { ru: "Сайт", en: "Website" },
+  pdSocialTitle: { ru: "Социальные сети", en: "Social networks" },
+  pdContactsSaved: { ru: "Контакты сохранены", en: "Contacts saved" },
+  pdContactsSaveErr: { ru: "Не удалось сохранить. Попробуйте ещё раз.", en: "Failed to save. Please try again." },
 };
 
 interface LangCtx {

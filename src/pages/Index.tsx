@@ -390,10 +390,37 @@ export default function Index() {
     }
   };
 
+  const secBarH = secBannerOpen ? 36 : 0;
+
   return (
     <div className="min-h-screen bg-background font-ibm">
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      {/* Fixed security strip at the very top */}
+      {secBannerOpen && (
+        <div className="fixed top-0 left-0 right-0 z-[55] h-9 bg-gradient-to-r from-[hsl(220,20%,9%)] via-[hsl(220,18%,12%)] to-[hsl(220,20%,9%)] border-b border-gold/30">
+          <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-center gap-2 sm:gap-3">
+            <Icon name="ShieldCheck" size={14} className="text-gold shrink-0" />
+            <span className="text-[11px] sm:text-xs font-montserrat font-semibold text-foreground truncate">{tr("secBanner")}</span>
+            <span className="hidden md:inline text-[11px] text-muted-foreground truncate">· {tr("secBannerSub")}</span>
+            <button
+              onClick={() => go("policy")}
+              className="hidden sm:inline-flex items-center gap-1 text-[11px] font-montserrat font-bold text-gold hover:underline shrink-0"
+            >
+              {tr("secReadPolicy")}
+              <Icon name="ArrowRight" size={11} />
+            </button>
+            <button
+              onClick={() => setSecBannerOpen(false)}
+              className="absolute end-3 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="close"
+            >
+              <Icon name="X" size={15} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <header className="fixed left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm transition-[top]" style={{ top: secBarH }}>
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 gold-gradient rounded flex items-center justify-center">
               <Icon name="Shield" size={16} className="text-[hsl(220,20%,6%)]" />
@@ -404,19 +431,19 @@ export default function Index() {
             </div>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-5">
+          <nav className="hidden lg:flex items-center gap-6 mx-6 flex-1 justify-center">
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
                 onClick={() => go(item.id)}
-                className={`nav-link text-sm font-montserrat font-medium tracking-wide transition-colors ${active === item.id ? "text-gold active" : "text-muted-foreground hover:text-foreground"}`}
+                className={`nav-link text-sm font-montserrat font-medium tracking-wide transition-colors whitespace-nowrap ${active === item.id ? "text-gold active" : "text-muted-foreground hover:text-foreground"}`}
               >
                 {tr(item.key)}
               </button>
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 shrink-0">
             <div className="hidden md:flex items-center border border-gold/40 rounded-sm overflow-hidden">
               {(["client", "provider"] as const).map((r) => (
                 <button
@@ -428,11 +455,13 @@ export default function Index() {
                 </button>
               ))}
             </div>
+            <div className="hidden md:block w-px h-6 bg-border" />
             <LangSwitcher lang={lang} setLang={setLang} />
-            <button className="hidden sm:block gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+            <button className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+              <Icon name="LogIn" size={15} />
               {tr("login")}
             </button>
-            <button className="lg:hidden text-muted-foreground" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="lg:hidden text-muted-foreground ms-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               <Icon name={mobileMenuOpen ? "X" : "Menu"} size={22} />
             </button>
           </div>
@@ -472,7 +501,7 @@ export default function Index() {
       </header>
 
       {active !== "home" && (
-        <div className="pt-16">
+        <div style={{ paddingTop: 64 + secBarH }}>
           <div className="border-b border-border bg-card/40">
             <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2 text-xs font-montserrat">
               <button onClick={() => go("home")} className="text-muted-foreground hover:text-gold transition-colors flex items-center gap-1">
@@ -486,7 +515,7 @@ export default function Index() {
         </div>
       )}
 
-      <main className={active === "home" ? "pt-16" : ""}>
+      <main style={active === "home" ? { paddingTop: 64 + secBarH } : undefined}>
         <div key={active} className="animate-rise">
           {renderSection()}
         </div>
@@ -535,34 +564,6 @@ export default function Index() {
         </div>
       </footer>
 
-      {secBannerOpen && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 animate-fade-in">
-          <div className="max-w-7xl mx-auto px-4 pb-4">
-            <div className="glass-card border border-gold/40 rounded-sm security-glow flex items-center gap-4 px-5 py-3.5">
-              <div className="w-9 h-9 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
-                <Icon name="ShieldCheck" size={18} className="text-[hsl(220,20%,6%)]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-montserrat font-bold text-sm text-foreground leading-tight">{tr("secBanner")}</div>
-                <div className="text-xs text-muted-foreground truncate">{tr("secBannerSub")}</div>
-              </div>
-              <button
-                onClick={() => go("policy")}
-                className="hidden sm:block shrink-0 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity"
-              >
-                {tr("secReadPolicy")}
-              </button>
-              <button
-                onClick={() => setSecBannerOpen(false)}
-                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="close"
-              >
-                <Icon name="X" size={18} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -1213,14 +1214,32 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
 
 function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const { lang, tr } = useLang();
-  const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests">("stats");
+  const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts">("stats");
 
   const tabs = [
     { id: "stats" as const, key: "pdTab1" as const, icon: "ChartNoAxesColumn" },
     { id: "plan" as const, key: "pdTab2" as const, icon: "Wallet" },
     { id: "cases" as const, key: "pdTab3" as const, icon: "FolderOpen" },
     { id: "requests" as const, key: "pdTab4" as const, icon: "Inbox" },
+    { id: "contacts" as const, key: "pdTabContacts" as const, icon: "Contact" },
   ];
+
+  const [contacts, setContacts] = useState({ phone: "", email: "", whatsapp: "", telegram: "", website: "", vk: "", instagram: "", linkedin: "" });
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  const saveContacts = async () => {
+    setSaveState("saving");
+    try {
+      const res = await fetch(func2url["save-contacts"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: "morozov", ...contacts }),
+      });
+      setSaveState(res.ok ? "saved" : "error");
+    } catch {
+      setSaveState("error");
+    }
+  };
 
   const incoming = [
     { client: { ru: "ООО «АльфаТех»", en: "AlphaTech LLC" }, service: { ru: "Полиграф для 12 сотрудников", en: "Polygraph for 12 staff" }, budget: { ru: "от 90 000 ₽", en: "from $1,000" }, date: { ru: "сегодня", en: "today" }, status: "new" as const },
@@ -1484,6 +1503,78 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {tab === "contacts" && (
+            <div className="border border-border rounded-sm bg-card p-6 space-y-5">
+              <div>
+                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("pdContactsTitle")}</div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{tr("pdContactsHint")}</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {([
+                  { key: "phone", label: "pdFieldPhone", icon: "Phone", ph: "+7 999 000-00-00", type: "tel" },
+                  { key: "email", label: "pdFieldEmail", icon: "Mail", ph: "you@email.com", type: "email" },
+                  { key: "whatsapp", label: "pdFieldWhatsApp", icon: "MessageSquare", ph: "+7 999 000-00-00", type: "tel" },
+                  { key: "telegram", label: "pdFieldTelegram", icon: "Send", ph: "username", type: "text" },
+                ] as const).map((f) => (
+                  <div key={f.key}>
+                    <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2">
+                      <Icon name={f.icon} size={13} className="text-gold" />
+                      {tr(f.label)}
+                    </label>
+                    <input
+                      type={f.type}
+                      value={contacts[f.key]}
+                      onChange={(e) => { setContacts({ ...contacts, [f.key]: e.target.value }); setSaveState("idle"); }}
+                      placeholder={f.ph}
+                      className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="divider-gold" />
+              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdSocialTitle")}</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {([
+                  { key: "website", label: "pdFieldWebsite", icon: "Globe", ph: "https://..." },
+                  { key: "vk", label: "VK" as const, icon: "Share2", ph: "vk.com/..." },
+                  { key: "instagram", label: "Instagram" as const, icon: "Instagram", ph: "instagram.com/..." },
+                  { key: "linkedin", label: "LinkedIn" as const, icon: "Linkedin", ph: "linkedin.com/in/..." },
+                ] as const).map((f) => (
+                  <div key={f.key}>
+                    <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2">
+                      <Icon name={f.icon} size={13} className="text-gold" />
+                      {f.label === "pdFieldWebsite" ? tr("pdFieldWebsite") : f.label}
+                    </label>
+                    <input
+                      type="url"
+                      value={contacts[f.key as keyof typeof contacts]}
+                      onChange={(e) => { setContacts({ ...contacts, [f.key]: e.target.value }); setSaveState("idle"); }}
+                      placeholder={f.ph}
+                      className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {saveState === "saved" && (
+                <div className="flex items-center gap-2 text-sm text-green-400"><Icon name="CheckCircle2" size={16} />{tr("pdContactsSaved")}</div>
+              )}
+              {saveState === "error" && (
+                <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("pdContactsSaveErr")}</div>
+              )}
+              <button
+                onClick={saveContacts}
+                disabled={saveState === "saving"}
+                className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {saveState === "saving" ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Save" size={16} />}
+                {tr("dashSave")}
+              </button>
             </div>
           )}
         </div>
