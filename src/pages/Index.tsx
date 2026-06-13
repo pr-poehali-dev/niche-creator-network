@@ -11,6 +11,11 @@ const POLYGRAPH_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b
 const DETECTIVE_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b893f56c-cd01-49d7-b962-7f78f87ace2c.jpg";
 const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/0b2c5db2-c85b-4009-99db-6b023ed84bf5.jpg";
 const PROVIDER_EMAIL = "a.morozov@securenet.ru";
+const DEMO_CLIENT = {
+  name: { ru: "Дмитрий Орлов", en: "Dmitry Orlov" },
+  city: { ru: "Москва", en: "Moscow" },
+  email: "d.orlov@email.com",
+};
 
 type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard";
 type Role = "client" | "provider";
@@ -419,6 +424,12 @@ export default function Index() {
                 {tr(item.key)}
               </button>
             ))}
+            <div className="p-3">
+              <button className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                <Icon name="LogIn" size={16} />
+                {tr("login")}
+              </button>
+            </div>
           </div>
         )}
       </header>
@@ -938,7 +949,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
         <div className="flex-1">
           <div className="text-xs text-muted-foreground font-montserrat mb-1">{tr("dashWelcome")},</div>
           <div className="font-montserrat font-extrabold text-2xl text-foreground flex items-center gap-2">
-            Дмитрий Орлов
+            {L(DEMO_CLIENT.name, lang)}
             <Icon name="BadgeCheck" size={18} className="text-gold" />
           </div>
           <div className="flex items-center gap-3 mt-2">
@@ -1076,7 +1087,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
               <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("cdSetTitle")}</div>
               <div>
                 <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("cdFullName")}</label>
-                <input defaultValue="Дмитрий Орлов" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+                <input key={lang} defaultValue={L(DEMO_CLIENT.name, lang)} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground outline-none focus:border-gold transition-colors" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -1085,7 +1096,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 </div>
                 <div>
                   <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("cdCity")}</label>
-                  <input defaultValue="Москва" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+                  <input key={lang} defaultValue={L(DEMO_CLIENT.city, lang)} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground outline-none focus:border-gold transition-colors" />
                 </div>
               </div>
               <div className="divider-gold" />
@@ -2037,7 +2048,7 @@ function CoursesSection() {
           { icon: "Award", n: "31", l: tr("instructors") },
           { icon: "Star", n: "4.8", l: tr("avgRating") },
         ].map((s) => (
-          <div key={s.l} className="border border-border rounded-sm bg-card p-5 flex items-center gap-4">
+          <div key={s.icon} className="border border-border rounded-sm bg-card p-5 flex items-center gap-4">
             <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
               <Icon name={s.icon} size={16} className="text-[hsl(220,20%,6%)]" />
             </div>
@@ -2266,7 +2277,7 @@ function ForumSection() {
           <div className="border border-border rounded-sm bg-card p-5">
             <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("statistics")}</div>
             {[{ l: tr("topics"), v: "248" }, { l: tr("answers"), v: "4 120" }, { l: tr("members"), v: "1 240" }].map((s) => (
-              <div key={s.l} className="flex justify-between py-2 border-b border-border last:border-0">
+              <div key={s.v} className="flex justify-between py-2 border-b border-border last:border-0">
                 <span className="text-xs text-muted-foreground">{s.l}</span>
                 <span className="text-xs font-montserrat font-bold text-gold">{s.v}</span>
               </div>
