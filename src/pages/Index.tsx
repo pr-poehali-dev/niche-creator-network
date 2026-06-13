@@ -55,6 +55,35 @@ const spyAvatar = (gender?: string) => (gender === "f" ? SPY_AVATAR_F : SPY_AVAT
 const resolveAvatar = (img: string | null | undefined, gender?: string) => (img && img.trim() ? img : spyAvatar(gender));
 const isImageUrl = (url?: string) => !!url && /\.(png|jpe?g|webp|gif)(\?|$)/i.test(url);
 
+function Lightbox({ src, title, onClose }: { src: string; title?: string; onClose: () => void }) {
+  const { tr } = useLang();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+      <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
+      <div className="relative z-10 max-w-3xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        {title && <div className="text-sm font-montserrat font-semibold text-foreground mb-3 text-center">{title}</div>}
+        <img src={src} alt={title || ""} className="max-w-full max-h-[78vh] object-contain rounded-sm border border-gold/30 mx-auto" />
+        <div className="flex items-center justify-center gap-3 mt-4">
+          <a href={src} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-gold hover:underline">
+            <Icon name="ExternalLink" size={14} />{tr("lightboxOpenNewTab")}
+          </a>
+          <button onClick={onClose} className="inline-flex items-center gap-1.5 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-gold hover:text-gold transition-all">
+            <Icon name="X" size={14} />{tr("lightboxClose")}
+          </button>
+        </div>
+      </div>
+      <button onClick={onClose} className="absolute top-4 end-4 z-20 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
+        <Icon name="X" size={26} />
+      </button>
+    </div>
+  );
+}
+
 function DocFileButton({ slug, url, onUploaded }: { slug: string; url: string; onUploaded: (url: string) => void }) {
   const { tr } = useLang();
   const [busy, setBusy] = useState(false);
@@ -197,6 +226,7 @@ function ContactButtons({ p, onChat, compact }: { p: Provider; onChat: () => voi
 
 function VerificationBlock({ v }: { v: NonNullable<Provider["verification"]> }) {
   const { tr } = useLang();
+  const [lightbox, setLightbox] = useState<{ src: string; title?: string } | null>(null);
   const licenses = v.licenses && v.licenses.length ? v.licenses : (v.license ? [v.license] : []);
   const documents = v.documents || [];
   const hasAny = v.fullName || v.legalStatus || licenses.length || v.registry || documents.length || v.bio;
@@ -254,12 +284,12 @@ function VerificationBlock({ v }: { v: NonNullable<Provider["verification"]> }) 
                 <div className="flex flex-wrap gap-2">
                   {documents.map((d, i) => (
                     isImageUrl(d.url) ? (
-                      <a key={i} href={d.url} target="_blank" rel="noopener noreferrer" title={d.title || tr("docOpen")} className="group/doc relative w-16 h-16 rounded-sm overflow-hidden border border-border hover:border-gold transition-colors">
+                      <button key={i} onClick={() => setLightbox({ src: d.url as string, title: d.title })} title={d.title || tr("docOpen")} className="group/doc relative w-16 h-16 rounded-sm overflow-hidden border border-border hover:border-gold transition-colors">
                         <img src={d.url} alt={d.title || ""} className="w-full h-full object-cover" />
                         <span className="absolute inset-0 bg-background/60 opacity-0 group-hover/doc:opacity-100 transition-opacity flex items-center justify-center">
                           <Icon name="ZoomIn" size={16} className="text-gold" />
                         </span>
-                      </a>
+                      </button>
                     ) : d.url ? (
                       <a key={i} href={d.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-foreground bg-secondary border border-border rounded-sm px-2 py-1 hover:border-gold hover:text-gold transition-colors self-start">
                         <Icon name="FileText" size={11} className="text-gold" />{d.title || tr("docOpen")}
@@ -277,6 +307,7 @@ function VerificationBlock({ v }: { v: NonNullable<Provider["verification"]> }) 
           )}
         </div>
       </div>
+      {lightbox && <Lightbox src={lightbox.src} title={lightbox.title} onClose={() => setLightbox(null)} />}
     </div>
   );
 }

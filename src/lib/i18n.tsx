@@ -630,6 +630,8 @@ export const t: Dict = {
   pdVfDocError: { ru: "Ошибка загрузки файла", en: "File upload failed" },
   pdVfDocHint: { ru: "PDF или изображение, до 10 МБ", en: "PDF or image, up to 10 MB" },
   docOpen: { ru: "Открыть", en: "Open" },
+  lightboxOpenNewTab: { ru: "Открыть в новой вкладке", en: "Open in new tab" },
+  lightboxClose: { ru: "Закрыть", en: "Close" },
   pdVfBio: { ru: "О себе и достижениях", en: "About yourself & achievements" },
   pdVfBioPh: { ru: "Краткая справка: опыт, специализация, ключевые достижения...", en: "Short summary: experience, specialization, key achievements..." },
   remove: { ru: "Удалить", en: "Remove" },
