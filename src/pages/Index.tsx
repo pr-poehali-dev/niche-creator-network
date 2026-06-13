@@ -7,7 +7,7 @@ const POLYGRAPH_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b
 const DETECTIVE_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b893f56c-cd01-49d7-b962-7f78f87ace2c.jpg";
 const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/0b2c5db2-c85b-4009-99db-6b023ed84bf5.jpg";
 
-type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts";
+type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy";
 
 const NAV_ITEMS: { id: Section; key: keyof typeof t; icon: string }[] = [
   { id: "home", key: "navHome", icon: "Home" },
@@ -147,6 +147,7 @@ const SECTION_CRUMB: Record<Section, keyof typeof t> = {
   chat: "crumbChat",
   forum: "crumbForum",
   contacts: "crumbContacts",
+  policy: "crumbPolicy",
 };
 
 const cases = [
@@ -272,6 +273,7 @@ export default function Index() {
       case "chat": return <ChatSection chatInput={chatInput} setChatInput={setChatInput} />;
       case "forum": return <ForumSection />;
       case "contacts": return <ContactsSection />;
+      case "policy": return <SecurityPolicySection setActive={go} />;
       default: return <HomeSection setActive={go} />;
     }
   };
@@ -389,6 +391,10 @@ export default function Index() {
             </div>
             <div>
               <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerDocs")}</div>
+              <button onClick={() => go("policy")} className="flex items-center gap-1.5 text-xs text-gold hover:opacity-80 cursor-pointer transition-colors mb-2 font-medium">
+                <Icon name="ShieldCheck" size={12} />
+                {tr("navPolicy")}
+              </button>
               {(["fPrivacy", "fTerms", "fAgreement", "fOffer"] as const).map(l => (
                 <div key={l} className="text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2">{tr(l)}</div>
               ))}
@@ -414,10 +420,10 @@ export default function Index() {
                 <div className="text-xs text-muted-foreground truncate">{tr("secBannerSub")}</div>
               </div>
               <button
-                onClick={() => go("home")}
+                onClick={() => go("policy")}
                 className="hidden sm:block shrink-0 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity"
               >
-                {tr("secTag")}
+                {tr("secReadPolicy")}
               </button>
               <button
                 onClick={() => setSecBannerOpen(false)}
@@ -710,6 +716,16 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="text-center mt-10">
+            <button
+              onClick={() => setActive("policy")}
+              className="inline-flex items-center gap-2 border border-gold text-gold px-8 py-3.5 font-montserrat font-bold text-sm tracking-wide hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm"
+            >
+              <Icon name="FileText" size={16} />
+              {tr("secReadPolicy")}
+            </button>
           </div>
         </div>
       </section>
@@ -1427,6 +1443,94 @@ function ContactsSection() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SecurityPolicySection({ setActive }: { setActive: (s: Section) => void }) {
+  const { tr } = useLang();
+
+  const sections = [
+    { icon: "DatabaseZap", title: "pol1Title" as const, text: "pol1Text" as const },
+    { icon: "KeyRound", title: "pol2Title" as const, text: "pol2Text" as const },
+    { icon: "MessageSquareLock", title: "pol3Title" as const, text: "pol3Text" as const },
+    { icon: "Globe", title: "pol4Title" as const, text: "pol4Text" as const },
+    { icon: "FileLock2", title: "pol5Title" as const, text: "pol5Text" as const },
+    { icon: "BadgeCheck", title: "pol6Title" as const, text: "pol6Text" as const },
+    { icon: "Server", title: "pol7Title" as const, text: "pol7Text" as const },
+    { icon: "Scale", title: "pol8Title" as const, text: "pol8Text" as const },
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      {/* Header */}
+      <div className="border border-gold/30 rounded-sm glass-card p-8 md:p-10 mb-8 relative overflow-hidden security-glow ambient-gold">
+        <div className="absolute inset-0 grid-line-bg opacity-30" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
+          <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
+            <Icon name="ShieldCheck" size={30} className="text-[hsl(220,20%,6%)]" />
+          </div>
+          <div>
+            <div className="tag-security mb-3 inline-block">{tr("polTag")}</div>
+            <h1 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-2">{tr("polTitle")}</h1>
+            <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Icon name="Calendar" size={12} className="text-gold" />
+              {tr("polUpdated")}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Sidebar contents */}
+        <aside className="lg:col-span-1 order-2 lg:order-1">
+          <div className="lg:sticky lg:top-24 border border-border rounded-sm bg-card p-5">
+            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("polNav")}</div>
+            {sections.map((s, i) => (
+              <a key={s.title} href={`#pol-${i}`} className="flex items-center gap-2 py-2 border-b border-border last:border-0 cursor-pointer group">
+                <span className="font-montserrat font-bold text-[10px] text-gold w-4">{String(i + 1).padStart(2, "0")}</span>
+                <span className="text-xs text-muted-foreground group-hover:text-gold transition-colors">{tr(s.title).replace(/^\d+\.\s*/, "")}</span>
+              </a>
+            ))}
+          </div>
+        </aside>
+
+        {/* Content */}
+        <div className="lg:col-span-3 order-1 lg:order-2">
+          <div className="border border-border rounded-sm bg-card p-6 md:p-8 mb-6">
+            <p className="text-sm text-muted-foreground leading-relaxed">{tr("polIntro")}</p>
+          </div>
+
+          <div className="space-y-5 stagger">
+            {sections.map((s, i) => (
+              <div key={s.title} id={`pol-${i}`} className="border border-border rounded-sm bg-card p-6 md:p-7 card-hover scroll-mt-24">
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center shrink-0 glow-gold-sm">
+                    <Icon name={s.icon} fallback="Lock" size={19} className="text-[hsl(220,20%,6%)]" />
+                  </div>
+                  <div>
+                    <h2 className="font-montserrat font-bold text-base text-foreground mb-2">{tr(s.title)}</h2>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{tr(s.text)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Contact callout */}
+          <div className="mt-8 border border-gold/30 rounded-sm glass-card p-8 text-center security-glow">
+            <Icon name="LifeBuoy" size={32} className="text-gold mx-auto mb-4" />
+            <h2 className="font-montserrat font-bold text-xl text-foreground mb-2">{tr("polContactTitle")}</h2>
+            <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-6">{tr("polContactText")}</p>
+            <button
+              onClick={() => setActive("contacts")}
+              className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+            >
+              {tr("polContactBtn")}
+            </button>
           </div>
         </div>
       </div>

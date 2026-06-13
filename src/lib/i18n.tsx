@@ -244,6 +244,45 @@ export const t: Dict = {
   secStat1: { ru: "Шифрование данных", en: "Data encryption" },
   secStat2: { ru: "Утечек данных", en: "Data breaches" },
   secStat3: { ru: "Мониторинг угроз", en: "Threat monitoring" },
+  secReadPolicy: { ru: "Читать политику безопасности", en: "Read the security policy" },
+
+  // Security policy page
+  navPolicy: { ru: "Политика безопасности", en: "Security Policy" },
+  crumbPolicy: { ru: "Политика безопасности", en: "Security Policy" },
+  polTag: { ru: "Документ", en: "Document" },
+  polTitle: { ru: "Политика безопасности", en: "Security Policy" },
+  polUpdated: { ru: "Последнее обновление: 13 июня 2026", en: "Last updated: June 13, 2026" },
+  polIntro: { ru: "Настоящая Политика описывает меры, которые SecureNet применяет для защиты данных клиентов и специалистов. Безопасность — основа доверия в нашей профессиональной нише, поэтому мы используем многоуровневую защиту на каждом этапе работы платформы.", en: "This Policy describes the measures SecureNet applies to protect the data of clients and specialists. Security is the foundation of trust in our professional niche, so we use multi-layered protection at every stage of the platform." },
+
+  polNav: { ru: "Содержание", en: "Contents" },
+
+  pol1Title: { ru: "1. Шифрование данных", en: "1. Data encryption" },
+  pol1Text: { ru: "Все персональные данные — телефоны, email, документы и реквизиты — шифруются алгоритмом AES-256 перед сохранением в базе данных. Ключи шифрования хранятся отдельно от данных в защищённом хранилище секретов и недоступны напрямую сотрудникам платформы.", en: "All personal data — phone numbers, emails, documents and credentials — is encrypted with AES-256 before being stored in the database. Encryption keys are stored separately from the data in a protected secrets vault and are not directly accessible to platform staff." },
+
+  pol2Title: { ru: "2. Защита аутентификации", en: "2. Authentication security" },
+  pol2Text: { ru: "Пароли никогда не хранятся в открытом виде — мы используем необратимое хеширование (bcrypt) с индивидуальной солью. Сессии защищены подписанными токенами с ограниченным сроком действия. Для специалистов доступна двухфакторная аутентификация (2FA).", en: "Passwords are never stored in plain text — we use irreversible hashing (bcrypt) with a unique salt. Sessions are protected by signed tokens with a limited lifetime. Two-factor authentication (2FA) is available for specialists." },
+
+  pol3Title: { ru: "3. Сквозное шифрование переписки", en: "3. End-to-end messaging" },
+  pol3Text: { ru: "Сообщения в чате и данные форм заявок передаются по защищённым каналам со сквозным шифрованием. Содержимое переписки доступно только отправителю и получателю — платформа не имеет доступа к расшифрованному тексту сообщений.", en: "Chat messages and request form data are transmitted over secure channels with end-to-end encryption. Message content is accessible only to the sender and recipient — the platform has no access to the decrypted message text." },
+
+  pol4Title: { ru: "4. Защищённое соединение", en: "4. Secure connection" },
+  pol4Text: { ru: "Весь трафик между вашим устройством и платформой передаётся по протоколу TLS 1.3 с принудительным HTTPS на всех страницах. Это исключает перехват и подмену данных при передаче через интернет.", en: "All traffic between your device and the platform is transmitted over TLS 1.3 with enforced HTTPS on every page. This prevents interception and tampering of data in transit over the internet." },
+
+  pol5Title: { ru: "5. Контроль доступа", en: "5. Access control" },
+  pol5Text: { ru: "Доступ к данным строго разграничен по ролям: каждый сотрудник и пользователь видит только ту информацию, которая необходима для его задач. Все действия с чувствительными данными журналируются, а доступ регулярно пересматривается.", en: "Data access is strictly segregated by role: each employee and user sees only the information necessary for their tasks. All actions with sensitive data are logged, and access is reviewed regularly." },
+
+  pol6Title: { ru: "6. Верификация участников", en: "6. Member verification" },
+  pol6Text: { ru: "Каждый специалист и охранное предприятие проходят проверку документов и лицензий перед допуском на платформу. Это снижает риск мошенничества и гарантирует, что вы работаете только с проверенными профессионалами.", en: "Every specialist and security firm undergoes document and license verification before being admitted to the platform. This reduces the risk of fraud and ensures that you work only with verified professionals." },
+
+  pol7Title: { ru: "7. Резервное копирование", en: "7. Backups" },
+  pol7Text: { ru: "Данные регулярно резервируются в зашифрованном виде в географически распределённых хранилищах. Это обеспечивает восстановление информации при любых сбоях без потери данных.", en: "Data is regularly backed up in encrypted form across geographically distributed storage. This ensures information recovery in case of any failure without data loss." },
+
+  pol8Title: { ru: "8. Соответствие стандартам", en: "8. Compliance" },
+  pol8Text: { ru: "Обработка персональных данных соответствует требованиям GDPR и законодательства о защите персональных данных. Вы вправе запросить доступ к своим данным, их исправление или удаление в любой момент.", en: "Personal data processing complies with GDPR and personal data protection legislation. You have the right to request access to your data, its correction or deletion at any time." },
+
+  polContactTitle: { ru: "Вопросы по безопасности?", en: "Security questions?" },
+  polContactText: { ru: "Если у вас есть вопросы о защите данных или вы обнаружили уязвимость — свяжитесь с нашей командой безопасности.", en: "If you have questions about data protection or have discovered a vulnerability — contact our security team." },
+  polContactBtn: { ru: "Связаться с поддержкой", en: "Contact support" },
 
   // Footer
   footerDesc: { ru: "Международное закрытое сообщество для специалистов в сфере безопасности", en: "International private community for security professionals" },
