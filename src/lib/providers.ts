@@ -17,7 +17,7 @@ export type ProviderVerification = {
   license?: string;
   licenses?: string[];
   registry?: string;
-  documents?: { title: string }[];
+  documents?: { title: string; url?: string }[];
   bio?: string;
 };
 

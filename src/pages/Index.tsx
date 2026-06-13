@@ -54,6 +54,51 @@ const L = (v: LS, lang: Lang) => {
 const spyAvatar = (gender?: string) => (gender === "f" ? SPY_AVATAR_F : SPY_AVATAR_M);
 const resolveAvatar = (img: string | null | undefined, gender?: string) => (img && img.trim() ? img : spyAvatar(gender));
 
+function DocFileButton({ slug, url, onUploaded }: { slug: string; url: string; onUploaded: (url: string) => void }) {
+  const { tr } = useLang();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(false);
+
+  const pick = (file: File) => {
+    setErr(false);
+    if (file.size > 10 * 1024 * 1024) { setErr(true); return; }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = String(reader.result || "");
+      const ext = (file.name.split(".").pop() || "pdf").toLowerCase();
+      setBusy(true);
+      try {
+        const res = await fetch(func2url["upload-document"], {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, fileBase64: base64, ext }),
+        });
+        const data = await res.json();
+        if (res.ok && data.url) onUploaded(data.url);
+        else setErr(true);
+      } catch {
+        setErr(true);
+      } finally {
+        setBusy(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="flex items-center gap-2 mt-1.5 ms-1">
+      <label className="inline-flex items-center gap-1.5 cursor-pointer text-[11px] font-montserrat font-semibold text-gold hover:underline">
+        {busy ? <Icon name="Loader" size={12} className="animate-spin" /> : <Icon name={url ? "FileCheck2" : "Paperclip"} size={12} />}
+        {tr(busy ? "pdVfDocUploading" : url ? "pdVfDocReplace" : "pdVfDocAttach")}
+        <input type="file" accept=".pdf,image/png,image/jpeg,image/webp" className="hidden" disabled={busy} onChange={(e) => { const f = e.target.files?.[0]; if (f) pick(f); }} />
+      </label>
+      {url && <a href={url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-green-400 inline-flex items-center gap-1"><Icon name="Check" size={11} />{tr("pdVfDocAttached")}</a>}
+      {!url && !busy && <span className="text-[10px] text-muted-foreground">{tr("pdVfDocHint")}</span>}
+      {err && <span className="text-[11px] text-destructive">{tr("pdVfDocError")}</span>}
+    </div>
+  );
+}
+
 function AvatarUploader({ current, gender, role, recordId, onUploaded }: { current: string | null; gender: string; role: "provider" | "client"; recordId: string; onUploaded: (url: string) => void }) {
   const { tr } = useLang();
   const [busy, setBusy] = useState(false);
@@ -202,9 +247,16 @@ function VerificationBlock({ v }: { v: NonNullable<Provider["verification"]> }) 
                 <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("verifyDocuments")}</div>
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   {documents.map((d, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 text-[11px] text-foreground bg-secondary border border-border rounded-sm px-2 py-1">
-                      <Icon name="Paperclip" size={11} className="text-gold" />{d.title}
-                    </span>
+                    d.url ? (
+                      <a key={i} href={d.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-foreground bg-secondary border border-border rounded-sm px-2 py-1 hover:border-gold hover:text-gold transition-colors">
+                        <Icon name="FileCheck2" size={11} className="text-gold" />{d.title || tr("docOpen")}
+                        <Icon name="ExternalLink" size={10} className="opacity-60" />
+                      </a>
+                    ) : (
+                      <span key={i} className="inline-flex items-center gap-1 text-[11px] text-foreground bg-secondary border border-border rounded-sm px-2 py-1">
+                        <Icon name="Paperclip" size={11} className="text-gold" />{d.title}
+                      </span>
+                    )
                   ))}
                 </div>
               </div>
@@ -1916,13 +1968,16 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                     {tr(vf.showDocuments ? "pdVfShow" : "pdVfHidden")}
                   </button>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {vf.documents.map((doc, i) => (
-                    <div key={i} className="flex gap-2">
-                      <input value={doc.title} onChange={(e) => { const arr = [...vf.documents]; arr[i] = { ...arr[i], title: e.target.value }; setVf({ ...vf, documents: arr }); setVfState("idle"); }} placeholder={tr("pdVfDocTitlePh")} className="flex-1 min-w-0 bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
-                      <button onClick={() => { setVf({ ...vf, documents: vf.documents.filter((_, idx) => idx !== i) }); setVfState("idle"); }} className="shrink-0 px-3 border border-border rounded-sm text-muted-foreground hover:border-destructive hover:text-destructive transition-colors" aria-label={tr("remove")}>
-                        <Icon name="Trash2" size={14} />
-                      </button>
+                    <div key={i} className="border border-border rounded-sm bg-secondary/30 p-3">
+                      <div className="flex gap-2">
+                        <input value={doc.title} onChange={(e) => { const arr = [...vf.documents]; arr[i] = { ...arr[i], title: e.target.value }; setVf({ ...vf, documents: arr }); setVfState("idle"); }} placeholder={tr("pdVfDocTitlePh")} className="flex-1 min-w-0 bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                        <button onClick={() => { setVf({ ...vf, documents: vf.documents.filter((_, idx) => idx !== i) }); setVfState("idle"); }} className="shrink-0 px-3 border border-border rounded-sm text-muted-foreground hover:border-destructive hover:text-destructive transition-colors" aria-label={tr("remove")}>
+                          <Icon name="Trash2" size={14} />
+                        </button>
+                      </div>
+                      <DocFileButton slug="morozov" url={doc.url || ""} onUploaded={(u) => { const arr = [...vf.documents]; arr[i] = { ...arr[i], url: u }; setVf({ ...vf, documents: arr }); setVfState("idle"); }} />
                     </div>
                   ))}
                 </div>

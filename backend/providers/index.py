@@ -100,7 +100,13 @@ def handler(event: dict, context) -> dict:
             if bool(r[32]) and r[28]:
                 public_verification['registry'] = r[28]
             if bool(r[43]) and documents_raw:
-                docs = [{'title': str(d.get('title', '')).strip()} for d in documents_raw if isinstance(d, dict) and str(d.get('title', '')).strip()]
+                docs = []
+                for d in documents_raw:
+                    if isinstance(d, dict):
+                        title = str(d.get('title', '')).strip()
+                        url = str(d.get('url', '')).strip()
+                        if title or url:
+                            docs.append({'title': title, 'url': url})
                 if docs:
                     public_verification['documents'] = docs
             if bool(r[41]) and (r[39] or '').strip():
