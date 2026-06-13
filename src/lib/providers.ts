@@ -36,6 +36,8 @@ export type Provider = {
   active: boolean;
   contacts: ProviderContacts | null;
   verification: ProviderVerification | null;
+  gender?: "m" | "f";
+  isPseudonym?: boolean;
 };
 
 export function useProviders() {

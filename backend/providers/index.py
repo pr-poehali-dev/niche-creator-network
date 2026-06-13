@@ -33,7 +33,8 @@ def handler(event: dict, context) -> dict:
         f'tags_ru, tags_en, phone, email, whatsapp, telegram, website, '
         f'verified, subscription_active, '
         f'full_name, legal_status, license_info, registry_number, '
-        f'show_full_name, show_legal_status, show_license, show_registry '
+        f'show_full_name, show_legal_status, show_license, show_registry, '
+        f'pseudonym, use_pseudonym, avatar_url, gender '
         f'FROM {SCHEMA}.providers ORDER BY subscription_active DESC, rating DESC, reviews DESC'
     )
     rows = cur.fetchall()
@@ -60,10 +61,18 @@ def handler(event: dict, context) -> dict:
             },
             'verified': bool(r[23]),
             'active': active,
+            'gender': r[36] or 'm',
         }
         if active:
-            item['name'] = {'ru': r[1], 'en': r[2]}
-            item['img'] = r[15]
+            use_pseudonym = bool(r[34])
+            pseudonym = (r[33] or '').strip()
+            if use_pseudonym and pseudonym:
+                item['name'] = {'ru': pseudonym, 'en': pseudonym}
+                item['isPseudonym'] = True
+            else:
+                item['name'] = {'ru': r[1], 'en': r[2]}
+                item['isPseudonym'] = False
+            item['img'] = (r[35] or '').strip() or r[15]
             item['contacts'] = {
                 'phone': r[18],
                 'email': r[19],

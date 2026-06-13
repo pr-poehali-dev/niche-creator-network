@@ -595,6 +595,23 @@ export const t: Dict = {
   pdVfSaved: { ru: "Данные верификации сохранены", en: "Verification saved" },
   pdVfSaveErr: { ru: "Не удалось сохранить. Попробуйте ещё раз.", en: "Failed to save. Please try again." },
 
+  // Pseudonym
+  pdVfPseudonym: { ru: "Псевдоним", en: "Pseudonym" },
+  pdVfPseudonymHint: { ru: "Можно показывать клиентам псевдоним вместо реального имени", en: "You can show clients a pseudonym instead of your real name" },
+  pdVfUsePseudonym: { ru: "Показывать псевдоним вместо ФИО", en: "Show pseudonym instead of real name" },
+
+  // Avatar
+  avatarTitle: { ru: "Фото профиля", en: "Profile photo" },
+  avatarHint: { ru: "Загрузите фото или оставьте шпионский аватар", en: "Upload a photo or keep the spy avatar" },
+  avatarUpload: { ru: "Загрузить фото", en: "Upload photo" },
+  avatarUploading: { ru: "Загрузка...", en: "Uploading..." },
+  avatarRemove: { ru: "Убрать фото", en: "Remove photo" },
+  avatarError: { ru: "Не удалось загрузить фото", en: "Failed to upload photo" },
+  genderLabel: { ru: "Аватар по умолчанию", en: "Default avatar" },
+  genderMale: { ru: "Мужской", en: "Male" },
+  genderFemale: { ru: "Женский", en: "Female" },
+  aliasBadge: { ru: "Псевдоним", en: "Alias" },
+
   // Public verification block (on card/profile)
   verifyBlockTitle: { ru: "Подтверждённые данные", en: "Verified details" },
   verifyName: { ru: "ФИО", en: "Name" },

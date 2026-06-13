@@ -55,6 +55,9 @@ def handler(event: dict, context) -> dict:
     show_license = b(body.get('showLicense'))
     show_registry = b(body.get('showRegistry'))
 
+    pseudonym = esc(body.get('pseudonym'))
+    use_pseudonym = b(body.get('usePseudonym'))
+
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     cur.execute(
@@ -67,7 +70,9 @@ def handler(event: dict, context) -> dict:
         f"show_full_name={show_name}, "
         f"show_legal_status={show_status}, "
         f"show_license={show_license}, "
-        f"show_registry={show_registry} "
+        f"show_registry={show_registry}, "
+        f"pseudonym='{pseudonym}', "
+        f"use_pseudonym={use_pseudonym} "
         f"WHERE slug='{slug}'"
     )
     updated = cur.rowcount

@@ -7,10 +7,12 @@ import { useGeo, haversineKm } from "@/lib/geo";
 import { useProviders, type Provider } from "@/lib/providers";
 import func2url from "../../backend/func2url.json";
 
-const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/e0e84afb-8e88-40ff-81b2-c3597f9a8371.jpg";
-const POLYGRAPH_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/c211bedb-fcf6-49e0-abb2-ad98fcf0bdac.jpg";
-const DETECTIVE_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b893f56c-cd01-49d7-b962-7f78f87ace2c.jpg";
-const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/0b2c5db2-c85b-4009-99db-6b023ed84bf5.jpg";
+const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/92040949-913f-4126-80f9-fa681d96ea82.jpg";
+const POLYGRAPH_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/7ad3b230-2fec-4347-a4a7-4c4670578fee.jpg";
+const DETECTIVE_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/fc0c15b9-2bf3-4932-b821-d76b3c5a8c55.jpg";
+const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/3ab23f4f-4190-41a8-a1f3-206d541e0669.jpg";
+const SPY_AVATAR_M = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/61fc9ccd-a5ee-4375-8640-5c890da0df33.jpg";
+const SPY_AVATAR_F = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b40d29de-2a29-448c-82c8-a2baa711ee57.jpg";
 const PROVIDER_EMAIL = "a.morozov@shchit.ru";
 const DEMO_CLIENT = {
   name: { ru: "Дмитрий Орлов", en: "Dmitry Orlov" },
@@ -48,6 +50,68 @@ const L = (v: LS, lang: Lang) => {
   if (lang === "en") return v.en;
   return dataExtra[lang as keyof typeof dataExtra]?.[v.en] ?? v.en;
 };
+
+const spyAvatar = (gender?: string) => (gender === "f" ? SPY_AVATAR_F : SPY_AVATAR_M);
+const resolveAvatar = (img: string | null | undefined, gender?: string) => (img && img.trim() ? img : spyAvatar(gender));
+
+function AvatarUploader({ current, gender, role, recordId, onUploaded }: { current: string | null; gender: string; role: "provider" | "client"; recordId: string; onUploaded: (url: string) => void }) {
+  const { tr } = useLang();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(false);
+
+  const pick = (file: File) => {
+    setErr(false);
+    if (file.size > 5 * 1024 * 1024) { setErr(true); return; }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = String(reader.result || "");
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      setBusy(true);
+      try {
+        const res = await fetch(func2url["upload-avatar"], {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role, id: recordId, imageBase64: base64, ext }),
+        });
+        const data = await res.json();
+        if (res.ok && data.url) onUploaded(data.url);
+        else setErr(true);
+      } catch {
+        setErr(true);
+      } finally {
+        setBusy(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="flex items-center gap-4">
+      <div className="w-20 h-20 rounded-sm overflow-hidden border-2 border-gold shrink-0 bg-secondary">
+        <img src={resolveAvatar(current, gender)} alt="avatar" className="w-full h-full object-cover" />
+      </div>
+      <div className="flex-1">
+        <div className="text-xs font-montserrat font-semibold text-foreground mb-1">{tr("avatarTitle")}</div>
+        <p className="text-[11px] text-muted-foreground mb-2">{tr("avatarHint")}</p>
+        <label className="inline-flex items-center gap-1.5 cursor-pointer border border-gold text-gold text-xs font-montserrat font-semibold px-3 py-2 rounded-sm hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all">
+          {busy ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="Upload" size={14} />}
+          {tr(busy ? "avatarUploading" : "avatarUpload")}
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            disabled={busy}
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) pick(f); }}
+          />
+        </label>
+        {current && current.trim() && (
+          <button onClick={() => onUploaded("")} className="ml-2 text-[11px] text-muted-foreground hover:text-destructive transition-colors">{tr("avatarRemove")}</button>
+        )}
+        {err && <div className="text-[11px] text-destructive mt-1">{tr("avatarError")}</div>}
+      </div>
+    </div>
+  );
+}
 
 function ContactButtons({ p, onChat, compact }: { p: Provider; onChat: () => void; compact?: boolean }) {
   const { tr } = useLang();
@@ -807,12 +871,14 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
             return s.active ? (
             <div key={s.slug} onClick={() => setActive("profile")} className="card-hover shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group flex flex-col">
               <div className="h-48 overflow-hidden relative">
-                {s.img ? (
-                  <img src={s.img} alt={L(s.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                ) : (
-                  <div className="w-full h-full bg-secondary flex items-center justify-center"><Icon name="UserRound" size={48} className="text-muted-foreground/40" /></div>
-                )}
+                <img src={resolveAvatar(s.img, s.gender)} alt={L(s.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+                {s.isPseudonym && (
+                  <div className="absolute top-3 start-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border px-2 py-1 rounded-sm">
+                    <Icon name="VenetianMask" size={11} className="text-muted-foreground" />
+                    <span className="text-[10px] font-montserrat font-semibold text-muted-foreground">{tr("aliasBadge")}</span>
+                  </div>
+                )}
                 {s.verified && (
                   <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
                     <Icon name="BadgeCheck" size={12} className="text-gold" />
@@ -820,7 +886,7 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
                   </div>
                 )}
                 {s.distance != null && s.distance <= 100 && (
-                  <div className="absolute top-3 start-3 flex items-center gap-1 bg-gold/90 backdrop-blur-sm px-2 py-1 rounded-sm">
+                  <div className={`absolute start-3 flex items-center gap-1 bg-gold/90 backdrop-blur-sm px-2 py-1 rounded-sm ${s.isPseudonym ? "top-12" : "top-3"}`}>
                     <Icon name="Navigation" size={11} className="text-[hsl(220,20%,6%)]" />
                     <span className="text-[10px] font-montserrat font-bold text-[hsl(220,20%,6%)]">{tr("geoNearYou")}</span>
                   </div>
@@ -1077,13 +1143,19 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
     { id: "settings" as const, key: "cdTab4" as const, icon: "Settings" },
   ];
 
-  const [clientData, setClientData] = useState({ fullName: "", phone: "", email: "" });
+  const [clientData, setClientData] = useState({ fullName: "", phone: "", email: "", gender: "m" });
   const [clientState, setClientState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [clientAvatar, setClientAvatar] = useState<string>("");
 
   useEffect(() => {
     fetch(`${func2url["clients"]}?clientId=demo-client`)
       .then((r) => r.json())
-      .then((d) => { if (d.client) setClientData({ fullName: d.client.fullName || "", phone: d.client.phone || "", email: d.client.email || "" }); })
+      .then((d) => {
+        if (d.client) {
+          setClientData({ fullName: d.client.fullName || "", phone: d.client.phone || "", email: d.client.email || "", gender: d.client.gender || "m" });
+          setClientAvatar(d.client.avatarUrl || "");
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -1120,7 +1192,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
       {/* Header card */}
       <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-5 security-glow">
         <div className="w-16 h-16 rounded-sm overflow-hidden border-2 border-gold shrink-0">
-          <img src={HERO_IMAGE} alt="avatar" className="w-full h-full object-cover" />
+          <img src={resolveAvatar(clientAvatar, clientData.gender)} alt="avatar" className="w-full h-full object-cover" />
         </div>
         <div className="flex-1">
           <div className="text-xs text-muted-foreground font-montserrat mb-1">{tr("dashWelcome")},</div>
@@ -1264,6 +1336,21 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("cdClientData")}</div>
                 <p className="text-xs text-muted-foreground leading-relaxed">{tr("cdClientDataHint")}</p>
               </div>
+
+              <AvatarUploader current={clientAvatar} gender={clientData.gender} role="client" recordId="demo-client" onUploaded={setClientAvatar} />
+              <div>
+                <label className="text-xs font-montserrat font-semibold text-foreground block mb-2">{tr("genderLabel")}</label>
+                <div className="grid grid-cols-2 gap-2 max-w-xs">
+                  {([{ v: "m", k: "genderMale" as const }, { v: "f", k: "genderFemale" as const }]).map((g) => (
+                    <button key={g.v} onClick={() => { setClientData({ ...clientData, gender: g.v }); setClientState("idle"); }}
+                      className={`py-2 text-xs font-montserrat font-semibold rounded-sm border transition-all ${clientData.gender === g.v ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                      {tr(g.k)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="divider-gold" />
+
               <div>
                 <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2"><Icon name="User" size={13} className="text-gold" />{tr("cdClientName")}</label>
                 <input value={clientData.fullName} onChange={(e) => { setClientData({ ...clientData, fullName: e.target.value }); setClientState("idle"); }} placeholder={tr("cdClientName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
@@ -1325,8 +1412,10 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [vf, setVf] = useState({
     fullName: "", passportNumber: "", legalStatus: "ip", license: "", registry: "",
     showFullName: true, showLegalStatus: true, showLicense: true, showRegistry: true,
+    pseudonym: "", usePseudonym: false,
   });
   const [vfState, setVfState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
 
   const saveVerification = async () => {
     setVfState("saving");
@@ -1614,6 +1703,10 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 <p className="text-xs text-muted-foreground leading-relaxed">{tr("pdVerifyHint")}</p>
               </div>
 
+              {/* Avatar upload */}
+              <AvatarUploader current={avatarUrl} gender="m" role="provider" recordId="morozov" onUploaded={setAvatarUrl} />
+              <div className="divider-gold" />
+
               {/* Full name (with visibility toggle) */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -1627,6 +1720,24 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                   </button>
                 </div>
                 <input value={vf.fullName} onChange={(e) => { setVf({ ...vf, fullName: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfFullName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+              </div>
+
+              {/* Pseudonym */}
+              <div className="border border-border rounded-sm bg-secondary/40 p-4 space-y-3">
+                <div>
+                  <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-1"><Icon name="VenetianMask" size={13} className="text-gold" />{tr("pdVfPseudonym")}</label>
+                  <p className="text-[11px] text-muted-foreground mb-2">{tr("pdVfPseudonymHint")}</p>
+                  <input value={vf.pseudonym} onChange={(e) => { setVf({ ...vf, pseudonym: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfPseudonym")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                </div>
+                <button
+                  onClick={() => { setVf({ ...vf, usePseudonym: !vf.usePseudonym }); setVfState("idle"); }}
+                  className="flex items-center justify-between w-full"
+                >
+                  <span className="text-xs text-foreground">{tr("pdVfUsePseudonym")}</span>
+                  <span className={`relative w-10 h-5 rounded-full transition-colors ${vf.usePseudonym ? "bg-gold" : "bg-border"}`}>
+                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-card transition-all ${vf.usePseudonym ? "start-5" : "start-0.5"}`} />
+                  </span>
+                </button>
               </div>
 
               {/* Passport — never public */}

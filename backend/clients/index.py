@@ -39,7 +39,7 @@ def handler(event: dict, context) -> dict:
             conn.close()
             return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'clientId required'})}
         cur.execute(
-            f"SELECT full_name, phone, email FROM {SCHEMA}.clients WHERE client_id='{client_id}'"
+            f"SELECT full_name, phone, email, avatar_url, gender FROM {SCHEMA}.clients WHERE client_id='{client_id}'"
         )
         row = cur.fetchone()
         cur.close()
@@ -47,7 +47,7 @@ def handler(event: dict, context) -> dict:
         if not row:
             return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'client': None})}
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({
-            'client': {'fullName': row[0], 'phone': row[1], 'email': row[2]}
+            'client': {'fullName': row[0], 'phone': row[1], 'email': row[2], 'avatarUrl': row[3] or '', 'gender': row[4] or 'm'}
         })}
 
     if method == 'POST':
@@ -60,11 +60,14 @@ def handler(event: dict, context) -> dict:
         full_name = esc(body.get('fullName'))
         phone = esc(body.get('phone'))
         email = esc(body.get('email'))
+        gender = esc(body.get('gender')) or 'm'
+        if gender not in ('m', 'f'):
+            gender = 'm'
         cur.execute(
-            f"INSERT INTO {SCHEMA}.clients (client_id, full_name, phone, email) "
-            f"VALUES ('{client_id}', '{full_name}', '{phone}', '{email}') "
+            f"INSERT INTO {SCHEMA}.clients (client_id, full_name, phone, email, gender) "
+            f"VALUES ('{client_id}', '{full_name}', '{phone}', '{email}', '{gender}') "
             f"ON CONFLICT (client_id) DO UPDATE SET "
-            f"full_name=EXCLUDED.full_name, phone=EXCLUDED.phone, email=EXCLUDED.email, updated_at=now()"
+            f"full_name=EXCLUDED.full_name, phone=EXCLUDED.phone, email=EXCLUDED.email, gender=EXCLUDED.gender, updated_at=now()"
         )
         conn.commit()
         cur.close()

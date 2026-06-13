@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Invalid role returns 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"role": "bad", "id": "x", "imageBase64": "iVBORw0KGgo=", "ext": "png"},
+      "expectedStatus": 400
+    },
+    {
+      "name": "Missing id returns 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"role": "provider", "imageBase64": "iVBORw0KGgo=", "ext": "png"},
+      "expectedStatus": 400
+    }
+  ]
+}
