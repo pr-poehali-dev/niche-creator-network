@@ -1,7 +1,8 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
-import { useLang, t } from "@/lib/i18n";
+import { useLang, t, LANGS, type Lang } from "@/lib/i18n";
 import { downloadReceipt } from "@/lib/receipt";
+import { useGeo, haversineKm } from "@/lib/geo";
 import func2url from "../../backend/func2url.json";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/e0e84afb-8e88-40ff-81b2-c3597f9a8371.jpg";
@@ -34,9 +35,40 @@ const PROVIDER_NAV: NavItem[] = [
   { id: "contacts", key: "navContacts", icon: "Phone" },
 ];
 
-type Lang = "ru" | "en";
 type LS = { ru: string; en: string };
-const L = (v: LS, lang: Lang) => v[lang];
+const L = (v: LS, lang: Lang) => (lang === "ru" ? v.ru : v.en);
+
+function LangSwitcher({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
+  const [open, setOpen] = useState(false);
+  const current = LANGS.find((l) => l.code === lang) ?? LANGS[0];
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        className="flex items-center gap-1.5 border border-border rounded-sm px-2.5 py-1.5 text-xs font-montserrat font-bold text-foreground hover:border-gold transition-colors"
+      >
+        <span className="text-sm leading-none">{current.flag}</span>
+        <span className="uppercase">{current.code}</span>
+        <Icon name="ChevronDown" size={12} className="text-muted-foreground" />
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-1 z-50 min-w-[150px] border border-border rounded-sm bg-card shadow-lg overflow-hidden animate-fade-in">
+          {LANGS.map((l) => (
+            <button
+              key={l.code}
+              onClick={() => { setLang(l.code); setOpen(false); }}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-montserrat text-left transition-colors ${l.code === lang ? "bg-gold text-[hsl(220,20%,6%)] font-bold" : "text-foreground hover:bg-secondary"}`}
+            >
+              <span className="text-sm leading-none">{l.flag}</span>
+              <span>{l.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const specialists = [
   {
@@ -47,6 +79,8 @@ const specialists = [
     cases: 312,
     experience: 12,
     city: { ru: "Москва", en: "Moscow" },
+    lat: 55.7558,
+    lon: 37.6173,
     price: { ru: "от 8 000 ₽", en: "from $90" },
     verified: true,
     tags: [
@@ -64,6 +98,8 @@ const specialists = [
     cases: 198,
     experience: 9,
     city: { ru: "Лондон", en: "London" },
+    lat: 51.5074,
+    lon: -0.1278,
     price: { ru: "от 12 000 ₽", en: "from $140" },
     verified: true,
     tags: [
@@ -81,6 +117,8 @@ const specialists = [
     cases: 145,
     experience: 15,
     city: { ru: "Дубай", en: "Dubai" },
+    lat: 25.2048,
+    lon: 55.2708,
     price: { ru: "от 25 000 ₽", en: "from $280" },
     verified: true,
     tags: [
@@ -343,17 +381,7 @@ export default function Index() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center border border-border rounded-sm overflow-hidden">
-              {(["ru", "en"] as const).map((lng) => (
-                <button
-                  key={lng}
-                  onClick={() => setLang(lng)}
-                  className={`px-2.5 py-1.5 text-xs font-montserrat font-bold uppercase transition-colors ${lang === lng ? "bg-gold text-[hsl(220,20%,6%)]" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  {lng}
-                </button>
-              ))}
-            </div>
+            <LangSwitcher lang={lang} setLang={setLang} />
             <button className="hidden sm:block gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
               {tr("login")}
             </button>
@@ -489,6 +517,16 @@ export default function Index() {
 function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) => void; role: Role; switchRole: (r: Role) => void }) {
   const { lang, tr } = useLang();
   const isClient = role === "client";
+  const { geo } = useGeo();
+
+  const sortedSpecialists = (() => {
+    if (!geo || geo.lat == null || geo.lon == null) {
+      return specialists.map((s) => ({ ...s, distance: null as number | null }));
+    }
+    return specialists
+      .map((s) => ({ ...s, distance: haversineKm(geo.lat as number, geo.lon as number, s.lat, s.lon) }))
+      .sort((a, b) => (a.distance ?? 1e9) - (b.distance ?? 1e9));
+  })();
 
   return (
     <div>
@@ -610,7 +648,7 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
 
       {isClient && (
       <section className="max-w-7xl mx-auto px-4 py-20">
-        <div className="flex items-end justify-between mb-10">
+        <div className="flex items-end justify-between mb-4">
           <div>
             <div className="tag-security mb-3 inline-block">{tr("specialists")}</div>
             <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("topExperts")}</h2>
@@ -619,8 +657,16 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
             {tr("allSpecialists")} <Icon name="ArrowRight" size={14} />
           </button>
         </div>
+        {geo && geo.city && (
+          <div className="flex items-center gap-2 mb-8 text-xs text-muted-foreground bg-card border border-gold/30 rounded-sm px-3 py-2 w-fit">
+            <Icon name="MapPin" size={13} className="text-gold" />
+            <span>{tr("geoYourLocation")}: <span className="text-foreground font-semibold">{geo.city}{geo.country ? `, ${geo.country}` : ""}</span></span>
+            <span className="text-muted-foreground/60">·</span>
+            <span className="text-gold">{tr("geoSortNearby")}</span>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
-          {specialists.map((s) => (
+          {sortedSpecialists.map((s) => (
             <div key={s.name.en} onClick={() => setActive("profile")} className="card-hover shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group">
               <div className="h-48 overflow-hidden relative">
                 <img src={s.img} alt={L(s.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -629,6 +675,12 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
                   <div className="absolute top-3 right-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
                     <Icon name="BadgeCheck" size={12} className="text-gold" />
                     <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licensed")}</span>
+                  </div>
+                )}
+                {s.distance != null && s.distance <= 100 && (
+                  <div className="absolute top-3 left-3 flex items-center gap-1 bg-gold/90 backdrop-blur-sm px-2 py-1 rounded-sm">
+                    <Icon name="Navigation" size={11} className="text-[hsl(220,20%,6%)]" />
+                    <span className="text-[10px] font-montserrat font-bold text-[hsl(220,20%,6%)]">{tr("geoNearYou")}</span>
                   </div>
                 )}
                 <div className="absolute bottom-3 left-4 right-4">
@@ -645,6 +697,7 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
                   <span className="text-xs text-muted-foreground">{s.rating} ({s.reviews})</span>
                   <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
                     <Icon name="MapPin" size={11} />{L(s.city, lang)}
+                    {s.distance != null && <span className="text-gold font-semibold">· {s.distance} {tr("geoKm")}</span>}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-4">

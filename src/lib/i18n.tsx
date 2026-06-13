@@ -1,7 +1,19 @@
-import { createContext, useContext, useState, ReactNode } from "react";
-import "./i18n-extra";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { extra, type ExtraLang } from "./i18n-extra";
 
-export type Lang = "ru" | "en";
+export type Lang = "ru" | "en" | "fr" | "de" | "ja" | "ar" | "he";
+
+export const LANGS: { code: Lang; label: string; flag: string; rtl?: boolean }[] = [
+  { code: "ru", label: "Русский", flag: "🇷🇺" },
+  { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "ja", label: "日本語", flag: "🇯🇵" },
+  { code: "ar", label: "العربية", flag: "🇸🇦", rtl: true },
+  { code: "he", label: "עברית", flag: "🇮🇱", rtl: true },
+];
+
+export const RTL_LANGS: Lang[] = ["ar", "he"];
 
 type Dict = Record<string, { ru: string; en: string }>;
 
@@ -499,25 +511,68 @@ export const t: Dict = {
   fTerms: { ru: "Условия использования", en: "Terms of Use" },
   fAgreement: { ru: "Пользовательское соглашение", en: "User Agreement" },
   fOffer: { ru: "Оферта", en: "Public Offer" },
+
+  // Geolocation
+  geoNearYou: { ru: "Рядом с вами", en: "Near you" },
+  geoYourLocation: { ru: "Ваше местоположение", en: "Your location" },
+  geoDetecting: { ru: "Определяем местоположение...", en: "Detecting your location..." },
+  geoKm: { ru: "км", en: "km" },
+  geoSortNearby: { ru: "Сначала ближайшие", en: "Nearest first" },
+  geoNearbyHint: { ru: "Исполнители отсортированы по удалённости от вас", en: "Providers sorted by distance from you" },
 };
 
 interface LangCtx {
   lang: Lang;
   setLang: (l: Lang) => void;
   tr: (key: keyof typeof t) => string;
+  rtl: boolean;
+}
+
+function translate(key: string, lang: Lang): string {
+  if (lang !== "ru" && lang !== "en") {
+    const ex = extra[lang as ExtraLang]?.[key];
+    if (ex) return ex;
+    return t[key]?.en ?? t[key]?.ru ?? String(key);
+  }
+  return t[key]?.[lang] ?? t[key]?.en ?? String(key);
 }
 
 const LanguageContext = createContext<LangCtx>({
   lang: "ru",
   setLang: () => {},
   tr: (k) => String(k),
+  rtl: false,
 });
 
+function getInitialLang(): Lang {
+  if (typeof window === "undefined") return "ru";
+  const saved = window.localStorage.getItem("lang") as Lang | null;
+  if (saved && LANGS.some((l) => l.code === saved)) return saved;
+  const browser = window.navigator.language.slice(0, 2) as Lang;
+  if (LANGS.some((l) => l.code === browser)) return browser;
+  return "ru";
+}
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>("ru");
-  const tr = (key: keyof typeof t) => t[key]?.[lang] ?? String(key);
+  const [lang, setLangState] = useState<Lang>(getInitialLang);
+  const rtl = RTL_LANGS.includes(lang);
+
+  const setLang = (l: Lang) => {
+    setLangState(l);
+    if (typeof window !== "undefined") window.localStorage.setItem("lang", l);
+  };
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = lang;
+      document.documentElement.dir = rtl ? "rtl" : "ltr";
+    }
+  }, [lang, rtl]);
+
+  const tr = (key: keyof typeof t) => translate(key as string, lang);
+
   return (
-    <LanguageContext.Provider value={{ lang, setLang, tr }}>
+    <LanguageContext.Provider value={{ lang, setLang, tr, rtl }}>
       {children}
     </LanguageContext.Provider>
   );
