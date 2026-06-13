@@ -10,6 +10,12 @@ export const t: Dict = {
   login: { ru: "Войти", en: "Sign in" },
   join: { ru: "Вступить", en: "Join" },
 
+  // Roles
+  roleClient: { ru: "Я клиент", en: "I'm a client" },
+  roleProvider: { ru: "Я исполнитель", en: "I'm a provider" },
+  navPricing: { ru: "Тарифы", en: "Pricing" },
+  crumbPricing: { ru: "Тарифы", en: "Pricing" },
+
   // Nav
   navHome: { ru: "Главная", en: "Home" },
   navProfile: { ru: "Профиль", en: "Profile" },
@@ -283,6 +289,72 @@ export const t: Dict = {
   polContactTitle: { ru: "Вопросы по безопасности?", en: "Security questions?" },
   polContactText: { ru: "Если у вас есть вопросы о защите данных или вы обнаружили уязвимость — свяжитесь с нашей командой безопасности.", en: "If you have questions about data protection or have discovered a vulnerability — contact our security team." },
   polContactBtn: { ru: "Связаться с поддержкой", en: "Contact support" },
+
+  // Client hero
+  heroClientTitle1: { ru: "Найдите проверенного", en: "Find a verified" },
+  heroClientTitle2: { ru: "специалиста", en: "security specialist" },
+  heroClientTitle3: { ru: "по безопасности", en: "you can trust" },
+  heroClientDesc: { ru: "Выберите услугу, сравните проверенных исполнителей по рейтингу и кейсам и свяжитесь напрямую. Для клиентов платформа полностью бесплатна.", en: "Choose a service, compare verified providers by rating and case history, and contact them directly. The platform is completely free for clients." },
+  heroClientCta1: { ru: "Подобрать услугу", en: "Browse services" },
+  heroClientCta2: { ru: "Смотреть специалистов", en: "View specialists" },
+  freeForClients: { ru: "Бесплатно для клиентов", en: "Free for clients" },
+  noFees: { ru: "Без комиссий и подписок", en: "No fees or subscriptions" },
+
+  // Provider hero
+  heroProviderTitle1: { ru: "Получайте заказы", en: "Win clients" },
+  heroProviderTitle2: { ru: "в сфере безопасности", en: "in the security industry" },
+  heroProviderDesc: { ru: "Зарегистрируйтесь, подтвердите документы и лицензии, выберите тариф — и тысячи клиентов увидят ваш профиль. Кейсы, отзывы и рейтинг работают на вас.", en: "Register, confirm your documents and licenses, choose a plan — and thousands of clients will see your profile. Cases, reviews and ratings work for you." },
+  heroProviderCta1: { ru: "Выбрать тариф", en: "Choose a plan" },
+  heroProviderCta2: { ru: "Как это работает", en: "How it works" },
+  becomeProvider: { ru: "Стать исполнителем", en: "Become a provider" },
+
+  // Become provider steps
+  bpTag: { ru: "Для исполнителей", en: "For providers" },
+  bpTitle: { ru: "Как начать получать заказы", en: "How to start getting orders" },
+  bp1Title: { ru: "Регистрация", en: "Register" },
+  bp1Desc: { ru: "Создайте профиль и укажите вашу специализацию в сфере безопасности", en: "Create a profile and specify your security specialization" },
+  bp2Title: { ru: "Проверка документов", en: "Document verification" },
+  bp2Desc: { ru: "Загрузите лицензии и подтверждающие документы — мы проверим их в течение 24 часов", en: "Upload licenses and supporting documents — we'll verify them within 24 hours" },
+  bp3Title: { ru: "Оплата тарифа", en: "Pay for a plan" },
+  bp3Desc: { ru: "Выберите подходящий тариф и оплатите ежемесячный членский взнос", en: "Choose a suitable plan and pay the monthly membership fee" },
+  bp4Title: { ru: "Получайте клиентов", en: "Get clients" },
+  bp4Desc: { ru: "Ваш профиль становится виден клиентам — принимайте заказы и развивайтесь", en: "Your profile becomes visible to clients — accept orders and grow" },
+
+  // Pricing
+  pricingTag: { ru: "Членство", en: "Membership" },
+  pricingTitle: { ru: "Тарифы для исполнителей", en: "Plans for providers" },
+  pricingDesc: { ru: "Выберите уровень присутствия на платформе. Клиенты ищут бесплатно — вы платите только за видимость и инструменты продвижения.", en: "Choose your level of presence on the platform. Clients search for free — you only pay for visibility and promotion tools." },
+  perMonth: { ru: "/ мес", en: "/ mo" },
+  mostPopular: { ru: "Популярный", en: "Most popular" },
+  choosePlan: { ru: "Выбрать тариф", en: "Choose plan" },
+  contactSales: { ru: "Связаться с нами", en: "Contact us" },
+
+  planStartName: { ru: "Старт", en: "Start" },
+  planStartPrice: { ru: "990 ₽", en: "$12" },
+  planStartFor: { ru: "Для начинающих специалистов", en: "For new specialists" },
+  planProName: { ru: "Про", en: "Pro" },
+  planProPrice: { ru: "2 490 ₽", en: "$29" },
+  planProFor: { ru: "Для активных исполнителей", en: "For active providers" },
+  planPremiumName: { ru: "Премиум", en: "Premium" },
+  planPremiumPrice: { ru: "4 990 ₽", en: "$59" },
+  planPremiumFor: { ru: "Максимум заказов и охвата", en: "Maximum orders and reach" },
+  planEntName: { ru: "Enterprise", en: "Enterprise" },
+  planEntPrice: { ru: "По запросу", en: "Custom" },
+  planEntFor: { ru: "Для охранных предприятий", en: "For security firms" },
+
+  featProfile: { ru: "Профиль в каталоге", en: "Profile in the catalog" },
+  featCases: { ru: "Публикация кейсов", en: "Case publishing" },
+  featChat: { ru: "Чат и форум", en: "Chat & forum" },
+  featCourses: { ru: "Доступ к курсам", en: "Access to courses" },
+  featPriority: { ru: "Приоритет в поиске", en: "Priority in search" },
+  featTopPlacement: { ru: "Топ-размещение", en: "Top placement" },
+  featBadge: { ru: "Премиум-бейдж", en: "Premium badge" },
+  featManager: { ru: "Персональный менеджер", en: "Dedicated manager" },
+  featTeam: { ru: "Командные аккаунты", en: "Team accounts" },
+  featApi: { ru: "API и интеграции", en: "API & integrations" },
+  feat5cases: { ru: "До 5 кейсов", en: "Up to 5 cases" },
+  feat20cases: { ru: "До 20 кейсов", en: "Up to 20 cases" },
+  featUnlimCases: { ru: "Безлимит кейсов", en: "Unlimited cases" },
 
   // Footer
   footerDesc: { ru: "Международное закрытое сообщество для специалистов в сфере безопасности", en: "International private community for security professionals" },

@@ -7,15 +7,23 @@ const POLYGRAPH_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b
 const DETECTIVE_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b893f56c-cd01-49d7-b962-7f78f87ace2c.jpg";
 const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/0b2c5db2-c85b-4009-99db-6b023ed84bf5.jpg";
 
-type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy";
+type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing";
+type Role = "client" | "provider";
 
-const NAV_ITEMS: { id: Section; key: keyof typeof t; icon: string }[] = [
+type NavItem = { id: Section; key: keyof typeof t; icon: string };
+
+const CLIENT_NAV: NavItem[] = [
   { id: "home", key: "navHome", icon: "Home" },
-  { id: "profile", key: "navProfile", icon: "User" },
-  { id: "cases", key: "navCases", icon: "FolderOpen" },
   { id: "services", key: "navServices", icon: "Briefcase" },
-  { id: "courses", key: "navCourses", icon: "GraduationCap" },
+  { id: "profile", key: "navProfile", icon: "User" },
   { id: "guards", key: "navGuards", icon: "ShieldCheck" },
+  { id: "contacts", key: "navContacts", icon: "Phone" },
+];
+
+const PROVIDER_NAV: NavItem[] = [
+  { id: "home", key: "navHome", icon: "Home" },
+  { id: "pricing", key: "navPricing", icon: "Wallet" },
+  { id: "courses", key: "navCourses", icon: "GraduationCap" },
   { id: "chat", key: "navChat", icon: "MessageSquare" },
   { id: "forum", key: "navForum", icon: "MessagesSquare" },
   { id: "contacts", key: "navContacts", icon: "Phone" },
@@ -148,6 +156,7 @@ const SECTION_CRUMB: Record<Section, keyof typeof t> = {
   forum: "crumbForum",
   contacts: "crumbContacts",
   policy: "crumbPolicy",
+  pricing: "crumbPricing",
 };
 
 const cases = [
@@ -253,18 +262,28 @@ function StarRating({ rating }: { rating: number }) {
 export default function Index() {
   const { lang, setLang, tr } = useLang();
   const [active, setActive] = useState<Section>("home");
+  const [role, setRole] = useState<Role>("client");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [secBannerOpen, setSecBannerOpen] = useState(true);
+
+  const NAV_ITEMS = role === "client" ? CLIENT_NAV : PROVIDER_NAV;
 
   const go = (s: Section) => {
     setActive(s);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const switchRole = (r: Role) => {
+    setRole(r);
+    setActive("home");
+    setMobileMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const renderSection = () => {
     switch (active) {
-      case "home": return <HomeSection setActive={go} />;
+      case "home": return <HomeSection setActive={go} role={role} switchRole={switchRole} />;
       case "profile": return <ProfileSection setActive={go} />;
       case "cases": return <CasesSection />;
       case "services": return <ServicesSection />;
@@ -274,7 +293,8 @@ export default function Index() {
       case "forum": return <ForumSection />;
       case "contacts": return <ContactsSection />;
       case "policy": return <SecurityPolicySection setActive={go} />;
-      default: return <HomeSection setActive={go} />;
+      case "pricing": return <PricingSection setActive={go} />;
+      default: return <HomeSection setActive={go} role={role} switchRole={switchRole} />;
     }
   };
 
@@ -305,6 +325,17 @@ export default function Index() {
           </nav>
 
           <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center border border-gold/40 rounded-sm overflow-hidden">
+              {(["client", "provider"] as const).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => switchRole(r)}
+                  className={`px-3 py-1.5 text-xs font-montserrat font-bold transition-colors ${role === r ? "gold-gradient text-[hsl(220,20%,6%)]" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  {tr(r === "client" ? "roleClient" : "roleProvider")}
+                </button>
+              ))}
+            </div>
             <div className="flex items-center border border-border rounded-sm overflow-hidden">
               {(["ru", "en"] as const).map((lng) => (
                 <button
@@ -316,11 +347,8 @@ export default function Index() {
                 </button>
               ))}
             </div>
-            <button className="hidden sm:flex items-center gap-2 px-4 py-2 border border-gold text-gold text-sm font-montserrat font-semibold hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all duration-200 rounded-sm">
-              {tr("login")}
-            </button>
             <button className="hidden sm:block gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
-              {tr("join")}
+              {tr("login")}
             </button>
             <button className="lg:hidden text-muted-foreground" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               <Icon name={mobileMenuOpen ? "X" : "Menu"} size={22} />
@@ -330,6 +358,17 @@ export default function Index() {
 
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-border bg-card animate-fade-in">
+            <div className="flex p-3 gap-2 border-b border-border">
+              {(["client", "provider"] as const).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => switchRole(r)}
+                  className={`flex-1 px-3 py-2 text-xs font-montserrat font-bold rounded-sm transition-colors ${role === r ? "gold-gradient text-[hsl(220,20%,6%)]" : "border border-border text-muted-foreground"}`}
+                >
+                  {tr(r === "client" ? "roleClient" : "roleProvider")}
+                </button>
+              ))}
+            </div>
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
@@ -440,15 +479,17 @@ export default function Index() {
   );
 }
 
-function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
+function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) => void; role: Role; switchRole: (r: Role) => void }) {
   const { lang, tr } = useLang();
+  const isClient = role === "client";
+
   return (
     <div>
       <section className="relative overflow-hidden grid-line-bg min-h-[92vh] flex items-center vignette">
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/40 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
         <div className="absolute inset-0">
-          <img src={HERO_IMAGE} alt="Security" className="w-full h-full object-cover opacity-25" />
+          <img src={isClient ? HERO_IMAGE : GUARDS_IMAGE} alt="Security" className="w-full h-full object-cover opacity-25" />
         </div>
         <div className="absolute top-1/4 -left-40 w-[500px] h-[500px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.1) 0%, transparent 70%)" }} />
         <div className="relative z-20 max-w-7xl mx-auto px-4 py-24">
@@ -456,43 +497,49 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
             <div className="flex items-center gap-3 mb-6 flex-wrap">
               <div className="tag-security inline-flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse-gold" />
-                {tr("closedPlatform")}
+                {tr(isClient ? "freeForClients" : "becomeProvider")}
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-montserrat">
                 <Icon name="ShieldCheck" size={13} className="text-gold" />
                 {tr("verifyAll")}
               </div>
             </div>
-            <h1 className="font-montserrat font-extrabold text-5xl md:text-6xl lg:text-7xl text-foreground leading-[0.95] mb-6 tracking-tight">
-              {tr("heroTitle1")}<br />
-              <span className="gold-text-gradient">{tr("heroTitle2")}</span><br />
-              {tr("heroTitle3")}
-            </h1>
+            {isClient ? (
+              <h1 className="font-montserrat font-extrabold text-5xl md:text-6xl lg:text-7xl text-foreground leading-[0.95] mb-6 tracking-tight">
+                {tr("heroClientTitle1")}<br />
+                <span className="gold-text-gradient">{tr("heroClientTitle2")}</span><br />
+                {tr("heroClientTitle3")}
+              </h1>
+            ) : (
+              <h1 className="font-montserrat font-extrabold text-5xl md:text-6xl lg:text-7xl text-foreground leading-[0.95] mb-6 tracking-tight">
+                {tr("heroProviderTitle1")}<br />
+                <span className="gold-text-gradient">{tr("heroProviderTitle2")}</span>
+              </h1>
+            )}
             <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-xl">
-              {tr("heroDesc")}
+              {tr(isClient ? "heroClientDesc" : "heroProviderDesc")}
             </p>
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={() => setActive("services")}
+                onClick={() => setActive(isClient ? "services" : "pricing")}
                 className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-8 py-3.5 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm flex items-center gap-2"
               >
-                <Icon name="Search" size={16} />
-                {tr("findSpecialist")}
+                <Icon name={isClient ? "Search" : "Wallet"} size={16} />
+                {tr(isClient ? "heroClientCta1" : "heroProviderCta1")}
               </button>
               <button
-                onClick={() => setActive("cases")}
+                onClick={() => setActive(isClient ? "profile" : "pricing")}
                 className="border border-border text-foreground px-8 py-3.5 font-montserrat font-semibold text-sm tracking-wide hover:border-gold hover:text-gold transition-all rounded-sm flex items-center gap-2"
               >
-                {tr("viewCases")}
+                {tr(isClient ? "heroClientCta2" : "heroProviderCta2")}
                 <Icon name="ArrowRight" size={16} />
               </button>
             </div>
             <div className="flex items-center gap-6 mt-10 flex-wrap">
-              {[
-                { icon: "BadgeCheck", t: "trust1" as const },
-                { icon: "Lock", t: "trust2" as const },
-                { icon: "Scale", t: "trust3" as const },
-              ].map((b) => (
+              {(isClient
+                ? [{ icon: "Wallet", t: "noFees" as const }, { icon: "BadgeCheck", t: "trust1" as const }, { icon: "Lock", t: "trust2" as const }]
+                : [{ icon: "BadgeCheck", t: "trust1" as const }, { icon: "Users", t: "statClients" as const }, { icon: "Scale", t: "trust3" as const }]
+              ).map((b) => (
                 <div key={b.t} className="flex items-center gap-2 text-xs text-muted-foreground font-montserrat">
                   <Icon name={b.icon} size={14} className="text-gold" />
                   {tr(b.t)}
@@ -520,6 +567,41 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
         </div>
       </section>
 
+      {!isClient && (
+        <section className="border-t border-border bg-card py-20 relative overflow-hidden ambient-gold">
+          <div className="max-w-7xl mx-auto px-4 relative z-10">
+            <div className="text-center mb-14">
+              <div className="tag-security mb-3 inline-block">{tr("bpTag")}</div>
+              <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("bpTitle")}</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-5 stagger">
+              {[
+                { n: "01", icon: "UserPlus", title: "bp1Title" as const, desc: "bp1Desc" as const },
+                { n: "02", icon: "FileCheck2", title: "bp2Title" as const, desc: "bp2Desc" as const },
+                { n: "03", icon: "Wallet", title: "bp3Title" as const, desc: "bp3Desc" as const },
+                { n: "04", icon: "TrendingUp", title: "bp4Title" as const, desc: "bp4Desc" as const },
+              ].map((step) => (
+                <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-hover">
+                  <div className="font-montserrat font-extrabold text-4xl text-gold/15 absolute top-4 right-5">{step.n}</div>
+                  <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
+                    <Icon name={step.icon} fallback="Check" size={19} className="text-[hsl(220,20%,6%)]" />
+                  </div>
+                  <div className="font-montserrat font-bold text-sm text-foreground mb-2">{tr(step.title)}</div>
+                  <div className="text-xs text-muted-foreground leading-relaxed">{tr(step.desc)}</div>
+                </div>
+              ))}
+            </div>
+            <div className="text-center mt-10">
+              <button onClick={() => setActive("pricing")} className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-8 py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity glow-gold-sm inline-flex items-center gap-2">
+                <Icon name="Wallet" size={16} />
+                {tr("heroProviderCta1")}
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {isClient && (
       <section className="max-w-7xl mx-auto px-4 py-20">
         <div className="flex items-end justify-between mb-10">
           <div>
@@ -578,8 +660,9 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
           ))}
         </div>
       </section>
+      )}
 
-      {/* How it works */}
+      {isClient && (
       <section className="border-t border-border bg-card py-20 relative overflow-hidden ambient-gold">
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           <div className="text-center mb-14">
@@ -605,8 +688,8 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
           </div>
         </div>
       </section>
+      )}
 
-      {/* Features */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
@@ -741,8 +824,8 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
               {tr("ctaDesc")}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <button className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm">
-                {tr("applyJoin")}
+              <button onClick={() => setActive(isClient ? "services" : "pricing")} className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm">
+                {tr(isClient ? "heroClientCta1" : "applyJoin")}
               </button>
               <button onClick={() => setActive("contacts")} className="border border-border text-foreground px-8 py-4 font-montserrat font-semibold text-sm hover:border-gold hover:text-gold transition-all rounded-sm">
                 {tr("contactUs")}
@@ -751,6 +834,114 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
+  const { tr } = useLang();
+  const plans = [
+    {
+      name: "planStartName" as const,
+      price: "planStartPrice" as const,
+      for: "planStartFor" as const,
+      featured: false,
+      enterprise: false,
+      features: ["featProfile", "feat5cases", "featChat"] as const,
+      muted: ["featCourses", "featPriority", "featTopPlacement", "featManager"] as const,
+    },
+    {
+      name: "planProName" as const,
+      price: "planProPrice" as const,
+      for: "planProFor" as const,
+      featured: true,
+      enterprise: false,
+      features: ["featProfile", "feat20cases", "featChat", "featCourses", "featPriority"] as const,
+      muted: ["featTopPlacement", "featManager"] as const,
+    },
+    {
+      name: "planPremiumName" as const,
+      price: "planPremiumPrice" as const,
+      for: "planPremiumFor" as const,
+      featured: false,
+      enterprise: false,
+      features: ["featProfile", "featUnlimCases", "featChat", "featCourses", "featPriority", "featTopPlacement", "featBadge"] as const,
+      muted: ["featManager"] as const,
+    },
+    {
+      name: "planEntName" as const,
+      price: "planEntPrice" as const,
+      for: "planEntFor" as const,
+      featured: false,
+      enterprise: true,
+      features: ["featProfile", "featUnlimCases", "featTopPlacement", "featBadge", "featManager", "featTeam", "featApi"] as const,
+      muted: [] as const,
+    },
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      <div className="text-center mb-12">
+        <div className="tag-security mb-3 inline-block">{tr("pricingTag")}</div>
+        <h1 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-3">{tr("pricingTitle")}</h1>
+        <p className="text-muted-foreground text-sm max-w-2xl mx-auto">{tr("pricingDesc")}</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 stagger">
+        {plans.map((p) => (
+          <div
+            key={p.name}
+            className={`relative flex flex-col border rounded-sm bg-card p-6 card-hover ${p.featured ? "border-gold security-glow" : "border-border"}`}
+          >
+            {p.featured && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 badge-pro whitespace-nowrap">{tr("mostPopular")}</div>
+            )}
+            <div className="mb-5">
+              <div className="font-montserrat font-bold text-lg text-foreground mb-1">{tr(p.name)}</div>
+              <div className="text-xs text-muted-foreground">{tr(p.for)}</div>
+            </div>
+            <div className="mb-6">
+              <span className="font-montserrat font-extrabold text-3xl text-gold">{tr(p.price)}</span>
+              {!p.enterprise && <span className="text-xs text-muted-foreground ml-1">{tr("perMonth")}</span>}
+            </div>
+            <div className="divider-gold mb-5" />
+            <div className="space-y-2.5 flex-1 mb-6">
+              {p.features.map((f) => (
+                <div key={f} className="flex items-center gap-2">
+                  <Icon name="Check" size={14} className="text-gold shrink-0" />
+                  <span className="text-xs text-foreground">{tr(f)}</span>
+                </div>
+              ))}
+              {p.muted.map((f) => (
+                <div key={f} className="flex items-center gap-2 opacity-40">
+                  <Icon name="X" size={14} className="text-muted-foreground shrink-0" />
+                  <span className="text-xs text-muted-foreground line-through">{tr(f)}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setActive(p.enterprise ? "contacts" : "contacts")}
+              className={`w-full py-3 text-xs font-montserrat font-bold rounded-sm transition-all ${p.featured ? "gold-gradient text-[hsl(220,20%,6%)] hover:opacity-90 glow-gold-sm" : "border border-gold text-gold hover:bg-gold hover:text-[hsl(220,20%,6%)]"}`}
+            >
+              {p.enterprise ? tr("contactSales") : tr("choosePlan")}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Commission note */}
+      <div className="mt-10 border border-gold/30 rounded-sm glass-card p-6 flex flex-col md:flex-row items-start md:items-center gap-4 security-glow">
+        <div className="w-10 h-10 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
+          <Icon name="Wallet" size={18} className="text-[hsl(220,20%,6%)]" />
+        </div>
+        <div>
+          <div className="font-montserrat font-semibold text-sm text-foreground mb-1">{tr("freeForClients")}</div>
+          <div className="text-xs text-muted-foreground">{tr("heroClientDesc")}</div>
+        </div>
+        <button onClick={() => setActive("contacts")} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 hover:border-gold hover:text-gold transition-all rounded-sm ml-auto">
+          {tr("contactUs")}
+        </button>
+      </div>
     </div>
   );
 }
