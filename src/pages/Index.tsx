@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
 import { useLang, t, LANGS, type Lang } from "@/lib/i18n";
+import { dataExtra } from "@/lib/i18n-extra";
 import { downloadReceipt } from "@/lib/receipt";
 import { useGeo, haversineKm } from "@/lib/geo";
 import func2url from "../../backend/func2url.json";
@@ -36,7 +37,11 @@ const PROVIDER_NAV: NavItem[] = [
 ];
 
 type LS = { ru: string; en: string };
-const L = (v: LS, lang: Lang) => (lang === "ru" ? v.ru : v.en);
+const L = (v: LS, lang: Lang) => {
+  if (lang === "ru") return v.ru;
+  if (lang === "en") return v.en;
+  return dataExtra[lang as keyof typeof dataExtra]?.[v.en] ?? v.en;
+};
 
 function LangSwitcher({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
   const [open, setOpen] = useState(false);
@@ -48,20 +53,20 @@ function LangSwitcher({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => voi
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         className="flex items-center gap-1.5 border border-border rounded-sm px-2.5 py-1.5 text-xs font-montserrat font-bold text-foreground hover:border-gold transition-colors"
       >
-        <span className="text-sm leading-none">{current.flag}</span>
+        <Icon name="Globe" size={14} className="text-gold" />
         <span className="uppercase">{current.code}</span>
         <Icon name="ChevronDown" size={12} className="text-muted-foreground" />
       </button>
       {open && (
-        <div className="absolute right-0 mt-1 z-50 min-w-[150px] border border-border rounded-sm bg-card shadow-lg overflow-hidden animate-fade-in">
+        <div className="absolute right-0 mt-1 z-50 min-w-[160px] border border-border rounded-sm bg-card shadow-lg overflow-hidden animate-fade-in">
           {LANGS.map((l) => (
             <button
               key={l.code}
               onClick={() => { setLang(l.code); setOpen(false); }}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-montserrat text-left transition-colors ${l.code === lang ? "bg-gold text-[hsl(220,20%,6%)] font-bold" : "text-foreground hover:bg-secondary"}`}
+              className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-xs font-montserrat text-left transition-colors ${l.code === lang ? "bg-gold text-[hsl(220,20%,6%)] font-bold" : "text-foreground hover:bg-secondary"}`}
             >
-              <span className="text-sm leading-none">{l.flag}</span>
               <span>{l.label}</span>
+              <span className="uppercase opacity-60">{l.code}</span>
             </button>
           ))}
         </div>
