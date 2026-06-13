@@ -2,6 +2,7 @@ import { useState } from "react";
 import Icon from "@/components/ui/icon";
 import { useLang, t } from "@/lib/i18n";
 import { downloadReceipt } from "@/lib/receipt";
+import func2url from "../../backend/func2url.json";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/e0e84afb-8e88-40ff-81b2-c3597f9a8371.jpg";
 const POLYGRAPH_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/c211bedb-fcf6-49e0-abb2-ad98fcf0bdac.jpg";
@@ -1298,13 +1299,41 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
 type PayPlan = { name: keyof typeof t; price: keyof typeof t };
 
 function PaymentModal({ plan, onClose }: { plan: PayPlan; onClose: () => void }) {
-  const { tr } = useLang();
+  const { lang, tr } = useLang();
   const [method, setMethod] = useState<"card" | "sbp">("card");
   const [status, setStatus] = useState<"form" | "processing" | "success">("form");
+  const [email, setEmail] = useState("");
+  const [emailState, setEmailState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  const receipt = () => ({
+    receiptNo: "SN-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + Math.floor(Math.random() * 900 + 100),
+    date: new Date().toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US"),
+    plan: tr(plan.name),
+    period: tr("payOneMonth"),
+    amount: tr(plan.price),
+    payer: email || L(specialists[0].name, lang),
+    method: tr(method === "card" ? "payCard" : "paySbp"),
+    lang,
+  });
 
   const pay = () => {
     setStatus("processing");
     setTimeout(() => setStatus("success"), 1600);
+  };
+
+  const sendEmail = async () => {
+    if (!email || !email.includes("@")) return;
+    setEmailState("sending");
+    try {
+      const res = await fetch(func2url["send-receipt"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...receipt(), email }),
+      });
+      setEmailState(res.ok ? "sent" : "error");
+    } catch {
+      setEmailState("error");
+    }
   };
 
   return (
@@ -1312,12 +1341,48 @@ function PaymentModal({ plan, onClose }: { plan: PayPlan; onClose: () => void })
       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-md border border-gold/40 rounded-sm glass-card security-glow max-h-[90vh] overflow-y-auto">
         {status === "success" ? (
-          <div className="p-8 text-center">
-            <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center mx-auto mb-5 glow-gold-sm">
-              <Icon name="Check" size={32} className="text-[hsl(220,20%,6%)]" />
+          <div className="p-7">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center mx-auto mb-5 glow-gold-sm">
+                <Icon name="Check" size={32} className="text-[hsl(220,20%,6%)]" />
+              </div>
+              <h3 className="font-montserrat font-extrabold text-xl text-foreground mb-2">{tr("paySuccess")}</h3>
+              <p className="text-sm text-muted-foreground">{tr("paySuccessDesc")}</p>
             </div>
-            <h3 className="font-montserrat font-extrabold text-xl text-foreground mb-2">{tr("paySuccess")}</h3>
-            <p className="text-sm text-muted-foreground mb-6">{tr("paySuccessDesc")}</p>
+
+            <div className="border border-border rounded-sm bg-card p-4 mb-4">
+              <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("payEmailLabel")}</label>
+              {emailState === "sent" ? (
+                <div className="flex items-center gap-2 text-sm text-green-400 py-2">
+                  <Icon name="MailCheck" size={16} />
+                  {tr("payEmailSent")}
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setEmailState("idle"); }}
+                    placeholder={tr("payEmailPlaceholder")}
+                    className="flex-1 min-w-0 bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+                  />
+                  <button
+                    onClick={sendEmail}
+                    disabled={emailState === "sending" || !email.includes("@")}
+                    className="shrink-0 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {emailState === "sending" ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="Send" size={14} />}
+                    <span className="hidden sm:inline">{tr(emailState === "sending" ? "payEmailSending" : "payEmailSend")}</span>
+                  </button>
+                </div>
+              )}
+              {emailState === "error" && <div className="text-xs text-destructive mt-2">{tr("payEmailError")}</div>}
+            </div>
+
+            <button onClick={() => downloadReceipt(receipt())} className="w-full border border-gold text-gold py-2.5 text-sm font-montserrat font-semibold rounded-sm hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all flex items-center justify-center gap-2 mb-2.5">
+              <Icon name="Download" size={15} />
+              {tr("payDownloadPdf")}
+            </button>
             <button onClick={onClose} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("payDone")}</button>
           </div>
         ) : (

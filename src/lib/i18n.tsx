@@ -467,6 +467,15 @@ export const t: Dict = {
   pdHistDownload: { ru: "Скачать", en: "Download" },
   pdHistTotal: { ru: "Всего оплачено", en: "Total paid" },
 
+  // Receipt by email
+  payEmailLabel: { ru: "Отправить чек на email", en: "Send receipt to email" },
+  payEmailPlaceholder: { ru: "ваша@почта.ru", en: "your@email.com" },
+  payEmailSend: { ru: "Отправить чек", en: "Send receipt" },
+  payEmailSending: { ru: "Отправка...", en: "Sending..." },
+  payEmailSent: { ru: "Чек отправлен на почту", en: "Receipt sent to your email" },
+  payEmailError: { ru: "Не удалось отправить. Попробуйте позже.", en: "Failed to send. Try again later." },
+  payDownloadPdf: { ru: "Скачать PDF-чек", en: "Download PDF receipt" },
+
   // Footer
   footerDesc: { ru: "Международное закрытое сообщество для специалистов в сфере безопасности", en: "International private community for security professionals" },
   footerPlatform: { ru: "Платформа", en: "Platform" },
