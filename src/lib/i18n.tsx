@@ -601,6 +601,7 @@ export const t: Dict = {
   verifyStatus: { ru: "Статус", en: "Status" },
   verifyLicense: { ru: "Лицензия", en: "License" },
   verifyRegistry: { ru: "Реквизиты", en: "Registration" },
+  verifyDocsConfirmed: { ru: "Документы подтверждены", en: "Documents verified" },
 
   // Client data
   cdClientData: { ru: "Ваши данные", en: "Your details" },

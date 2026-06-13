@@ -822,6 +822,12 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
                     {s.distance != null && <span className="text-gold font-semibold">· {s.distance} {tr("geoKm")}</span>}
                   </span>
                 </div>
+                {s.verification && (s.verification.license || s.verification.registry || s.verification.fullName) && (
+                  <div className="inline-flex items-center gap-1.5 mb-4 px-2.5 py-1.5 rounded-sm bg-green-500/10 border border-green-500/30 w-fit">
+                    <Icon name="ShieldCheck" size={13} className="text-green-400" />
+                    <span className="text-[11px] font-montserrat font-bold text-green-400">{tr("verifyDocsConfirmed")}</span>
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {tags.map((tg) => (
                     <span key={tg} className="tag-security">{tg}</span>
