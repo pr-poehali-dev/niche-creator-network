@@ -25,6 +25,9 @@ const specialists = [
     rating: 4.9,
     reviews: 134,
     cases: 312,
+    experience: 12,
+    city: "Москва",
+    price: "от 8 000 ₽",
     verified: true,
     tags: ["Полиграф", "HR-проверки", "Корпоративная безопасность"],
     img: DETECTIVE_IMAGE,
@@ -35,6 +38,9 @@ const specialists = [
     rating: 4.8,
     reviews: 87,
     cases: 198,
+    experience: 9,
+    city: "Санкт-Петербург",
+    price: "от 12 000 ₽",
     verified: true,
     tags: ["Розыск", "Наружное наблюдение", "Сбор доказательств"],
     img: HERO_IMAGE,
@@ -45,11 +51,25 @@ const specialists = [
     rating: 5.0,
     reviews: 62,
     cases: 145,
+    experience: 15,
+    city: "Москва",
+    price: "от 25 000 ₽",
     verified: true,
     tags: ["Поиск жучков", "Контрразведка", "Защита переговоров"],
     img: POLYGRAPH_IMAGE,
   },
 ];
+
+const SECTION_META: Record<Section, { title: string; crumb: string }> = {
+  home: { title: "Главная", crumb: "Главная" },
+  profile: { title: "Профиль специалиста", crumb: "Специалисты" },
+  cases: { title: "Профессиональные кейсы", crumb: "Кейсы" },
+  services: { title: "Каталог услуг", crumb: "Услуги" },
+  courses: { title: "Курсы и тренинги", crumb: "Курсы" },
+  chat: { title: "Профессиональный чат", crumb: "Чат" },
+  forum: { title: "Профессиональный форум", crumb: "Форум" },
+  contacts: { title: "Контакты и поддержка", crumb: "Контакты" },
+};
 
 const cases = [
   {
@@ -156,17 +176,22 @@ export default function Index() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
 
+  const go = (s: Section) => {
+    setActive(s);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const renderSection = () => {
     switch (active) {
-      case "home": return <HomeSection setActive={setActive} />;
-      case "profile": return <ProfileSection />;
+      case "home": return <HomeSection setActive={go} />;
+      case "profile": return <ProfileSection setActive={go} />;
       case "cases": return <CasesSection />;
       case "services": return <ServicesSection />;
       case "courses": return <CoursesSection />;
       case "chat": return <ChatSection chatInput={chatInput} setChatInput={setChatInput} />;
       case "forum": return <ForumSection />;
       case "contacts": return <ContactsSection />;
-      default: return <HomeSection setActive={setActive} />;
+      default: return <HomeSection setActive={go} />;
     }
   };
 
@@ -188,7 +213,7 @@ export default function Index() {
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setActive(item.id)}
+                onClick={() => go(item.id)}
                 className={`nav-link text-sm font-montserrat font-medium tracking-wide transition-colors ${active === item.id ? "text-gold active" : "text-muted-foreground hover:text-foreground"}`}
               >
                 {item.label}
@@ -217,7 +242,7 @@ export default function Index() {
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
-                onClick={() => { setActive(item.id); setMobileMenuOpen(false); }}
+                onClick={() => { go(item.id); setMobileMenuOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-montserrat border-b border-border last:border-0 ${active === item.id ? "text-gold bg-secondary" : "text-muted-foreground"}`}
               >
                 <Icon name={item.icon} size={16} />
@@ -228,7 +253,26 @@ export default function Index() {
         )}
       </header>
 
-      <main className="pt-16">{renderSection()}</main>
+      {active !== "home" && (
+        <div className="pt-16">
+          <div className="border-b border-border bg-card/40">
+            <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2 text-xs font-montserrat">
+              <button onClick={() => go("home")} className="text-muted-foreground hover:text-gold transition-colors flex items-center gap-1">
+                <Icon name="Home" size={12} />
+                Главная
+              </button>
+              <Icon name="ChevronRight" size={12} className="text-muted-foreground" />
+              <span className="text-gold font-medium">{SECTION_META[active].crumb}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main className={active === "home" ? "pt-16" : ""}>
+        <div key={active} className="animate-rise">
+          {renderSection()}
+        </div>
+      </main>
 
       <footer className="border-t border-border bg-card mt-16">
         <div className="max-w-7xl mx-auto px-4 py-10">
@@ -275,17 +319,28 @@ export default function Index() {
 function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
   return (
     <div>
-      <section className="relative overflow-hidden grid-line-bg min-h-[90vh] flex items-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-transparent z-10" />
+      <section className="relative overflow-hidden grid-line-bg min-h-[92vh] flex items-center vignette">
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/40 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
         <div className="absolute inset-0">
-          <img src={HERO_IMAGE} alt="Специалист по безопасности" className="w-full h-full object-cover opacity-20" />
+          <img src={HERO_IMAGE} alt="Специалист по безопасности" className="w-full h-full object-cover opacity-25" />
         </div>
+        <div className="absolute top-1/4 -left-40 w-[500px] h-[500px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.1) 0%, transparent 70%)" }} />
         <div className="relative z-20 max-w-7xl mx-auto px-4 py-24">
-          <div className="max-w-2xl animate-fade-in">
-            <div className="tag-security mb-6 inline-block">Закрытая платформа</div>
-            <h1 className="font-montserrat font-extrabold text-5xl md:text-6xl lg:text-7xl text-foreground leading-none mb-6">
+          <div className="max-w-2xl stagger">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="tag-security inline-flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse-gold" />
+                Закрытая платформа
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-montserrat">
+                <Icon name="ShieldCheck" size={13} className="text-gold" />
+                Верификация всех участников
+              </div>
+            </div>
+            <h1 className="font-montserrat font-extrabold text-5xl md:text-6xl lg:text-7xl text-foreground leading-[0.95] mb-6 tracking-tight">
               Профессионалы<br />
-              <span className="text-gold">безопасности</span><br />
+              <span className="gold-text-gradient">безопасности</span><br />
               России
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-xl">
@@ -294,16 +349,30 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setActive("services")}
-                className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3.5 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm"
+                className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-8 py-3.5 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm flex items-center gap-2"
               >
+                <Icon name="Search" size={16} />
                 Найти специалиста
               </button>
               <button
                 onClick={() => setActive("cases")}
-                className="border border-border text-foreground px-8 py-3.5 font-montserrat font-semibold text-sm tracking-wide hover:border-gold hover:text-gold transition-all rounded-sm"
+                className="border border-border text-foreground px-8 py-3.5 font-montserrat font-semibold text-sm tracking-wide hover:border-gold hover:text-gold transition-all rounded-sm flex items-center gap-2"
               >
                 Смотреть кейсы
+                <Icon name="ArrowRight" size={16} />
               </button>
+            </div>
+            <div className="flex items-center gap-6 mt-10 flex-wrap">
+              {[
+                { icon: "BadgeCheck", t: "Проверенные лицензии" },
+                { icon: "Lock", t: "Конфиденциальность" },
+                { icon: "Scale", t: "Работа в правовом поле" },
+              ].map((b) => (
+                <div key={b.t} className="flex items-center gap-2 text-xs text-muted-foreground font-montserrat">
+                  <Icon name={b.icon} size={14} className="text-gold" />
+                  {b.t}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -332,46 +401,88 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
             <div className="tag-security mb-3 inline-block">Специалисты</div>
             <h2 className="font-montserrat font-bold text-3xl text-foreground">Топ-эксперты платформы</h2>
           </div>
-          <button onClick={() => setActive("profile")} className="text-sm text-gold hover:underline font-montserrat hidden md:block">
-            Все специалисты →
+          <button onClick={() => setActive("profile")} className="text-sm text-gold hover:gap-2 font-montserrat hidden md:flex items-center gap-1 transition-all">
+            Все специалисты <Icon name="ArrowRight" size={14} />
           </button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
           {specialists.map((s) => (
-            <div key={s.name} className="card-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer">
-              <div className="h-44 overflow-hidden relative">
-                <img src={s.img} alt={s.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
+            <div key={s.name} onClick={() => setActive("profile")} className="card-hover shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group">
+              <div className="h-48 overflow-hidden relative">
+                <img src={s.img} alt={s.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
                 {s.verified && (
-                  <div className="absolute top-3 right-3 flex items-center gap-1 bg-card/90 border border-gold/40 px-2 py-1 rounded-sm">
+                  <div className="absolute top-3 right-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
                     <Icon name="BadgeCheck" size={12} className="text-gold" />
                     <span className="text-[10px] font-montserrat font-semibold text-gold">ВЕРИФИЦИРОВАН</span>
                   </div>
                 )}
+                <div className="absolute bottom-3 left-4 right-4">
+                  <div className="font-montserrat font-bold text-base text-foreground">{s.name}</div>
+                  <div className="text-xs text-gold font-montserrat font-medium flex items-center gap-2">
+                    {s.title}
+                    <span className="text-muted-foreground">· {s.experience} лет</span>
+                  </div>
+                </div>
               </div>
               <div className="p-5">
-                <div className="font-montserrat font-bold text-base text-foreground">{s.name}</div>
-                <div className="text-xs text-gold font-montserrat font-medium mt-0.5 mb-3">{s.title}</div>
                 <div className="flex items-center gap-3 mb-4">
                   <StarRating rating={s.rating} />
-                  <span className="text-xs text-muted-foreground">{s.rating} ({s.reviews} отзывов)</span>
-                  <span className="text-xs text-muted-foreground ml-auto">{s.cases} кейсов</span>
+                  <span className="text-xs text-muted-foreground">{s.rating} ({s.reviews})</span>
+                  <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
+                    <Icon name="MapPin" size={11} />{s.city}
+                  </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5 mb-4">
                   {s.tags.map((t) => (
                     <span key={t} className="tag-security">{t}</span>
                   ))}
                 </div>
-                <button className="w-full mt-4 border border-gold text-gold text-xs font-montserrat font-semibold py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">
-                  Связаться
-                </button>
+                <div className="divider-gold mb-4" />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Стоимость услуг</div>
+                    <div className="font-montserrat font-bold text-sm text-gold">{s.price}</div>
+                  </div>
+                  <button className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">
+                    Профиль
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="border-t border-border bg-card py-20">
+      {/* How it works */}
+      <section className="border-t border-border bg-card py-20 relative overflow-hidden ambient-gold">
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="text-center mb-14">
+            <div className="tag-security mb-3 inline-block">Процесс</div>
+            <h2 className="font-montserrat font-bold text-3xl text-foreground">Как работает платформа</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5 stagger">
+            {[
+              { n: "01", icon: "UserPlus", title: "Регистрация", desc: "Подаёте заявку и проходите верификацию документов и лицензий" },
+              { n: "02", icon: "FolderOpen", title: "Профиль и кейсы", desc: "Публикуете портфолио, кейсы и формируете профессиональную репутацию" },
+              { n: "03", icon: "Handshake", title: "Сделки", desc: "Получаете заказы от клиентов через защищённую систему расчётов" },
+              { n: "04", icon: "TrendingUp", title: "Рост", desc: "Развиваетесь, обучаетесь и расширяете сеть деловых контактов" },
+            ].map((step) => (
+              <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-hover">
+                <div className="font-montserrat font-extrabold text-4xl text-gold/15 absolute top-4 right-5">{step.n}</div>
+                <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
+                  <Icon name={step.icon} size={19} className="text-[hsl(220,20%,6%)]" />
+                </div>
+                <div className="font-montserrat font-bold text-sm text-foreground mb-2">{step.title}</div>
+                <div className="text-xs text-muted-foreground leading-relaxed">{step.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
             <div className="tag-security mb-3 inline-block">Возможности</div>
@@ -386,8 +497,8 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
               { icon: "Users", title: "Деловые связи", desc: "Находите партнёров, коллег и клиентов в своей профессиональной нише" },
               { icon: "Star", title: "Репутация и рейтинг", desc: "Прозрачная система оценки и отзывов для формирования профессиональной репутации" },
             ].map((f) => (
-              <div key={f.title} className="p-6 border border-border rounded-sm card-hover cursor-default">
-                <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center mb-4">
+              <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-hover cursor-default">
+                <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110">
                   <Icon name={f.icon} size={18} className="text-[hsl(220,20%,6%)]" />
                 </div>
                 <div className="font-montserrat font-semibold text-sm text-foreground mb-2">{f.title}</div>
@@ -398,19 +509,47 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
         </div>
       </section>
 
+      {/* Testimonial */}
+      <section className="border-y border-border bg-card py-20 relative overflow-hidden">
+        <div className="absolute inset-0 grid-line-bg opacity-50" />
+        <div className="max-w-4xl mx-auto px-4 relative z-10 text-center">
+          <Icon name="Quote" size={40} className="text-gold/30 mx-auto mb-6" />
+          <p className="font-montserrat font-medium text-xl md:text-2xl text-foreground leading-relaxed mb-8">
+            «За год на платформе я полностью закрыл вопрос поиска корпоративных клиентов. Закрытое сообщество профессионалов — это совсем другой уровень доверия и качества заказов».
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-11 h-11 rounded-sm overflow-hidden border border-gold/40">
+              <img src={DETECTIVE_IMAGE} alt="Александр Морозов" className="w-full h-full object-cover" />
+            </div>
+            <div className="text-left">
+              <div className="font-montserrat font-bold text-sm text-foreground flex items-center gap-1.5">
+                Александр Морозов
+                <Icon name="BadgeCheck" size={14} className="text-gold" />
+              </div>
+              <div className="text-xs text-muted-foreground">Полиграфолог · 12 лет опыта</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="max-w-7xl mx-auto px-4 py-20">
-        <div className="border border-gold/30 rounded-sm bg-card p-10 md:p-16 text-center relative overflow-hidden grid-line-bg">
+        <div className="border border-gold/30 rounded-sm glass-card p-10 md:p-16 text-center relative overflow-hidden grid-line-bg glow-gold ambient-gold">
           <div className="relative z-10">
             <div className="tag-security mb-4 inline-block">Закрытый доступ</div>
             <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-4">
-              Вступите в профессиональное<br /><span className="text-gold">сообщество сегодня</span>
+              Вступите в профессиональное<br /><span className="gold-text-gradient">сообщество сегодня</span>
             </h2>
             <p className="text-muted-foreground text-sm mb-8 max-w-xl mx-auto">
               Оставьте заявку на верификацию — наша команда свяжется с вами в течение 24 часов для проверки профессиональных документов
             </p>
-            <button className="gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm">
-              Подать заявку на вступление
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm">
+                Подать заявку на вступление
+              </button>
+              <button onClick={() => setActive("contacts")} className="border border-border text-foreground px-8 py-4 font-montserrat font-semibold text-sm hover:border-gold hover:text-gold transition-all rounded-sm">
+                Связаться с нами
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -418,12 +557,18 @@ function HomeSection({ setActive }: { setActive: (s: Section) => void }) {
   );
 }
 
-function ProfileSection() {
+function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
   const [activeTab, setActiveTab] = useState<"cases" | "services" | "reviews">("cases");
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 animate-fade-in">
-      <div className="tag-security mb-6 inline-block">Профиль специалиста</div>
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      <div className="flex items-center justify-between mb-6">
+        <div className="tag-security inline-block">Профиль специалиста</div>
+        <button onClick={() => setActive("home")} className="text-xs text-muted-foreground hover:text-gold transition-colors font-montserrat flex items-center gap-1">
+          <Icon name="ArrowLeft" size={13} />
+          Назад
+        </button>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-5">
           <div className="border border-border rounded-sm bg-card overflow-hidden">
@@ -569,7 +714,7 @@ function CasesSection() {
   const cats = ["Все", "Полиграф", "TSCM", "Детективная деятельность", "Корпоративная безопасность"];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 animate-fade-in">
+    <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
           <div className="tag-security mb-3 inline-block">База знаний</div>
@@ -590,9 +735,9 @@ function CasesSection() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-4 stagger">
           {cases.map((c) => (
-            <div key={c.title} className="border border-border rounded-sm bg-card p-6 card-hover cursor-pointer">
+            <div key={c.title} className="border border-border rounded-sm bg-card p-6 card-hover shine-on-hover cursor-pointer">
               <div className="flex items-start gap-3 mb-3">
                 <span className="tag-security">{c.category}</span>
                 <span className="text-[10px] text-muted-foreground ml-auto">{c.date}</span>
@@ -646,7 +791,7 @@ function CasesSection() {
 
 function ServicesSection() {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 animate-fade-in">
+    <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="mb-10">
         <div className="tag-security mb-3 inline-block">Каталог</div>
         <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">Услуги специалистов</h2>
@@ -661,11 +806,17 @@ function ServicesSection() {
         <button className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 text-xs font-montserrat font-bold rounded-sm">Найти</button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
         {services.map((s) => (
-          <div key={s.title} className="border border-border rounded-sm bg-card p-6 card-hover cursor-pointer">
-            <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-5">
-              <Icon name={s.icon} size={20} className="text-[hsl(220,20%,6%)]" />
+          <div key={s.title} className="group border border-border rounded-sm bg-card p-6 card-hover shine-on-hover cursor-pointer">
+            <div className="flex items-start justify-between mb-5">
+              <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                <Icon name={s.icon} size={20} className="text-[hsl(220,20%,6%)]" />
+              </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Icon name="Star" size={11} className="text-gold fill-current" />
+                4.9
+              </div>
             </div>
             <h3 className="font-montserrat font-bold text-sm text-foreground mb-2">{s.title}</h3>
             <p className="text-xs text-muted-foreground leading-relaxed mb-5">{s.desc}</p>
@@ -673,7 +824,9 @@ function ServicesSection() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-montserrat font-extrabold text-base text-gold">{s.price}</div>
-                <div className="text-[10px] text-muted-foreground">{s.time}</div>
+                <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Icon name="Clock" size={10} />{s.time}
+                </div>
               </div>
               <button className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">Заказать</button>
             </div>
@@ -697,18 +850,18 @@ function ServicesSection() {
 
 function CoursesSection() {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 animate-fade-in">
+    <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="mb-10">
         <div className="tag-security mb-3 inline-block">Обучение</div>
         <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">Курсы и тренинги</h2>
         <p className="text-muted-foreground text-sm">Обучающие программы от действующих практиков отрасли</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10 stagger">
         {courses.map((c) => (
-          <div key={c.title} className="border border-border rounded-sm bg-card overflow-hidden card-hover cursor-pointer">
+          <div key={c.title} className="group border border-border rounded-sm bg-card overflow-hidden card-hover shine-on-hover cursor-pointer">
             <div className="h-44 overflow-hidden relative">
-              <img src={c.img} alt={c.title} className="w-full h-full object-cover" />
+              <img src={c.img} alt={c.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
               <div className="absolute top-3 left-3"><span className="badge-pro">{c.level}</span></div>
             </div>
@@ -762,7 +915,7 @@ function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatIn
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 animate-fade-in">
+    <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="mb-6">
         <div className="tag-security mb-3 inline-block">Сообщество</div>
         <h2 className="font-montserrat font-bold text-3xl text-foreground">Профессиональный чат</h2>
@@ -834,7 +987,7 @@ function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatIn
 
 function ForumSection() {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 animate-fade-in">
+    <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
           <div className="tag-security mb-3 inline-block">Дискуссии</div>
@@ -906,7 +1059,7 @@ function ForumSection() {
 
 function ContactsSection() {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10 animate-fade-in">
+    <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="mb-10">
         <div className="tag-security mb-3 inline-block">Поддержка</div>
         <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">Контакты</h2>

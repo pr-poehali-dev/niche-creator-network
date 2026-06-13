@@ -109,15 +109,114 @@
   }
 
   .card-hover {
-    transition: all 0.25s ease;
+    transition:
+      transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.35s ease,
+      box-shadow 0.35s ease;
   }
 
   .card-hover:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
     border-color: hsl(var(--gold)) !important;
     box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.4),
-      0 0 0 1px hsl(43, 80%, 52%, 0.3);
+      0 12px 40px rgba(0, 0, 0, 0.5),
+      0 0 0 1px hsl(43, 80%, 52%, 0.4),
+      0 0 24px hsl(43, 80%, 52%, 0.08);
+  }
+
+  .glow-gold {
+    box-shadow: 0 0 30px hsl(43, 80%, 52%, 0.15);
+  }
+
+  .glow-gold-sm {
+    box-shadow: 0 0 16px hsl(43, 80%, 52%, 0.25);
+  }
+
+  .ambient-gold {
+    position: relative;
+  }
+  .ambient-gold::after {
+    content: "";
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(
+      circle,
+      hsl(43, 80%, 52%, 0.08) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+    z-index: 0;
+    top: -100px;
+    right: -100px;
+    border-radius: 50%;
+  }
+
+  .vignette {
+    position: relative;
+  }
+  .vignette::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 40%,
+      hsl(220, 20%, 4%, 0.6) 100%
+    );
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .glass-card {
+    background: linear-gradient(
+      145deg,
+      hsl(220, 18%, 11%) 0%,
+      hsl(220, 20%, 8%) 100%
+    );
+    backdrop-filter: blur(12px);
+  }
+
+  .gold-text-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(43, 90%, 60%) 0%,
+      hsl(38, 70%, 45%) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hover-lift {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  .shine-on-hover {
+    position: relative;
+    overflow: hidden;
+  }
+  .shine-on-hover::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(43, 80%, 52%, 0.12),
+      transparent
+    );
+    transition: left 0.6s ease;
+    z-index: 1;
+  }
+  .shine-on-hover:hover::before {
+    left: 130%;
   }
 
   .nav-link {
@@ -174,6 +273,45 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  .animate-rise {
+    opacity: 0;
+    animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(28px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .stagger > * {
+    opacity: 0;
+    animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .stagger > *:nth-child(1) {
+    animation-delay: 0.05s;
+  }
+  .stagger > *:nth-child(2) {
+    animation-delay: 0.12s;
+  }
+  .stagger > *:nth-child(3) {
+    animation-delay: 0.19s;
+  }
+  .stagger > *:nth-child(4) {
+    animation-delay: 0.26s;
+  }
+  .stagger > *:nth-child(5) {
+    animation-delay: 0.33s;
+  }
+  .stagger > *:nth-child(6) {
+    animation-delay: 0.4s;
   }
 
   .badge-pro {
