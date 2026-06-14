@@ -35,7 +35,8 @@ def handler(event: dict, context) -> dict:
         f'full_name, legal_status, license_info, registry_number, '
         f'show_full_name, show_legal_status, show_license, show_registry, '
         f'pseudonym, use_pseudonym, avatar_url, gender, '
-        f'licenses, documents, bio, age, show_bio, show_age, show_documents '
+        f'licenses, documents, bio, age, show_bio, show_age, show_documents, '
+        f'license_verified, timezone, always_available, quiet_start, quiet_end '
         f'FROM {SCHEMA}.providers ORDER BY subscription_active DESC, rating DESC, reviews DESC'
     )
     rows = cur.fetchall()
@@ -114,6 +115,24 @@ def handler(event: dict, context) -> dict:
             item['verification'] = public_verification or None
             # Возраст показываем, если включена видимость
             item['age'] = r[40] if (bool(r[42]) and r[40]) else None
+            # Доступность для звонков
+            item['timezone'] = (r[45] or '').strip() or None
+            item['alwaysAvailable'] = bool(r[46])
+            item['quietStart'] = (r[47] or '').strip() or None
+            item['quietEnd'] = (r[48] or '').strip() or None
+            # Бейдж «Лицензия»: полная верификация + подтверждённая лицензия + ИП/ООО
+            lic_all = [str(x).strip() for x in licenses_raw if str(x).strip()]
+            if not lic_all and (r[27] or '').strip():
+                lic_all = [r[27].strip()]
+            org_status = (r[26] or '').strip().lower()
+            is_org = org_status in ('ip', 'company', 'ооо', 'ип', 'llc')
+            item['licenseVerified'] = bool(r[44])
+            item['licensed'] = bool(r[44]) and bool(r[23]) and bool(lic_all) and is_org
+            if item['licensed']:
+                vv = item.get('verification') or {}
+                vv.setdefault('licenses', lic_all)
+                vv['legalStatus'] = r[26]
+                item['verification'] = vv
         else:
             # Обезличиваем: скрываем имя, фото, контакты и верификацию
             item['name'] = {'ru': 'Профиль скрыт', 'en': 'Profile hidden'}

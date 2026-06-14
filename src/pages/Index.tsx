@@ -4,7 +4,7 @@ import { useLang, t, LANGS, type Lang } from "@/lib/i18n";
 import { dataExtra } from "@/lib/i18n-extra";
 import { downloadReceipt } from "@/lib/receipt";
 import { useGeo, haversineKm } from "@/lib/geo";
-import { useProviders, type Provider } from "@/lib/providers";
+import { useProviders, isLicensed, isQuietNow, providerLocalTime, type Provider } from "@/lib/providers";
 import { useAuth, type AuthRole } from "@/lib/auth";
 import func2url from "../../backend/func2url.json";
 
@@ -29,8 +29,6 @@ type NavItem = { id: Section; key: keyof typeof t; icon: string };
 const CLIENT_NAV: NavItem[] = [
   { id: "home", key: "navHome", icon: "Home" },
   { id: "services", key: "navServices", icon: "Briefcase" },
-  { id: "profile", key: "navProfile", icon: "User" },
-  { id: "guards", key: "navGuards", icon: "ShieldCheck" },
   { id: "dashboard", key: "navDashboard", icon: "LayoutDashboard" },
   { id: "contacts", key: "navContacts", icon: "Phone" },
 ];
@@ -438,6 +436,28 @@ function AvatarUploader({ current, gender, role, recordId, onUploaded }: { curre
   );
 }
 
+function AvailabilityNote({ p }: { p: Provider }) {
+  const { tr } = useLang();
+  const localTime = providerLocalTime(p);
+  if (p.alwaysAvailable) {
+    return (
+      <div className="flex items-center gap-1.5 mb-3 text-[11px] text-green-400 font-montserrat font-semibold">
+        <Icon name="Clock" size={12} />{tr("availAlways")}
+        {localTime && <span className="text-muted-foreground font-normal">· {tr("availLocalTime")} {localTime}</span>}
+      </div>
+    );
+  }
+  if (!p.quietStart || !p.quietEnd) return null;
+  const quiet = isQuietNow(p);
+  return (
+    <div className={`flex items-center gap-1.5 mb-3 text-[11px] font-montserrat font-semibold ${quiet ? "text-muted-foreground/70" : "text-foreground"}`}>
+      <Icon name={quiet ? "Moon" : "Clock"} size={12} className={quiet ? "" : "text-gold"} />
+      {quiet ? tr("availSleeping") : `${tr("availCallFrom")} ${p.quietEnd}–${p.quietStart}`}
+      {localTime && <span className="text-muted-foreground font-normal">· {localTime}</span>}
+    </div>
+  );
+}
+
 function ContactButtons({ p, onChat, compact }: { p: Provider; onChat: () => void; compact?: boolean }) {
   const { tr } = useLang();
   const c = p.contacts;
@@ -445,12 +465,19 @@ function ContactButtons({ p, onChat, compact }: { p: Provider; onChat: () => voi
   const size = compact ? 14 : 16;
   const btn = "flex items-center justify-center gap-1.5 rounded-sm font-montserrat font-semibold transition-all";
   const pad = compact ? "px-2.5 py-2 text-[11px]" : "px-3 py-2.5 text-xs";
+  const quiet = isQuietNow(p);
   return (
     <div className={`grid ${compact ? "grid-cols-4" : "grid-cols-2"} gap-2`} onClick={(e) => e.stopPropagation()}>
       {c.phone && (
-        <a href={`tel:${c.phone}`} className={`${btn} ${pad} gold-gradient text-[hsl(220,20%,6%)] hover:opacity-90`} aria-label={tr("contactCall")}>
-          <Icon name="Phone" size={size} />{!compact && tr("contactCall")}
-        </a>
+        quiet ? (
+          <div className={`${btn} ${pad} border border-border text-muted-foreground/60 cursor-not-allowed`} title={tr("quietHoursTip")} aria-disabled="true">
+            <Icon name="PhoneOff" size={size} />{!compact && tr("quietHoursBtn")}
+          </div>
+        ) : (
+          <a href={`tel:${c.phone}`} className={`${btn} ${pad} gold-gradient text-[hsl(220,20%,6%)] hover:opacity-90`} aria-label={tr("contactCall")}>
+            <Icon name="Phone" size={size} />{!compact && tr("contactCall")}
+          </a>
+        )
       )}
       <button onClick={onChat} className={`${btn} ${pad} border border-gold text-gold hover:bg-gold hover:text-[hsl(220,20%,6%)]`} aria-label={tr("contactChat")}>
         <Icon name="MessageCircle" size={size} />{!compact && tr("contactChat")}
@@ -763,6 +790,10 @@ const services = [
   { icon: "FileSearch", title: { ru: "Сбор досье", en: "Background dossier" }, price: { ru: "от 15 000 ₽", en: "from $170" }, time: { ru: "3–7 дней", en: "3–7 days" }, desc: { ru: "Комплексная проверка физических и юридических лиц по открытым и закрытым источникам", en: "Comprehensive checks of individuals and companies via open and closed sources" } },
   { icon: "Shield", title: { ru: "Защита переговоров", en: "Meeting protection" }, price: { ru: "от 30 000 ₽", en: "from $340" }, time: { ru: "под ключ", en: "turnkey" }, desc: { ru: "Обеспечение защищённого периметра для конфиденциальных встреч на вашей или нейтральной территории", en: "A secure perimeter for confidential meetings on your or neutral territory" } },
   { icon: "UserCheck", title: { ru: "HR-безопасность", en: "HR security" }, price: { ru: "от 5 000 ₽", en: "from $60" }, time: { ru: "1–2 дня", en: "1–2 days" }, desc: { ru: "Проверка соискателей, мониторинг персонала, расследование инцидентов внутри компании", en: "Applicant screening, staff monitoring and internal incident investigations" } },
+  { icon: "Building2", title: { ru: "Охрана объектов", en: "Site security" }, price: { ru: "от 180 ₽/час", en: "from $2/hour" }, time: { ru: "24/7", en: "24/7" }, desc: { ru: "Круглосуточная физическая охрана офисов, складов, ТЦ и промышленных объектов", en: "24/7 physical security for offices, warehouses, malls and industrial sites" } },
+  { icon: "UserCog", title: { ru: "Личная охрана", en: "Close protection" }, price: { ru: "от 9 000 ₽/смена", en: "from $100/shift" }, time: { ru: "по запросу", en: "on request" }, desc: { ru: "Профессиональные телохранители и VIP-сопровождение для руководителей и публичных персон", en: "Professional bodyguards and VIP escort for executives and public figures" } },
+  { icon: "Radio", title: { ru: "Пультовая охрана", en: "Alarm monitoring" }, price: { ru: "от 3 000 ₽/мес", en: "from $35/mo" }, time: { ru: "24/7", en: "24/7" }, desc: { ru: "Мониторинг сигнализации с выездом групп быстрого реагирования", en: "Alarm monitoring with rapid response team dispatch" } },
+  { icon: "Video", title: { ru: "Видеонаблюдение", en: "Video surveillance" }, price: { ru: "от 20 000 ₽", en: "from $230" }, time: { ru: "под ключ", en: "turnkey" }, desc: { ru: "Проектирование, монтаж и обслуживание систем видеонаблюдения и контроля доступа", en: "Design, installation and maintenance of CCTV and access control systems" } },
 ];
 
 const courses = [
@@ -1364,10 +1395,10 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                     <span className="text-[10px] font-montserrat font-semibold text-muted-foreground">{tr("aliasBadge")}</span>
                   </div>
                 )}
-                {s.verified && (
+                {isLicensed(s) && (
                   <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
                     <Icon name="BadgeCheck" size={12} className="text-gold" />
-                    <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licensed")}</span>
+                    <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licenseBadge")}</span>
                   </div>
                 )}
                 {s.distance != null && s.distance <= 100 && (
@@ -1412,6 +1443,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                     <div className="font-montserrat font-bold text-sm text-gold">{L(s.price, lang)}</div>
                   </div>
                 </div>
+                <AvailabilityNote p={s} />
                 <div className="mt-auto">
                   <ContactButtons p={s} onChat={() => setActive("chat")} compact />
                 </div>
@@ -1908,6 +1940,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     documents: [] as { title: string; url: string }[],
     bio: "",
     showBio: true, showAge: true, showDocuments: true,
+    timezone: "", alwaysAvailable: false, quietStart: "23:00", quietEnd: "08:00",
   });
   const [vfState, setVfState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
@@ -1928,6 +1961,8 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
           documents: Array.isArray(v.documents) ? v.documents : [],
           bio: v.bio || "",
           showBio: !!v.showBio, showAge: !!v.showAge, showDocuments: !!v.showDocuments,
+          timezone: v.timezone || "", alwaysAvailable: !!v.alwaysAvailable,
+          quietStart: v.quietStart || "23:00", quietEnd: v.quietEnd || "08:00",
         });
         if (v.avatarUrl) setAvatarUrl(v.avatarUrl);
       })
@@ -2412,6 +2447,44 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 <input value={vf.registry} onChange={(e) => { setVf({ ...vf, registry: e.target.value }); setVfState("idle"); }} placeholder="ОГРНИП / ИНН" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
               </div>
 
+              <div className="border border-border rounded-sm bg-secondary/40 p-4 space-y-4">
+                <div>
+                  <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-1"><Icon name="Clock" size={13} className="text-gold" />{tr("pdAvailTitle")}</label>
+                  <p className="text-[11px] text-muted-foreground">{tr("pdAvailHint")}</p>
+                </div>
+                <button
+                  onClick={() => { setVf({ ...vf, alwaysAvailable: !vf.alwaysAvailable }); setVfState("idle"); }}
+                  className="flex items-center justify-between w-full"
+                >
+                  <span className="text-xs text-foreground">{tr("pdAvailAlways")}</span>
+                  <span className={`relative w-10 h-5 rounded-full transition-colors ${vf.alwaysAvailable ? "bg-gold" : "bg-border"}`}>
+                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-card transition-all ${vf.alwaysAvailable ? "start-[22px]" : "start-0.5"}`} />
+                  </span>
+                </button>
+                {!vf.alwaysAvailable && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-montserrat font-semibold text-muted-foreground block mb-1.5">{tr("pdQuietFrom")}</label>
+                      <input type="time" value={vf.quietStart} onChange={(e) => { setVf({ ...vf, quietStart: e.target.value }); setVfState("idle"); }} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-montserrat font-semibold text-muted-foreground block mb-1.5">{tr("pdQuietTo")}</label>
+                      <input type="time" value={vf.quietEnd} onChange={(e) => { setVf({ ...vf, quietEnd: e.target.value }); setVfState("idle"); }} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <label className="text-[11px] font-montserrat font-semibold text-muted-foreground block mb-1.5">{tr("pdTimezone")}</label>
+                  <select value={vf.timezone} onChange={(e) => { setVf({ ...vf, timezone: e.target.value }); setVfState("idle"); }} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors">
+                    <option value="">{tr("pdTimezoneAuto")}</option>
+                    {["Europe/Kaliningrad","Europe/Moscow","Europe/Samara","Asia/Yekaterinburg","Asia/Omsk","Asia/Krasnoyarsk","Asia/Irkutsk","Asia/Yakutsk","Asia/Vladivostok","Asia/Magadan","Asia/Kamchatka","Europe/Kyiv","Europe/Minsk","Asia/Almaty","Europe/London","Europe/Berlin","America/New_York","America/Los_Angeles","Asia/Dubai"].map((z) => (
+                      <option key={z} value={z}>{z}</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-muted-foreground/70 mt-1.5">{tr("pdTimezoneNote")}</p>
+                </div>
+              </div>
+
               {vfState === "saved" && <div className="flex items-center gap-2 text-sm text-green-400"><Icon name="CheckCircle2" size={16} />{tr("pdVfSaved")}</div>}
               {vfState === "error" && <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("pdVfSaveErr")}</div>}
               <button onClick={saveVerification} disabled={vfState === "saving"} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
@@ -2891,7 +2964,12 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
               </div>
               <div className="flex items-center gap-2 mb-1">
                 <div className="font-montserrat font-bold text-lg text-foreground">{L(specialists[0].name, lang)}</div>
-                <Icon name="BadgeCheck" size={16} className="text-gold" />
+                {provider && isLicensed(provider) && (
+                  <span className="flex items-center gap-1 bg-gold/10 border border-gold/40 px-2 py-0.5 rounded-sm" title={tr("licenseBadge")}>
+                    <Icon name="BadgeCheck" size={13} className="text-gold" />
+                    <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licenseBadge")}</span>
+                  </span>
+                )}
               </div>
               <div className="text-gold text-xs font-montserrat font-medium mb-1">{L(specialists[0].title, lang)} · 12 {tr("yearsShort")}</div>
               <div className="text-xs text-muted-foreground mb-4">{L(specialists[0].city, lang)}</div>
@@ -2906,6 +2984,7 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
                 <div><div className="stat-number text-xl">98%</div><div className="text-[10px] text-muted-foreground">{tr("success")}</div></div>
               </div>
               <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-montserrat font-semibold mb-2">{tr("contactTitle")}</div>
+              {provider && <AvailabilityNote p={provider} />}
               {provider && <ContactButtons p={provider} onChat={() => setActive("chat")} />}
               <button className="w-full mt-2 border border-border text-muted-foreground py-2.5 text-xs font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">{tr("orderService")}</button>
             </div>
@@ -3181,10 +3260,15 @@ function CoursesSection() {
   const { lang, tr } = useLang();
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="mb-10">
+      <div className="mb-6">
         <div className="tag-security mb-3 inline-block">{tr("education")}</div>
         <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">{tr("coursesTitle")}</h2>
         <p className="text-muted-foreground text-sm">{tr("coursesDesc")}</p>
+      </div>
+
+      <div className="mb-8 border border-gold/30 rounded-sm bg-card/60 p-4 flex items-start gap-3">
+        <Icon name="Megaphone" size={16} className="text-gold mt-0.5 shrink-0" />
+        <p className="text-xs text-muted-foreground leading-relaxed">{tr("coursesPartnerNote")}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10 stagger">
@@ -3194,6 +3278,10 @@ function CoursesSection() {
               <img src={c.img} alt={L(c.title, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
               <div className="absolute top-3 start-3"><span className="badge-pro">{L(c.level, lang)}</span></div>
+              <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
+                <Icon name="Megaphone" size={11} className="text-gold" />
+                <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("coursesPartnerBadge")}</span>
+              </div>
             </div>
             <div className="p-5">
               <h3 className="font-montserrat font-bold text-sm text-foreground mb-2 leading-snug">{L(c.title, lang)}</h3>
@@ -3206,8 +3294,11 @@ function CoursesSection() {
               <div className="divider-gold mb-4" />
               <div className="flex items-center justify-between">
                 <div className="font-montserrat font-extrabold text-lg text-gold">{L(c.price, lang)}</div>
-                <button className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("enroll")}</button>
+                <button className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center gap-1.5">
+                  {tr("coursesGoBtn")}<Icon name="ExternalLink" size={13} />
+                </button>
               </div>
+              <div className="text-[10px] text-muted-foreground/70 mt-2 text-center">{tr("coursesAdLabel")}</div>
             </div>
           </div>
         ))}

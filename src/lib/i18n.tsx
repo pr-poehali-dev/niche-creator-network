@@ -500,13 +500,13 @@ export const t: Dict = {
   contactSales: { ru: "Связаться с нами", en: "Contact us" },
 
   planStartName: { ru: "Старт", en: "Start" },
-  planStartPrice: { ru: "990 ₽", en: "$12" },
+  planStartPrice: { ru: "1 990 ₽", en: "$22" },
   planStartFor: { ru: "Для начинающих специалистов", en: "For new specialists" },
   planProName: { ru: "Про", en: "Pro" },
-  planProPrice: { ru: "2 490 ₽", en: "$29" },
+  planProPrice: { ru: "4 490 ₽", en: "$49" },
   planProFor: { ru: "Для активных исполнителей", en: "For active providers" },
   planPremiumName: { ru: "Премиум", en: "Premium" },
-  planPremiumPrice: { ru: "4 990 ₽", en: "$59" },
+  planPremiumPrice: { ru: "7 990 ₽", en: "$89" },
   planPremiumFor: { ru: "Максимум заказов и охвата", en: "Maximum orders and reach" },
   planEntName: { ru: "Enterprise", en: "Enterprise" },
   planEntPrice: { ru: "По запросу", en: "Custom" },
@@ -525,6 +525,33 @@ export const t: Dict = {
   feat5cases: { ru: "До 5 кейсов", en: "Up to 5 cases" },
   feat20cases: { ru: "До 20 кейсов", en: "Up to 20 cases" },
   featUnlimCases: { ru: "Безлимит кейсов", en: "Unlimited cases" },
+
+  // License badge
+  licenseBadge: { ru: "Лицензия", en: "License" },
+
+  // Provider availability settings
+  pdAvailTitle: { ru: "Доступность для звонков", en: "Call availability" },
+  pdAvailHint: { ru: "Укажите часы тишины — в это время кнопка звонка будет недоступна. Часовой пояс определяется автоматически для вас и клиента.", en: "Set quiet hours — the call button will be disabled during this time. The time zone is detected automatically for you and the client." },
+  pdAvailAlways: { ru: "Всегда доступен для звонков", en: "Always available for calls" },
+  pdQuietFrom: { ru: "Тишина с", en: "Quiet from" },
+  pdQuietTo: { ru: "Тишина до", en: "Quiet until" },
+  pdTimezone: { ru: "Часовой пояс", en: "Time zone" },
+  pdTimezoneAuto: { ru: "Определять автоматически", en: "Detect automatically" },
+  pdTimezoneNote: { ru: "Если выбрано «автоматически», используется часовой пояс вашего устройства.", en: "If 'automatically' is selected, your device's time zone is used." },
+
+  // Availability / quiet hours
+  availAlways: { ru: "Всегда доступен", en: "Always available" },
+  availLocalTime: { ru: "местное время", en: "local time" },
+  availSleeping: { ru: "Сейчас часы тишины", en: "Quiet hours now" },
+  availCallFrom: { ru: "Звонки с", en: "Calls from" },
+  quietHoursBtn: { ru: "Часы тишины", en: "Quiet hours" },
+  quietHoursTip: { ru: "У исполнителя сейчас ночь. Позвоните позже или напишите в чат.", en: "It's night for this provider. Call later or message in chat." },
+
+  // Courses (partner advertising)
+  coursesPartnerNote: { ru: "Курсы проводят сторонние учебные заведения. Платформа размещает их на правах рекламы и может получать вознаграждение от организаторов. Оплата и обучение происходят на стороне учебного заведения.", en: "Courses are run by third-party training institutions. The Platform features them as advertising and may receive a fee from the organizers. Payment and training take place on the institution's side." },
+  coursesPartnerBadge: { ru: "Партнёр", en: "Partner" },
+  coursesGoBtn: { ru: "Перейти к курсу", en: "Go to course" },
+  coursesAdLabel: { ru: "Реклама · партнёрский курс", en: "Ad · partner course" },
 
   // Dashboard — common
   dashWelcome: { ru: "С возвращением", en: "Welcome back" },

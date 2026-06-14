@@ -43,7 +43,8 @@ def handler(event: dict, context) -> dict:
             f"SELECT full_name, passport_number, legal_status, license_info, registry_number, "
             f"show_full_name, show_legal_status, show_license, show_registry, "
             f"pseudonym, use_pseudonym, licenses, documents, bio, age, "
-            f"show_bio, show_age, show_documents, gender, avatar_url "
+            f"show_bio, show_age, show_documents, gender, avatar_url, "
+            f"timezone, always_available, quiet_start, quiet_end, license_verified "
             f"FROM {SCHEMA}.providers WHERE slug='{slug}'"
         )
         row = cur.fetchone()
@@ -66,6 +67,9 @@ def handler(event: dict, context) -> dict:
             'bio': row[13] or '', 'age': row[14],
             'showBio': bool(row[15]), 'showAge': bool(row[16]), 'showDocuments': bool(row[17]),
             'gender': row[18] or 'm', 'avatarUrl': row[19] or '',
+            'timezone': row[20] or '', 'alwaysAvailable': bool(row[21]),
+            'quietStart': row[22] or '', 'quietEnd': row[23] or '',
+            'licenseVerified': bool(row[24]),
         }
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'verification': data})}
 
@@ -132,6 +136,17 @@ def handler(event: dict, context) -> dict:
     show_age = b(body.get('showAge'))
     show_documents = b(body.get('showDocuments'))
 
+    timezone = esc(body.get('timezone'))[:64]
+    always_available = b(body.get('alwaysAvailable'))
+
+    def time_or_empty(v):
+        s = str(v or '').strip()
+        if len(s) == 5 and s[2] == ':' and s[:2].isdigit() and s[3:].isdigit():
+            return s
+        return ''
+    quiet_start = time_or_empty(body.get('quietStart')).replace("'", "''")
+    quiet_end = time_or_empty(body.get('quietEnd')).replace("'", "''")
+
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     cur.execute(
@@ -154,7 +169,11 @@ def handler(event: dict, context) -> dict:
         f"age={age_sql}, "
         f"show_bio={show_bio}, "
         f"show_age={show_age}, "
-        f"show_documents={show_documents} "
+        f"show_documents={show_documents}, "
+        f"timezone='{timezone}', "
+        f"always_available={always_available}, "
+        f"quiet_start='{quiet_start}', "
+        f"quiet_end='{quiet_end}' "
         f"WHERE slug='{slug}'"
     )
     updated = cur.rowcount
