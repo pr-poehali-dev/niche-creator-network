@@ -33,6 +33,13 @@
       "path": "/",
       "body": {"action": "foobar"},
       "expectedStatus": 400
+    },
+    {
+      "name": "Admin login wrong password",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "admin_login", "password": "definitely-wrong-pass", "role": "client"},
+      "expectedStatus": 401
     }
   ]
 }

@@ -87,8 +87,8 @@ function Lightbox({ src, title, onClose }: { src: string; title?: string; onClos
 
 function AuthModal({ onClose }: { onClose: () => void }) {
   const { tr } = useLang();
-  const { login, register } = useAuth();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const { login, register, adminLogin } = useAuth();
+  const [mode, setMode] = useState<"login" | "register" | "admin">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -115,11 +115,82 @@ function AuthModal({ onClose }: { onClose: () => void }) {
     setBusy(true);
     const res = mode === "login"
       ? await login(email.trim(), password)
-      : await register(email.trim(), password, role, name.trim());
+      : mode === "admin"
+        ? await adminLogin(password, role)
+        : await register(email.trim(), password, role, name.trim());
     setBusy(false);
     if (res.ok) onClose();
     else setError(errText(res.error || "error"));
   };
+
+  if (mode === "admin") {
+    return (
+      <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
+        <div className="relative z-10 w-full max-w-md bg-card border border-gold/40 rounded-sm shadow-2xl security-glow" onClick={(e) => e.stopPropagation()}>
+          <button onClick={onClose} className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
+            <Icon name="X" size={20} />
+          </button>
+          <div className="p-6 sm:p-8">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center">
+                <Icon name="ShieldCheck" size={17} className="text-[hsl(220,20%,6%)]" />
+              </div>
+              <span className="font-montserrat font-bold text-base text-foreground">{tr("authAdminTitle")}</span>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-montserrat font-semibold text-foreground mb-1.5 block">{tr("authAdminViewAs")}</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["client", "provider"] as const).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setRole(r)}
+                      className={`py-2.5 text-xs font-montserrat font-bold rounded-sm border transition-all ${role === r ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:text-foreground"}`}
+                    >
+                      {tr(r === "client" ? "roleClient" : "roleProvider")}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !busy) submit(); }}
+                placeholder={tr("authAdminPassword")}
+                autoComplete="off"
+                autoFocus
+                className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+              />
+
+              {error && (
+                <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-sm px-3 py-2">
+                  <Icon name="CircleAlert" size={14} className="shrink-0" />{error}
+                </div>
+              )}
+
+              <button
+                onClick={submit}
+                disabled={busy}
+                className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {busy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="LogIn" size={16} />}
+                {busy ? tr("authBusy") : tr("authAdminBtn")}
+              </button>
+            </div>
+
+            <div className="text-center mt-4">
+              <button onClick={() => { setMode("login"); setError(""); setPassword(""); }} className="text-xs text-muted-foreground hover:text-gold transition-colors">
+                {tr("authBackToLogin")}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
@@ -217,6 +288,13 @@ function AuthModal({ onClose }: { onClose: () => void }) {
           <div className="flex items-center justify-center gap-1.5 mt-5 text-[11px] text-muted-foreground">
             <Icon name="ShieldCheck" size={12} className="text-gold" />
             {tr("authSecureNote")}
+          </div>
+
+          <div className="text-center mt-4 pt-4 border-t border-border">
+            <button onClick={() => { setMode("admin"); setError(""); setPassword(""); }} className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground/70 hover:text-gold transition-colors">
+              <Icon name="KeyRound" size={12} />
+              {tr("authAdminLink")}
+            </button>
           </div>
         </div>
       </div>

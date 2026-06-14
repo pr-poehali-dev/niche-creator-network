@@ -72,6 +72,29 @@ def handler(event: dict, context) -> dict:
     try:
         cur = conn.cursor()
 
+        if action == 'admin_login':
+            password = body.get('password') or ''
+            admin_pwd = os.environ.get('ADMIN_PASSWORD', '')
+            if not admin_pwd or not hmac.compare_digest(password, admin_pwd):
+                return _resp(401, {'error': 'invalid_credentials'})
+            role = body.get('role') if body.get('role') in ('client', 'provider') else 'client'
+            admin_email = f"admin+{role}@shchit.local"
+            esc_email = admin_email.replace("'", "''")
+            cur.execute(f"SELECT id, role, name FROM {SCHEMA}.users WHERE email = '{esc_email}'")
+            row = cur.fetchone()
+            if row:
+                user_id = row[0]
+                cur.execute(f"UPDATE {SCHEMA}.users SET role = '{role}' WHERE id = {user_id}")
+            else:
+                placeholder = _make_hash(pysecrets.token_hex(16)).replace("'", "''")
+                cur.execute(
+                    f"INSERT INTO {SCHEMA}.users (email, password_hash, role, name) "
+                    f"VALUES ('{esc_email}', '{placeholder}', '{role}', 'Администратор') RETURNING id"
+                )
+                user_id = cur.fetchone()[0]
+            new_token = _create_session(cur, user_id)
+            return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': admin_email, 'role': role, 'name': 'Администратор', 'isAdmin': True}})
+
         if action == 'register':
             email = (body.get('email') or '').strip().lower()
             password = body.get('password') or ''

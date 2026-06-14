@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import func2url from "../../backend/func2url.json";
 
 export type AuthRole = "client" | "provider";
-export type AuthUser = { id: number; email: string; role: AuthRole; name: string };
+export type AuthUser = { id: number; email: string; role: AuthRole; name: string; isAdmin?: boolean };
 
 type AuthResult = { ok: boolean; error?: string };
 
@@ -12,6 +12,7 @@ type AuthContextValue = {
   isAuthed: boolean;
   login: (email: string, password: string) => Promise<AuthResult>;
   register: (email: string, password: string, role: AuthRole, name: string) => Promise<AuthResult>;
+  adminLogin: (password: string, role: AuthRole) => Promise<AuthResult>;
   logout: () => Promise<void>;
 };
 
@@ -77,6 +78,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const adminLogin = useCallback(async (password: string, role: AuthRole): Promise<AuthResult> => {
+    const { res, data } = await callAuth({ action: "admin_login", password, role });
+    if (res.ok && data.token) {
+      localStorage.setItem(TOKEN_KEY, data.token);
+      setUser(data.user);
+      return { ok: true };
+    }
+    return { ok: false, error: data.error || "error" };
+  }, []);
+
   const logout = useCallback(async () => {
     const token = localStorage.getItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
@@ -85,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthed: !!user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, isAuthed: !!user, login, register, adminLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );

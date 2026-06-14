@@ -46,6 +46,12 @@ export const t: Dict = {
   authErrGeneric: { ru: "Что-то пошло не так. Попробуйте ещё раз", en: "Something went wrong. Try again" },
   authSecureNote: { ru: "Данные защищены шифрованием", en: "Your data is encrypted" },
   authBusy: { ru: "Подождите...", en: "Please wait..." },
+  authAdminLink: { ru: "Вход для администратора", en: "Administrator login" },
+  authAdminTitle: { ru: "Вход администратора", en: "Administrator login" },
+  authAdminPassword: { ru: "Пароль администратора", en: "Administrator password" },
+  authAdminViewAs: { ru: "Войти как", en: "View as" },
+  authAdminBtn: { ru: "Войти", en: "Sign in" },
+  authBackToLogin: { ru: "Назад ко входу", en: "Back to sign in" },
 
   // Minimal home / promo
   promoTitle1: { ru: "Проверенные специалисты", en: "Verified specialists" },
