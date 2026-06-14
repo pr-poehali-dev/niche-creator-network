@@ -6,7 +6,6 @@ import { downloadReceipt } from "@/lib/receipt";
 import { useGeo, haversineKm } from "@/lib/geo";
 import { useProviders, type Provider } from "@/lib/providers";
 import { useAuth, type AuthRole } from "@/lib/auth";
-import CookieConsent from "@/components/CookieConsent";
 import func2url from "../../backend/func2url.json";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/92040949-913f-4126-80f9-fa681d96ea82.jpg";
@@ -86,7 +85,7 @@ function Lightbox({ src, title, onClose }: { src: string; title?: string; onClos
   );
 }
 
-function AuthModal({ onClose }: { onClose: () => void }) {
+function AuthModal({ onClose, onOpenDoc }: { onClose: () => void; onOpenDoc: (s: Section) => void }) {
   const { tr } = useLang();
   const { login, register, adminLogin } = useAuth();
   const [mode, setMode] = useState<"login" | "register" | "admin">("login");
@@ -94,6 +93,7 @@ function AuthModal({ onClose }: { onClose: () => void }) {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState<AuthRole>("client");
+  const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -108,11 +108,13 @@ function AuthModal({ onClose }: { onClose: () => void }) {
     if (code === "email_exists") return tr("authErrExists");
     if (code === "weak_password") return tr("authErrWeak");
     if (code === "invalid_email") return tr("authErrEmail");
+    if (code === "consent") return tr("authErrConsent");
     return tr("authErrGeneric");
   };
 
   const submit = async () => {
     setError("");
+    if (mode === "register" && !consent) { setError(errText("consent")); return; }
     setBusy(true);
     const res = mode === "login"
       ? await login(email.trim(), password)
@@ -262,6 +264,30 @@ function AuthModal({ onClose }: { onClose: () => void }) {
               autoComplete={mode === "login" ? "current-password" : "new-password"}
               className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
             />
+
+            {mode === "register" && (
+              <label className="flex items-start gap-2.5 cursor-pointer select-none pt-1">
+                <button
+                  type="button"
+                  onClick={() => setConsent((v) => !v)}
+                  className={`mt-0.5 w-5 h-5 shrink-0 rounded-sm border flex items-center justify-center transition-all ${consent ? "gold-gradient border-gold" : "border-border bg-secondary"}`}
+                  aria-checked={consent}
+                  role="checkbox"
+                >
+                  {consent && <Icon name="Check" size={13} className="text-[hsl(220,20%,6%)]" />}
+                </button>
+                <span className="text-[11px] text-muted-foreground leading-relaxed" onClick={() => setConsent((v) => !v)}>
+                  {tr("consentIntro")}{" "}
+                  {([["consentPrivacy", "privacy"], ["consentTerms", "terms"], ["consentAgreement", "agreement"], ["consentOffer", "offer"]] as const).map(([k, sec], i) => (
+                    <span key={k}>
+                      {i > 0 && ", "}
+                      <button type="button" onClick={(e) => { e.stopPropagation(); onOpenDoc(sec); }} className="text-gold hover:underline">{tr(k)}</button>
+                    </span>
+                  ))}
+                  {" — "}{tr("consentCookie")}
+                </span>
+              </label>
+            )}
 
             {error && (
               <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-sm px-3 py-2">
@@ -1041,8 +1067,7 @@ export default function Index() {
         </div>
       </footer>
 
-      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
-      <CookieConsent onPolicy={() => go("privacy")} />
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onOpenDoc={(s) => { setAuthOpen(false); go(s); }} />}
     </div>
   );
 }
