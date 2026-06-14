@@ -7,12 +7,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { LanguageProvider } from "@/lib/i18n";
+import { AuthProvider } from "@/lib/auth";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
+      <AuthProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -24,6 +26,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>
 );

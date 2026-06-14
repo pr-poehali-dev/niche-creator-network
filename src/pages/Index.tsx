@@ -5,6 +5,7 @@ import { dataExtra } from "@/lib/i18n-extra";
 import { downloadReceipt } from "@/lib/receipt";
 import { useGeo, haversineKm } from "@/lib/geo";
 import { useProviders, type Provider } from "@/lib/providers";
+import { useAuth, type AuthRole } from "@/lib/auth";
 import func2url from "../../backend/func2url.json";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/92040949-913f-4126-80f9-fa681d96ea82.jpg";
@@ -80,6 +81,145 @@ function Lightbox({ src, title, onClose }: { src: string; title?: string; onClos
       <button onClick={onClose} className="absolute top-4 end-4 z-20 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
         <Icon name="X" size={26} />
       </button>
+    </div>
+  );
+}
+
+function AuthModal({ onClose }: { onClose: () => void }) {
+  const { tr } = useLang();
+  const { login, register } = useAuth();
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [role, setRole] = useState<AuthRole>("client");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const errText = (code: string) => {
+    if (code === "invalid_credentials") return tr("authErrInvalid");
+    if (code === "email_exists") return tr("authErrExists");
+    if (code === "weak_password") return tr("authErrWeak");
+    if (code === "invalid_email") return tr("authErrEmail");
+    return tr("authErrGeneric");
+  };
+
+  const submit = async () => {
+    setError("");
+    setBusy(true);
+    const res = mode === "login"
+      ? await login(email.trim(), password)
+      : await register(email.trim(), password, role, name.trim());
+    setBusy(false);
+    if (res.ok) onClose();
+    else setError(errText(res.error || "error"));
+  };
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+      <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
+      <div className="relative z-10 w-full max-w-md bg-card border border-border rounded-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
+          <Icon name="X" size={20} />
+        </button>
+        <div className="p-6 sm:p-8">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center">
+              <Icon name="Shield" size={17} className="text-[hsl(220,20%,6%)]" />
+            </div>
+            <span className="font-montserrat font-bold text-lg tracking-[0.2em] text-foreground">Щ<span className="text-gold">ИТ</span></span>
+          </div>
+
+          <div className="flex border border-border rounded-sm overflow-hidden mb-6">
+            {(["login", "register"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => { setMode(m); setError(""); }}
+                className={`flex-1 py-2.5 text-sm font-montserrat font-bold transition-colors ${mode === m ? "gold-gradient text-[hsl(220,20%,6%)]" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {tr(m === "login" ? "authTabLogin" : "authTabRegister")}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-3">
+            {mode === "register" && (
+              <>
+                <div>
+                  <label className="text-xs font-montserrat font-semibold text-foreground mb-1.5 block">{tr("authRoleQuestion")}</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["client", "provider"] as const).map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => setRole(r)}
+                        className={`py-2.5 text-xs font-montserrat font-bold rounded-sm border transition-all ${role === r ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:text-foreground"}`}
+                      >
+                        {tr(r === "client" ? "roleClient" : "roleProvider")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={tr("authNamePh")}
+                  className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+                />
+              </>
+            )}
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={tr("authEmail")}
+              autoComplete="email"
+              className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !busy) submit(); }}
+              placeholder={tr("authPassword")}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+            />
+
+            {error && (
+              <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-sm px-3 py-2">
+                <Icon name="CircleAlert" size={14} className="shrink-0" />{error}
+              </div>
+            )}
+
+            <button
+              onClick={submit}
+              disabled={busy}
+              className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {busy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name={mode === "login" ? "LogIn" : "UserPlus"} size={16} />}
+              {busy ? tr("authBusy") : tr(mode === "login" ? "authLoginBtn" : "authRegisterBtn")}
+            </button>
+          </div>
+
+          <div className="text-center mt-4 text-xs text-muted-foreground">
+            {mode === "login" ? tr("authNoAccount") : tr("authHaveAccount")}{" "}
+            <button onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }} className="text-gold font-semibold hover:underline">
+              {tr(mode === "login" ? "authToRegister" : "authToLogin")}
+            </button>
+          </div>
+
+          <div className="flex items-center justify-center gap-1.5 mt-5 text-[11px] text-muted-foreground">
+            <Icon name="ShieldCheck" size={12} className="text-gold" />
+            {tr("authSecureNote")}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -579,34 +719,52 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function Index() {
   const { lang, setLang, tr, applyGeoLang } = useLang();
+  const { user, isAuthed, logout } = useAuth();
   const [active, setActive] = useState<Section>("home");
-  const [role, setRole] = useState<Role>("client");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [secBannerOpen, setSecBannerOpen] = useState(true);
+  const [authOpen, setAuthOpen] = useState(false);
   const { geo } = useGeo();
+
+  const role: Role = user?.role === "provider" ? "provider" : "client";
 
   useEffect(() => {
     if (geo?.countryCode) applyGeoLang(geo.countryCode);
   }, [geo?.countryCode]);
 
-  const NAV_ITEMS = role === "client" ? CLIENT_NAV : PROVIDER_NAV;
+  useEffect(() => {
+    if (!isAuthed) setActive("home");
+  }, [isAuthed]);
+
+  const NAV_ITEMS = isAuthed ? (role === "client" ? CLIENT_NAV : PROVIDER_NAV) : [];
 
   const go = (s: Section) => {
     setActive(s);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const switchRole = (r: Role) => {
-    setRole(r);
-    setActive("home");
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const openCabinet = () => {
+    setMobileMenuOpen(false);
+    if (isAuthed) go("dashboard");
+    else setAuthOpen(true);
+  };
+
+  const handleLogout = async () => {
+    setMobileMenuOpen(false);
+    await logout();
+    setActive("home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const renderSection = () => {
+    if (!isAuthed) {
+      if (active === "policy") return <SecurityPolicySection setActive={go} />;
+      return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} />;
+    }
     switch (active) {
-      case "home": return <HomeSection setActive={go} role={role} switchRole={switchRole} />;
+      case "home": return <HomeSection setActive={go} role={role} />;
       case "profile": return <ProfileSection setActive={go} />;
       case "cases": return <CasesSection />;
       case "services": return <ServicesSection />;
@@ -618,7 +776,7 @@ export default function Index() {
       case "policy": return <SecurityPolicySection setActive={go} />;
       case "pricing": return <PricingSection setActive={go} />;
       case "dashboard": return role === "client" ? <ClientDashboard setActive={go} /> : <ProviderDashboard setActive={go} />;
-      default: return <HomeSection setActive={go} role={role} switchRole={switchRole} />;
+      default: return <HomeSection setActive={go} role={role} />;
     }
   };
 
@@ -676,23 +834,23 @@ export default function Index() {
           </nav>
 
           <div className="flex items-center gap-2.5 shrink-0">
-            <div className="hidden md:flex items-center border border-gold/40 rounded-sm overflow-hidden">
-              {(["client", "provider"] as const).map((r) => (
-                <button
-                  key={r}
-                  onClick={() => switchRole(r)}
-                  className={`px-3 py-1.5 text-xs font-montserrat font-bold transition-colors ${role === r ? "gold-gradient text-[hsl(220,20%,6%)]" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  {tr(r === "client" ? "roleClient" : "roleProvider")}
-                </button>
-              ))}
-            </div>
-            <div className="hidden md:block w-px h-6 bg-border" />
             <LangSwitcher lang={lang} setLang={setLang} />
-            <button className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
-              <Icon name="LogIn" size={15} />
-              {tr("login")}
-            </button>
+            {isAuthed ? (
+              <>
+                <button onClick={() => go("dashboard")} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+                  <Icon name="LayoutDashboard" size={15} />
+                  {tr("authCabinet")}
+                </button>
+                <button onClick={handleLogout} className="hidden sm:flex items-center gap-1.5 border border-border text-muted-foreground px-3 py-2 text-sm font-montserrat font-semibold rounded-sm hover:border-destructive hover:text-destructive transition-all" aria-label={tr("dashLogout")}>
+                  <Icon name="LogOut" size={15} />
+                </button>
+              </>
+            ) : (
+              <button onClick={openCabinet} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+                <Icon name="LogIn" size={15} />
+                {tr("authCabinet")}
+              </button>
+            )}
             <button className="lg:hidden text-muted-foreground ms-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               <Icon name={mobileMenuOpen ? "X" : "Menu"} size={22} />
             </button>
@@ -701,32 +859,34 @@ export default function Index() {
 
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-border bg-card animate-fade-in">
-            <div className="flex p-3 gap-2 border-b border-border">
-              {(["client", "provider"] as const).map((r) => (
-                <button
-                  key={r}
-                  onClick={() => switchRole(r)}
-                  className={`flex-1 px-3 py-2 text-xs font-montserrat font-bold rounded-sm transition-colors ${role === r ? "gold-gradient text-[hsl(220,20%,6%)]" : "border border-border text-muted-foreground"}`}
-                >
-                  {tr(r === "client" ? "roleClient" : "roleProvider")}
-                </button>
-              ))}
-            </div>
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
-                onClick={() => { go(item.id); setMobileMenuOpen(false); }}
+                onClick={() => go(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-montserrat border-b border-border last:border-0 ${active === item.id ? "text-gold bg-secondary" : "text-muted-foreground"}`}
               >
                 <Icon name={item.icon} size={16} />
                 {tr(item.key)}
               </button>
             ))}
-            <div className="p-3">
-              <button className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-                <Icon name="LogIn" size={16} />
-                {tr("login")}
-              </button>
+            <div className="p-3 space-y-2">
+              {isAuthed ? (
+                <>
+                  <button onClick={() => go("dashboard")} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                    <Icon name="LayoutDashboard" size={16} />
+                    {tr("authCabinet")}
+                  </button>
+                  <button onClick={handleLogout} className="w-full border border-border text-muted-foreground py-3 text-sm font-montserrat font-semibold rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center justify-center gap-2">
+                    <Icon name="LogOut" size={16} />
+                    {tr("dashLogout")}
+                  </button>
+                </>
+              ) : (
+                <button onClick={openCabinet} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                  <Icon name="LogIn" size={16} />
+                  {tr("authCabinet")}
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -796,11 +956,82 @@ export default function Index() {
         </div>
       </footer>
 
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
     </div>
   );
 }
 
-function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) => void; role: Role; switchRole: (r: Role) => void }) {
+function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; onPolicy: () => void }) {
+  const { tr } = useLang();
+  return (
+    <div className="min-h-[88vh] flex items-center">
+      <section className="relative overflow-hidden grid-line-bg vignette w-full">
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/60 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
+        <div className="absolute inset-0">
+          <img src={HERO_IMAGE} alt="Security" className="w-full h-full object-cover opacity-20" />
+        </div>
+        <div className="absolute top-1/4 -left-40 w-[500px] h-[500px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.1) 0%, transparent 70%)" }} />
+        <div className="relative z-20 max-w-5xl mx-auto px-4 py-20 md:py-28">
+          <div className="max-w-2xl stagger">
+            <div className="tag-security inline-flex items-center gap-1.5 mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse-gold" />
+              {tr("verifyAll")}
+            </div>
+            <h1 className="font-montserrat font-extrabold text-4xl md:text-6xl text-foreground leading-[1] mb-6 tracking-tight">
+              {tr("promoTitle1")}<br />
+              <span className="gold-text-gradient">{tr("promoTitle2")}</span>
+            </h1>
+            <p className="text-muted-foreground text-base md:text-lg leading-relaxed mb-7 max-w-xl">
+              {tr("promoDesc")}
+            </p>
+
+            <div className="space-y-2.5 mb-8">
+              {(["promoForClients", "promoForProviders"] as const).map((k) => (
+                <div key={k} className="flex items-start gap-2.5 text-sm text-foreground">
+                  <Icon name="Check" size={17} className="text-gold mt-0.5 shrink-0" />
+                  <span>{tr(k)}</span>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={onCabinet}
+              className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-9 py-4 font-montserrat font-extrabold text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm inline-flex items-center gap-2.5"
+            >
+              <Icon name="LogIn" size={18} />
+              {tr("homeOpenCabinet")}
+              <Icon name="ArrowRight" size={18} />
+            </button>
+
+            <div className="mt-12 border border-gold/30 rounded-sm glass-card p-6 max-w-xl">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
+                  <Icon name="ShieldCheck" size={17} className="text-[hsl(220,20%,6%)]" />
+                </div>
+                <span className="font-montserrat font-bold text-base text-foreground">{tr("homeSecTitle")}</span>
+              </div>
+              <div className="space-y-2.5 mb-4">
+                {(["homeSec1", "homeSec2", "homeSec3"] as const).map((k) => (
+                  <div key={k} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                    <Icon name="Lock" size={15} className="text-gold mt-0.5 shrink-0" />
+                    <span>{tr(k)}</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={onPolicy} className="inline-flex items-center gap-1.5 text-sm font-montserrat font-semibold text-gold hover:underline">
+                {tr("homeReadPolicy")}
+                <Icon name="ArrowRight" size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function HomeSection({ setActive, role }: { setActive: (s: Section) => void; role: Role }) {
   const { lang, tr } = useLang();
   const isClient = role === "client";
   const { geo } = useGeo();
@@ -1272,6 +1503,8 @@ function HomeSection({ setActive, role, switchRole }: { setActive: (s: Section) 
 
 function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const { lang, tr } = useLang();
+  const { logout } = useAuth();
+  const handleLogout = async () => { await logout(); setActive("home"); window.scrollTo({ top: 0 }); };
   const [tab, setTab] = useState<"profile" | "requests" | "favorites" | "settings">("profile");
 
   const tabs = [
@@ -1343,7 +1576,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
             <span className="text-xs text-muted-foreground">4.9 · {tr("dashSince")} 2024</span>
           </div>
         </div>
-        <button onClick={() => setActive("home")} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-gold hover:text-gold transition-all flex items-center gap-1.5">
+        <button onClick={handleLogout} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5">
           <Icon name="LogOut" size={13} />
           {tr("dashLogout")}
         </button>
@@ -1519,6 +1752,8 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
 
 function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const { lang, tr } = useLang();
+  const { logout } = useAuth();
+  const handleLogout = async () => { await logout(); setActive("home"); window.scrollTo({ top: 0 }); };
   const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts" | "verify">("stats");
 
   const tabs = [
@@ -1647,7 +1882,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
             <span className="text-xs text-muted-foreground">{specialists[0].rating} · {L(specialists[0].title, lang)}</span>
           </div>
         </div>
-        <button onClick={() => setActive("home")} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-gold hover:text-gold transition-all flex items-center gap-1.5">
+        <button onClick={handleLogout} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5">
           <Icon name="LogOut" size={13} />
           {tr("dashLogout")}
         </button>

@@ -57,9 +57,31 @@
     @apply border-border;
   }
 
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: "IBM Plex Sans", sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Slim global scrollbar so it never overlaps content (e.g. the Logout button) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
   }
 
   h1,
