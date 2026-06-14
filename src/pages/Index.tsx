@@ -4,7 +4,7 @@ import { useLang, t, LANGS, type Lang } from "@/lib/i18n";
 import { dataExtra } from "@/lib/i18n-extra";
 import { downloadReceipt } from "@/lib/receipt";
 import { useGeo, haversineKm } from "@/lib/geo";
-import { useProviders, isLicensed, isQuietNow, providerLocalTime, type Provider } from "@/lib/providers";
+import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, type Provider } from "@/lib/providers";
 import { useAuth, type AuthRole } from "@/lib/auth";
 import func2url from "../../backend/func2url.json";
 
@@ -28,7 +28,7 @@ type NavItem = { id: Section; key: keyof typeof t; icon: string };
 
 const CLIENT_NAV: NavItem[] = [
   { id: "home", key: "navHome", icon: "Home" },
-  { id: "services", key: "navServices", icon: "Briefcase" },
+  { id: "services", key: "navSearch", icon: "Search" },
   { id: "dashboard", key: "navDashboard", icon: "LayoutDashboard" },
   { id: "contacts", key: "navContacts", icon: "Phone" },
 ];
@@ -1093,7 +1093,7 @@ export default function Index() {
       case "home": return <HomeSection setActive={go} role={role} />;
       case "profile": return <ProfileSection setActive={go} />;
       case "cases": return <CasesSection />;
-      case "services": return <ServicesSection />;
+      case "services": return role === "client" ? <SearchSection setActive={go} /> : <ServicesSection />;
       case "courses": return <CoursesSection />;
       case "guards": return <GuardsSection />;
       case "chat": return <ChatSection chatInput={chatInput} setChatInput={setChatInput} />;
@@ -1149,7 +1149,7 @@ export default function Index() {
             </div>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-6 mx-6 flex-1 justify-center">
+          <nav className="hidden lg:flex items-center gap-5 mx-4 flex-1 justify-center min-w-0">
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
@@ -1161,31 +1161,31 @@ export default function Index() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <LangSwitcher lang={lang} setLang={setLang} />
             {isAuthed ? (
               <>
                 {user?.isAdmin && (
-                  <button onClick={() => go("admin")} className={`hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-montserrat font-bold rounded-sm transition-all border ${active === "admin" ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`}>
+                  <button onClick={() => go("admin")} className={`hidden sm:flex items-center gap-1.5 px-2.5 py-2 text-sm font-montserrat font-bold rounded-sm transition-all border shrink-0 whitespace-nowrap ${active === "admin" ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`} aria-label={tr("adminPanelTitle")}>
                     <Icon name="ShieldCheck" size={15} />
-                    {tr("adminPanelTitle")}
+                    <span className="hidden xl:inline">{tr("adminPanelTitle")}</span>
                   </button>
                 )}
-                <button onClick={() => go("dashboard")} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+                <button onClick={() => go("dashboard")} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] px-3 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity shrink-0 whitespace-nowrap">
                   <Icon name="LayoutDashboard" size={15} />
                   {tr("authCabinet")}
                 </button>
-                <button onClick={handleLogout} className="hidden sm:flex items-center gap-1.5 border border-border text-muted-foreground px-3 py-2 text-sm font-montserrat font-semibold rounded-sm hover:border-destructive hover:text-destructive transition-all" aria-label={tr("dashLogout")}>
+                <button onClick={handleLogout} className="hidden sm:flex items-center justify-center border border-border text-muted-foreground w-9 h-9 rounded-sm hover:border-destructive hover:text-destructive transition-all shrink-0" aria-label={tr("dashLogout")}>
                   <Icon name="LogOut" size={15} />
                 </button>
               </>
             ) : (
-              <button onClick={openCabinet} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+              <button onClick={openCabinet} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] px-3 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity shrink-0 whitespace-nowrap">
                 <Icon name="LogIn" size={15} />
                 {tr("authCabinet")}
               </button>
             )}
-            <button className="lg:hidden text-muted-foreground ms-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="lg:hidden text-muted-foreground ms-0.5 shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="menu">
               <Icon name={mobileMenuOpen ? "X" : "Menu"} size={22} />
             </button>
           </div>
@@ -1819,8 +1819,13 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
           {sortedSpecialists.map((s) => {
             const tags = lang === "ru" ? s.tags.ru : s.tags.en;
             return s.active ? (
-            <div key={s.slug} onClick={() => setActive("profile")} className="card-hover shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group flex flex-col">
-              <div className="h-48 overflow-hidden relative">
+            <div key={s.slug} onClick={() => setActive("profile")} className={`card-hover shine-on-hover rounded-sm overflow-hidden cursor-pointer group flex flex-col relative ${isPremium(s) ? "border-2 border-gold security-glow ambient-gold bg-card" : "border border-border bg-card"}`}>
+              {isPremium(s) && (
+                <div className="absolute top-0 inset-x-0 z-20 gold-gradient text-[hsl(220,20%,6%)] text-[10px] font-montserrat font-extrabold tracking-widest uppercase text-center py-1 flex items-center justify-center gap-1">
+                  <Icon name="Crown" size={11} />{tr("premiumBadge")}
+                </div>
+              )}
+              <div className={`h-48 overflow-hidden relative ${isPremium(s) ? "mt-6" : ""}`}>
                 <img src={resolveAvatar(s.img, s.gender)} alt={L(s.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
                 {s.isPseudonym && (
@@ -2537,6 +2542,40 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 <div className="text-xs text-muted-foreground mb-5">{tr("pdRenews")}: 13.07.2026</div>
                 <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("pdChangePlan")}</button>
               </div>
+
+              <div className="relative overflow-hidden border-2 border-gold/50 rounded-sm glass-card ambient-gold p-6 security-glow">
+                <div className="absolute inset-0 grid-line-bg opacity-30" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Icon name="Crown" size={18} className="text-gold" />
+                    <span className="font-montserrat font-extrabold text-lg gold-text-gradient">{tr("planPremiumName")}</span>
+                    <span className="ms-auto text-[10px] font-montserrat font-bold px-2 py-0.5 rounded-sm bg-gold/15 text-gold uppercase tracking-widest">{tr("pdPremiumWhatFor")}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-5">{tr("premiumValueNote")}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                    {([
+                      { icon: "Crown", t: "featPremiumCard" as const, d: "pdPremB1" as const },
+                      { icon: "ArrowUpToLine", t: "featPremiumTop" as const, d: "pdPremB2" as const },
+                      { icon: "ChartNoAxesColumn", t: "featPremiumAnalytics" as const, d: "pdPremB3" as const },
+                      { icon: "BadgeCheck", t: "featBadge" as const, d: "pdPremB4" as const },
+                    ]).map((b) => (
+                      <div key={b.t} className="flex items-start gap-3 border border-gold/20 rounded-sm bg-gold/[0.04] p-3">
+                        <div className="w-8 h-8 gold-gradient rounded flex items-center justify-center shrink-0">
+                          <Icon name={b.icon} fallback="Sparkles" size={15} className="text-[hsl(220,20%,6%)]" />
+                        </div>
+                        <div>
+                          <div className="font-montserrat font-bold text-xs text-foreground">{tr(b.t)}</div>
+                          <div className="text-[11px] text-muted-foreground leading-snug mt-0.5">{tr(b.d)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity glow-gold-sm inline-flex items-center gap-2">
+                    <Icon name="Crown" size={14} />{tr("pdUpgradePremium")}
+                  </button>
+                </div>
+              </div>
+
               <div className="border border-border rounded-sm bg-card p-6 space-y-4">
                 <div className="flex items-center justify-between py-2 border-b border-border">
                   <span className="text-sm text-muted-foreground">{tr("pdPaymentMethod")}</span>
@@ -3241,6 +3280,7 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
       price: "planStartPrice" as const,
       for: "planStartFor" as const,
       featured: false,
+      premium: false,
       enterprise: false,
       features: ["featProfile", "feat5cases", "featChat"] as const,
       muted: ["featCourses", "featPriority", "featTopPlacement", "featManager"] as const,
@@ -3250,6 +3290,7 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
       price: "planProPrice" as const,
       for: "planProFor" as const,
       featured: true,
+      premium: false,
       enterprise: false,
       features: ["featProfile", "feat20cases", "featChat", "featCourses", "featPriority"] as const,
       muted: ["featTopPlacement", "featManager"] as const,
@@ -3259,15 +3300,17 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
       price: "planPremiumPrice" as const,
       for: "planPremiumFor" as const,
       featured: false,
+      premium: true,
       enterprise: false,
-      features: ["featProfile", "featUnlimCases", "featChat", "featCourses", "featPriority", "featTopPlacement", "featBadge"] as const,
-      muted: ["featManager"] as const,
+      features: ["featProfile", "featUnlimCases", "featChat", "featCourses", "featPriority", "featTopPlacement", "featBadge", "featPremiumCard", "featPremiumTop", "featPremiumAnalytics"] as const,
+      muted: [] as const,
     },
     {
       name: "planEntName" as const,
       price: "planEntPrice" as const,
       for: "planEntFor" as const,
       featured: false,
+      premium: false,
       enterprise: true,
       features: ["featProfile", "featUnlimCases", "featTopPlacement", "featBadge", "featManager", "featTeam", "featApi"] as const,
       muted: [] as const,
@@ -3305,18 +3348,26 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
         {plans.map((p) => (
           <div
             key={p.name}
-            className={`relative flex flex-col border rounded-sm bg-card p-6 card-hover ${p.featured ? "border-gold security-glow" : "border-border"}`}
+            className={`relative flex flex-col rounded-sm p-6 card-hover ${p.premium ? "border-2 border-gold security-glow ambient-gold bg-gradient-to-b from-gold/[0.07] to-card glow-gold-sm md:-mt-2 md:mb-2" : p.featured ? "border border-gold security-glow bg-card" : "border border-border bg-card"}`}
           >
-            {p.featured && (
+            {p.premium && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 gold-gradient text-[hsl(220,20%,6%)] text-[10px] font-montserrat font-extrabold tracking-widest uppercase px-3 py-1 rounded-sm whitespace-nowrap flex items-center gap-1 shadow-lg">
+                <Icon name="Crown" size={11} />{tr("bestChoice")}
+              </div>
+            )}
+            {p.featured && !p.premium && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 badge-pro whitespace-nowrap">{tr("mostPopular")}</div>
             )}
             <div className="mb-5">
-              <div className="font-montserrat font-bold text-lg text-foreground mb-1">{tr(p.name)}</div>
+              <div className="flex items-center gap-2 mb-1">
+                {p.premium && <Icon name="Crown" size={18} className="text-gold" />}
+                <span className={`font-montserrat font-bold text-foreground ${p.premium ? "text-xl gold-text-gradient" : "text-lg"}`}>{tr(p.name)}</span>
+              </div>
               <div className="text-xs text-muted-foreground">{tr(p.for)}</div>
             </div>
             <div className="mb-6">
               <div>
-                <span className="font-montserrat font-extrabold text-3xl text-gold">{tr(p.price)}</span>
+                <span className={`font-montserrat font-extrabold text-gold ${p.premium ? "text-4xl" : "text-3xl"}`}>{tr(p.price)}</span>
                 {!p.enterprise && <span className="text-xs text-muted-foreground ms-1">{tr("perMonth")}</span>}
               </div>
               {!p.enterprise && (
@@ -3326,14 +3377,23 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
                 </div>
               )}
             </div>
+            {p.premium && (
+              <div className="mb-5 -mt-1 rounded-sm bg-gold/10 border border-gold/30 px-3 py-2 flex items-start gap-2">
+                <Icon name="Sparkles" size={13} className="text-gold mt-0.5 shrink-0" />
+                <span className="text-[11px] text-foreground leading-snug">{tr("premiumValueNote")}</span>
+              </div>
+            )}
             <div className="divider-gold mb-5" />
             <div className="space-y-2.5 flex-1 mb-6">
-              {p.features.map((f) => (
-                <div key={f} className="flex items-center gap-2">
-                  <Icon name="Check" size={14} className="text-gold shrink-0" />
-                  <span className="text-xs text-foreground">{tr(f)}</span>
-                </div>
-              ))}
+              {p.features.map((f) => {
+                const isExtra = (["featPremiumCard", "featPremiumTop", "featPremiumAnalytics"] as string[]).includes(f);
+                return (
+                  <div key={f} className="flex items-center gap-2">
+                    <Icon name={isExtra ? "Sparkles" : "Check"} size={14} className={`shrink-0 ${isExtra ? "text-gold" : "text-gold"}`} />
+                    <span className={`text-xs ${isExtra ? "text-gold font-semibold" : "text-foreground"}`}>{tr(f)}</span>
+                  </div>
+                );
+              })}
               {p.muted.map((f) => (
                 <div key={f} className="flex items-center gap-2 opacity-40">
                   <Icon name="X" size={14} className="text-muted-foreground shrink-0" />
@@ -3343,9 +3403,9 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
             </div>
             <button
               onClick={() => p.enterprise ? setActive("contacts") : setPayPlan({ name: p.name, price: p.price })}
-              className={`w-full py-3 text-xs font-montserrat font-bold rounded-sm transition-all ${p.featured ? "gold-gradient text-[hsl(220,20%,6%)] hover:opacity-90 glow-gold-sm" : "border border-gold text-gold hover:bg-gold hover:text-[hsl(220,20%,6%)]"}`}
+              className={`w-full py-3 text-xs font-montserrat font-bold rounded-sm transition-all ${(p.featured || p.premium) ? "gold-gradient text-[hsl(220,20%,6%)] hover:opacity-90 glow-gold-sm" : "border border-gold text-gold hover:bg-gold hover:text-[hsl(220,20%,6%)]"}`}
             >
-              {p.enterprise ? tr("contactSales") : tr("choosePlan")}
+              {p.enterprise ? tr("contactSales") : p.premium ? tr("choosePremium") : tr("choosePlan")}
             </button>
           </div>
         ))}
@@ -3627,6 +3687,199 @@ function CasesSection() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) {
+  const { lang, tr } = useLang();
+  const tags = lang === "ru" ? p.tags.ru : p.tags.en;
+  const premium = isPremium(p);
+  return (
+    <div
+      onClick={onOpen}
+      className={`card-hover shine-on-hover rounded-sm overflow-hidden cursor-pointer group flex flex-col relative ${premium ? "border-2 border-gold security-glow ambient-gold bg-card" : "border border-border bg-card"}`}
+    >
+      {premium && (
+        <div className="absolute top-0 inset-x-0 z-20 gold-gradient text-[hsl(220,20%,6%)] text-[10px] font-montserrat font-extrabold tracking-widest uppercase text-center py-1 flex items-center justify-center gap-1">
+          <Icon name="Crown" size={11} />{tr("premiumBadge")}
+        </div>
+      )}
+      <div className={`h-48 overflow-hidden relative ${premium ? "mt-6" : ""}`}>
+        <img src={resolveAvatar(p.img, p.gender)} alt={L(p.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+        {p.isPseudonym && (
+          <div className="absolute top-3 start-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border px-2 py-1 rounded-sm">
+            <Icon name="VenetianMask" size={11} className="text-muted-foreground" />
+            <span className="text-[10px] font-montserrat font-semibold text-muted-foreground">{tr("aliasBadge")}</span>
+          </div>
+        )}
+        {isLicensed(p) && (
+          <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
+            <Icon name="BadgeCheck" size={12} className="text-gold" />
+            <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licenseBadge")}</span>
+          </div>
+        )}
+        <div className="absolute bottom-3 start-4 end-4">
+          <div className="font-montserrat font-bold text-base text-foreground">{L(p.name, lang)}</div>
+          <div className="text-xs text-gold font-montserrat font-medium flex items-center gap-2 flex-wrap">
+            {L(p.title, lang)}
+            <span className="text-muted-foreground">· {p.experience} {tr("yearsShort")}</span>
+          </div>
+        </div>
+      </div>
+      <div className="p-5 flex flex-col flex-1">
+        <div className="flex items-center gap-3 mb-4">
+          <StarRating rating={p.rating} />
+          <span className="text-xs text-muted-foreground">{p.rating} ({p.reviews})</span>
+          <span className="text-xs text-muted-foreground ms-auto flex items-center gap-1">
+            <Icon name="MapPin" size={11} />{L(p.city, lang)}
+          </span>
+        </div>
+        {p.country && (p.country.ru || p.country.en) && (
+          <div className="text-[11px] text-muted-foreground mb-3 flex items-center gap-1"><Icon name="Globe" size={11} className="text-gold" />{L(p.country, lang)}</div>
+        )}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {tags.slice(0, 4).map((tg) => (<span key={tg} className="tag-security">{tg}</span>))}
+        </div>
+        <div className="divider-gold mb-4" />
+        <div className="flex items-center justify-between mt-auto">
+          <div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("cost")}</div>
+            <div className="font-montserrat font-bold text-sm text-gold">{L(p.price, lang)}</div>
+          </div>
+          <span className="text-xs font-montserrat font-semibold text-gold flex items-center gap-1 group-hover:gap-2 transition-all">{tr("openProfile")}<Icon name="ArrowRight" size={13} /></span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SearchSection({ setActive }: { setActive: (s: Section) => void }) {
+  const { lang, tr } = useLang();
+  const { providers } = useProviders();
+  const { geo } = useGeo();
+  const [service, setService] = useState("");
+  const [minRating, setMinRating] = useState(0);
+  const [licensedOnly, setLicensedOnly] = useState(false);
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
+  const [date, setDate] = useState("");
+
+  const serviceOptions = services.map((s) => L(s.title, lang));
+  const cityOptions = Array.from(new Set(providers.map((p) => L(p.city, lang)).filter(Boolean))).sort();
+  const countryOptions = Array.from(new Set(providers.map((p) => (p.country ? L(p.country, lang) : "")).filter(Boolean))).sort();
+
+  const reset = () => { setService(""); setMinRating(0); setLicensedOnly(false); setCity(""); setCountry(""); setDate(""); };
+
+  const dow = date ? new Date(date + "T12:00:00").getDay() : null;
+  const availableOnDate = (p: Provider) => {
+    if (dow == null) return true;
+    if (p.alwaysAvailable) return true;
+    return true;
+  };
+
+  const results = providers.filter((p) => {
+    if (!p.active) return false;
+    if (minRating && p.rating < minRating) return false;
+    if (licensedOnly && !isLicensed(p)) return false;
+    if (city && L(p.city, lang) !== city) return false;
+    if (country && (!p.country || L(p.country, lang) !== country)) return false;
+    if (service) {
+      const tags = (lang === "ru" ? p.tags.ru : p.tags.en).map((t) => t.toLowerCase());
+      const title = L(p.title, lang).toLowerCase();
+      const q = service.toLowerCase();
+      if (!title.includes(q) && !tags.some((t) => t.includes(q) || q.includes(t))) return false;
+    }
+    if (!availableOnDate(p)) return false;
+    return true;
+  });
+
+  const activeFilters = [service, minRating ? "r" : "", licensedOnly ? "l" : "", city, country, date].filter(Boolean).length;
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      <div className="mb-6">
+        <div className="tag-security mb-3 inline-block">{tr("searchTag")}</div>
+        <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">{tr("searchTitle")}</h2>
+        <p className="text-muted-foreground text-sm">{tr("searchSubtitle")}</p>
+      </div>
+
+      <div className="border border-border rounded-sm bg-card p-5 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFService")}</label>
+            <div className="flex items-center gap-2 border border-border bg-secondary rounded-sm px-3">
+              <Icon name="Briefcase" size={14} className="text-muted-foreground" />
+              <input list="svc-list" value={service} onChange={(e) => setService(e.target.value)} placeholder={tr("searchAnyService")} className="flex-1 bg-transparent py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
+              <datalist id="svc-list">{serviceOptions.map((s) => <option key={s} value={s} />)}</datalist>
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFCity")}</label>
+            <select value={city} onChange={(e) => setCity(e.target.value)} className="w-full border border-border bg-secondary rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold">
+              <option value="">{tr("searchAnyCity")}</option>
+              {cityOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFCountry")}</label>
+            <select value={country} onChange={(e) => setCountry(e.target.value)} className="w-full border border-border bg-secondary rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold">
+              <option value="">{tr("searchAnyCountry")}</option>
+              {countryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFRating")}</label>
+            <select value={minRating} onChange={(e) => setMinRating(Number(e.target.value))} className="w-full border border-border bg-secondary rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold">
+              <option value={0}>{tr("searchAnyRating")}</option>
+              <option value={4}>4.0+</option>
+              <option value={4.5}>4.5+</option>
+              <option value={4.8}>4.8+</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFDate")}</label>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full border border-border bg-secondary rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold" />
+          </div>
+          <div className="flex items-end">
+            <button
+              onClick={() => setLicensedOnly((v) => !v)}
+              className={`w-full flex items-center justify-center gap-2 rounded-sm px-3 py-2.5 text-sm font-montserrat font-semibold border transition-all ${licensedOnly ? "bg-gold/15 border-gold/50 text-gold" : "border-border bg-secondary text-muted-foreground hover:border-gold hover:text-gold"}`}
+            >
+              <Icon name={licensedOnly ? "BadgeCheck" : "Badge"} size={15} />
+              {tr("searchFLicensed")}
+            </button>
+          </div>
+        </div>
+        {activeFilters > 0 && (
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+            <span className="text-xs text-muted-foreground">{tr("searchFound")}: <span className="text-gold font-bold">{results.length}</span></span>
+            <button onClick={reset} className="text-xs font-montserrat font-semibold text-muted-foreground hover:text-gold flex items-center gap-1.5"><Icon name="X" size={13} />{tr("searchReset")}</button>
+          </div>
+        )}
+      </div>
+
+      {geo && geo.city && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-card border border-gold/30 rounded-sm px-3 py-2 mb-5 w-fit">
+          <Icon name="MapPin" size={13} className="text-gold" />
+          <span>{tr("geoYourLocation")}: <span className="text-foreground font-semibold">{geo.city}{geo.country ? `, ${geo.country}` : ""}</span></span>
+        </div>
+      )}
+
+      {results.length === 0 ? (
+        <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
+          <Icon name="SearchX" size={40} className="text-muted-foreground/30" />
+          <span className="text-sm text-muted-foreground">{tr("filterNoResults")}</span>
+          <button onClick={reset} className="text-xs font-montserrat font-semibold text-gold hover:underline">{tr("searchReset")}</button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+          {results.map((p) => (
+            <ProviderResultCard key={p.slug} p={p} onOpen={() => setActive("profile")} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

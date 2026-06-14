@@ -36,8 +36,10 @@ def handler(event: dict, context) -> dict:
         f'show_full_name, show_legal_status, show_license, show_registry, '
         f'pseudonym, use_pseudonym, avatar_url, gender, '
         f'licenses, documents, bio, age, show_bio, show_age, show_documents, '
-        f'license_verified, timezone, always_available, quiet_start, quiet_end '
-        f'FROM {SCHEMA}.providers ORDER BY subscription_active DESC, rating DESC, reviews DESC'
+        f'license_verified, timezone, always_available, quiet_start, quiet_end, '
+        f'plan, country_ru, country_en '
+        f"FROM {SCHEMA}.providers ORDER BY subscription_active DESC, "
+        f"(CASE WHEN plan='premium' THEN 0 WHEN plan='pro' THEN 1 ELSE 2 END), rating DESC, reviews DESC"
     )
     rows = cur.fetchall()
     cur.close()
@@ -64,6 +66,8 @@ def handler(event: dict, context) -> dict:
             'verified': bool(r[23]),
             'active': active,
             'gender': r[36] or 'm',
+            'plan': (r[49] or 'start'),
+            'country': {'ru': r[50] or '', 'en': r[51] or ''},
         }
         if active:
             use_pseudonym = bool(r[34])

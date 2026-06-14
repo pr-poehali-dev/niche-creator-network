@@ -525,6 +525,20 @@ export const t: Dict = {
   feat5cases: { ru: "До 5 кейсов", en: "Up to 5 cases" },
   feat20cases: { ru: "До 20 кейсов", en: "Up to 20 cases" },
   featUnlimCases: { ru: "Безлимит кейсов", en: "Unlimited cases" },
+  featPremiumCard: { ru: "Выделенная Премиум-карточка", en: "Highlighted Premium card" },
+  featPremiumTop: { ru: "Всегда в топе выдачи", en: "Always at the top of results" },
+  featPremiumAnalytics: { ru: "Расширенная аналитика", en: "Advanced analytics" },
+
+  // Premium plan extras
+  bestChoice: { ru: "Лучший выбор", en: "Best choice" },
+  choosePremium: { ru: "Стать Премиум", en: "Go Premium" },
+  premiumValueNote: { ru: "Ваша карточка выделяется среди всех и всегда показывается выше — клиенты замечают вас первыми.", en: "Your card stands out from the rest and always appears higher — clients notice you first." },
+  pdPremiumWhatFor: { ru: "За что вы платите", en: "What you pay for" },
+  pdUpgradePremium: { ru: "Перейти на Премиум", en: "Upgrade to Premium" },
+  pdPremB1: { ru: "Золотая рамка и корона на карточке в поиске.", en: "Gold frame and crown on your card in search." },
+  pdPremB2: { ru: "Ваш профиль выше конкурентов в результатах.", en: "Your profile ranks above competitors in results." },
+  pdPremB3: { ru: "Просмотры, клики и источники заявок.", en: "Views, clicks and lead sources." },
+  pdPremB4: { ru: "Знак доверия рядом с именем.", en: "A trust mark next to your name." },
 
   // License badge
   licenseBadge: { ru: "Лицензия", en: "License" },
@@ -553,6 +567,26 @@ export const t: Dict = {
   adminDocsList: { ru: "Загруженные документы", en: "Uploaded documents" },
   adminNoDocs: { ru: "Документы не загружены", en: "No documents uploaded" },
   adminOpenDoc: { ru: "Открыть документ", en: "Open document" },
+
+  // Client search & premium
+  navSearch: { ru: "Поиск", en: "Search" },
+  searchTag: { ru: "Подбор специалиста", en: "Find a specialist" },
+  searchTitle: { ru: "Найдите проверенного исполнителя", en: "Find a verified provider" },
+  searchSubtitle: { ru: "Отфильтруйте специалистов по услуге, рейтингу, лицензии, городу, стране и нужной дате.", en: "Filter specialists by service, rating, license, city, country and the date you need." },
+  searchFService: { ru: "Услуга", en: "Service" },
+  searchFCity: { ru: "Город", en: "City" },
+  searchFCountry: { ru: "Страна", en: "Country" },
+  searchFRating: { ru: "Рейтинг", en: "Rating" },
+  searchFDate: { ru: "Дата услуги", en: "Service date" },
+  searchFLicensed: { ru: "С лицензией", en: "Licensed only" },
+  searchAnyService: { ru: "Любая услуга", en: "Any service" },
+  searchAnyCity: { ru: "Любой город", en: "Any city" },
+  searchAnyCountry: { ru: "Любая страна", en: "Any country" },
+  searchAnyRating: { ru: "Любой рейтинг", en: "Any rating" },
+  searchFound: { ru: "Найдено", en: "Found" },
+  searchReset: { ru: "Сбросить фильтры", en: "Reset filters" },
+  premiumBadge: { ru: "Премиум", en: "Premium" },
+  openProfile: { ru: "Открыть профиль", en: "Open profile" },
 
   // Landing (pre-login marketing)
   lpStat1: { ru: "проверенных специалистов", en: "verified specialists" },

@@ -48,7 +48,13 @@ export type Provider = {
   alwaysAvailable?: boolean;
   quietStart?: string | null;
   quietEnd?: string | null;
+  country?: LS | null;
+  plan?: string | null;
 };
+
+export function isPremium(p: Provider): boolean {
+  return (p.plan || "").toLowerCase() === "premium";
+}
 
 const ORG_STATUSES = ["ип", "ооо", "ip", "ooo", "llc", "sole proprietor"];
 
