@@ -1379,8 +1379,53 @@ function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; onPolicy:
       <LandingValue />
       <LandingServices />
       <LandingTestimonials />
+      <LandingFaq />
       <LandingFinalCta onCabinet={onCabinet} />
     </>
+  );
+}
+
+function LandingFaq() {
+  const { tr } = useLang();
+  const [open, setOpen] = useState<number | null>(0);
+  const faqs = [
+    { q: "lpFaq1Q" as const, a: "lpFaq1A" as const },
+    { q: "lpFaq2Q" as const, a: "lpFaq2A" as const },
+    { q: "lpFaq3Q" as const, a: "lpFaq3A" as const },
+    { q: "lpFaq4Q" as const, a: "lpFaq4A" as const },
+    { q: "lpFaq5Q" as const, a: "lpFaq5A" as const },
+    { q: "lpFaq6Q" as const, a: "lpFaq6A" as const },
+  ];
+  return (
+    <section className="border-t border-border bg-card/30">
+      <div className="max-w-3xl mx-auto px-4 py-16">
+        <div className="text-center mb-10">
+          <div className="tag-security inline-block mb-3">{tr("lpFaqTag")}</div>
+          <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground">{tr("lpFaqTitle")}</h2>
+        </div>
+        <div className="space-y-3">
+          {faqs.map((f, i) => {
+            const isOpen = open === i;
+            return (
+              <div key={f.q} className={`border rounded-sm bg-card overflow-hidden transition-all ${isOpen ? "border-gold/40" : "border-border"}`}>
+                <button
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  className="w-full flex items-center justify-between gap-4 px-5 py-4 text-start"
+                >
+                  <span className="font-montserrat font-semibold text-sm text-foreground">{tr(f.q)}</span>
+                  <Icon name={isOpen ? "Minus" : "Plus"} size={17} className={`shrink-0 transition-colors ${isOpen ? "text-gold" : "text-muted-foreground"}`} />
+                </button>
+                {isOpen && (
+                  <div className="px-5 pb-4 -mt-1 animate-fade-in">
+                    <p className="text-sm text-muted-foreground leading-relaxed">{tr(f.a)}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 }
 
