@@ -1,0 +1,55 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Empty body ignored gracefully",
+      "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 200,
+      "expectedBody": {"ignored": "unknown"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Unknown payload ignored",
+      "method": "POST",
+      "path": "/",
+      "body": {"hello": "world"},
+      "expectedStatus": 200,
+      "expectedBody": {"ignored": "unknown"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "YooKassa non-succeeded ignored",
+      "method": "POST",
+      "path": "/",
+      "body": {"event": "payment.waiting_for_capture", "object": {"id": "1"}},
+      "expectedStatus": 200,
+      "expectedBody": {"ok": true},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "YooKassa succeeded activates",
+      "method": "POST",
+      "path": "/",
+      "body": {"event": "payment.succeeded", "object": {"id": "1", "metadata": {"slug": "morozov", "plan": "premium", "period": "month"}}},
+      "expectedStatus": 200,
+      "expectedBody": {"provider": "yookassa", "ok": true},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Paddle completed activates",
+      "method": "POST",
+      "path": "/",
+      "body": {"event_type": "transaction.completed", "data": {"custom_data": {"slug": "semenov", "plan": "pro", "period": "month"}}},
+      "expectedStatus": 200,
+      "expectedBody": {"provider": "paddle", "ok": true},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

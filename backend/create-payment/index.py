@@ -73,7 +73,7 @@ def _rate(currency):
     return FALLBACK_RATES.get(currency, FALLBACK_RATES['USD'])
 
 
-def _create_yookassa(amount_rub, plan, email, return_url):
+def _create_yookassa(amount_rub, plan, email, return_url, slug, period):
     shop_id = os.environ.get('YOOKASSA_SHOP_ID', '')
     secret = os.environ.get('YOOKASSA_SECRET_KEY', '')
     if not shop_id or not secret:
@@ -83,7 +83,7 @@ def _create_yookassa(amount_rub, plan, email, return_url):
         'capture': True,
         'confirmation': {'type': 'redirect', 'return_url': return_url or 'https://example.com/return'},
         'description': f'Подписка «{plan}»',
-        'metadata': {'plan': plan, 'email': email},
+        'metadata': {'plan': plan, 'email': email, 'slug': slug, 'period': period},
     }
     data = json.dumps(payload).encode('utf-8')
     token = base64.b64encode(f'{shop_id}:{secret}'.encode()).decode()
@@ -108,7 +108,7 @@ def _create_yookassa(amount_rub, plan, email, return_url):
         return None, 'yookassa_unavailable'
 
 
-def _create_paddle(amount, currency, plan, email):
+def _create_paddle(amount, currency, plan, email, slug, period):
     api_key = os.environ.get('PADDLE_API_KEY', '')
     env = (os.environ.get('PADDLE_ENV', 'sandbox') or 'sandbox').lower()
     if not api_key:
@@ -129,6 +129,7 @@ def _create_paddle(amount, currency, plan, email):
         }],
         'currency_code': currency,
         'collection_mode': 'automatic',
+        'custom_data': {'plan': plan, 'slug': slug, 'period': period, 'email': email},
         'customer': {'email': email} if email else None,
     }
     payload = {k: v for k, v in payload.items() if v is not None}
@@ -196,11 +197,13 @@ def handler(event, context):
 
     email = (body.get('email') or '').strip()
     return_url = (body.get('returnUrl') or '').strip()
+    slug = (body.get('slug') or '').strip()[:64]
+    per = 'year' if months == 12 else 'month'
 
     if cc == 'RU':
-        result, err = _create_yookassa(base_rub, plan, email, return_url)
+        result, err = _create_yookassa(base_rub, plan, email, return_url, slug, per)
     else:
-        result, err = _create_paddle(local_amount, currency, plan, email)
+        result, err = _create_paddle(local_amount, currency, plan, email, slug, per)
 
     if err:
         return _resp(200, {**quote, 'configured': False, 'error': err})

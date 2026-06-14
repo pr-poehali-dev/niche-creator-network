@@ -3053,7 +3053,7 @@ const PLAN_KEY_MAP: Record<string, string> = {
   planPremiumName: "premium",
 };
 
-function PaymentModal({ plan, onClose, defaultEmail = "" }: { plan: PayPlan; onClose: () => void; defaultEmail?: string }) {
+function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: PayPlan; onClose: () => void; defaultEmail?: string; slug?: string }) {
   const { lang, tr } = useLang();
   const { geo } = useGeo();
   const [method, setMethod] = useState<"card" | "sbp">("card");
@@ -3131,7 +3131,7 @@ function PaymentModal({ plan, onClose, defaultEmail = "" }: { plan: PayPlan; onC
       const res = await fetch(func2url["create-payment"], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planKey, period, email, countryCode: geo?.countryCode || "", returnUrl: window.location.href }),
+        body: JSON.stringify({ plan: planKey, period, email, slug, countryCode: geo?.countryCode || "", returnUrl: window.location.href }),
       });
       const d = await res.json();
       const redirect = d.confirmationUrl || d.checkoutUrl;
@@ -3476,7 +3476,7 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
         ))}
       </div>
 
-      {payPlan && <PaymentModal plan={payPlan} onClose={() => setPayPlan(null)} defaultEmail={PROVIDER_EMAIL} />}
+      {payPlan && <PaymentModal plan={payPlan} onClose={() => setPayPlan(null)} defaultEmail={PROVIDER_EMAIL} slug="morozov" />}
 
       {/* No-commission promise */}
       <div className="mt-10 border border-gold/30 rounded-sm glass-card p-6 flex flex-col md:flex-row items-start md:items-center gap-4 security-glow">
