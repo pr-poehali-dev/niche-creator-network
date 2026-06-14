@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Icon from "@/components/ui/icon";
 import { useLang, t, LANGS, type Lang } from "@/lib/i18n";
 import { dataExtra } from "@/lib/i18n-extra";
@@ -21,7 +21,7 @@ const DEMO_CLIENT = {
   email: "d.orlov@email.com",
 };
 
-type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer";
+type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "admin";
 type Role = "client" | "provider";
 
 type NavItem = { id: Section; key: keyof typeof t; icon: string };
@@ -751,6 +751,7 @@ const SECTION_CRUMB: Record<Section, keyof typeof t> = {
   terms: "fTerms",
   agreement: "fAgreement",
   offer: "fOffer",
+  admin: "adminPanelTitle",
 };
 
 const cases = [
@@ -857,6 +858,128 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+type AdminProvider = { slug: string; name: { ru: string; en: string }; legalStatus: string; verified: boolean; licenseVerified: boolean; licenses: string[]; active: boolean };
+
+function AdminPanel() {
+  const { lang, tr } = useLang();
+  const [items, setItems] = useState<AdminProvider[] | null>(null);
+  const [error, setError] = useState(false);
+  const [savingSlug, setSavingSlug] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+
+  const token = () => localStorage.getItem("shchit_auth_token") || "";
+
+  const load = useCallback(() => {
+    setError(false);
+    fetch(func2url["admin-providers"], { headers: { "X-Auth-Token": token() } })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => setItems(Array.isArray(d.providers) ? d.providers : []))
+      .catch(() => { setError(true); setItems([]); });
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const toggle = async (p: AdminProvider) => {
+    setSavingSlug(p.slug);
+    try {
+      const res = await fetch(func2url["admin-providers"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Auth-Token": token() },
+        body: JSON.stringify({ slug: p.slug, licenseVerified: !p.licenseVerified }),
+      });
+      if (res.ok) {
+        setItems((prev) => (prev || []).map((x) => (x.slug === p.slug ? { ...x, licenseVerified: !x.licenseVerified } : x)));
+      }
+    } finally {
+      setSavingSlug(null);
+    }
+  };
+
+  const isOrg = (s: string) => ["ip", "company", "ип", "ооо", "llc"].includes((s || "").toLowerCase());
+  const statusLabel = (s: string) => {
+    const v = (s || "").toLowerCase();
+    if (v === "ip" || v === "ип") return "ИП";
+    if (v === "company" || v === "ооо" || v === "llc") return "ООО";
+    if (v === "self") return tr("adminStatusSelf");
+    return "—";
+  };
+
+  const filtered = (items || []).filter((p) => {
+    const n = (p.name.ru + " " + p.name.en + " " + p.slug).toLowerCase();
+    return n.includes(query.toLowerCase());
+  });
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-10">
+      <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mb-6 relative overflow-hidden security-glow">
+        <div className="absolute inset-0 grid-line-bg opacity-30" />
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-14 h-14 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
+            <Icon name="ShieldCheck" size={26} className="text-[hsl(220,20%,6%)]" />
+          </div>
+          <div>
+            <h1 className="font-montserrat font-extrabold text-2xl md:text-3xl text-foreground">{tr("adminPanelTitle")}</h1>
+            <p className="text-xs text-muted-foreground mt-1">{tr("adminLicenseHint")}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 mb-5">
+        <div className="flex-1 flex items-center gap-2 border border-border bg-card rounded-sm px-4">
+          <Icon name="Search" size={15} className="text-muted-foreground" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr("adminSearch")} className="flex-1 bg-transparent py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
+        </div>
+        <button onClick={load} className="flex items-center gap-1.5 border border-border text-muted-foreground px-3 py-2.5 text-xs font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">
+          <Icon name="RefreshCw" size={14} />{tr("adminRefresh")}
+        </button>
+      </div>
+
+      {items === null ? (
+        <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex justify-center"><Icon name="Loader" size={28} className="text-gold animate-spin" /></div>
+      ) : error ? (
+        <div className="border border-destructive/30 rounded-sm bg-destructive/10 p-4 text-sm text-destructive flex items-center gap-2"><Icon name="CircleAlert" size={16} />{tr("adminError")}</div>
+      ) : (
+        <div className="border border-border rounded-sm bg-card overflow-hidden">
+          {filtered.map((p) => {
+            const eligible = p.verified && isOrg(p.legalStatus) && p.licenses.length > 0;
+            return (
+              <div key={p.slug} className="flex items-center gap-4 px-4 py-3.5 border-b border-border last:border-0">
+                <div className="flex-1 min-w-0">
+                  <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(p.name, lang)}</div>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className="text-[10px] text-muted-foreground">{p.slug}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-sm ${isOrg(p.legalStatus) ? "bg-gold/10 text-gold" : "bg-secondary text-muted-foreground"}`}>{statusLabel(p.legalStatus)}</span>
+                    {p.verified ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-green-500/10 text-green-400">{tr("adminVerified")}</span>
+                    ) : (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-secondary text-muted-foreground">{tr("adminNotVerified")}</span>
+                    )}
+                    <span className="text-[10px] text-muted-foreground">· {p.licenses.length} {tr("adminLicensesCount")}</span>
+                  </div>
+                  {!eligible && (
+                    <div className="text-[10px] text-amber-400/80 mt-1 flex items-center gap-1"><Icon name="TriangleAlert" size={10} />{tr("adminNotEligible")}</div>
+                  )}
+                </div>
+                <button
+                  onClick={() => toggle(p)}
+                  disabled={savingSlug === p.slug}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-montserrat font-bold rounded-sm transition-all shrink-0 disabled:opacity-50 ${p.licenseVerified ? "gold-gradient text-[hsl(220,20%,6%)]" : "border border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
+                >
+                  {savingSlug === p.slug ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name={p.licenseVerified ? "BadgeCheck" : "Badge"} size={14} />}
+                  {p.licenseVerified ? tr("adminLicenseOn") : tr("adminLicenseOff")}
+                </button>
+              </div>
+            );
+          })}
+          {filtered.length === 0 && (
+            <div className="py-12 text-center text-sm text-muted-foreground">{tr("adminEmpty")}</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Index() {
   const { lang, setLang, tr, applyGeoLang } = useLang();
   const { user, isAuthed, logout } = useAuth();
@@ -918,6 +1041,7 @@ export default function Index() {
       case "pricing": return <PricingSection setActive={go} />;
       case "privacy": case "terms": case "agreement": case "offer": return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
       case "dashboard": return role === "client" ? <ClientDashboard setActive={go} /> : <ProviderDashboard setActive={go} />;
+      case "admin": return user?.isAdmin ? <AdminPanel /> : <HomeSection setActive={go} role={role} />;
       default: return <HomeSection setActive={go} role={role} />;
     }
   };
@@ -979,6 +1103,12 @@ export default function Index() {
             <LangSwitcher lang={lang} setLang={setLang} />
             {isAuthed ? (
               <>
+                {user?.isAdmin && (
+                  <button onClick={() => go("admin")} className={`hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-montserrat font-bold rounded-sm transition-all border ${active === "admin" ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`}>
+                    <Icon name="ShieldCheck" size={15} />
+                    {tr("adminPanelTitle")}
+                  </button>
+                )}
                 <button onClick={() => go("dashboard")} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
                   <Icon name="LayoutDashboard" size={15} />
                   {tr("authCabinet")}
@@ -1014,6 +1144,12 @@ export default function Index() {
             <div className="p-3 space-y-2">
               {isAuthed ? (
                 <>
+                  {user?.isAdmin && (
+                    <button onClick={() => go("admin")} className="w-full border border-gold text-gold py-3 text-sm font-montserrat font-bold rounded-sm hover:bg-gold/10 transition-all flex items-center justify-center gap-2">
+                      <Icon name="ShieldCheck" size={16} />
+                      {tr("adminPanelTitle")}
+                    </button>
+                  )}
                   <button onClick={() => go("dashboard")} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
                     <Icon name="LayoutDashboard" size={16} />
                     {tr("authCabinet")}

@@ -529,6 +529,21 @@ export const t: Dict = {
   // License badge
   licenseBadge: { ru: "Лицензия", en: "License" },
 
+  // Admin panel
+  adminPanelTitle: { ru: "Админ-панель", en: "Admin panel" },
+  adminLicenseHint: { ru: "Подтверждайте лицензию исполнителей. Флажок «Лицензия» появляется в карточке только после подтверждения.", en: "Confirm provider licenses. The 'License' badge appears on the card only after confirmation." },
+  adminSearch: { ru: "Поиск по имени или slug", en: "Search by name or slug" },
+  adminRefresh: { ru: "Обновить", en: "Refresh" },
+  adminError: { ru: "Не удалось загрузить список. Войдите как администратор.", en: "Failed to load the list. Log in as administrator." },
+  adminEmpty: { ru: "Исполнители не найдены", en: "No providers found" },
+  adminVerified: { ru: "Верифицирован", en: "Verified" },
+  adminNotVerified: { ru: "Не верифицирован", en: "Not verified" },
+  adminStatusSelf: { ru: "Самозанятый", en: "Self-employed" },
+  adminLicensesCount: { ru: "лиц.", en: "lic." },
+  adminNotEligible: { ru: "Не выполнены условия: нужна полная верификация, статус ИП/ООО и загруженная лицензия", en: "Conditions not met: full verification, IP/LLC status and an uploaded license required" },
+  adminLicenseOn: { ru: "Лицензия подтверждена", en: "License confirmed" },
+  adminLicenseOff: { ru: "Подтвердить лицензию", en: "Confirm license" },
+
   // Provider availability settings
   pdAvailTitle: { ru: "Доступность для звонков", en: "Call availability" },
   pdAvailHint: { ru: "Укажите часы тишины — в это время кнопка звонка будет недоступна. Часовой пояс определяется автоматически для вас и клиента.", en: "Set quiet hours — the call button will be disabled during this time. The time zone is detected automatically for you and the client." },

@@ -149,7 +149,8 @@ def handler(event: dict, context) -> dict:
             row = cur.fetchone()
             if not row or row[4] < datetime.utcnow():
                 return _resp(401, {'error': 'invalid_session'})
-            return _resp(200, {'user': {'id': row[0], 'email': row[1], 'role': row[2], 'name': row[3]}})
+            is_admin = str(row[1] or '').startswith('admin+') and str(row[1] or '').endswith('@shchit.local')
+            return _resp(200, {'user': {'id': row[0], 'email': row[1], 'role': row[2], 'name': row[3], 'isAdmin': is_admin}})
 
         if action == 'logout':
             if token:
