@@ -858,7 +858,7 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-type AdminProvider = { slug: string; name: { ru: string; en: string }; legalStatus: string; verified: boolean; licenseVerified: boolean; licenses: string[]; active: boolean };
+type AdminProvider = { slug: string; name: { ru: string; en: string }; legalStatus: string; verified: boolean; licenseVerified: boolean; licenses: string[]; active: boolean; documents: { title: string; url: string }[]; fullName: string; registry: string };
 
 function AdminPanel() {
   const { lang, tr } = useLang();
@@ -866,6 +866,7 @@ function AdminPanel() {
   const [error, setError] = useState(false);
   const [savingSlug, setSavingSlug] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
 
   const token = () => localStorage.getItem("shchit_auth_token") || "";
 
@@ -948,37 +949,87 @@ function AdminPanel() {
         <div className="border border-border rounded-sm bg-card overflow-hidden">
           {filtered.map((p) => {
             const eligible = p.verified && isOrg(p.legalStatus) && p.licenses.length > 0;
+            const docCount = p.documents.length + p.licenses.length;
+            const open = openSlug === p.slug;
             return (
-              <div key={p.slug} className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3.5 border-b border-border last:border-0">
-                <div className="flex-1 min-w-0">
-                  <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(p.name, lang)}</div>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className="text-[10px] text-muted-foreground">{p.slug}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-sm ${isOrg(p.legalStatus) ? "bg-gold/10 text-gold" : "bg-secondary text-muted-foreground"}`}>{statusLabel(p.legalStatus)}</span>
-                    <span className="text-[10px] text-muted-foreground">· {p.licenses.length} {tr("adminLicensesCount")}</span>
+              <div key={p.slug} className="border-b border-border last:border-0">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(p.name, lang)}</div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-[10px] text-muted-foreground">{p.slug}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-sm ${isOrg(p.legalStatus) ? "bg-gold/10 text-gold" : "bg-secondary text-muted-foreground"}`}>{statusLabel(p.legalStatus)}</span>
+                      <span className="text-[10px] text-muted-foreground">· {p.licenses.length} {tr("adminLicensesCount")}</span>
+                    </div>
+                    {!eligible && (
+                      <div className="text-[10px] text-amber-400/80 mt-1 flex items-center gap-1"><Icon name="TriangleAlert" size={10} />{tr("adminNotEligible")}</div>
+                    )}
                   </div>
-                  {!eligible && (
-                    <div className="text-[10px] text-amber-400/80 mt-1 flex items-center gap-1"><Icon name="TriangleAlert" size={10} />{tr("adminNotEligible")}</div>
-                  )}
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    <button
+                      onClick={() => setOpenSlug(open ? null : p.slug)}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-montserrat font-semibold rounded-sm transition-all border ${open ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
+                    >
+                      <Icon name="FileText" size={14} />
+                      {tr("adminDocs")} ({docCount})
+                      <Icon name={open ? "ChevronUp" : "ChevronDown"} size={13} />
+                    </button>
+                    <button
+                      onClick={() => toggle(p, "verified")}
+                      disabled={savingSlug === p.slug + "verified"}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-montserrat font-bold rounded-sm transition-all disabled:opacity-50 ${p.verified ? "bg-green-500/15 border border-green-500/40 text-green-400" : "border border-border text-muted-foreground hover:border-green-500 hover:text-green-400"}`}
+                    >
+                      {savingSlug === p.slug + "verified" ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name={p.verified ? "ShieldCheck" : "Shield"} size={14} />}
+                      {p.verified ? tr("adminVerifyOn") : tr("adminVerifyOff")}
+                    </button>
+                    <button
+                      onClick={() => toggle(p, "licenseVerified")}
+                      disabled={savingSlug === p.slug + "licenseVerified"}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-montserrat font-bold rounded-sm transition-all disabled:opacity-50 ${p.licenseVerified ? "gold-gradient text-[hsl(220,20%,6%)]" : "border border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
+                    >
+                      {savingSlug === p.slug + "licenseVerified" ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name={p.licenseVerified ? "BadgeCheck" : "Badge"} size={14} />}
+                      {p.licenseVerified ? tr("adminLicenseOn") : tr("adminLicenseOff")}
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => toggle(p, "verified")}
-                    disabled={savingSlug === p.slug + "verified"}
-                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-montserrat font-bold rounded-sm transition-all disabled:opacity-50 ${p.verified ? "bg-green-500/15 border border-green-500/40 text-green-400" : "border border-border text-muted-foreground hover:border-green-500 hover:text-green-400"}`}
-                  >
-                    {savingSlug === p.slug + "verified" ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name={p.verified ? "ShieldCheck" : "Shield"} size={14} />}
-                    {p.verified ? tr("adminVerifyOn") : tr("adminVerifyOff")}
-                  </button>
-                  <button
-                    onClick={() => toggle(p, "licenseVerified")}
-                    disabled={savingSlug === p.slug + "licenseVerified"}
-                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-montserrat font-bold rounded-sm transition-all disabled:opacity-50 ${p.licenseVerified ? "gold-gradient text-[hsl(220,20%,6%)]" : "border border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
-                  >
-                    {savingSlug === p.slug + "licenseVerified" ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name={p.licenseVerified ? "BadgeCheck" : "Badge"} size={14} />}
-                    {p.licenseVerified ? tr("adminLicenseOn") : tr("adminLicenseOff")}
-                  </button>
-                </div>
+                {open && (
+                  <div className="px-4 pb-4 -mt-1 animate-fade-in">
+                    <div className="border border-border rounded-sm bg-secondary/40 p-4 space-y-3">
+                      {(p.fullName || p.registry) && (
+                        <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px]">
+                          {p.fullName && <div><span className="text-muted-foreground">{tr("adminFullName")}: </span><span className="text-foreground font-semibold">{p.fullName}</span></div>}
+                          {p.registry && <div><span className="text-muted-foreground">{tr("adminRegistry")}: </span><span className="text-foreground font-semibold">{p.registry}</span></div>}
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-[10px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest mb-1.5">{tr("adminLicensesList")}</div>
+                        {p.licenses.length ? (
+                          <div className="space-y-1">
+                            {p.licenses.map((l, i) => (
+                              <div key={i} className="flex items-center gap-1.5 text-xs text-foreground"><Icon name="Award" size={13} className="text-gold shrink-0" />{l}</div>
+                            ))}
+                          </div>
+                        ) : <div className="text-xs text-muted-foreground">{tr("adminNoLicenses")}</div>}
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest mb-1.5">{tr("adminDocsList")}</div>
+                        {p.documents.length ? (
+                          <div className="flex flex-wrap gap-2">
+                            {p.documents.map((d, i) => (
+                              d.url ? (
+                                <a key={i} href={d.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-gold border border-gold/30 rounded-sm px-2.5 py-1.5 hover:bg-gold/10 transition-all">
+                                  <Icon name="FileText" size={13} />{d.title || tr("adminOpenDoc")}<Icon name="ExternalLink" size={11} />
+                                </a>
+                              ) : (
+                                <span key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground border border-border rounded-sm px-2.5 py-1.5"><Icon name="FileText" size={13} />{d.title}</span>
+                              )
+                            ))}
+                          </div>
+                        ) : <div className="text-xs text-muted-foreground">{tr("adminNoDocs")}</div>}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -1259,8 +1310,8 @@ export default function Index() {
 function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; onPolicy: () => void }) {
   const { tr } = useLang();
   return (
-    <div className="min-h-[88vh] flex items-center">
-      <section className="relative overflow-hidden grid-line-bg vignette w-full">
+    <>
+      <section className="relative overflow-hidden grid-line-bg vignette w-full flex items-center min-h-[80vh]">
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/60 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
         <div className="absolute inset-0">
@@ -1322,7 +1373,198 @@ function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; onPolicy:
           </div>
         </div>
       </section>
-    </div>
+
+      <LandingStats />
+      <LandingHowItWorks />
+      <LandingValue />
+      <LandingServices />
+      <LandingTestimonials />
+      <LandingFinalCta onCabinet={onCabinet} />
+    </>
+  );
+}
+
+function LandingStats() {
+  const { tr } = useLang();
+  const stats = [
+    { value: "1 200+", key: "lpStat1" as const, icon: "Users" },
+    { value: "98%", key: "lpStat2" as const, icon: "ThumbsUp" },
+    { value: "24/7", key: "lpStat3" as const, icon: "Headset" },
+    { value: "15+", key: "lpStat4" as const, icon: "Globe" },
+  ];
+  return (
+    <section className="border-y border-border bg-card/40">
+      <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-6">
+        {stats.map((s) => (
+          <div key={s.key} className="text-center">
+            <div className="w-11 h-11 gold-gradient rounded-full flex items-center justify-center mx-auto mb-3 glow-gold-sm">
+              <Icon name={s.icon} fallback="Star" size={19} className="text-[hsl(220,20%,6%)]" />
+            </div>
+            <div className="font-montserrat font-extrabold text-2xl md:text-3xl gold-text-gradient">{s.value}</div>
+            <div className="text-xs text-muted-foreground mt-1">{tr(s.key)}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function LandingHowItWorks() {
+  const { tr } = useLang();
+  const steps = [
+    { icon: "Search", title: "lpHow1Title" as const, desc: "lpHow1Desc" as const },
+    { icon: "ShieldCheck", title: "lpHow2Title" as const, desc: "lpHow2Desc" as const },
+    { icon: "MessageCircle", title: "lpHow3Title" as const, desc: "lpHow3Desc" as const },
+    { icon: "CircleCheck", title: "lpHow4Title" as const, desc: "lpHow4Desc" as const },
+  ];
+  return (
+    <section className="max-w-7xl mx-auto px-4 py-16">
+      <div className="text-center mb-12">
+        <div className="tag-security inline-block mb-3">{tr("lpHowTag")}</div>
+        <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground">{tr("lpHowTitle")}</h2>
+        <p className="text-muted-foreground text-sm mt-3 max-w-xl mx-auto">{tr("lpHowDesc")}</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5 stagger">
+        {steps.map((s, i) => (
+          <div key={s.title} className="relative border border-border rounded-sm bg-card p-6 card-hover">
+            <div className="absolute top-4 end-4 font-montserrat font-extrabold text-3xl text-gold/15">{i + 1}</div>
+            <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center mb-4 glow-gold-sm">
+              <Icon name={s.icon} fallback="Check" size={21} className="text-[hsl(220,20%,6%)]" />
+            </div>
+            <h3 className="font-montserrat font-bold text-base text-foreground mb-2">{tr(s.title)}</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">{tr(s.desc)}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function LandingValue() {
+  const { tr } = useLang();
+  const cards = [
+    { tag: "lpValClientTag" as const, title: "lpValClientTitle" as const, icon: "UserSearch", items: ["lpValClient1", "lpValClient2", "lpValClient3", "lpValClient4"] as const, accent: false },
+    { tag: "lpValProTag" as const, title: "lpValProTitle" as const, icon: "Briefcase", items: ["lpValPro1", "lpValPro2", "lpValPro3", "lpValPro4"] as const, accent: true },
+  ];
+  return (
+    <section className="border-y border-border bg-card/30">
+      <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {cards.map((c) => (
+          <div key={c.title} className={`rounded-sm p-7 md:p-8 border ${c.accent ? "border-gold/40 glass-card security-glow" : "border-border bg-card"}`}>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center shrink-0">
+                <Icon name={c.icon} fallback="User" size={21} className="text-[hsl(220,20%,6%)]" />
+              </div>
+              <div>
+                <div className="text-[10px] font-montserrat font-bold text-gold uppercase tracking-widest">{tr(c.tag)}</div>
+                <h3 className="font-montserrat font-extrabold text-xl text-foreground">{tr(c.title)}</h3>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {c.items.map((k) => (
+                <div key={k} className="flex items-start gap-2.5 text-sm text-foreground">
+                  <Icon name="Check" size={16} className="text-gold mt-0.5 shrink-0" />
+                  <span>{tr(k)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function LandingServices() {
+  const { lang, tr } = useLang();
+  return (
+    <section className="max-w-7xl mx-auto px-4 py-16">
+      <div className="text-center mb-12">
+        <div className="tag-security inline-block mb-3">{tr("lpServicesTag")}</div>
+        <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground">{tr("lpServicesTitle")}</h2>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger">
+        {services.slice(0, 6).map((s) => (
+          <div key={s.title.en} className="group border border-border rounded-sm bg-card p-5 card-hover shine-on-hover">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
+                <Icon name={s.icon} size={18} className="text-[hsl(220,20%,6%)]" />
+              </div>
+              <h3 className="font-montserrat font-bold text-sm text-foreground">{L(s.title, lang)}</h3>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-2">{L(s.desc, lang)}</p>
+            <div className="font-montserrat font-bold text-sm text-gold">{L(s.price, lang)}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function LandingTestimonials() {
+  const { lang, tr } = useLang();
+  const reviews = [
+    { name: { ru: "Дмитрий О.", en: "Dmitry O." }, role: { ru: "Клиент · Москва", en: "Client · Moscow" }, text: { ru: "Нашёл полиграфолога за 10 минут. Проверенный специалист, всё прозрачно — рекомендую.", en: "Found a polygraph examiner in 10 minutes. A verified specialist, fully transparent — highly recommend." } },
+    { name: { ru: "Игорь С.", en: "Igor S." }, role: { ru: "Исполнитель · Дубай", en: "Provider · Dubai" }, text: { ru: "Платформа реально приводит клиентов. Никакой комиссии со сделок — только подписка.", en: "The platform really brings in clients. No deal commission — just a subscription." } },
+    { name: { ru: "Елена В.", en: "Elena V." }, role: { ru: "Клиент · Лондон", en: "Client · London" }, text: { ru: "Удобно сравнивать кейсы и рейтинги. Защита данных на высоте, общение в закрытом чате.", en: "Convenient to compare cases and ratings. Data protection is top-notch, communication in a private chat." } },
+  ];
+  return (
+    <section className="border-y border-border bg-card/30">
+      <div className="max-w-7xl mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <div className="tag-security inline-block mb-3">{tr("lpRevTag")}</div>
+          <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground">{tr("lpRevTitle")}</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+          {reviews.map((r) => (
+            <div key={r.name.en} className="border border-border rounded-sm bg-card p-6 card-hover">
+              <div className="flex gap-0.5 mb-3">
+                {[1, 2, 3, 4, 5].map((i) => <Icon key={i} name="Star" size={14} className="text-gold fill-current" />)}
+              </div>
+              <p className="text-sm text-foreground leading-relaxed mb-4">«{L(r.text, lang)}»</p>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full gold-gradient flex items-center justify-center text-[hsl(220,20%,6%)] font-montserrat font-bold text-xs">{L(r.name, lang).charAt(0)}</div>
+                <div>
+                  <div className="font-montserrat font-semibold text-xs text-foreground">{L(r.name, lang)}</div>
+                  <div className="text-[10px] text-muted-foreground">{L(r.role, lang)}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LandingFinalCta({ onCabinet }: { onCabinet: () => void }) {
+  const { tr } = useLang();
+  return (
+    <section className="max-w-7xl mx-auto px-4 py-20">
+      <div className="relative overflow-hidden rounded-sm border border-gold/40 glass-card security-glow ambient-gold p-10 md:p-14 text-center">
+        <div className="absolute inset-0 grid-line-bg opacity-30" />
+        <div className="relative z-10">
+          <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center mx-auto mb-6 glow-gold-sm">
+            <Icon name="ShieldCheck" size={30} className="text-[hsl(220,20%,6%)]" />
+          </div>
+          <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-4">{tr("lpCtaTitle")}</h2>
+          <p className="text-muted-foreground text-base max-w-xl mx-auto mb-8">{tr("lpCtaDesc")}</p>
+          <button
+            onClick={onCabinet}
+            className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-extrabold text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm inline-flex items-center gap-2.5"
+          >
+            <Icon name="UserPlus" size={18} />
+            {tr("lpCtaBtn")}
+            <Icon name="ArrowRight" size={18} />
+          </button>
+          <div className="flex items-center justify-center gap-5 mt-6 flex-wrap text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5"><Icon name="Check" size={13} className="text-gold" />{tr("lpCtaNote1")}</span>
+            <span className="flex items-center gap-1.5"><Icon name="Check" size={13} className="text-gold" />{tr("lpCtaNote2")}</span>
+            <span className="flex items-center gap-1.5"><Icon name="Check" size={13} className="text-gold" />{tr("lpCtaNote3")}</span>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 

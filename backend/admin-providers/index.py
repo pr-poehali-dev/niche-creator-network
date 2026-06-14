@@ -57,7 +57,7 @@ def handler(event: dict, context) -> dict:
         if method == 'GET':
             cur.execute(
                 f"SELECT slug, name_ru, name_en, legal_status, verified, license_verified, "
-                f"licenses, license_info, subscription_active "
+                f"licenses, license_info, subscription_active, documents, full_name, registry_number "
                 f"FROM {SCHEMA}.providers ORDER BY name_ru"
             )
             rows = cur.fetchall()
@@ -67,6 +67,14 @@ def handler(event: dict, context) -> dict:
                 lic = [str(x).strip() for x in lic if str(x).strip()]
                 if not lic and (r[7] or '').strip():
                     lic = [r[7].strip()]
+                docs_raw = r[9] if isinstance(r[9], list) else (json.loads(r[9]) if r[9] else [])
+                docs = []
+                for d in docs_raw:
+                    if isinstance(d, dict):
+                        title = str(d.get('title', '')).strip()
+                        url = str(d.get('url', '')).strip()
+                        if title or url:
+                            docs.append({'title': title, 'url': url})
                 items.append({
                     'slug': r[0],
                     'name': {'ru': r[1], 'en': r[2]},
@@ -75,6 +83,9 @@ def handler(event: dict, context) -> dict:
                     'licenseVerified': bool(r[5]),
                     'licenses': lic,
                     'active': bool(r[8]),
+                    'documents': docs,
+                    'fullName': r[10] or '',
+                    'registry': r[11] or '',
                 })
             return _resp(200, {'providers': items})
 
