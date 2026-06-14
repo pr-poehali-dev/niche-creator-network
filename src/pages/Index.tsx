@@ -1087,6 +1087,7 @@ export default function Index() {
     if (!isAuthed) {
       if (active === "policy") return <SecurityPolicySection setActive={go} />;
       if (active === "privacy" || active === "terms" || active === "agreement" || active === "offer") return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
+      if (active === "pricing") return <PricingSection setActive={go} />;
       return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} />;
     }
     switch (active) {
@@ -1283,7 +1284,7 @@ export default function Index() {
                 <Icon name="ShieldCheck" size={12} />
                 {tr("navPolicy")}
               </button>
-              {([["fPrivacy", "privacy"], ["fTerms", "terms"], ["fAgreement", "agreement"], ["fOffer", "offer"]] as const).map(([l, sec]) => (
+              {([["fPrivacy", "privacy"], ["fTerms", "terms"], ["fAgreement", "agreement"], ["fOffer", "offer"], ["navPricing", "pricing"]] as const).map(([l, sec]) => (
                 <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
               ))}
             </div>
