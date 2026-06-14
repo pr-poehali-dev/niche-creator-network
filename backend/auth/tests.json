@@ -49,6 +49,31 @@
       "path": "/",
       "body": {"action": "admin_login", "password": "definitely-wrong-pass", "role": "client"},
       "expectedStatus": 401
+    },
+    {
+      "name": "Verify 2fa invalid code format",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "verify_2fa", "challengeId": "x", "code": "12"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "invalid_code"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Verify 2fa unknown challenge",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "verify_2fa", "challengeId": "nonexistent_challenge_id", "code": "123456"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "challenge_not_found"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Resend 2fa unknown challenge",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "resend_2fa", "challengeId": "nonexistent"},
+      "expectedStatus": 400
     }
   ]
 }

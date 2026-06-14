@@ -2,17 +2,97 @@ import json
 import os
 import hashlib
 import hmac
+import smtplib
 import secrets as pysecrets
 from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 import psycopg2
 
 SCHEMA = 't_p50633472_niche_creator_networ'
 SESSION_DAYS = 30
+CODE_TTL_MIN = 10
+MAX_2FA_ATTEMPTS = 5
 
 
 def _conn():
     return psycopg2.connect(os.environ['DATABASE_URL'])
+
+
+def _hash_code(code: str) -> str:
+    return hashlib.sha256(('2fa:' + code).encode()).hexdigest()
+
+
+def _mask_email(email: str) -> str:
+    try:
+        name, domain = email.split('@', 1)
+    except ValueError:
+        return email
+    if len(name) <= 2:
+        masked = name[0] + '*'
+    else:
+        masked = name[0] + '*' * (len(name) - 2) + name[-1]
+    return f'{masked}@{domain}'
+
+
+def _send_2fa_email(to_email: str, code: str, lang: str = 'ru') -> bool:
+    host = os.environ.get('SMTP_HOST')
+    port = int(os.environ.get('SMTP_PORT', '465'))
+    user = os.environ.get('SMTP_USER')
+    password = os.environ.get('SMTP_PASSWORD')
+    if not all([host, user, password]):
+        return False
+    if lang == 'en':
+        subject = 'SHCHIT — your login code'
+        title = 'Your verification code'
+        note = 'Enter this code to finish signing in. It expires in 10 minutes. If this was not you, ignore this email.'
+    else:
+        subject = 'ЩИТ — код для входа'
+        title = 'Ваш код подтверждения'
+        note = 'Введите этот код, чтобы завершить вход. Код действует 10 минут. Если это были не вы — проигнорируйте письмо.'
+    html = f'''<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#f4f5f7;font-family:Arial,sans-serif;color:#1a1d24;">
+<div style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #e4e6eb;border-radius:10px;overflow:hidden;">
+  <div style="padding:24px 30px;background:#1a1d24;color:#fff;">
+    <div style="font-weight:800;font-size:20px;letter-spacing:0.2em;">Щ<span style="color:#d4af37;">ИТ</span></div>
+  </div>
+  <div style="padding:28px 30px;text-align:center;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:18px;">{title}</div>
+    <div style="font-size:38px;font-weight:800;letter-spacing:10px;color:#b8901f;background:#faf7ec;border:1px solid #ecdfb0;border-radius:8px;padding:16px;">{code}</div>
+    <div style="margin-top:20px;font-size:12px;color:#9aa0ab;line-height:1.5;">{note}</div>
+  </div>
+</div></body></html>'''
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = user
+    msg['To'] = to_email
+    msg.attach(MIMEText(html, 'html', 'utf-8'))
+    try:
+        if port == 465:
+            server = smtplib.SMTP_SSL(host, port, timeout=20)
+        else:
+            server = smtplib.SMTP(host, port, timeout=20)
+            server.starttls()
+        server.login(user, password)
+        server.sendmail(user, [to_email], msg.as_string())
+        server.quit()
+        return True
+    except (smtplib.SMTPException, OSError):
+        return False
+
+
+def _start_2fa(cur, user_id: int, email: str, lang: str) -> dict:
+    code = ''.join(pysecrets.choice('0123456789') for _ in range(6))
+    challenge = pysecrets.token_hex(24)
+    expires = (datetime.utcnow() + timedelta(minutes=CODE_TTL_MIN)).strftime('%Y-%m-%d %H:%M:%S')
+    code_hash = _hash_code(code).replace("'", "''")
+    cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE user_id = {user_id}")
+    cur.execute(
+        f"INSERT INTO {SCHEMA}.two_factor_codes (challenge_id, user_id, code_hash, expires_at) "
+        f"VALUES ('{challenge}', {user_id}, '{code_hash}', '{expires}')"
+    )
+    sent = _send_2fa_email(email, code, lang)
+    return {'challengeId': challenge, 'sent': sent}
 
 
 def _hash_password(password: str, salt: str) -> str:
@@ -129,13 +209,63 @@ def handler(event: dict, context) -> dict:
         if action == 'login':
             email = (body.get('email') or '').strip().lower()
             password = body.get('password') or ''
+            lang = body.get('lang') if body.get('lang') in ('ru', 'en') else 'ru'
             esc_email = email.replace("'", "''")
-            cur.execute(f"SELECT id, password_hash, role, name FROM {SCHEMA}.users WHERE email = '{esc_email}'")
+            cur.execute(f"SELECT id, password_hash, role, name, twofa_enabled FROM {SCHEMA}.users WHERE email = '{esc_email}'")
             row = cur.fetchone()
             if not row or not _verify_password(password, row[1]):
                 return _resp(401, {'error': 'invalid_credentials'})
+            twofa_on = bool(row[4]) if len(row) > 4 else True
+            if twofa_on:
+                ch = _start_2fa(cur, row[0], email, lang)
+                return _resp(200, {'need2fa': True, 'challengeId': ch['challengeId'], 'emailHint': _mask_email(email), 'sent': ch['sent']})
             new_token = _create_session(cur, row[0])
             return _resp(200, {'token': new_token, 'user': {'id': row[0], 'email': email, 'role': row[2], 'name': row[3]}})
+
+        if action == 'verify_2fa':
+            challenge = (body.get('challengeId') or '').strip().replace("'", "''")[:64]
+            code = (body.get('code') or '').strip()
+            if not challenge or not code.isdigit() or len(code) != 6:
+                return _resp(400, {'error': 'invalid_code'})
+            cur.execute(
+                f"SELECT id, user_id, code_hash, attempts, expires_at FROM {SCHEMA}.two_factor_codes WHERE challenge_id = '{challenge}'"
+            )
+            rec = cur.fetchone()
+            if not rec:
+                return _resp(400, {'error': 'challenge_not_found'})
+            rec_id, uid, code_hash, attempts, expires_at = rec
+            if expires_at < datetime.utcnow():
+                cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE id = {rec_id}")
+                return _resp(400, {'error': 'code_expired'})
+            if attempts >= MAX_2FA_ATTEMPTS:
+                cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE id = {rec_id}")
+                return _resp(429, {'error': 'too_many_attempts'})
+            if not hmac.compare_digest(code_hash, _hash_code(code)):
+                cur.execute(f"UPDATE {SCHEMA}.two_factor_codes SET attempts = attempts + 1 WHERE id = {rec_id}")
+                return _resp(401, {'error': 'wrong_code'})
+            cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE id = {rec_id}")
+            cur.execute(f"SELECT id, email, role, name FROM {SCHEMA}.users WHERE id = {uid}")
+            u = cur.fetchone()
+            if not u:
+                return _resp(401, {'error': 'invalid_session'})
+            new_token = _create_session(cur, u[0])
+            return _resp(200, {'token': new_token, 'user': {'id': u[0], 'email': u[1], 'role': u[2], 'name': u[3]}})
+
+        if action == 'resend_2fa':
+            challenge = (body.get('challengeId') or '').strip().replace("'", "''")[:64]
+            lang = body.get('lang') if body.get('lang') in ('ru', 'en') else 'ru'
+            if not challenge:
+                return _resp(400, {'error': 'challenge_not_found'})
+            cur.execute(f"SELECT user_id FROM {SCHEMA}.two_factor_codes WHERE challenge_id = '{challenge}'")
+            rec = cur.fetchone()
+            if not rec:
+                return _resp(400, {'error': 'challenge_not_found'})
+            cur.execute(f"SELECT email FROM {SCHEMA}.users WHERE id = {rec[0]}")
+            ur = cur.fetchone()
+            if not ur:
+                return _resp(400, {'error': 'challenge_not_found'})
+            ch = _start_2fa(cur, rec[0], ur[0], lang)
+            return _resp(200, {'challengeId': ch['challengeId'], 'sent': ch['sent']})
 
         if action == 'me':
             if not token:

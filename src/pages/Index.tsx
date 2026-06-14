@@ -84,8 +84,8 @@ function Lightbox({ src, title, onClose }: { src: string; title?: string; onClos
 }
 
 function AuthModal({ onClose, onOpenDoc }: { onClose: () => void; onOpenDoc: (s: Section) => void }) {
-  const { tr } = useLang();
-  const { login, register, adminLogin } = useAuth();
+  const { tr, lang } = useLang();
+  const { login, verify2fa, resend2fa, register, adminLogin } = useAuth();
   const [mode, setMode] = useState<"login" | "register" | "admin">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -94,6 +94,9 @@ function AuthModal({ onClose, onOpenDoc }: { onClose: () => void; onOpenDoc: (s:
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [twofa, setTwofa] = useState<{ challengeId: string; emailHint: string; sent: boolean } | null>(null);
+  const [code, setCode] = useState("");
+  const [resent, setResent] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -107,6 +110,9 @@ function AuthModal({ onClose, onOpenDoc }: { onClose: () => void; onOpenDoc: (s:
     if (code === "weak_password") return tr("authErrWeak");
     if (code === "invalid_email") return tr("authErrEmail");
     if (code === "consent") return tr("authErrConsent");
+    if (code === "wrong_code") return tr("auth2faWrong");
+    if (code === "code_expired") return tr("auth2faExpired");
+    if (code === "too_many_attempts") return tr("auth2faTooMany");
     return tr("authErrGeneric");
   };
 
@@ -115,14 +121,84 @@ function AuthModal({ onClose, onOpenDoc }: { onClose: () => void; onOpenDoc: (s:
     if (mode === "register" && !consent) { setError(errText("consent")); return; }
     setBusy(true);
     const res = mode === "login"
-      ? await login(email.trim(), password)
+      ? await login(email.trim(), password, lang)
       : mode === "admin"
         ? await adminLogin(password, role)
         : await register(email.trim(), password, role, name.trim());
     setBusy(false);
+    if (res.need2fa && res.challengeId) {
+      setTwofa({ challengeId: res.challengeId, emailHint: res.emailHint || email, sent: !!res.sent });
+      return;
+    }
     if (res.ok) onClose();
     else setError(errText(res.error || "error"));
   };
+
+  const submitCode = async () => {
+    if (!twofa || code.length !== 6) return;
+    setError("");
+    setBusy(true);
+    const res = await verify2fa(twofa.challengeId, code);
+    setBusy(false);
+    if (res.ok) onClose();
+    else setError(errText(res.error || "error"));
+  };
+
+  const doResend = async () => {
+    if (!twofa) return;
+    setError("");
+    const res = await resend2fa(twofa.challengeId, lang);
+    if (res.ok && res.challengeId) {
+      setTwofa({ ...twofa, challengeId: res.challengeId });
+      setResent(true);
+      setTimeout(() => setResent(false), 4000);
+    }
+  };
+
+  if (twofa) {
+    return (
+      <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
+        <div className="relative z-10 w-full max-w-md bg-card border border-gold/40 rounded-sm shadow-2xl security-glow p-7" onClick={(e) => e.stopPropagation()}>
+          <button onClick={onClose} className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
+            <Icon name="X" size={20} />
+          </button>
+          <div className="w-12 h-12 gold-gradient rounded-full flex items-center justify-center mb-4 glow-gold-sm">
+            <Icon name="ShieldCheck" size={22} className="text-[hsl(220,20%,6%)]" />
+          </div>
+          <h3 className="font-montserrat font-bold text-lg text-foreground mb-1">{tr("auth2faTitle")}</h3>
+          <p className="text-xs text-muted-foreground mb-1">{tr("auth2faDesc")} <span className="text-gold font-semibold">{twofa.emailHint}</span></p>
+          {!twofa.sent && <p className="text-[11px] text-amber-400 mb-2">{tr("auth2faNotConfigured")}</p>}
+          <input
+            value={code}
+            onChange={(e) => { setCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }}
+            onKeyDown={(e) => { if (e.key === "Enter" && code.length === 6 && !busy) submitCode(); }}
+            inputMode="numeric"
+            autoFocus
+            placeholder="••••••"
+            className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-center text-2xl tracking-[0.5em] font-montserrat font-bold text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors my-4"
+          />
+          {error && (
+            <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-sm px-3 py-2 mb-3">
+              <Icon name="CircleAlert" size={14} className="shrink-0" />{error}
+            </div>
+          )}
+          <button
+            onClick={submitCode}
+            disabled={busy || code.length !== 6}
+            className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {busy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="LogIn" size={16} />}
+            {tr("auth2faConfirm")}
+          </button>
+          <div className="flex items-center justify-between mt-4 text-xs">
+            <button onClick={() => { setTwofa(null); setCode(""); setError(""); }} className="text-muted-foreground hover:text-gold flex items-center gap-1"><Icon name="ArrowLeft" size={13} />{tr("authBackToLogin")}</button>
+            <button onClick={doResend} className="text-gold hover:underline font-semibold">{resent ? tr("auth2faResent") : tr("auth2faResend")}</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (mode === "admin") {
     return (
@@ -2384,6 +2460,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   });
   const [vfState, setVfState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [sub, setSub] = useState<{ plan: string; active: boolean; until: string | null } | null>(null);
 
   useEffect(() => {
     fetch(`${func2url["save-verification"]}?slug=morozov`)
@@ -2391,6 +2468,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
       .then((d) => {
         const v = d.verification;
         if (!v) return;
+        setSub({ plan: v.plan || "start", active: !!v.subscriptionActive, until: v.subscriptionUntil || null });
         setVf({
           fullName: v.fullName || "", passportNumber: v.passportNumber || "", legalStatus: v.legalStatus || "ip",
           registry: v.registry || "",
@@ -2531,19 +2609,31 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
 
           {tab === "plan" && (
             <>
-              <div className="border border-gold/30 rounded-sm glass-card p-6 security-glow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdCurrentPlan")}</div>
-                  <span className="text-xs font-montserrat font-semibold px-3 py-1 rounded-sm bg-gold/15 text-gold">{tr("pdActive")}</span>
-                </div>
-                <div className="flex items-end gap-2 mb-1">
-                  <span className="font-montserrat font-extrabold text-2xl text-foreground">{tr("planProName")}</span>
-                  <span className="font-montserrat font-bold text-lg text-gold">{tr("planProPrice")}{tr("perMonth")}</span>
-                </div>
-                <div className="text-xs text-muted-foreground mb-5">{tr("pdRenews")}: 13.07.2026</div>
-                <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("pdChangePlan")}</button>
-              </div>
+              {(() => {
+                const planName = ({ start: "planStartName", pro: "planProName", premium: "planPremiumName", enterprise: "planEntName" } as const)[(sub?.plan || "start")] || "planStartName";
+                const planPrice = ({ start: "planStartPrice", pro: "planProPrice", premium: "planPremiumPrice", enterprise: "planEntPrice" } as const)[(sub?.plan || "start")] || "planStartPrice";
+                const active = sub?.active ?? false;
+                const untilStr = sub?.until ? new Date(sub.until).toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US") : null;
+                return (
+                  <div className={`border rounded-sm glass-card p-6 ${active ? "border-gold/30 security-glow" : "border-border"}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdCurrentPlan")}</div>
+                      <span className={`text-xs font-montserrat font-semibold px-3 py-1 rounded-sm ${active ? "bg-green-500/15 text-green-400" : "bg-secondary text-muted-foreground"}`}>{active ? tr("pdActive") : tr("pdInactive")}</span>
+                    </div>
+                    <div className="flex items-end gap-2 mb-1 flex-wrap">
+                      {sub?.plan === "premium" && <Icon name="Crown" size={20} className="text-gold mb-1" />}
+                      <span className="font-montserrat font-extrabold text-2xl text-foreground">{tr(planName)}</span>
+                      <span className="font-montserrat font-bold text-lg text-gold">{tr(planPrice)}{tr("perMonth")}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mb-5">
+                      {active && untilStr ? `${tr("pdRenews")}: ${untilStr}` : (!active ? tr("pdNoSub") : tr("pdActive"))}
+                    </div>
+                    <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{active ? tr("pdChangePlan") : tr("choosePlan")}</button>
+                  </div>
+                );
+              })()}
 
+              {sub?.plan !== "premium" && (
               <div className="relative overflow-hidden border-2 border-gold/50 rounded-sm glass-card ambient-gold p-6 security-glow">
                 <div className="absolute inset-0 grid-line-bg opacity-30" />
                 <div className="relative z-10">
@@ -2576,6 +2666,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                   </button>
                 </div>
               </div>
+              )}
 
               <div className="border border-border rounded-sm bg-card p-6 space-y-4">
                 <div className="flex items-center justify-between py-2 border-b border-border">

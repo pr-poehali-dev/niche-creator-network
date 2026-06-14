@@ -44,7 +44,8 @@ def handler(event: dict, context) -> dict:
             f"show_full_name, show_legal_status, show_license, show_registry, "
             f"pseudonym, use_pseudonym, licenses, documents, bio, age, "
             f"show_bio, show_age, show_documents, gender, avatar_url, "
-            f"timezone, always_available, quiet_start, quiet_end, license_verified "
+            f"timezone, always_available, quiet_start, quiet_end, license_verified, "
+            f"plan, subscription_active, subscription_until "
             f"FROM {SCHEMA}.providers WHERE slug='{slug}'"
         )
         row = cur.fetchone()
@@ -70,6 +71,9 @@ def handler(event: dict, context) -> dict:
             'timezone': row[20] or '', 'alwaysAvailable': bool(row[21]),
             'quietStart': row[22] or '', 'quietEnd': row[23] or '',
             'licenseVerified': bool(row[24]),
+            'plan': row[25] or 'start',
+            'subscriptionActive': bool(row[26]),
+            'subscriptionUntil': row[27].isoformat() if row[27] else None,
         }
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'verification': data})}
 
