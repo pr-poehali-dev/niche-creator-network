@@ -6,6 +6,7 @@ import { downloadReceipt } from "@/lib/receipt";
 import { useGeo, haversineKm } from "@/lib/geo";
 import { useProviders, type Provider } from "@/lib/providers";
 import { useAuth, type AuthRole } from "@/lib/auth";
+import CookieConsent from "@/components/CookieConsent";
 import func2url from "../../backend/func2url.json";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/92040949-913f-4126-80f9-fa681d96ea82.jpg";
@@ -1041,6 +1042,7 @@ export default function Index() {
       </footer>
 
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
+      <CookieConsent onPolicy={() => go("privacy")} />
     </div>
   );
 }
