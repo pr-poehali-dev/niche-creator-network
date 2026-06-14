@@ -540,6 +540,11 @@ export const t: Dict = {
   pdPremB3: { ru: "Просмотры, клики и источники заявок.", en: "Views, clicks and lead sources." },
   pdPremB4: { ru: "Знак доверия рядом с именем.", en: "A trust mark next to your name." },
 
+  // Payment (YooKassa + Paddle + currency)
+  payForeignNote: { ru: "Оплата для вашей страны проходит через защищённый платёжный сервис Paddle. После нажатия вы перейдёте на безопасную страницу оплаты — сумма спишется в вашей местной валюте.", en: "Payment for your country is processed via the secure Paddle service. After clicking, you'll be redirected to a secure checkout — the amount is charged in your local currency." },
+  payNotConfigured: { ru: "Это демо-оплата: платёжная система ещё подключается. Реальное списание не произведено.", en: "This is a demo payment: the payment system is still being connected. No real charge was made." },
+  payError: { ru: "Не удалось создать платёж. Попробуйте ещё раз.", en: "Failed to create the payment. Please try again." },
+
   // License badge
   licenseBadge: { ru: "Лицензия", en: "License" },
 

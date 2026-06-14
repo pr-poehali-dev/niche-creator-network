@@ -1,0 +1,46 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Invalid plan rejected",
+      "method": "POST",
+      "path": "/",
+      "body": {"plan": "unknown", "action": "quote"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "invalid_plan"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Quote for RU premium",
+      "method": "POST",
+      "path": "/",
+      "body": {"plan": "premium", "action": "quote", "countryCode": "RU"},
+      "expectedStatus": 200,
+      "expectedBody": {"currency": "RUB", "provider": "yookassa", "amountRub": 7990},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Quote for US premium uses paddle",
+      "method": "POST",
+      "path": "/",
+      "body": {"plan": "premium", "action": "quote", "countryCode": "US"},
+      "expectedStatus": 200,
+      "expectedBody": {"currency": "USD", "provider": "paddle"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Create payment RU without keys returns not configured",
+      "method": "POST",
+      "path": "/",
+      "body": {"plan": "pro", "countryCode": "RU", "email": "test@example.com"},
+      "expectedStatus": 200,
+      "expectedBody": {"provider": "yookassa"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

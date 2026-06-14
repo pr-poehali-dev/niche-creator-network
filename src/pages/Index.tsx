@@ -3046,14 +3046,43 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
 
 type PayPlan = { name: keyof typeof t; price: keyof typeof t };
 
+const PLAN_KEY_MAP: Record<string, string> = {
+  planStartName: "start",
+  planProName: "pro",
+  planPremiumName: "premium",
+};
+
 function PaymentModal({ plan, onClose, defaultEmail = "" }: { plan: PayPlan; onClose: () => void; defaultEmail?: string }) {
   const { lang, tr } = useLang();
+  const { geo } = useGeo();
   const [method, setMethod] = useState<"card" | "sbp">("card");
   const [status, setStatus] = useState<"form" | "processing" | "success">("form");
   const [email, setEmail] = useState(defaultEmail);
   const [emailState, setEmailState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [autoSent, setAutoSent] = useState(false);
   const [period, setPeriod] = useState<"month" | "year">("month");
+  const [quote, setQuote] = useState<{ currency: string; amount: number; provider: string; countryCode: string } | null>(null);
+  const [payErr, setPayErr] = useState("");
+
+  const planKey = PLAN_KEY_MAP[plan.name as string] || "pro";
+
+  useEffect(() => {
+    let alive = true;
+    fetch(func2url["create-payment"], {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "quote", plan: planKey, period, countryCode: geo?.countryCode || "" }),
+    })
+      .then((r) => r.json())
+      .then((d) => { if (alive && d && d.currency) setQuote(d); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [planKey, period, geo?.countryCode]);
+
+  const isForeign = !!quote && quote.countryCode !== "RU";
+  const localAmountStr = quote
+    ? new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US", { style: "currency", currency: quote.currency, maximumFractionDigits: quote.currency === "RUB" ? 0 : 2 }).format(quote.amount)
+    : null;
 
   // Parse the monthly price string ("2 490 ₽" / "from $90") into number + currency formatting
   const priceStr = tr(plan.price);
@@ -3094,15 +3123,32 @@ function PaymentModal({ plan, onClose, defaultEmail = "" }: { plan: PayPlan; onC
     }
   };
 
-  const pay = () => {
+  const pay = async () => {
+    setPayErr("");
     setStatus("processing");
-    setTimeout(() => {
+    try {
+      const res = await fetch(func2url["create-payment"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planKey, period, email, countryCode: geo?.countryCode || "", returnUrl: window.location.href }),
+      });
+      const d = await res.json();
+      const redirect = d.confirmationUrl || d.checkoutUrl;
+      if (d.configured && redirect) {
+        window.location.href = redirect;
+        return;
+      }
+      // Платёжная система ещё не настроена — показываем демо-успех
       setStatus("success");
       if (defaultEmail && defaultEmail.includes("@")) {
         setAutoSent(true);
         sendTo(defaultEmail);
       }
-    }, 1600);
+      if (!d.configured) setPayErr(tr("payNotConfigured"));
+    } catch {
+      setStatus("form");
+      setPayErr(tr("payError"));
+    }
   };
 
   const sendEmail = () => sendTo(email);
@@ -3218,10 +3264,20 @@ function PaymentModal({ plan, onClose, defaultEmail = "" }: { plan: PayPlan; onC
                   )}
                   <span className="font-montserrat font-extrabold text-2xl text-gold">{amountStr}</span>
                   <span className="text-xs text-muted-foreground ms-1">{period === "year" ? tr("billPerYear") : tr("perMonth")}</span>
+                  {isForeign && localAmountStr && (
+                    <div className="text-[11px] text-gold mt-1 flex items-center justify-end gap-1"><Icon name="Globe" size={11} />≈ {localAmountStr}</div>
+                  )}
                 </div>
               </div>
             </div>
 
+            {isForeign ? (
+              <div className="border border-gold/30 rounded-sm bg-card/60 p-4 mb-5 flex items-start gap-3">
+                <Icon name="ShieldCheck" size={16} className="text-gold mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground leading-relaxed">{tr("payForeignNote")}</p>
+              </div>
+            ) : (
+            <>
             <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-2">{tr("payMethod")}</div>
             <div className="grid grid-cols-2 gap-2 mb-5">
               {(["card", "sbp"] as const).map((m) => (
@@ -3250,13 +3306,21 @@ function PaymentModal({ plan, onClose, defaultEmail = "" }: { plan: PayPlan; onC
                 <p className="text-xs text-muted-foreground text-center max-w-[220px]">{tr("paySbpHint")}</p>
               </div>
             )}
+            </>
+            )}
+
+            {payErr && (
+              <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-sm px-3 py-2 mb-3">
+                <Icon name="Info" size={14} className="shrink-0" />{payErr}
+              </div>
+            )}
 
             <button onClick={pay} disabled={status === "processing"}
               className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3.5 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
               {status === "processing" ? (
                 <><Icon name="Loader" size={16} className="animate-spin" /> {tr("payProcessing")}</>
               ) : (
-                <><Icon name="Lock" size={15} /> {tr("payButton")} {amountStr}</>
+                <><Icon name="Lock" size={15} /> {tr("payButton")} {isForeign && localAmountStr ? localAmountStr : amountStr}</>
               )}
             </button>
             <div className="flex items-center justify-center gap-1.5 mt-3 text-[10px] text-muted-foreground">
