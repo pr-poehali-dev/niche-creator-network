@@ -100,19 +100,27 @@ def handler(event: dict, context) -> dict:
             password = body.get('password') or ''
             role = body.get('role') if body.get('role') in ('client', 'provider') else 'client'
             name = (body.get('name') or '').strip()[:200]
+            consent = bool(body.get('consent'))
             if not email or '@' not in email:
                 return _resp(400, {'error': 'invalid_email'})
             if len(password) < 6:
                 return _resp(400, {'error': 'weak_password'})
+            if not consent:
+                return _resp(400, {'error': 'consent'})
             esc_email = email.replace("'", "''")
             cur.execute(f"SELECT id FROM {SCHEMA}.users WHERE email = '{esc_email}'")
             if cur.fetchone():
                 return _resp(409, {'error': 'email_exists'})
             pwd_hash = _make_hash(password).replace("'", "''")
             esc_name = name.replace("'", "''")
+            consent_version = (str(body.get('consentVersion') or '1.0'))[:20].replace("'", "''")
+            try:
+                src_ip = (event.get('requestContext', {}).get('identity', {}).get('sourceIp') or '')[:64].replace("'", "''")
+            except (AttributeError, TypeError):
+                src_ip = ''
             cur.execute(
-                f"INSERT INTO {SCHEMA}.users (email, password_hash, role, name) "
-                f"VALUES ('{esc_email}', '{pwd_hash}', '{role}', '{esc_name}') RETURNING id"
+                f"INSERT INTO {SCHEMA}.users (email, password_hash, role, name, consent_accepted_at, consent_version, consent_ip) "
+                f"VALUES ('{esc_email}', '{pwd_hash}', '{role}', '{esc_name}', now(), '{consent_version}', '{src_ip}') RETURNING id"
             )
             user_id = cur.fetchone()[0]
             new_token = _create_session(cur, user_id)

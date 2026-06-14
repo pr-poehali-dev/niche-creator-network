@@ -1060,6 +1060,12 @@ export default function Index() {
             </div>
           </div>
           <div className="divider-gold mt-8 mb-6" />
+          <div className="text-[11px] text-muted-foreground/80 leading-relaxed mb-4 space-y-0.5">
+            <div className="font-semibold text-muted-foreground">{tr("reqName")}</div>
+            <div>{tr("reqOgrnip")} · {tr("reqInn")}</div>
+            <div>{tr("reqAddress")}</div>
+            <div>{tr("reqTaxOffice")}</div>
+          </div>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
             <div className="text-xs text-muted-foreground">{tr("rights")}</div>
             <div className="text-xs text-muted-foreground">{tr("forVerified")}</div>

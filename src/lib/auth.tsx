@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (email: string, password: string, role: AuthRole, name: string): Promise<AuthResult> => {
-      const { res, data } = await callAuth({ action: "register", email, password, role, name });
+      const { res, data } = await callAuth({ action: "register", email, password, role, name, consent: true, consentVersion: "1.0" });
       if (res.ok && data.token) {
         localStorage.setItem(TOKEN_KEY, data.token);
         setUser(data.user);

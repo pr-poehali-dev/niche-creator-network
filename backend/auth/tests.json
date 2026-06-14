@@ -14,6 +14,15 @@
       "expectedStatus": 400
     },
     {
+      "name": "Register without consent rejected",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "register", "email": "noconsent@example.com", "password": "strongpass123", "role": "client"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "consent"},
+      "bodyMatcher": "partial"
+    },
+    {
       "name": "Login invalid credentials",
       "method": "POST",
       "path": "/",
