@@ -21,7 +21,7 @@ const DEMO_CLIENT = {
   email: "d.orlov@email.com",
 };
 
-type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard";
+type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer";
 type Role = "client" | "provider";
 
 type NavItem = { id: Section; key: keyof typeof t; icon: string };
@@ -693,6 +693,10 @@ const SECTION_CRUMB: Record<Section, keyof typeof t> = {
   policy: "crumbPolicy",
   pricing: "crumbPricing",
   dashboard: "crumbDashboard",
+  privacy: "fPrivacy",
+  terms: "fTerms",
+  agreement: "fAgreement",
+  offer: "fOffer",
 };
 
 const cases = [
@@ -839,6 +843,7 @@ export default function Index() {
   const renderSection = () => {
     if (!isAuthed) {
       if (active === "policy") return <SecurityPolicySection setActive={go} />;
+      if (active === "privacy" || active === "terms" || active === "agreement" || active === "offer") return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
       return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} />;
     }
     switch (active) {
@@ -853,6 +858,7 @@ export default function Index() {
       case "contacts": return <ContactsSection />;
       case "policy": return <SecurityPolicySection setActive={go} />;
       case "pricing": return <PricingSection setActive={go} />;
+      case "privacy": case "terms": case "agreement": case "offer": return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
       case "dashboard": return role === "client" ? <ClientDashboard setActive={go} /> : <ProviderDashboard setActive={go} />;
       default: return <HomeSection setActive={go} role={role} />;
     }
@@ -1021,8 +1027,8 @@ export default function Index() {
                 <Icon name="ShieldCheck" size={12} />
                 {tr("navPolicy")}
               </button>
-              {(["fPrivacy", "fTerms", "fAgreement", "fOffer"] as const).map(l => (
-                <div key={l} className="text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2">{tr(l)}</div>
+              {([["fPrivacy", "privacy"], ["fTerms", "terms"], ["fAgreement", "agreement"], ["fOffer", "offer"]] as const).map(([l, sec]) => (
+                <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
               ))}
             </div>
           </div>
@@ -3595,6 +3601,156 @@ function SecurityPolicySection({ setActive }: { setActive: (s: Section) => void 
 
           {/* Contact callout */}
           <div className="mt-8 border border-gold/30 rounded-sm glass-card p-8 text-center security-glow">
+            <Icon name="LifeBuoy" size={32} className="text-gold mx-auto mb-4" />
+            <h2 className="font-montserrat font-bold text-xl text-foreground mb-2">{tr("polContactTitle")}</h2>
+            <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-6">{tr("polContactText")}</p>
+            <button
+              onClick={() => setActive("contacts")}
+              className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+            >
+              {tr("polContactBtn")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type LegalKey = keyof typeof t;
+type LegalDoc = {
+  icon: string;
+  tag: LegalKey;
+  title: LegalKey;
+  intro: LegalKey;
+  sections: { title: LegalKey; text: LegalKey }[];
+};
+
+const LEGAL_DOCS: Record<"privacy" | "terms" | "agreement" | "offer", LegalDoc> = {
+  privacy: {
+    icon: "ShieldCheck",
+    tag: "lglTag",
+    title: "fPrivacy",
+    intro: "privIntro",
+    sections: [
+      { title: "priv1Title", text: "priv1Text" },
+      { title: "priv2Title", text: "priv2Text" },
+      { title: "priv3Title", text: "priv3Text" },
+      { title: "priv4Title", text: "priv4Text" },
+      { title: "priv5Title", text: "priv5Text" },
+      { title: "priv6Title", text: "priv6Text" },
+      { title: "priv7Title", text: "priv7Text" },
+      { title: "priv8Title", text: "priv8Text" },
+      { title: "priv9Title", text: "priv9Text" },
+    ],
+  },
+  terms: {
+    icon: "FileText",
+    tag: "lglTag",
+    title: "fTerms",
+    intro: "termsIntro",
+    sections: [
+      { title: "terms1Title", text: "terms1Text" },
+      { title: "terms2Title", text: "terms2Text" },
+      { title: "terms3Title", text: "terms3Text" },
+      { title: "terms4Title", text: "terms4Text" },
+      { title: "terms5Title", text: "terms5Text" },
+      { title: "terms6Title", text: "terms6Text" },
+      { title: "terms7Title", text: "terms7Text" },
+    ],
+  },
+  agreement: {
+    icon: "Handshake",
+    tag: "lglTag",
+    title: "fAgreement",
+    intro: "agrIntro",
+    sections: [
+      { title: "agr1Title", text: "agr1Text" },
+      { title: "agr2Title", text: "agr2Text" },
+      { title: "agr3Title", text: "agr3Text" },
+      { title: "agr4Title", text: "agr4Text" },
+      { title: "agr5Title", text: "agr5Text" },
+      { title: "agr6Title", text: "agr6Text" },
+    ],
+  },
+  offer: {
+    icon: "Wallet",
+    tag: "lglTag",
+    title: "fOffer",
+    intro: "offerIntro",
+    sections: [
+      { title: "offer1Title", text: "offer1Text" },
+      { title: "offer2Title", text: "offer2Text" },
+      { title: "offer3Title", text: "offer3Text" },
+      { title: "offer4Title", text: "offer4Text" },
+      { title: "offer5Title", text: "offer5Text" },
+      { title: "offer6Title", text: "offer6Text" },
+      { title: "offer7Title", text: "offer7Text" },
+    ],
+  },
+};
+
+function LegalDocSection({ doc, setActive }: { doc: LegalDoc; setActive: (s: Section) => void }) {
+  const { tr } = useLang();
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      <div className="border border-gold/30 rounded-sm glass-card p-8 md:p-10 mb-8 relative overflow-hidden security-glow ambient-gold">
+        <div className="absolute inset-0 grid-line-bg opacity-30" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
+          <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
+            <Icon name={doc.icon} fallback="FileText" size={30} className="text-[hsl(220,20%,6%)]" />
+          </div>
+          <div>
+            <div className="tag-security mb-3 inline-block">{tr(doc.tag)}</div>
+            <h1 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-2">{tr(doc.title)}</h1>
+            <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Icon name="Calendar" size={12} className="text-gold" />
+              {tr("polUpdated")}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <aside className="lg:col-span-1 order-2 lg:order-1">
+          <div className="lg:sticky lg:top-24 border border-border rounded-sm bg-card p-5">
+            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("polNav")}</div>
+            {doc.sections.map((s, i) => (
+              <a key={s.title} href={`#lgl-${i}`} className="flex items-center gap-2 py-2 border-b border-border last:border-0 cursor-pointer group">
+                <span className="font-montserrat font-bold text-[10px] text-gold w-4">{String(i + 1).padStart(2, "0")}</span>
+                <span className="text-xs text-muted-foreground group-hover:text-gold transition-colors">{tr(s.title).replace(/^\d+\.\s*/, "")}</span>
+              </a>
+            ))}
+          </div>
+        </aside>
+
+        <div className="lg:col-span-3 order-1 lg:order-2">
+          <div className="border border-border rounded-sm bg-card p-6 md:p-8 mb-6">
+            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{tr(doc.intro)}</p>
+          </div>
+
+          <div className="space-y-5 stagger">
+            {doc.sections.map((s, i) => (
+              <div key={s.title} id={`lgl-${i}`} className="border border-border rounded-sm bg-card p-6 md:p-7 card-hover scroll-mt-24">
+                <div className="flex items-start gap-4">
+                  <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0 glow-gold-sm">
+                    <span className="font-montserrat font-extrabold text-sm text-[hsl(220,20%,6%)]">{String(i + 1).padStart(2, "0")}</span>
+                  </div>
+                  <div>
+                    <h2 className="font-montserrat font-bold text-base text-foreground mb-2">{tr(s.title)}</h2>
+                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{tr(s.text)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 border border-border rounded-sm bg-card/60 p-5 flex items-start gap-3">
+            <Icon name="Info" size={16} className="text-gold mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground leading-relaxed">{tr("lglDisclaimer")}</p>
+          </div>
+
+          <div className="mt-6 border border-gold/30 rounded-sm glass-card p-8 text-center security-glow">
             <Icon name="LifeBuoy" size={32} className="text-gold mx-auto mb-4" />
             <h2 className="font-montserrat font-bold text-xl text-foreground mb-2">{tr("polContactTitle")}</h2>
             <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-6">{tr("polContactText")}</p>
