@@ -543,6 +543,8 @@ export const t: Dict = {
   adminNotEligible: { ru: "Не выполнены условия: нужна полная верификация, статус ИП/ООО и загруженная лицензия", en: "Conditions not met: full verification, IP/LLC status and an uploaded license required" },
   adminLicenseOn: { ru: "Лицензия подтверждена", en: "License confirmed" },
   adminLicenseOff: { ru: "Подтвердить лицензию", en: "Confirm license" },
+  adminVerifyOn: { ru: "Верификация пройдена", en: "Verification passed" },
+  adminVerifyOff: { ru: "Подтвердить верификацию", en: "Confirm verification" },
 
   // Provider availability settings
   pdAvailTitle: { ru: "Доступность для звонков", en: "Call availability" },

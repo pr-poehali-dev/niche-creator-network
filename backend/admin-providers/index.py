@@ -83,15 +83,23 @@ def handler(event: dict, context) -> dict:
             slug = str(body.get('slug') or '').strip().replace("'", "''")[:64]
             if not slug:
                 return _resp(400, {'error': 'slug required'})
-            value = 'true' if bool(body.get('licenseVerified')) else 'false'
+
+            sets = []
+            if 'licenseVerified' in body:
+                sets.append(f"license_verified={'true' if bool(body.get('licenseVerified')) else 'false'}")
+            if 'verified' in body:
+                sets.append(f"verified={'true' if bool(body.get('verified')) else 'false'}")
+            if not sets:
+                return _resp(400, {'error': 'nothing to update'})
+
             cur.execute(
-                f"UPDATE {SCHEMA}.providers SET license_verified={value} WHERE slug='{slug}'"
+                f"UPDATE {SCHEMA}.providers SET {', '.join(sets)} WHERE slug='{slug}'"
             )
             updated = cur.rowcount
             conn.commit()
             if updated == 0:
                 return _resp(404, {'error': 'provider not found'})
-            return _resp(200, {'success': True, 'slug': slug, 'licenseVerified': value == 'true'})
+            return _resp(200, {'success': True, 'slug': slug})
 
         return _resp(405, {'error': 'method not allowed'})
     finally:

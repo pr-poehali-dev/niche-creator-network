@@ -879,16 +879,22 @@ function AdminPanel() {
 
   useEffect(() => { load(); }, [load]);
 
-  const toggle = async (p: AdminProvider) => {
-    setSavingSlug(p.slug);
+  const toggle = async (p: AdminProvider, field: "licenseVerified" | "verified") => {
+    setSavingSlug(p.slug + field);
     try {
+      const next = !p[field];
       const res = await fetch(func2url["admin-providers"], {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Auth-Token": token() },
-        body: JSON.stringify({ slug: p.slug, licenseVerified: !p.licenseVerified }),
+        body: JSON.stringify({ slug: p.slug, [field]: next }),
       });
       if (res.ok) {
-        setItems((prev) => (prev || []).map((x) => (x.slug === p.slug ? { ...x, licenseVerified: !x.licenseVerified } : x)));
+        setItems((prev) => (prev || []).map((x) => {
+          if (x.slug !== p.slug) return x;
+          const upd = { ...x, [field]: next };
+          if (field === "verified" && !next) upd.licenseVerified = false;
+          return upd;
+        }));
       }
     } finally {
       setSavingSlug(null);
@@ -943,31 +949,36 @@ function AdminPanel() {
           {filtered.map((p) => {
             const eligible = p.verified && isOrg(p.legalStatus) && p.licenses.length > 0;
             return (
-              <div key={p.slug} className="flex items-center gap-4 px-4 py-3.5 border-b border-border last:border-0">
+              <div key={p.slug} className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3.5 border-b border-border last:border-0">
                 <div className="flex-1 min-w-0">
                   <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(p.name, lang)}</div>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <span className="text-[10px] text-muted-foreground">{p.slug}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-sm ${isOrg(p.legalStatus) ? "bg-gold/10 text-gold" : "bg-secondary text-muted-foreground"}`}>{statusLabel(p.legalStatus)}</span>
-                    {p.verified ? (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-green-500/10 text-green-400">{tr("adminVerified")}</span>
-                    ) : (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-secondary text-muted-foreground">{tr("adminNotVerified")}</span>
-                    )}
                     <span className="text-[10px] text-muted-foreground">· {p.licenses.length} {tr("adminLicensesCount")}</span>
                   </div>
                   {!eligible && (
                     <div className="text-[10px] text-amber-400/80 mt-1 flex items-center gap-1"><Icon name="TriangleAlert" size={10} />{tr("adminNotEligible")}</div>
                   )}
                 </div>
-                <button
-                  onClick={() => toggle(p)}
-                  disabled={savingSlug === p.slug}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-montserrat font-bold rounded-sm transition-all shrink-0 disabled:opacity-50 ${p.licenseVerified ? "gold-gradient text-[hsl(220,20%,6%)]" : "border border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
-                >
-                  {savingSlug === p.slug ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name={p.licenseVerified ? "BadgeCheck" : "Badge"} size={14} />}
-                  {p.licenseVerified ? tr("adminLicenseOn") : tr("adminLicenseOff")}
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => toggle(p, "verified")}
+                    disabled={savingSlug === p.slug + "verified"}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-montserrat font-bold rounded-sm transition-all disabled:opacity-50 ${p.verified ? "bg-green-500/15 border border-green-500/40 text-green-400" : "border border-border text-muted-foreground hover:border-green-500 hover:text-green-400"}`}
+                  >
+                    {savingSlug === p.slug + "verified" ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name={p.verified ? "ShieldCheck" : "Shield"} size={14} />}
+                    {p.verified ? tr("adminVerifyOn") : tr("adminVerifyOff")}
+                  </button>
+                  <button
+                    onClick={() => toggle(p, "licenseVerified")}
+                    disabled={savingSlug === p.slug + "licenseVerified"}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-montserrat font-bold rounded-sm transition-all disabled:opacity-50 ${p.licenseVerified ? "gold-gradient text-[hsl(220,20%,6%)]" : "border border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
+                  >
+                    {savingSlug === p.slug + "licenseVerified" ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name={p.licenseVerified ? "BadgeCheck" : "Badge"} size={14} />}
+                    {p.licenseVerified ? tr("adminLicenseOn") : tr("adminLicenseOff")}
+                  </button>
+                </div>
               </div>
             );
           })}
