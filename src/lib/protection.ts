@@ -27,6 +27,7 @@ export function useContentProtection() {
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (!e.key) return;
       const k = e.key.toLowerCase();
       // F12
       if (e.key === "F12") { e.preventDefault(); return; }
