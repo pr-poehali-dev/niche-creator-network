@@ -1972,7 +1972,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
                 </div>
               )}
               <div className={`h-48 overflow-hidden relative ${isPremium(s) ? "mt-6" : ""}`}>
-                <img src={resolveAvatar(s.img, s.gender)} alt={L(s.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <img src={resolveAvatar(s.img, s.gender)} alt={L(s.name, lang)} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
                 {s.isPseudonym && (
                   <div className="absolute top-3 start-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border px-2 py-1 rounded-sm">
@@ -2517,7 +2517,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 <div key={s.name.en} className="border border-border rounded-sm bg-card p-5 card-hover">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-11 h-11 rounded-sm overflow-hidden shrink-0">
-                      <img src={s.img} alt={L(s.name, lang)} className="w-full h-full object-cover" />
+                      <img src={s.img} alt={L(s.name, lang)} loading="lazy" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <div className="font-montserrat font-bold text-sm text-foreground">{L(s.name, lang)}</div>
@@ -4209,7 +4209,7 @@ function CasesSection() {
               <div key={s.name.en} className="flex items-center gap-3 py-2.5 border-b border-border last:border-0">
                 <div className="font-montserrat font-bold text-xs text-gold w-4">{i + 1}</div>
                 <div className="w-7 h-7 rounded-sm overflow-hidden">
-                  <img src={s.img} alt={L(s.name, lang)} className="w-full h-full object-cover" />
+                  <img src={s.img} alt={L(s.name, lang)} loading="lazy" className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <div className="text-xs font-montserrat font-semibold text-foreground">{L(s.name, lang)}</div>

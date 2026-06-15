@@ -160,16 +160,17 @@ def handler(event: dict, context) -> dict:
             role = body.get('role') if body.get('role') in ('client', 'provider') else 'client'
             admin_email = f"admin+{role}@shchit.local"
             esc_email = admin_email.replace("'", "''")
+            esc_role = role.replace("'", "''")
             cur.execute(f"SELECT id, role, name FROM {SCHEMA}.users WHERE email = '{esc_email}'")
             row = cur.fetchone()
             if row:
-                user_id = row[0]
-                cur.execute(f"UPDATE {SCHEMA}.users SET role = '{role}' WHERE id = {user_id}")
+                user_id = int(row[0])
+                cur.execute(f"UPDATE {SCHEMA}.users SET role = '{esc_role}' WHERE id = {user_id}")
             else:
                 placeholder = _make_hash(pysecrets.token_hex(16)).replace("'", "''")
                 cur.execute(
                     f"INSERT INTO {SCHEMA}.users (email, password_hash, role, name) "
-                    f"VALUES ('{esc_email}', '{placeholder}', '{role}', 'Администратор') RETURNING id"
+                    f"VALUES ('{esc_email}', '{placeholder}', '{esc_role}', 'Администратор') RETURNING id"
                 )
                 user_id = cur.fetchone()[0]
             new_token = _create_session(cur, user_id)
