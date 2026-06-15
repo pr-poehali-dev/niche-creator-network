@@ -860,17 +860,47 @@ const cases = [
   },
 ];
 
+const serviceCategories = [
+  { id: "physical", icon: "ShieldCheck", title: { ru: "Физическая безопасность", en: "Physical security" } },
+  { id: "cyber", icon: "Lock", title: { ru: "Информационная и кибербезопасность", en: "Information & cybersecurity" } },
+  { id: "economic", icon: "Briefcase", title: { ru: "Экономическая и корпоративная безопасность", en: "Economic & corporate security" } },
+  { id: "investigation", icon: "Search", title: { ru: "Расследования и аналитика", en: "Investigations & analytics" } },
+  { id: "engineering", icon: "Cpu", title: { ru: "Инженерно-техническая безопасность", en: "Engineering & technical security" } },
+  { id: "polygraph", icon: "Activity", title: { ru: "Полиграфология", en: "Polygraph examination" } },
+] as const;
+
 const services = [
-  { icon: "Activity", title: { ru: "Полиграф-проверка", en: "Polygraph examination" }, price: { ru: "от 8 000 ₽", en: "from $90" }, time: { ru: "2–3 часа", en: "2–3 hours" }, desc: { ru: "Психофизиологическое исследование с применением компьютерного полиграфа для HR и корпоративных нужд", en: "Psychophysiological examination with a computer polygraph for HR and corporate needs" } },
-  { icon: "Search", title: { ru: "Поиск прослушивающих устройств", en: "Bug detection sweep" }, price: { ru: "от 25 000 ₽", en: "from $280" }, time: { ru: "от 4 часов", en: "from 4 hours" }, desc: { ru: "Профессиональное радиочастотное сканирование помещений, офисов и транспортных средств", en: "Professional RF sweeping of premises, offices and vehicles" } },
-  { icon: "Eye", title: { ru: "Наружное наблюдение", en: "Surveillance" }, price: { ru: "от 12 000 ₽/день", en: "from $140/day" }, time: { ru: "от 1 дня", en: "from 1 day" }, desc: { ru: "Профессиональная слежка силами сертифицированных детективов с фото- и видеофиксацией", en: "Professional surveillance by certified investigators with photo and video evidence" } },
-  { icon: "FileSearch", title: { ru: "Сбор досье", en: "Background dossier" }, price: { ru: "от 15 000 ₽", en: "from $170" }, time: { ru: "3–7 дней", en: "3–7 days" }, desc: { ru: "Комплексная проверка физических и юридических лиц по открытым и закрытым источникам", en: "Comprehensive checks of individuals and companies via open and closed sources" } },
-  { icon: "Shield", title: { ru: "Защита переговоров", en: "Meeting protection" }, price: { ru: "от 30 000 ₽", en: "from $340" }, time: { ru: "под ключ", en: "turnkey" }, desc: { ru: "Обеспечение защищённого периметра для конфиденциальных встреч на вашей или нейтральной территории", en: "A secure perimeter for confidential meetings on your or neutral territory" } },
-  { icon: "UserCheck", title: { ru: "HR-безопасность", en: "HR security" }, price: { ru: "от 5 000 ₽", en: "from $60" }, time: { ru: "1–2 дня", en: "1–2 days" }, desc: { ru: "Проверка соискателей, мониторинг персонала, расследование инцидентов внутри компании", en: "Applicant screening, staff monitoring and internal incident investigations" } },
-  { icon: "Building2", title: { ru: "Охрана объектов", en: "Site security" }, price: { ru: "от 180 ₽/час", en: "from $2/hour" }, time: { ru: "24/7", en: "24/7" }, desc: { ru: "Круглосуточная физическая охрана офисов, складов, ТЦ и промышленных объектов", en: "24/7 physical security for offices, warehouses, malls and industrial sites" } },
-  { icon: "UserCog", title: { ru: "Личная охрана", en: "Close protection" }, price: { ru: "от 9 000 ₽/смена", en: "from $100/shift" }, time: { ru: "по запросу", en: "on request" }, desc: { ru: "Профессиональные телохранители и VIP-сопровождение для руководителей и публичных персон", en: "Professional bodyguards and VIP escort for executives and public figures" } },
-  { icon: "Radio", title: { ru: "Пультовая охрана", en: "Alarm monitoring" }, price: { ru: "от 3 000 ₽/мес", en: "from $35/mo" }, time: { ru: "24/7", en: "24/7" }, desc: { ru: "Мониторинг сигнализации с выездом групп быстрого реагирования", en: "Alarm monitoring with rapid response team dispatch" } },
-  { icon: "Video", title: { ru: "Видеонаблюдение", en: "Video surveillance" }, price: { ru: "от 20 000 ₽", en: "from $230" }, time: { ru: "под ключ", en: "turnkey" }, desc: { ru: "Проектирование, монтаж и обслуживание систем видеонаблюдения и контроля доступа", en: "Design, installation and maintenance of CCTV and access control systems" } },
+  // Физическая безопасность
+  { cat: "physical", icon: "UserCog", title: { ru: "Телохранитель (личная охрана)", en: "Bodyguard (close protection)" }, price: { ru: "от 9 000 ₽/смена", en: "from $100/shift" }, time: { ru: "по запросу", en: "on request" }, desc: { ru: "Непосредственная защита физического лица — VIP, руководителя, публичной персоны", en: "Direct protection of an individual — a VIP, executive or public figure" } },
+  { cat: "physical", icon: "Building2", title: { ru: "Сотрудник службы безопасности / охранник", en: "Security guard" }, price: { ru: "от 180 ₽/час", en: "from $2/hour" }, time: { ru: "24/7", en: "24/7" }, desc: { ru: "Охрана объектов, контроль пропускного режима, патрулирование территории офисов, складов и ТЦ", en: "Site protection, access control and patrolling of offices, warehouses and malls" } },
+  { cat: "physical", icon: "ScanLine", title: { ru: "Инспектор по досмотру", en: "Screening inspector" }, price: { ru: "по запросу", en: "on request" }, time: { ru: "сменный график", en: "shift schedule" }, desc: { ru: "Работа на КПП с применением технических средств досмотра — аэропорты, вокзалы, объекты", en: "Checkpoint work with technical screening means — airports, stations and facilities" } },
+  { cat: "physical", icon: "Users", title: { ru: "Безопасность массовых мероприятий", en: "Event security specialist" }, price: { ru: "от 15 000 ₽", en: "from $170" }, time: { ru: "под событие", en: "per event" }, desc: { ru: "Порядок и безопасность на концертах, спортивных матчах и фестивалях", en: "Order and safety at concerts, sporting events and festivals" } },
+  { cat: "physical", icon: "Dog", title: { ru: "Кинолог", en: "K9 handler" }, price: { ru: "от 12 000 ₽", en: "from $140" }, time: { ru: "по запросу", en: "on request" }, desc: { ru: "Работа со служебными собаками: поиск запрещённых веществ, взрывчатки, задержание нарушителей", en: "Service-dog work: detection of prohibited substances, explosives and apprehension" } },
+
+  // Информационная и кибербезопасность
+  { cat: "cyber", icon: "Lock", title: { ru: "Специалист по информационной безопасности", en: "Information security specialist" }, price: { ru: "от 20 000 ₽", en: "from $230" }, time: { ru: "проект", en: "project" }, desc: { ru: "Настройка систем защиты: межсетевых экранов, антивирусов, систем обнаружения вторжений", en: "Setup of protection systems: firewalls, antivirus and intrusion detection" } },
+  { cat: "cyber", icon: "Activity", title: { ru: "Аналитик по кибербезопасности (SOC)", en: "Cybersecurity analyst (SOC)" }, price: { ru: "от 25 000 ₽/мес", en: "from $280/mo" }, time: { ru: "24/7 мониторинг", en: "24/7 monitoring" }, desc: { ru: "Мониторинг событий безопасности в реальном времени, выявление аномалий и реагирование на инциденты", en: "Real-time security monitoring, anomaly detection and incident response" } },
+  { cat: "cyber", icon: "Bug", title: { ru: "Пентестер / этичный хакер", en: "Penetration tester / ethical hacker" }, price: { ru: "от 40 000 ₽", en: "from $450" }, time: { ru: "от 1 недели", en: "from 1 week" }, desc: { ru: "Санкционированные атаки на системы компании для поиска уязвимостей раньше злоумышленников", en: "Authorized attacks on company systems to find vulnerabilities before attackers do" } },
+  { cat: "cyber", icon: "Globe", title: { ru: "OSINT-специалист", en: "OSINT specialist" }, price: { ru: "от 15 000 ₽", en: "from $170" }, time: { ru: "2–5 дней", en: "2–5 days" }, desc: { ru: "Сбор и анализ информации из открытых источников для оценки рисков и проверки контрагентов", en: "Collection and analysis of open-source data for risk assessment and counterparty checks" } },
+  { cat: "cyber", icon: "FileSearch", title: { ru: "Форензик-аналитик (цифровая криминалистика)", en: "Digital forensics analyst" }, price: { ru: "от 35 000 ₽", en: "from $400" }, time: { ru: "3–10 дней", en: "3–10 days" }, desc: { ru: "Расследование киберпреступлений, восстановление хронологии событий и сбор цифровых улик", en: "Investigation of cybercrime, event-timeline reconstruction and digital evidence collection" } },
+  { cat: "cyber", icon: "ShieldAlert", title: { ru: "DLP-специалист", en: "DLP specialist" }, price: { ru: "от 30 000 ₽", en: "from $340" }, time: { ru: "проект", en: "project" }, desc: { ru: "Управление системами предотвращения утечек конфиденциальной информации (Data Loss Prevention)", en: "Management of Data Loss Prevention systems for confidential information" } },
+
+  // Экономическая и корпоративная безопасность
+  { cat: "economic", icon: "Banknote", title: { ru: "Специалист по экономической безопасности", en: "Economic security specialist" }, price: { ru: "от 25 000 ₽", en: "from $280" }, time: { ru: "проект", en: "project" }, desc: { ru: "Предотвращение мошенничества, хищений и коррупции внутри организации", en: "Prevention of fraud, theft and corruption inside the organization" } },
+  { cat: "economic", icon: "ClipboardCheck", title: { ru: "Аудитор безопасности бизнес-процессов", en: "Business-process security auditor" }, price: { ru: "от 30 000 ₽", en: "from $340" }, time: { ru: "1–3 недели", en: "1–3 weeks" }, desc: { ru: "Проверка внутренних процедур на слабые места, ведущие к финансовым потерям", en: "Review of internal procedures for weak points leading to financial losses" } },
+  { cat: "economic", icon: "TrendingUp", title: { ru: "Менеджер по управлению рисками", en: "Risk manager" }, price: { ru: "от 35 000 ₽", en: "from $400" }, time: { ru: "проект", en: "project" }, desc: { ru: "Идентификация финансовых, операционных и репутационных угроз и стратегии их минимизации", en: "Identification of financial, operational and reputational threats and mitigation strategies" } },
+
+  // Расследования и аналитика
+  { cat: "investigation", icon: "Eye", title: { ru: "Частный детектив", en: "Private investigator" }, price: { ru: "от 12 000 ₽/день", en: "from $140/day" }, time: { ru: "от 1 дня", en: "from 1 day" }, desc: { ru: "Сыщицкая деятельность по поручению клиентов: поиск людей, проверка фактов, наблюдение", en: "Investigative work for clients: locating people, fact-checking and surveillance" } },
+  { cat: "investigation", icon: "Briefcase", title: { ru: "Корпоративный следователь", en: "Corporate investigator" }, price: { ru: "от 20 000 ₽", en: "from $230" }, time: { ru: "3–10 дней", en: "3–10 days" }, desc: { ru: "Внутренние расследования по фактам мошенничества, краж и нарушения политики компании", en: "Internal investigations of fraud, theft and corporate-policy violations" } },
+  { cat: "investigation", icon: "UserSearch", title: { ru: "Профайлер", en: "Profiler" }, price: { ru: "от 18 000 ₽", en: "from $200" }, time: { ru: "по запросу", en: "on request" }, desc: { ru: "Психологический портрет для прогноза поведения — переговоры и оценка благонадёжности", en: "Psychological profiling to predict behavior — negotiations and trustworthiness assessment" } },
+
+  // Инженерно-техническая безопасность
+  { cat: "engineering", icon: "Video", title: { ru: "Инженер по системам безопасности", en: "Security systems engineer" }, price: { ru: "от 20 000 ₽", en: "from $230" }, time: { ru: "под ключ", en: "turnkey" }, desc: { ru: "Проектирование, монтаж и обслуживание видеонаблюдения (CCTV), СКУД и сигнализации", en: "Design, installation and maintenance of CCTV, access control and alarm systems" } },
+  { cat: "engineering", icon: "RadioTower", title: { ru: "Инженер технической защиты информации", en: "Technical information protection engineer" }, price: { ru: "от 25 000 ₽", en: "from $280" }, time: { ru: "от 4 часов", en: "from 4 hours" }, desc: { ru: "Защита каналов связи от прослушивания, генераторы шума, поиск закладок и экранирование помещений", en: "Protection of comms from eavesdropping, noise generators, bug sweeps and room shielding" } },
+
+  // Полиграфология
+  { cat: "polygraph", icon: "Activity", title: { ru: "Полиграфолог", en: "Polygraph examiner" }, price: { ru: "от 8 000 ₽", en: "from $90" }, time: { ru: "2–3 часа", en: "2–3 hours" }, desc: { ru: "Полиграфные проверки для бизнеса и частных лиц: HR, расследования, проверка благонадёжности", en: "Polygraph examinations for business and individuals: HR, investigations and trustworthiness checks" } },
 ];
 
 const courses = [
@@ -3916,17 +3946,26 @@ function SearchSection({ setActive }: { setActive: (s: Section) => void }) {
   const { providers } = useProviders();
   const { geo } = useGeo();
   const [service, setService] = useState("");
+  const [category, setCategory] = useState("");
   const [minRating, setMinRating] = useState(0);
   const [licensedOnly, setLicensedOnly] = useState(false);
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
   const [date, setDate] = useState("");
 
-  const serviceOptions = services.map((s) => L(s.title, lang));
+  const servicesInCat = category ? services.filter((s) => s.cat === category) : services;
+  const serviceOptions = servicesInCat.map((s) => L(s.title, lang));
   const cityOptions = Array.from(new Set(providers.map((p) => L(p.city, lang)).filter(Boolean))).sort();
   const countryOptions = Array.from(new Set(providers.map((p) => (p.country ? L(p.country, lang) : "")).filter(Boolean))).sort();
 
-  const reset = () => { setService(""); setMinRating(0); setLicensedOnly(false); setCity(""); setCountry(""); setDate(""); };
+  const reset = () => { setService(""); setCategory(""); setMinRating(0); setLicensedOnly(false); setCity(""); setCountry(""); setDate(""); };
+
+  const matchesText = (p: Provider, q: string) => {
+    const tags = (lang === "ru" ? p.tags.ru : p.tags.en).map((t) => t.toLowerCase());
+    const title = L(p.title, lang).toLowerCase();
+    const ql = q.toLowerCase();
+    return title.includes(ql) || tags.some((t) => t.includes(ql) || ql.includes(t));
+  };
 
   const dow = date ? new Date(date + "T12:00:00").getDay() : null;
   const availableOnDate = (p: Provider) => {
@@ -3941,12 +3980,12 @@ function SearchSection({ setActive }: { setActive: (s: Section) => void }) {
     if (licensedOnly && !isLicensed(p)) return false;
     if (city && L(p.city, lang) !== city) return false;
     if (country && (!p.country || L(p.country, lang) !== country)) return false;
-    if (service) {
-      const tags = (lang === "ru" ? p.tags.ru : p.tags.en).map((t) => t.toLowerCase());
-      const title = L(p.title, lang).toLowerCase();
-      const q = service.toLowerCase();
-      if (!title.includes(q) && !tags.some((t) => t.includes(q) || q.includes(t))) return false;
+    if (category) {
+      const catServices = services.filter((s) => s.cat === category);
+      const anyMatch = catServices.some((s) => matchesText(p, L(s.title, lang)));
+      if (!anyMatch) return false;
     }
+    if (service && !matchesText(p, service)) return false;
     if (!availableOnDate(p)) return false;
     return true;
   });
@@ -3963,6 +4002,13 @@ function SearchSection({ setActive }: { setActive: (s: Section) => void }) {
 
       <div className="border border-border rounded-sm bg-card p-5 mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFCategory")}</label>
+            <select value={category} onChange={(e) => { setCategory(e.target.value); setService(""); }} className="w-full border border-border bg-secondary rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold">
+              <option value="">{tr("searchAnyCategory")}</option>
+              {serviceCategories.map((c) => <option key={c.id} value={c.id}>{L(c.title, lang)}</option>)}
+            </select>
+          </div>
           <div>
             <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFService")}</label>
             <div className="flex items-center gap-2 border border-border bg-secondary rounded-sm px-3">
@@ -4042,49 +4088,84 @@ function SearchSection({ setActive }: { setActive: (s: Section) => void }) {
 
 function ServicesSection() {
   const { lang, tr } = useLang();
+  const [query, setQuery] = useState("");
+  const [activeCat, setActiveCat] = useState("");
+
+  const q = query.trim().toLowerCase();
+  const filtered = services.filter((s) => {
+    if (activeCat && s.cat !== activeCat) return false;
+    if (q && !L(s.title, lang).toLowerCase().includes(q) && !L(s.desc, lang).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const shownCats = serviceCategories.filter((c) => filtered.some((s) => s.cat === c.id));
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="mb-10">
+      <div className="mb-8">
         <div className="tag-security mb-3 inline-block">{tr("catalog")}</div>
         <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">{tr("servicesTitle")}</h2>
         <p className="text-muted-foreground text-sm">{tr("servicesDesc")}</p>
       </div>
 
-      <div className="flex gap-3 mb-10">
+      <div className="flex gap-3 mb-6">
         <div className="flex-1 flex items-center gap-3 border border-border bg-card rounded-sm px-4">
           <Icon name="Search" size={16} className="text-muted-foreground" />
-          <input placeholder={tr("searchServices")} className="flex-1 bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr("searchServices")} className="flex-1 bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
+          {query && <button onClick={() => setQuery("")} className="text-muted-foreground hover:text-foreground"><Icon name="X" size={15} /></button>}
         </div>
-        <button className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 text-xs font-montserrat font-bold rounded-sm">{tr("search")}</button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
-        {services.map((s) => (
-          <div key={s.title.en} className="group border border-border rounded-sm bg-card p-6 card-hover shine-on-hover cursor-pointer">
-            <div className="flex items-start justify-between mb-5">
-              <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                <Icon name={s.icon} size={20} className="text-[hsl(220,20%,6%)]" />
-              </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Icon name="Star" size={11} className="text-gold fill-current" />
-                4.9
-              </div>
-            </div>
-            <h3 className="font-montserrat font-bold text-sm text-foreground mb-2">{L(s.title, lang)}</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed mb-5">{L(s.desc, lang)}</p>
-            <div className="divider-gold mb-4" />
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-montserrat font-extrabold text-base text-gold">{L(s.price, lang)}</div>
-                <div className="text-[10px] text-muted-foreground flex items-center gap-1">
-                  <Icon name="Clock" size={10} />{L(s.time, lang)}
-                </div>
-              </div>
-              <button className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">{tr("order")}</button>
-            </div>
-          </div>
+      <div className="flex flex-wrap gap-2 mb-10">
+        <button onClick={() => setActiveCat("")} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors ${activeCat === "" ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"}`}>{tr("searchAnyCategory")}</button>
+        {serviceCategories.map((c) => (
+          <button key={c.id} onClick={() => setActiveCat(c.id === activeCat ? "" : c.id)} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors flex items-center gap-1.5 ${activeCat === c.id ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"}`}>
+            <Icon name={c.icon} fallback="Shield" size={13} />{L(c.title, lang)}
+          </button>
         ))}
       </div>
+
+      {shownCats.length === 0 && (
+        <div className="text-center text-muted-foreground text-sm py-16 border border-dashed border-border rounded-sm">{tr("searchNoResults")}</div>
+      )}
+
+      {shownCats.map((cat) => (
+        <div key={cat.id} className="mb-12">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
+              <Icon name={cat.icon} fallback="Shield" size={17} className="text-[hsl(220,20%,6%)]" />
+            </div>
+            <h3 className="font-montserrat font-bold text-lg text-foreground">{L(cat.title, lang)}</h3>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filtered.filter((s) => s.cat === cat.id).map((s) => (
+              <div key={s.title.en} className="group border border-border rounded-sm bg-card p-6 card-hover shine-on-hover cursor-pointer">
+                <div className="flex items-start justify-between mb-5">
+                  <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                    <Icon name={s.icon} size={20} className="text-[hsl(220,20%,6%)]" />
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Icon name="Star" size={11} className="text-gold fill-current" />
+                    4.9
+                  </div>
+                </div>
+                <h3 className="font-montserrat font-bold text-sm text-foreground mb-2">{L(s.title, lang)}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-5">{L(s.desc, lang)}</p>
+                <div className="divider-gold mb-4" />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-montserrat font-extrabold text-base text-gold">{L(s.price, lang)}</div>
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      <Icon name="Clock" size={10} />{L(s.time, lang)}
+                    </div>
+                  </div>
+                  <button className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">{tr("order")}</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
 
       <div className="mt-10 border border-gold/30 rounded-sm bg-card p-6 flex flex-col md:flex-row items-start md:items-center gap-4">
         <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">

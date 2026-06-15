@@ -555,6 +555,9 @@ export const t: Dict = {
   payError: { ru: "Не удалось создать платёж. Попробуйте ещё раз.", en: "Failed to create the payment. Please try again." },
   pdInactive: { ru: "Не активна", en: "Inactive" },
   pdNoSub: { ru: "Подписка не оформлена — выберите тариф", en: "No active subscription — choose a plan" },
+  searchFCategory: { ru: "Категория", en: "Category" },
+  searchAnyCategory: { ru: "Все категории", en: "All categories" },
+  searchNoResults: { ru: "Ничего не найдено. Попробуйте изменить запрос.", en: "Nothing found. Try changing your query." },
 
   // License badge
   licenseBadge: { ru: "Лицензия", en: "License" },
