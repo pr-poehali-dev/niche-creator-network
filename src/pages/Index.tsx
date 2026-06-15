@@ -16,7 +16,7 @@ const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-2
 const SPY_AVATAR_M = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/61fc9ccd-a5ee-4375-8640-5c890da0df33.jpg";
 const SPY_AVATAR_F = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b40d29de-2a29-448c-82c8-a2baa711ee57.jpg";
 
-type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "admin";
+type Section = "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "admin";
 type Role = "client" | "provider";
 
 type NavItem = { id: Section; key: keyof typeof t; icon: string };
@@ -1225,6 +1225,7 @@ export default function Index() {
     switch (active) {
       case "home": return <HomeSection setActive={go} role={role} openChat={openChat} />;
       case "profile": return <ProfileSection setActive={go} openChat={openChat} />;
+      case "specialists": return <SpecialistsListSection setActive={go} />;
       case "cases": return <CasesSection />;
       case "services": return role === "client" ? <SearchSection setActive={go} /> : <ServicesSection />;
       case "courses": return <CoursesSection />;
@@ -1874,7 +1875,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
                 <Icon name="ArrowRight" size={18} />
               </button>
               <button
-                onClick={() => setActive(isClient ? "services" : "dashboard")}
+                onClick={() => setActive(isClient ? "specialists" : "dashboard")}
                 className="border border-border text-foreground px-7 py-4 font-montserrat font-semibold text-sm tracking-wide hover:border-gold hover:text-gold transition-all rounded-sm flex items-center gap-2"
               >
                 {tr(isClient ? "heroClientCta2" : "heroProviderCta2")}
@@ -1977,7 +1978,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
             <div className="tag-security mb-3 inline-block">{tr("specialists")}</div>
             <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("topExperts")}</h2>
           </div>
-          <button onClick={() => setActive("services")} className="text-sm text-gold hover:gap-2 font-montserrat hidden md:flex items-center gap-1 transition-all">
+          <button onClick={() => setActive("specialists")} className="text-sm text-gold hover:gap-2 font-montserrat hidden md:flex items-center gap-1 transition-all">
             {tr("allSpecialists")} <Icon name="ArrowRight" size={14} />
           </button>
         </div>
@@ -3626,7 +3627,7 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
   const [emailState, setEmailState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [autoSent, setAutoSent] = useState(false);
   const [period, setPeriod] = useState<"month" | "year">("month");
-  const [quote, setQuote] = useState<{ currency: string; amount: number; provider: string; countryCode: string } | null>(null);
+  const [quote, setQuote] = useState<{ currency: string; amount: number; provider: string; countryCode: string; promo?: boolean; promoDiscount?: number; promoUntil?: string; fullAmount?: number } | null>(null);
   const [payErr, setPayErr] = useState("");
 
   const planKey = PLAN_KEY_MAP[plan.name as string] || "pro";
@@ -3660,7 +3661,16 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
   const yearlyFull = priceNum * 12;
   const yearlyDiscounted = Math.round(yearlyFull * 0.83);
   const yearlySaving = Math.round(yearlyFull - yearlyDiscounted);
-  const amountStr = period === "year" ? fmt(yearlyDiscounted) : priceStr;
+
+  // Промо-скидка 30% до 1 августа 2026 (источник истины — бэкенд quote.promo)
+  const promoActive = quote ? !!quote.promo : (new Date() < new Date("2026-08-01T00:00:00Z"));
+  const promoPct = quote && quote.promoDiscount ? quote.promoDiscount : 30;
+  const promoFactor = (100 - promoPct) / 100;
+
+  const baseFull = period === "year" ? yearlyDiscounted : priceNum;
+  const baseFinal = promoActive ? Math.round(baseFull * promoFactor) : baseFull;
+  const amountStr = fmt(baseFinal);
+  const amountFullStr = fmt(baseFull);
 
   const receipt = (to?: string) => ({
     receiptNo: "SN-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + Math.floor(Math.random() * 900 + 100),
@@ -3820,13 +3830,21 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
                   <span className="font-montserrat font-bold text-green-400">−{fmt(yearlySaving)}</span>
                 </div>
               )}
+              {promoActive && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground flex items-center gap-1"><Icon name="Tag" size={12} className="text-green-400" />{tr("promoLabel")}</span>
+                  <span className="font-montserrat font-bold text-green-400">−{promoPct}%</span>
+                </div>
+              )}
               <div className="divider-gold my-1" />
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">{tr("payAmount")}</span>
                 <div className="text-end">
-                  {period === "year" && (
+                  {promoActive ? (
+                    <div className="text-xs text-muted-foreground line-through">{amountFullStr}</div>
+                  ) : period === "year" ? (
                     <div className="text-xs text-muted-foreground line-through">{fmt(yearlyFull)}</div>
-                  )}
+                  ) : null}
                   <span className="font-montserrat font-extrabold text-2xl text-gold">{amountStr}</span>
                   <span className="text-xs text-muted-foreground ms-1">{period === "year" ? tr("billPerYear") : tr("perMonth")}</span>
                   {isForeign && localAmountStr && (
@@ -3834,6 +3852,9 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
                   )}
                 </div>
               </div>
+              {promoActive && (
+                <div className="text-[11px] text-green-400 text-center pt-1">{tr("promoUntil")}</div>
+              )}
             </div>
 
             {isForeign ? (
@@ -3903,6 +3924,7 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
 function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
   const { tr } = useLang();
   const [payPlan, setPayPlan] = useState<PayPlan | null>(null);
+  const promoActive = new Date() < new Date("2026-08-01T00:00:00Z");
   const plans = [
     {
       name: "planStartName" as const,
@@ -3954,6 +3976,16 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
         <p className="text-muted-foreground text-sm max-w-2xl mx-auto">{tr("pricingDesc")}</p>
       </div>
 
+      {promoActive && (
+        <div className="border border-green-500/40 bg-green-500/10 rounded-sm p-4 mb-8 max-w-3xl mx-auto flex items-center gap-3 justify-center text-center">
+          <Icon name="BadgePercent" size={22} className="text-green-400 shrink-0" />
+          <div>
+            <div className="font-montserrat font-bold text-sm text-foreground">{tr("promoBannerTitle")}</div>
+            <div className="text-xs text-muted-foreground">{tr("promoBannerText")}</div>
+          </div>
+        </div>
+      )}
+
       {/* No-commission highlights */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-10 max-w-4xl mx-auto">
         {[
@@ -3995,10 +4027,27 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
               <div className="text-xs text-muted-foreground">{tr(p.for)}</div>
             </div>
             <div className="mb-6">
-              <div>
-                <span className={`font-montserrat font-extrabold text-gold ${p.premium ? "text-4xl" : "text-3xl"}`}>{tr(p.price)}</span>
-                {!p.enterprise && <span className="text-xs text-muted-foreground ms-1">{tr("perMonth")}</span>}
-              </div>
+              {promoActive && !p.enterprise ? (() => {
+                const ps = tr(p.price);
+                const n = parseFloat(ps.replace(/[^\d.,]/g, "").replace(/\s/g, "").replace(",", ".")) || 0;
+                const discounted = Math.round(n * 0.7).toLocaleString("ru-RU");
+                const discStr = ps.replace(/[\d\s.,]+/, discounted);
+                return (
+                  <div>
+                    <span className="text-sm text-muted-foreground line-through me-2">{ps}</span>
+                    <span className="inline-flex items-center text-[10px] font-montserrat font-bold text-green-400 bg-green-500/15 rounded-sm px-1.5 py-0.5 align-middle">−30%</span>
+                    <div>
+                      <span className={`font-montserrat font-extrabold text-gold ${p.premium ? "text-4xl" : "text-3xl"}`}>{discStr}</span>
+                      <span className="text-xs text-muted-foreground ms-1">{tr("perMonth")}</span>
+                    </div>
+                  </div>
+                );
+              })() : (
+                <div>
+                  <span className={`font-montserrat font-extrabold text-gold ${p.premium ? "text-4xl" : "text-3xl"}`}>{tr(p.price)}</span>
+                  {!p.enterprise && <span className="text-xs text-muted-foreground ms-1">{tr("perMonth")}</span>}
+                </div>
+              )}
               {!p.enterprise && (
                 <div className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-montserrat font-semibold text-green-400">
                   <Icon name="Check" size={11} />
@@ -4532,6 +4581,57 @@ function SearchSection({ setActive }: { setActive: (s: Section) => void }) {
             ))}
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+function SpecialistsListSection({ setActive }: { setActive: (s: Section) => void }) {
+  const { tr } = useLang();
+  const { providers } = useProviders();
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+
+  const list = providers
+    .filter((p) => p.active)
+    .filter((p) => !verifiedOnly || isLicensed(p));
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      <div className="mb-6">
+        <div className="tag-security mb-3 inline-block">{tr("specialists")}</div>
+        <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">{tr("allSpecialistsTitle")}</h2>
+        <p className="text-muted-foreground text-sm">{tr("allSpecialistsSub")}</p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <button
+          onClick={() => setVerifiedOnly((v) => !v)}
+          className={`flex items-center gap-2 text-xs font-montserrat font-semibold rounded-sm px-3 py-2 border transition-all ${verifiedOnly ? "bg-green-500/15 border-green-500/40 text-green-400" : "bg-card border-border text-muted-foreground hover:border-gold hover:text-foreground"}`}
+        >
+          <Icon name={verifiedOnly ? "ShieldCheck" : "Shield"} size={14} />
+          {tr("filterVerifiedOnly")}
+        </button>
+        <button
+          onClick={() => setActive("services")}
+          className="flex items-center gap-2 text-xs font-montserrat font-semibold rounded-sm px-3 py-2 border border-border bg-card text-muted-foreground hover:border-gold hover:text-gold transition-all"
+        >
+          <Icon name="Search" size={14} />
+          {tr("heroClientCta1")}
+        </button>
+        <span className="text-xs text-muted-foreground ms-auto">{tr("searchFound")}: <span className="text-gold font-bold">{list.length}</span></span>
+      </div>
+
+      {list.length === 0 ? (
+        <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
+          <Icon name="SearchX" size={40} className="text-muted-foreground/30" />
+          <span className="text-sm text-muted-foreground">{tr("filterNoResults")}</span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+          {list.map((p) => (
+            <ProviderResultCard key={p.slug} p={p} onOpen={() => setActive("profile")} />
+          ))}
+        </div>
       )}
     </div>
   );

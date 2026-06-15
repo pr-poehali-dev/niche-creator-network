@@ -2,8 +2,17 @@ import json
 import os
 import base64
 import uuid
+from datetime import datetime, timezone
 import urllib.request
 import urllib.error
+
+# Промо-скидка 30% действует до 1 августа 2026 года (включительно по 31 июля)
+PROMO_DISCOUNT = 0.30
+PROMO_UNTIL = datetime(2026, 8, 1, tzinfo=timezone.utc)
+
+
+def _promo_active():
+    return datetime.now(timezone.utc) < PROMO_UNTIL
 
 CORS = {
     'Access-Control-Allow-Origin': '*',
@@ -175,12 +184,16 @@ def handler(event, context):
     period = (body.get('period') or 'month').lower()
     months = 12 if period == 'year' else 1
     # Год = 10 месяцев (2 в подарок)
-    base_rub = PLAN_PRICES_RUB[plan] * (10 if months == 12 else 1)
+    full_rub = PLAN_PRICES_RUB[plan] * (10 if months == 12 else 1)
+
+    promo = _promo_active()
+    base_rub = round(full_rub * (1 - PROMO_DISCOUNT)) if promo else full_rub
 
     cc = _country_code(event, body)
     currency = COUNTRY_CURRENCY.get(cc, 'USD')
     rate = _rate(currency)
     local_amount = round(base_rub * rate, 2)
+    full_amount = round(full_rub * rate, 2)
 
     quote = {
         'plan': plan,
@@ -188,6 +201,11 @@ def handler(event, context):
         'currency': currency,
         'amount': local_amount,
         'amountRub': base_rub,
+        'fullAmount': full_amount,
+        'fullAmountRub': full_rub,
+        'promo': promo,
+        'promoDiscount': int(PROMO_DISCOUNT * 100) if promo else 0,
+        'promoUntil': PROMO_UNTIL.date().isoformat(),
         'period': 'year' if months == 12 else 'month',
         'provider': 'yookassa' if cc == 'RU' else 'paddle',
     }

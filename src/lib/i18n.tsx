@@ -1053,6 +1053,12 @@ export const t: Dict = {
   paywallTitle: { ru: "Нужен активный тариф", en: "Active subscription required" },
   paywallText: { ru: "Заполните карточку и оплатите тариф, чтобы открыть чаты, форум, курсы и поиск заказов.", en: "Complete your profile and purchase a plan to unlock chats, forum, courses and order search." },
   paywallBtn: { ru: "Перейти к оплате тарифа", en: "Go to subscription" },
+  allSpecialistsTitle: { ru: "Все специалисты", en: "All specialists" },
+  allSpecialistsSub: { ru: "Все исполнители, зарегистрированные на платформе. Нажмите на карточку, чтобы открыть профиль.", en: "Every provider registered on the platform. Click a card to open the profile." },
+  promoLabel: { ru: "Скидка по акции", en: "Promo discount" },
+  promoUntil: { ru: "Акция −30% действует до 1 августа 2026", en: "−30% promo valid until August 1, 2026" },
+  promoBannerTitle: { ru: "Скидка 30% на все тарифы", en: "30% off all plans" },
+  promoBannerText: { ru: "Успейте оформить подписку со скидкой 30% — акция действует до 1 августа 2026 года.", en: "Get 30% off your subscription — offer valid until August 1, 2026." },
 };
 
 interface LangCtx {
