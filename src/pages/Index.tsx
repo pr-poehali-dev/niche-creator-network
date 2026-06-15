@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Icon from "@/components/ui/icon";
 import { useLang, t, LANGS, type Lang } from "@/lib/i18n";
 import { dataExtra } from "@/lib/i18n-extra";
@@ -1629,6 +1629,7 @@ function LandingValue() {
 
 function LandingServices() {
   const { lang, tr } = useLang();
+  const { servicePrices } = useProviders();
   return (
     <section className="max-w-7xl mx-auto px-4 py-16">
       <div className="text-center mb-12">
@@ -1645,7 +1646,7 @@ function LandingServices() {
               <h3 className="font-montserrat font-bold text-sm text-foreground">{L(s.title, lang)}</h3>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-2">{L(s.desc, lang)}</p>
-            <div className="font-montserrat font-bold text-sm text-gold">{L(s.price, lang)}</div>
+            <div className="font-montserrat font-bold text-sm text-gold">{servicePrices[s.title.en] ? `${tr("priceFrom")} ${servicePrices[s.title.en]}` : L(s.price, lang)}</div>
           </div>
         ))}
       </div>
@@ -2491,7 +2492,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [vfState, setVfState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [sub, setSub] = useState<{ plan: string; active: boolean; until: string | null } | null>(null);
-  const [myServices, setMyServices] = useState<string[]>([]);
+  const [myServices, setMyServices] = useState<{ key: string; price: string }[]>([]);
   const [svcPickerOpen, setSvcPickerOpen] = useState(false);
   const [svcSaveState, setSvcSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
@@ -2502,7 +2503,9 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
         const v = d.verification;
         if (!v) return;
         setSub({ plan: v.plan || "start", active: !!v.subscriptionActive, until: v.subscriptionUntil || null });
-        if (Array.isArray(v.services)) setMyServices(v.services);
+        if (Array.isArray(v.services)) {
+          setMyServices(v.services.map((s: unknown) => typeof s === "string" ? { key: s, price: "" } : { key: (s as { key: string }).key, price: (s as { price?: string }).price || "" }));
+        }
         setVf({
           fullName: v.fullName || "", passportNumber: v.passportNumber || "", legalStatus: v.legalStatus || "ip",
           registry: v.registry || "",
@@ -2536,7 +2539,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     }
   };
 
-  const saveServices = async (next: string[]) => {
+  const saveServices = async (next: { key: string; price: string }[]) => {
     setSvcSaveState("saving");
     try {
       const payload = { ...vf, licenses: vf.licenses.filter((l) => l.trim()), age: vf.age ? parseInt(vf.age) : null };
@@ -2552,10 +2555,24 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     }
   };
 
+  const svcSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleServiceSave = (next: { key: string; price: string }[]) => {
+    if (svcSaveTimer.current) clearTimeout(svcSaveTimer.current);
+    svcSaveTimer.current = setTimeout(() => saveServices(next), 700);
+  };
+
   const toggleService = (key: string) => {
     setMyServices((prev) => {
-      const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+      const next = prev.some((s) => s.key === key) ? prev.filter((s) => s.key !== key) : [...prev, { key, price: "" }];
       saveServices(next);
+      return next;
+    });
+  };
+
+  const setServicePrice = (key: string, price: string) => {
+    setMyServices((prev) => {
+      const next = prev.map((s) => (s.key === key ? { ...s, price } : s));
+      scheduleServiceSave(next);
       return next;
     });
   };
@@ -2841,23 +2858,31 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                     {myServices.length === 0 && (
                       <div className="text-xs text-muted-foreground py-6 text-center border border-dashed border-border rounded-sm">{tr("pdNoServices")}</div>
                     )}
-                    {services.filter((s) => myServices.includes(s.title.en)).map((s) => (
-                      <div key={s.title.en} className="flex items-center gap-3 p-3 border border-border rounded-sm">
-                        <div className="w-8 h-8 gold-gradient rounded flex items-center justify-center shrink-0">
-                          <Icon name={s.icon} size={14} className="text-[hsl(220,20%,6%)]" />
+                    {myServices.map((ms) => {
+                      const s = services.find((x) => x.title.en === ms.key);
+                      if (!s) return null;
+                      return (
+                        <div key={ms.key} className="flex items-center gap-3 p-3 border border-border rounded-sm">
+                          <div className="w-8 h-8 gold-gradient rounded flex items-center justify-center shrink-0">
+                            <Icon name={s.icon} size={14} className="text-[hsl(220,20%,6%)]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(s.title, lang)}</div>
+                            <div className="text-[10px] text-muted-foreground truncate">{L(serviceCategories.find((c) => c.id === s.cat)?.title || { ru: "", en: "" }, lang)}</div>
+                          </div>
+                          <span className="font-montserrat font-bold text-sm text-gold shrink-0">{ms.price ? `${tr("priceFrom")} ${ms.price}` : tr("priceNotSet")}</span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(s.title, lang)}</div>
-                          <div className="text-[10px] text-muted-foreground truncate">{L(serviceCategories.find((c) => c.id === s.cat)?.title || { ru: "", en: "" }, lang)}</div>
-                        </div>
-                        <span className="font-montserrat font-bold text-sm text-gold shrink-0">{L(s.price, lang)}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
                 {svcPickerOpen && (
                   <div className="space-y-5">
+                    <div className="text-[11px] text-muted-foreground bg-secondary/50 border border-border rounded-sm p-3 flex items-start gap-2">
+                      <Icon name="Info" size={14} className="text-gold shrink-0 mt-0.5" />
+                      {tr("pdPriceHint")}
+                    </div>
                     {serviceCategories.map((cat) => (
                       <div key={cat.id}>
                         <div className="flex items-center gap-2 mb-2">
@@ -2866,16 +2891,30 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                         </div>
                         <div className="space-y-1.5">
                           {services.filter((s) => s.cat === cat.id).map((s) => {
-                            const on = myServices.includes(s.title.en);
+                            const sel = myServices.find((x) => x.key === s.title.en);
+                            const on = !!sel;
                             return (
-                              <button key={s.title.en} onClick={() => toggleService(s.title.en)} className={`w-full flex items-center gap-3 p-2.5 border rounded-sm text-left transition-colors ${on ? "border-gold/60 bg-gold/[0.06]" : "border-border hover:border-gold/40"}`}>
-                                <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 border ${on ? "gold-gradient border-transparent" : "border-border"}`}>
-                                  {on && <Icon name="Check" size={13} className="text-[hsl(220,20%,6%)]" />}
-                                </div>
-                                <Icon name={s.icon} size={15} className={on ? "text-gold" : "text-muted-foreground"} />
-                                <span className={`flex-1 text-sm font-montserrat ${on ? "text-foreground font-semibold" : "text-muted-foreground"}`}>{L(s.title, lang)}</span>
-                                <span className="text-[11px] text-muted-foreground shrink-0">{L(s.price, lang)}</span>
-                              </button>
+                              <div key={s.title.en} className={`border rounded-sm transition-colors ${on ? "border-gold/60 bg-gold/[0.06]" : "border-border"}`}>
+                                <button onClick={() => toggleService(s.title.en)} className="w-full flex items-center gap-3 p-2.5 text-left">
+                                  <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 border ${on ? "gold-gradient border-transparent" : "border-border"}`}>
+                                    {on && <Icon name="Check" size={13} className="text-[hsl(220,20%,6%)]" />}
+                                  </div>
+                                  <Icon name={s.icon} size={15} className={on ? "text-gold" : "text-muted-foreground"} />
+                                  <span className={`flex-1 text-sm font-montserrat ${on ? "text-foreground font-semibold" : "text-muted-foreground"}`}>{L(s.title, lang)}</span>
+                                </button>
+                                {on && (
+                                  <div className="flex items-center gap-2 px-2.5 pb-2.5 pt-0">
+                                    <span className="text-[11px] text-muted-foreground shrink-0">{tr("priceFrom")}</span>
+                                    <input
+                                      value={sel?.price || ""}
+                                      onChange={(e) => setServicePrice(s.title.en, e.target.value)}
+                                      inputMode="numeric"
+                                      placeholder={tr("pricePlaceholder")}
+                                      className="flex-1 bg-secondary border border-border rounded-sm px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold"
+                                    />
+                                  </div>
+                                )}
+                              </div>
                             );
                           })}
                         </div>
@@ -3817,9 +3856,13 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
                 <div className="space-y-3">
                   {(() => {
                     const sel = provider?.verification?.services;
-                    const list = Array.isArray(sel) && sel.length ? services.filter((s) => sel.includes(s.title.en)) : services.slice(0, 3);
-                    return list;
-                  })().map((s) => (
+                    if (Array.isArray(sel) && sel.length) {
+                      return sel
+                        .map((it) => ({ s: services.find((x) => x.title.en === it.key), price: it.price || "" }))
+                        .filter((x): x is { s: typeof services[number]; price: string } => !!x.s);
+                    }
+                    return services.slice(0, 3).map((s) => ({ s, price: "" }));
+                  })().map(({ s, price }) => (
                     <div key={s.title.en} className="flex items-center gap-4 p-4 border border-border rounded-sm hover:border-gold/40 transition-colors cursor-pointer">
                       <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
                         <Icon name={s.icon} size={15} className="text-[hsl(220,20%,6%)]" />
@@ -3829,7 +3872,7 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
                         <div className="text-xs text-muted-foreground">{L(s.desc, lang).slice(0, 60)}...</div>
                       </div>
                       <div className="text-right shrink-0">
-                        <div className="text-sm font-montserrat font-bold text-gold">{L(s.price, lang)}</div>
+                        <div className="text-sm font-montserrat font-bold text-gold">{price ? `${tr("priceFrom")} ${price}` : L(s.price, lang)}</div>
                         <div className="text-[10px] text-muted-foreground">{L(s.time, lang)}</div>
                       </div>
                     </div>
@@ -4162,8 +4205,11 @@ function SearchSection({ setActive }: { setActive: (s: Section) => void }) {
 
 function ServicesSection() {
   const { lang, tr } = useLang();
+  const { servicePrices } = useProviders();
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState("");
+  const priceFor = (s: { title: { en: string }; price: { ru: string; en: string } }) =>
+    servicePrices[s.title.en] ? `${tr("priceFrom")} ${servicePrices[s.title.en]}` : L(s.price, lang);
 
   const q = query.trim().toLowerCase();
   const filtered = services.filter((s) => {
@@ -4228,7 +4274,7 @@ function ServicesSection() {
                 <div className="divider-gold mb-4" />
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-montserrat font-extrabold text-base text-gold">{L(s.price, lang)}</div>
+                    <div className="font-montserrat font-extrabold text-base text-gold">{priceFor(s)}</div>
                     <div className="text-[10px] text-muted-foreground flex items-center gap-1">
                       <Icon name="Clock" size={10} />{L(s.time, lang)}
                     </div>

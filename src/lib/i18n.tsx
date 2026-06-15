@@ -563,6 +563,10 @@ export const t: Dict = {
   pdSaved: { ru: "Сохранено", en: "Saved" },
   pdServicesHint: { ru: "Отметьте услуги, которые вы оказываете — они появятся в вашей карточке и в поиске.", en: "Select the services you provide — they will appear on your card and in search." },
   pdNoServices: { ru: "Услуги пока не выбраны. Нажмите «Выбрать услуги».", en: "No services selected yet. Click 'Choose services'." },
+  priceFrom: { ru: "от", en: "from" },
+  priceNotSet: { ru: "цена не указана", en: "price not set" },
+  pricePlaceholder: { ru: "например, 8 000 ₽", en: "e.g. $90" },
+  pdPriceHint: { ru: "Укажите вашу минимальную цену по каждой услуге. В каталоге клиенты увидят самую низкую цену среди всех исполнителей.", en: "Set your minimum price for each service. In the catalog clients see the lowest price across all providers." },
 
   // License badge
   licenseBadge: { ru: "Лицензия", en: "License" },

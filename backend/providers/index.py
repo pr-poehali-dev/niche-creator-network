@@ -1,8 +1,22 @@
 import json
 import os
+import re
 import psycopg2
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
+
+
+def _price_value(price_str):
+    '''Достаёт число из строки цены вида "от 8 000 ₽" или "from $90".'''
+    if not price_str:
+        return None
+    digits = re.sub(r'[^\d]', '', str(price_str))
+    if not digits:
+        return None
+    try:
+        return int(digits)
+    except ValueError:
+        return None
 
 
 def handler(event: dict, context) -> dict:
@@ -46,6 +60,8 @@ def handler(event: dict, context) -> dict:
     conn.close()
 
     providers = []
+    # key -> {'value': int, 'ru': str, 'en': str} минимальная цена по услуге
+    service_min = {}
     for r in rows:
         active = bool(r[24])
         item = {
@@ -117,7 +133,23 @@ def handler(event: dict, context) -> dict:
             if bool(r[41]) and (r[39] or '').strip():
                 public_verification['bio'] = r[39].strip()
             services_raw = r[52] if isinstance(r[52], list) else (json.loads(r[52]) if r[52] else [])
-            svc_list = [str(x).strip() for x in services_raw if str(x).strip()]
+            svc_list = []
+            for x in services_raw:
+                if isinstance(x, dict):
+                    k = str(x.get('key', '')).strip()
+                    pr = str(x.get('price', '')).strip()
+                else:
+                    k = str(x).strip()
+                    pr = ''
+                if not k:
+                    continue
+                svc_list.append({'key': k, 'price': pr})
+                # Накапливаем минимальную цену по услуге среди активных исполнителей
+                val = _price_value(pr)
+                if val is not None:
+                    cur_min = service_min.get(k)
+                    if cur_min is None or val < cur_min['value']:
+                        service_min[k] = {'value': val, 'price': pr}
             if svc_list:
                 public_verification['services'] = svc_list
             item['verification'] = public_verification or None
@@ -150,4 +182,6 @@ def handler(event: dict, context) -> dict:
             item['age'] = None
         providers.append(item)
 
-    return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'providers': providers})}
+    service_prices = {k: v['price'] for k, v in service_min.items()}
+
+    return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'providers': providers, 'servicePrices': service_prices})}

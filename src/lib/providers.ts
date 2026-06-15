@@ -19,8 +19,10 @@ export type ProviderVerification = {
   registry?: string;
   documents?: { title: string; url?: string }[];
   bio?: string;
-  services?: string[];
+  services?: { key: string; price?: string }[];
 };
+
+export type ServicePrices = Record<string, string>;
 
 export type Provider = {
   slug: string;
@@ -106,6 +108,7 @@ export function providerLocalTime(p: Provider): string | null {
 
 export function useProviders() {
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [servicePrices, setServicePrices] = useState<ServicePrices>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -113,7 +116,9 @@ export function useProviders() {
     fetch(func2url["providers"])
       .then((r) => r.json())
       .then((d) => {
-        if (alive && Array.isArray(d.providers)) setProviders(d.providers);
+        if (!alive) return;
+        if (Array.isArray(d.providers)) setProviders(d.providers);
+        if (d.servicePrices && typeof d.servicePrices === "object") setServicePrices(d.servicePrices);
       })
       .catch(() => {})
       .finally(() => alive && setLoading(false));
@@ -122,5 +127,5 @@ export function useProviders() {
     };
   }, []);
 
-  return { providers, loading };
+  return { providers, servicePrices, loading };
 }

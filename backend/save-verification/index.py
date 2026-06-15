@@ -53,7 +53,15 @@ def handler(event: dict, context) -> dict:
         conn.close()
         if not row:
             return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'verification': None})}
-        svc = row[28] if isinstance(row[28], list) else (json.loads(row[28]) if row[28] else [])
+        svc_raw = row[28] if isinstance(row[28], list) else (json.loads(row[28]) if row[28] else [])
+        svc = []
+        for x in svc_raw:
+            if isinstance(x, dict):
+                k = str(x.get('key', '')).strip()
+                if k:
+                    svc.append({'key': k, 'price': str(x.get('price', '')).strip()})
+            elif str(x).strip():
+                svc.append({'key': str(x).strip(), 'price': ''})
         lic = row[11] if isinstance(row[11], list) else (json.loads(row[11]) if row[11] else [])
         if not lic and (row[3] or '').strip():
             lic = [row[3].strip()]
@@ -75,7 +83,7 @@ def handler(event: dict, context) -> dict:
             'plan': row[25] or 'start',
             'subscriptionActive': bool(row[26]),
             'subscriptionUntil': row[27].isoformat() if row[27] else None,
-            'services': [str(x) for x in svc],
+            'services': svc,
         }
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'verification': data})}
 
@@ -153,16 +161,22 @@ def handler(event: dict, context) -> dict:
     quiet_start = time_or_empty(body.get('quietStart')).replace("'", "''")
     quiet_end = time_or_empty(body.get('quietEnd')).replace("'", "''")
 
-    # Выбранные услуги (ключи — EN-названия из каталога)
+    # Выбранные услуги: список объектов {key, price}.
+    # Поддерживаем старый формат (список строк-ключей).
     raw_services = body.get('services') or []
     sel_services = []
     if isinstance(raw_services, list):
         seen = set()
         for s in raw_services:
-            key = str(s).strip()[:160]
+            if isinstance(s, dict):
+                key = str(s.get('key', '')).strip()[:160]
+                price = str(s.get('price', '')).strip()[:40]
+            else:
+                key = str(s).strip()[:160]
+                price = ''
             if key and key not in seen:
                 seen.add(key)
-                sel_services.append(key)
+                sel_services.append({'key': key, 'price': price})
         sel_services = sel_services[:50]
     services_json = json.dumps(sel_services, ensure_ascii=False).replace("'", "''")
 
