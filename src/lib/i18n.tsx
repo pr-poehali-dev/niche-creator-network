@@ -19,7 +19,7 @@ type Dict = Record<string, { ru: string; en: string }>;
 
 export const t: Dict = {
   // Brand / header
-  brandSub: { ru: "Профессиональная платформа", en: "Professional Platform" },
+  brandSub: { ru: "Международная профессиональная платформа безопасности", en: "International Professional Security Platform" },
   login: { ru: "Войти", en: "Sign in" },
   join: { ru: "Вступить", en: "Join" },
 
