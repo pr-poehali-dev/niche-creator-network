@@ -19,6 +19,7 @@ export type ProviderVerification = {
   registry?: string;
   documents?: { title: string; url?: string }[];
   bio?: string;
+  services?: string[];
 };
 
 export type Provider = {

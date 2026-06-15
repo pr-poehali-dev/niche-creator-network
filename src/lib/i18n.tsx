@@ -558,6 +558,11 @@ export const t: Dict = {
   searchFCategory: { ru: "Категория", en: "Category" },
   searchAnyCategory: { ru: "Все категории", en: "All categories" },
   searchNoResults: { ru: "Ничего не найдено. Попробуйте изменить запрос.", en: "Nothing found. Try changing your query." },
+  pdManageServices: { ru: "Выбрать услуги", en: "Choose services" },
+  pdDone: { ru: "Готово", en: "Done" },
+  pdSaved: { ru: "Сохранено", en: "Saved" },
+  pdServicesHint: { ru: "Отметьте услуги, которые вы оказываете — они появятся в вашей карточке и в поиске.", en: "Select the services you provide — they will appear on your card and in search." },
+  pdNoServices: { ru: "Услуги пока не выбраны. Нажмите «Выбрать услуги».", en: "No services selected yet. Click 'Choose services'." },
 
   // License badge
   licenseBadge: { ru: "Лицензия", en: "License" },

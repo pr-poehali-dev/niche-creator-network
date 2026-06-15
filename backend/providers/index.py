@@ -37,7 +37,7 @@ def handler(event: dict, context) -> dict:
         f'pseudonym, use_pseudonym, avatar_url, gender, '
         f'licenses, documents, bio, age, show_bio, show_age, show_documents, '
         f'license_verified, timezone, always_available, quiet_start, quiet_end, '
-        f'plan, country_ru, country_en '
+        f'plan, country_ru, country_en, services '
         f"FROM {SCHEMA}.providers ORDER BY subscription_active DESC, "
         f"(CASE WHEN plan='premium' THEN 0 WHEN plan='pro' THEN 1 ELSE 2 END), rating DESC, reviews DESC"
     )
@@ -116,6 +116,10 @@ def handler(event: dict, context) -> dict:
                     public_verification['documents'] = docs
             if bool(r[41]) and (r[39] or '').strip():
                 public_verification['bio'] = r[39].strip()
+            services_raw = r[52] if isinstance(r[52], list) else (json.loads(r[52]) if r[52] else [])
+            svc_list = [str(x).strip() for x in services_raw if str(x).strip()]
+            if svc_list:
+                public_verification['services'] = svc_list
             item['verification'] = public_verification or None
             # Возраст показываем, если включена видимость
             item['age'] = r[40] if (bool(r[42]) and r[40]) else None

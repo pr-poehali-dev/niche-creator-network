@@ -2491,6 +2491,9 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [vfState, setVfState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [sub, setSub] = useState<{ plan: string; active: boolean; until: string | null } | null>(null);
+  const [myServices, setMyServices] = useState<string[]>([]);
+  const [svcPickerOpen, setSvcPickerOpen] = useState(false);
+  const [svcSaveState, setSvcSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   useEffect(() => {
     fetch(`${func2url["save-verification"]}?slug=morozov`)
@@ -2499,6 +2502,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
         const v = d.verification;
         if (!v) return;
         setSub({ plan: v.plan || "start", active: !!v.subscriptionActive, until: v.subscriptionUntil || null });
+        if (Array.isArray(v.services)) setMyServices(v.services);
         setVf({
           fullName: v.fullName || "", passportNumber: v.passportNumber || "", legalStatus: v.legalStatus || "ip",
           registry: v.registry || "",
@@ -2524,12 +2528,36 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
       const res = await fetch(func2url["save-verification"], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: "morozov", ...payload }),
+        body: JSON.stringify({ slug: "morozov", ...payload, services: myServices }),
       });
       setVfState(res.ok ? "saved" : "error");
     } catch {
       setVfState("error");
     }
+  };
+
+  const saveServices = async (next: string[]) => {
+    setSvcSaveState("saving");
+    try {
+      const payload = { ...vf, licenses: vf.licenses.filter((l) => l.trim()), age: vf.age ? parseInt(vf.age) : null };
+      const res = await fetch(func2url["save-verification"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: "morozov", ...payload, services: next }),
+      });
+      setSvcSaveState(res.ok ? "saved" : "error");
+      if (res.ok) setTimeout(() => setSvcSaveState("idle"), 2000);
+    } catch {
+      setSvcSaveState("error");
+    }
+  };
+
+  const toggleService = (key: string) => {
+    setMyServices((prev) => {
+      const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+      saveServices(next);
+      return next;
+    });
   };
 
   const incoming = [
@@ -2796,23 +2824,65 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 </div>
               </div>
               <div className="border border-border rounded-sm bg-card p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-1 gap-2">
                   <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdMyServices")}</div>
-                  <button className="gold-gradient text-[hsl(220,20%,6%)] px-3 py-1.5 text-[10px] font-montserrat font-bold rounded-sm">{tr("pdAddService")}</button>
+                  <div className="flex items-center gap-2">
+                    {svcSaveState === "saving" && <Icon name="Loader" size={13} className="animate-spin text-muted-foreground" />}
+                    {svcSaveState === "saved" && <span className="text-[10px] text-green-400 flex items-center gap-1"><Icon name="Check" size={12} />{tr("pdSaved")}</span>}
+                    <button onClick={() => setSvcPickerOpen((o) => !o)} className="gold-gradient text-[hsl(220,20%,6%)] px-3 py-1.5 text-[10px] font-montserrat font-bold rounded-sm flex items-center gap-1">
+                      <Icon name={svcPickerOpen ? "Check" : "Plus"} size={12} />{svcPickerOpen ? tr("pdDone") : tr("pdManageServices")}
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  {services.slice(0, 3).map((s) => (
-                    <div key={s.title.en} className="flex items-center gap-3 p-3 border border-border rounded-sm">
-                      <div className="w-8 h-8 gold-gradient rounded flex items-center justify-center shrink-0">
-                        <Icon name={s.icon} size={14} className="text-[hsl(220,20%,6%)]" />
+                <p className="text-[11px] text-muted-foreground mb-4">{tr("pdServicesHint")}</p>
+
+                {!svcPickerOpen && (
+                  <div className="space-y-3">
+                    {myServices.length === 0 && (
+                      <div className="text-xs text-muted-foreground py-6 text-center border border-dashed border-border rounded-sm">{tr("pdNoServices")}</div>
+                    )}
+                    {services.filter((s) => myServices.includes(s.title.en)).map((s) => (
+                      <div key={s.title.en} className="flex items-center gap-3 p-3 border border-border rounded-sm">
+                        <div className="w-8 h-8 gold-gradient rounded flex items-center justify-center shrink-0">
+                          <Icon name={s.icon} size={14} className="text-[hsl(220,20%,6%)]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(s.title, lang)}</div>
+                          <div className="text-[10px] text-muted-foreground truncate">{L(serviceCategories.find((c) => c.id === s.cat)?.title || { ru: "", en: "" }, lang)}</div>
+                        </div>
+                        <span className="font-montserrat font-bold text-sm text-gold shrink-0">{L(s.price, lang)}</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(s.title, lang)}</div>
+                    ))}
+                  </div>
+                )}
+
+                {svcPickerOpen && (
+                  <div className="space-y-5">
+                    {serviceCategories.map((cat) => (
+                      <div key={cat.id}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Icon name={cat.icon} fallback="Shield" size={14} className="text-gold" />
+                          <div className="text-[11px] font-montserrat font-bold text-foreground uppercase tracking-wider">{L(cat.title, lang)}</div>
+                        </div>
+                        <div className="space-y-1.5">
+                          {services.filter((s) => s.cat === cat.id).map((s) => {
+                            const on = myServices.includes(s.title.en);
+                            return (
+                              <button key={s.title.en} onClick={() => toggleService(s.title.en)} className={`w-full flex items-center gap-3 p-2.5 border rounded-sm text-left transition-colors ${on ? "border-gold/60 bg-gold/[0.06]" : "border-border hover:border-gold/40"}`}>
+                                <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 border ${on ? "gold-gradient border-transparent" : "border-border"}`}>
+                                  {on && <Icon name="Check" size={13} className="text-[hsl(220,20%,6%)]" />}
+                                </div>
+                                <Icon name={s.icon} size={15} className={on ? "text-gold" : "text-muted-foreground"} />
+                                <span className={`flex-1 text-sm font-montserrat ${on ? "text-foreground font-semibold" : "text-muted-foreground"}`}>{L(s.title, lang)}</span>
+                                <span className="text-[11px] text-muted-foreground shrink-0">{L(s.price, lang)}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <span className="font-montserrat font-bold text-sm text-gold shrink-0">{L(s.price, lang)}</span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -3745,7 +3815,11 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
               )}
               {activeTab === "services" && (
                 <div className="space-y-3">
-                  {services.slice(0, 3).map((s) => (
+                  {(() => {
+                    const sel = provider?.verification?.services;
+                    const list = Array.isArray(sel) && sel.length ? services.filter((s) => sel.includes(s.title.en)) : services.slice(0, 3);
+                    return list;
+                  })().map((s) => (
                     <div key={s.title.en} className="flex items-center gap-4 p-4 border border-border rounded-sm hover:border-gold/40 transition-colors cursor-pointer">
                       <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
                         <Icon name={s.icon} size={15} className="text-[hsl(220,20%,6%)]" />

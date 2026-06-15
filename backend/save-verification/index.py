@@ -45,7 +45,7 @@ def handler(event: dict, context) -> dict:
             f"pseudonym, use_pseudonym, licenses, documents, bio, age, "
             f"show_bio, show_age, show_documents, gender, avatar_url, "
             f"timezone, always_available, quiet_start, quiet_end, license_verified, "
-            f"plan, subscription_active, subscription_until "
+            f"plan, subscription_active, subscription_until, services "
             f"FROM {SCHEMA}.providers WHERE slug='{slug}'"
         )
         row = cur.fetchone()
@@ -53,6 +53,7 @@ def handler(event: dict, context) -> dict:
         conn.close()
         if not row:
             return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'verification': None})}
+        svc = row[28] if isinstance(row[28], list) else (json.loads(row[28]) if row[28] else [])
         lic = row[11] if isinstance(row[11], list) else (json.loads(row[11]) if row[11] else [])
         if not lic and (row[3] or '').strip():
             lic = [row[3].strip()]
@@ -74,6 +75,7 @@ def handler(event: dict, context) -> dict:
             'plan': row[25] or 'start',
             'subscriptionActive': bool(row[26]),
             'subscriptionUntil': row[27].isoformat() if row[27] else None,
+            'services': [str(x) for x in svc],
         }
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'verification': data})}
 
@@ -151,6 +153,19 @@ def handler(event: dict, context) -> dict:
     quiet_start = time_or_empty(body.get('quietStart')).replace("'", "''")
     quiet_end = time_or_empty(body.get('quietEnd')).replace("'", "''")
 
+    # Выбранные услуги (ключи — EN-названия из каталога)
+    raw_services = body.get('services') or []
+    sel_services = []
+    if isinstance(raw_services, list):
+        seen = set()
+        for s in raw_services:
+            key = str(s).strip()[:160]
+            if key and key not in seen:
+                seen.add(key)
+                sel_services.append(key)
+        sel_services = sel_services[:50]
+    services_json = json.dumps(sel_services, ensure_ascii=False).replace("'", "''")
+
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     cur.execute(
@@ -177,7 +192,8 @@ def handler(event: dict, context) -> dict:
         f"timezone='{timezone}', "
         f"always_available={always_available}, "
         f"quiet_start='{quiet_start}', "
-        f"quiet_end='{quiet_end}' "
+        f"quiet_end='{quiet_end}', "
+        f"services='{services_json}'::jsonb "
         f"WHERE slug='{slug}'"
     )
     updated = cur.rowcount
