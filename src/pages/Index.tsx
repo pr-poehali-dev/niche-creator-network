@@ -2645,9 +2645,6 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     setCaseFormOpen(false);
   };
 
-  const locked = sub !== null && !sub.active;
-  const ALLOWED_WHEN_LOCKED = ["verify", "plan"];
-
   const tabs = [
     { id: "stats" as const, key: "pdTab1" as const, icon: "ChartNoAxesColumn" },
     { id: "plan" as const, key: "pdTab2" as const, icon: "Wallet" },
@@ -2656,15 +2653,6 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     { id: "verify" as const, key: "pdTabVerify" as const, icon: "BadgeCheck" },
     { id: "contacts" as const, key: "pdTabContacts" as const, icon: "Contact" },
   ];
-
-  useEffect(() => {
-    if (locked && !ALLOWED_WHEN_LOCKED.includes(tab)) setTab("verify");
-  }, [locked]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleTab = (id: typeof tab) => {
-    if (locked && !ALLOWED_WHEN_LOCKED.includes(id)) { setPaywallOpen(true); return; }
-    setTab(id);
-  };
   const [paywallOpen, setPaywallOpen] = useState(false);
 
   const [contacts, setContacts] = useState({ phone: "", email: "", whatsapp: "", telegram: "", website: "", vk: "", instagram: "", linkedin: "" });
@@ -2701,6 +2689,18 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [myServices, setMyServices] = useState<{ key: string; price: string }[]>([]);
   const [svcPickerOpen, setSvcPickerOpen] = useState(false);
   const [svcSaveState, setSvcSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  const locked = sub !== null && !sub.active;
+  const ALLOWED_WHEN_LOCKED = ["verify", "plan"];
+
+  useEffect(() => {
+    if (locked && !ALLOWED_WHEN_LOCKED.includes(tab)) setTab("verify");
+  }, [locked]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleTab = (id: typeof tab) => {
+    if (locked && !ALLOWED_WHEN_LOCKED.includes(id)) { setPaywallOpen(true); return; }
+    setTab(id);
+  };
 
   useEffect(() => {
     fetch(`${func2url["save-verification"]}?slug=${encodeURIComponent(slug)}`)
