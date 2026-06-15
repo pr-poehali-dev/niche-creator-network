@@ -1,0 +1,9 @@
+{
+  "tests": [
+    { "name": "CORS preflight", "method": "OPTIONS", "path": "/", "expectedStatus": 200 },
+    { "name": "Chat send", "method": "POST", "path": "/", "body": { "action": "chat_send", "room": "polygraph", "authorId": "morozov", "authorName": "A. Morozov", "text": "Привет коллеги" }, "expectedStatus": 200, "expectedBody": { "success": true }, "bodyMatcher": "partial" },
+    { "name": "Chat list", "method": "GET", "path": "/?kind=chat&room=polygraph", "expectedStatus": 200 },
+    { "name": "Forum create", "method": "POST", "path": "/", "body": { "action": "forum_create", "category": "polygraph", "title": "Тестовая тема", "authorId": "morozov", "authorName": "A. Morozov" }, "expectedStatus": 200, "expectedBody": { "success": true }, "bodyMatcher": "partial" },
+    { "name": "Forum list", "method": "GET", "path": "/?kind=forum&category=polygraph", "expectedStatus": 200 }
+  ]
+}

@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 import psycopg2
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
@@ -45,7 +46,7 @@ def handler(event: dict, context) -> dict:
             f"pseudonym, use_pseudonym, licenses, documents, bio, age, "
             f"show_bio, show_age, show_documents, gender, avatar_url, "
             f"timezone, always_available, quiet_start, quiet_end, license_verified, "
-            f"plan, subscription_active, subscription_until, services "
+            f"plan, subscription_active, subscription_until, services, birth_date "
             f"FROM {SCHEMA}.providers WHERE slug='{slug}'"
         )
         row = cur.fetchone()
@@ -84,6 +85,7 @@ def handler(event: dict, context) -> dict:
             'subscriptionActive': bool(row[26]),
             'subscriptionUntil': row[27].isoformat() if row[27] else None,
             'services': svc,
+            'birthDate': row[29].isoformat() if row[29] else '',
         }
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'verification': data})}
 
@@ -137,13 +139,30 @@ def handler(event: dict, context) -> dict:
 
     bio = str(body.get('bio') or '').strip()[:2000].replace("'", "''")
 
-    age_val = body.get('age')
-    try:
-        age = int(age_val)
-        if age < 18 or age > 100:
+    # Дата рождения + автоматический расчёт возраста
+    birth_raw = str(body.get('birthDate') or '').strip()[:10]
+    birth_date = None
+    if len(birth_raw) == 10 and birth_raw[4] == '-' and birth_raw[7] == '-':
+        try:
+            bd = datetime.strptime(birth_raw, '%Y-%m-%d').date()
+            today = datetime.utcnow().date()
+            if 1900 < bd.year and bd <= today:
+                birth_date = bd
+        except ValueError:
+            birth_date = None
+    birth_sql = f"'{birth_date.isoformat()}'" if birth_date else 'NULL'
+
+    if birth_date is not None:
+        today = datetime.utcnow().date()
+        age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+    else:
+        age_val = body.get('age')
+        try:
+            age = int(age_val)
+            if age < 18 or age > 100:
+                age = None
+        except (TypeError, ValueError):
             age = None
-    except (TypeError, ValueError):
-        age = None
     age_sql = str(age) if age is not None else 'NULL'
 
     show_bio = b(body.get('showBio'))
@@ -200,6 +219,7 @@ def handler(event: dict, context) -> dict:
         f"documents='{documents_json}'::jsonb, "
         f"bio='{bio}', "
         f"age={age_sql}, "
+        f"birth_date={birth_sql}, "
         f"show_bio={show_bio}, "
         f"show_age={show_age}, "
         f"show_documents={show_documents}, "
