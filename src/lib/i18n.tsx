@@ -75,17 +75,31 @@ export const t: Dict = {
   authBackToLogin: { ru: "Назад ко входу", en: "Back to sign in" },
 
   // Minimal home / promo
-  promoTitle1: { ru: "Проверенные специалисты", en: "Verified specialists" },
-  promoTitle2: { ru: "по безопасности", en: "in security" },
-  promoDesc: { ru: "Детективы, телохранители, полиграфологи и охранные агентства со всего мира. Для клиентов — бесплатно. Для исполнителей — поток заявок и продвижение.", en: "Detectives, bodyguards, polygraph examiners and security agencies worldwide. Free for clients. For providers — a flow of leads and promotion." },
-  promoForClients: { ru: "Клиентам — подбор и связь со специалистами бесплатно", en: "For clients — find and contact specialists for free" },
-  promoForProviders: { ru: "Исполнителям — заявки, профиль и репутация", en: "For providers — leads, profile and reputation" },
+  promoBadge: { ru: "Единственная в мире платформа в сфере безопасности", en: "The world's only security industry platform" },
+  promoTitle1: { ru: "Единственная международная платформа", en: "The only international platform" },
+  promoTitle2: { ru: "специалистов по безопасности", en: "for security specialists" },
+  promoDesc: { ru: "Детективы, телохранители, полиграфологи, кибербезопасность и охранные агентства со всего мира — все в одном месте. Не нужно искать по разным площадкам и регистрироваться на десятках сайтов.", en: "Detectives, bodyguards, polygraph examiners, cybersecurity experts and security agencies worldwide — all in one place. No need to search across different sites or sign up on dozens of platforms." },
+  promoForClients: { ru: "Клиентам — все специалисты в одном месте, подбор и связь бесплатно", en: "For clients — every specialist in one place, search and contact for free" },
+  promoForProviders: { ru: "Исполнителям — поток заказов без затрат на рекламу, сообщество и обучение", en: "For providers — a flow of orders with no ad spend, plus community and training" },
   homeSecTitle: { ru: "Безопасность платформы", en: "Platform security" },
   homeSec1: { ru: "Проверка лицензий и документов исполнителей", en: "License and document verification of providers" },
   homeSec2: { ru: "Шифрование данных и защита переписки", en: "Data encryption and message protection" },
   homeSec3: { ru: "Конфиденциальность и право на псевдоним", en: "Confidentiality and the right to an alias" },
   homeOpenCabinet: { ru: "Войти в кабинет", en: "Open account" },
   homeReadPolicy: { ru: "Подробнее о безопасности", en: "More about security" },
+
+  // Why us
+  whyUsTag: { ru: "Почему ЩИТ", en: "Why SHCHIT" },
+  whyUsTitle: { ru: "Одна платформа вместо десятка", en: "One platform instead of a dozen" },
+  whyUsSubtitle: { ru: "Мы — единственная международная площадка в сфере безопасности. Всё, что раньше было разбросано по разным сайтам, теперь в одном месте.", en: "We are the only international platform in the security field. Everything that used to be scattered across different sites is now in one place." },
+  whyUs1Title: { ru: "Единственные на рынке", en: "The only one on the market" },
+  whyUs1Desc: { ru: "Единственная международная платформа, объединяющая специалистов по безопасности со всего мира.", en: "The only international platform uniting security specialists from around the world." },
+  whyUs2Title: { ru: "Всё в одном месте", en: "All in one place" },
+  whyUs2Desc: { ru: "Детективы, охрана, полиграфологи, кибербезопасность и агентства — без регистрации на десятках сайтов.", en: "Detectives, security, polygraph examiners, cybersecurity and agencies — without signing up on dozens of sites." },
+  whyUs3Title: { ru: "Без затрат на рекламу", en: "No ad spend" },
+  whyUs3Desc: { ru: "Исполнителям не нужно тратить бюджет на продвижение на других площадках — заказы приходят сами.", en: "Providers don't need to spend on promotion elsewhere — orders come to them." },
+  whyUs4Title: { ru: "Сообщество и обучение", en: "Community and training" },
+  whyUs4Desc: { ru: "Живое общение с коллегами со всего мира, актуальные курсы и повышение квалификации.", en: "Live communication with colleagues worldwide, up-to-date courses and professional development." },
 
   // Roles
   roleClient: { ru: "Я клиент", en: "I'm a client" },
@@ -462,19 +476,22 @@ export const t: Dict = {
   heroClientTitle1: { ru: "Найдите проверенного", en: "Find a verified" },
   heroClientTitle2: { ru: "специалиста", en: "security specialist" },
   heroClientTitle3: { ru: "по безопасности", en: "you can trust" },
-  heroClientDesc: { ru: "Выберите услугу, сравните проверенных исполнителей по рейтингу и кейсам и свяжитесь напрямую. Для клиентов платформа полностью бесплатна.", en: "Choose a service, compare verified providers by rating and case history, and contact them directly. The platform is completely free for clients." },
+  heroClientDesc: { ru: "Все специалисты по безопасности — в одном месте. Не нужно искать по разным площадкам: выберите услугу, сравните проверенных исполнителей по рейтингу и кейсам и свяжитесь напрямую. Для клиентов — бесплатно.", en: "Every security specialist in one place. No need to search across different sites: choose a service, compare verified providers by rating and cases, and contact them directly. Free for clients." },
   heroClientCta1: { ru: "Подобрать услугу", en: "Browse services" },
   heroClientCta2: { ru: "Смотреть специалистов", en: "View specialists" },
   freeForClients: { ru: "Бесплатно для клиентов", en: "Free for clients" },
   noFees: { ru: "Без комиссий и подписок", en: "No fees or subscriptions" },
 
   // Provider hero
-  heroProviderTitle1: { ru: "Получайте заказы", en: "Win clients" },
-  heroProviderTitle2: { ru: "в сфере безопасности", en: "in the security industry" },
-  heroProviderDesc: { ru: "Зарегистрируйтесь, подтвердите документы и лицензии, выберите тариф — и тысячи клиентов увидят ваш профиль. Кейсы, отзывы и рейтинг работают на вас.", en: "Register, confirm your documents and licenses, choose a plan — and thousands of clients will see your profile. Cases, reviews and ratings work for you." },
+  heroProviderTitle1: { ru: "Заказы без затрат", en: "Orders without" },
+  heroProviderTitle2: { ru: "на рекламу", en: "ad spend" },
+  heroProviderDesc: { ru: "Клиенты находят вас сами — не нужно тратить бюджет на рекламу на других площадках. А ещё: живое общение с коллегами со всего мира и актуальные курсы для повышения квалификации. Всё на одной платформе.", en: "Clients find you on their own — no need to spend budget on ads elsewhere. Plus: live communication with colleagues worldwide and up-to-date courses for professional growth. All on one platform." },
   heroProviderCta1: { ru: "Выбрать тариф", en: "Choose a plan" },
   heroProviderCta2: { ru: "Как это работает", en: "How it works" },
   becomeProvider: { ru: "Стать исполнителем", en: "Become a provider" },
+  heroClientBadgeAll: { ru: "Все специалисты в одном месте", en: "All specialists in one place" },
+  heroProviderBadgeNoAds: { ru: "Без затрат на рекламу", en: "No ad spend" },
+  heroProviderBadgeCommunity: { ru: "Сообщество и курсы", en: "Community and courses" },
 
   // Become provider steps
   bpTag: { ru: "Для исполнителей", en: "For providers" },

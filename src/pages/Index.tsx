@@ -1436,7 +1436,7 @@ function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; onPolicy:
           <div className="max-w-2xl stagger">
             <div className="tag-security inline-flex items-center gap-1.5 mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse-gold" />
-              {tr("verifyAll")}
+              {tr("promoBadge")}
             </div>
             <h1 className="font-montserrat font-extrabold text-4xl md:text-6xl text-foreground leading-[1] mb-6 tracking-tight">
               {tr("promoTitle1")}<br />
@@ -1489,6 +1489,7 @@ function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; onPolicy:
       </section>
 
       <LandingStats />
+      <LandingWhyUs />
       <LandingHowItWorks />
       <LandingValue />
       <LandingServices />
@@ -1538,6 +1539,36 @@ function LandingFaq() {
             );
           })}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function LandingWhyUs() {
+  const { tr } = useLang();
+  const cards = [
+    { icon: "Globe2", title: "whyUs1Title" as const, desc: "whyUs1Desc" as const, accent: true },
+    { icon: "LayoutGrid", title: "whyUs2Title" as const, desc: "whyUs2Desc" as const, accent: false },
+    { icon: "Megaphone", title: "whyUs3Title" as const, desc: "whyUs3Desc" as const, accent: false },
+    { icon: "Users", title: "whyUs4Title" as const, desc: "whyUs4Desc" as const, accent: false },
+  ];
+  return (
+    <section className="max-w-7xl mx-auto px-4 py-16 md:py-20">
+      <div className="text-center mb-12 max-w-2xl mx-auto">
+        <div className="tag-security inline-block mb-3">{tr("whyUsTag")}</div>
+        <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-3">{tr("whyUsTitle")}</h2>
+        <p className="text-muted-foreground text-base leading-relaxed">{tr("whyUsSubtitle")}</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger">
+        {cards.map((c) => (
+          <div key={c.title} className={`rounded-sm p-6 border transition-all card-hover ${c.accent ? "border-gold/40 glass-card security-glow" : "border-border bg-card"}`}>
+            <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
+              <Icon name={c.icon} fallback="ShieldCheck" size={22} className="text-[hsl(220,20%,6%)]" />
+            </div>
+            <h3 className="font-montserrat font-bold text-base text-foreground mb-2">{tr(c.title)}</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">{tr(c.desc)}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -1832,8 +1863,8 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
 
             <div className="flex items-center gap-x-6 gap-y-2 mt-6 flex-wrap">
               {(isClient
-                ? [{ icon: "Wallet", t: "heroNoFeeBig" as const }, { icon: "BadgeCheck", t: "heroGuarantee" as const }]
-                : [{ icon: "BadgeCheck", t: "trust1" as const }, { icon: "Users", t: "heroProofTrusted" as const }]
+                ? [{ icon: "LayoutGrid", t: "heroClientBadgeAll" as const }, { icon: "Wallet", t: "heroNoFeeBig" as const }]
+                : [{ icon: "Megaphone", t: "heroProviderBadgeNoAds" as const }, { icon: "Users", t: "heroProviderBadgeCommunity" as const }]
               ).map((b) => (
                 <div key={b.t} className="flex items-center gap-2 text-xs text-muted-foreground font-montserrat">
                   <Icon name={b.icon} size={14} className="text-gold" />
