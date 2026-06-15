@@ -1,0 +1,31 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Translate batch returns 200",
+      "method": "POST",
+      "path": "/",
+      "body": { "texts": ["Привет, коллега"], "target": "en" },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Empty texts rejected",
+      "method": "POST",
+      "path": "/",
+      "body": { "texts": [], "target": "en" },
+      "expectedStatus": 400
+    },
+    {
+      "name": "Unsupported target rejected",
+      "method": "POST",
+      "path": "/",
+      "body": { "texts": ["hi"], "target": "xx" },
+      "expectedStatus": 400
+    }
+  ]
+}
