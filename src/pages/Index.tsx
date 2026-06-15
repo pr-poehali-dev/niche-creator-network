@@ -1198,7 +1198,7 @@ export default function Index() {
       return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} />;
     }
     switch (active) {
-      case "home": return <HomeSection setActive={go} role={role} />;
+      case "home": return <HomeSection setActive={go} role={role} openChat={openChat} />;
       case "profile": return <ProfileSection setActive={go} openChat={openChat} />;
       case "cases": return <CasesSection />;
       case "services": return role === "client" ? <SearchSection setActive={go} /> : <ServicesSection />;
@@ -1206,15 +1206,15 @@ export default function Index() {
       case "guards": return <GuardsSection />;
       case "chat": return chatTarget
         ? <DirectChatSection target={chatTarget} chatInput={chatInput} setChatInput={setChatInput} onBack={() => setChatTarget(null)} />
-        : (role === "client" ? <HomeSection setActive={go} role={role} /> : <ChatSection chatInput={chatInput} setChatInput={setChatInput} />);
-      case "forum": return role === "client" ? <HomeSection setActive={go} role={role} /> : <ForumSection />;
+        : (role === "client" ? <HomeSection setActive={go} role={role} openChat={openChat} /> : <ChatSection chatInput={chatInput} setChatInput={setChatInput} />);
+      case "forum": return role === "client" ? <HomeSection setActive={go} role={role} openChat={openChat} /> : <ForumSection />;
       case "contacts": return <ContactsSection />;
       case "policy": return <SecurityPolicySection setActive={go} />;
       case "pricing": return <PricingSection setActive={go} />;
       case "privacy": case "terms": case "agreement": case "offer": return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
       case "dashboard": return role === "client" ? <ClientDashboard setActive={go} /> : <ProviderDashboard setActive={go} />;
-      case "admin": return user?.isAdmin ? <AdminPanel /> : <HomeSection setActive={go} role={role} />;
-      default: return <HomeSection setActive={go} role={role} />;
+      case "admin": return user?.isAdmin ? <AdminPanel /> : <HomeSection setActive={go} role={role} openChat={openChat} />;
+      default: return <HomeSection setActive={go} role={role} openChat={openChat} />;
     }
   };
 
@@ -1728,7 +1728,7 @@ function LandingFinalCta({ onCabinet }: { onCabinet: () => void }) {
   );
 }
 
-function HomeSection({ setActive, role }: { setActive: (s: Section) => void; role: Role }) {
+function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) => void; role: Role; openChat?: (t: { name: string; title: string; avatar?: string | null }) => void }) {
   const { lang, tr } = useLang();
   const isClient = role === "client";
   const { geo } = useGeo();
@@ -1999,7 +1999,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 </div>
                 <AvailabilityNote p={s} />
                 <div className="mt-auto">
-                  <ContactButtons p={s} onChat={() => setActive("chat")} compact />
+                  <ContactButtons p={s} onChat={() => openChat?.({ name: L(s.name, lang), title: L(s.title, lang), avatar: s.img })} compact />
                 </div>
               </div>
             </div>
