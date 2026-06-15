@@ -1154,6 +1154,25 @@ export default function Index() {
 
   const role: Role = user?.role === "provider" ? "provider" : "client";
 
+  const [subActive, setSubActive] = useState<boolean | null>(null);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const providerSlug = user ? `provider-${user.id}` : "";
+  const isProvider = isAuthed && role === "provider" && !user?.isAdmin;
+  const isLocked = isProvider && subActive === false;
+
+  // Разделы, закрытые для исполнителя без оплаченного тарифа
+  const LOCKED_SECTIONS: Section[] = ["chat", "forum", "courses", "services", "cases", "guards"];
+
+  useEffect(() => {
+    if (!isProvider || !providerSlug) { setSubActive(null); return; }
+    let alive = true;
+    fetch(`${func2url["save-verification"]}?slug=${encodeURIComponent(providerSlug)}`)
+      .then((r) => r.json())
+      .then((d) => { if (alive) setSubActive(!!(d.verification && d.verification.subscriptionActive)); })
+      .catch(() => { if (alive) setSubActive(false); });
+    return () => { alive = false; };
+  }, [isProvider, providerSlug]);
+
   useEffect(() => {
     if (geo?.countryCode) applyGeoLang(geo.countryCode);
   }, [geo?.countryCode]);
@@ -1165,6 +1184,11 @@ export default function Index() {
   const NAV_ITEMS = isAuthed ? (role === "client" ? CLIENT_NAV : PROVIDER_NAV) : [];
 
   const go = (s: Section) => {
+    if (isLocked && LOCKED_SECTIONS.includes(s)) {
+      setPaywallOpen(true);
+      setMobileMenuOpen(false);
+      return;
+    }
     setActive(s);
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1194,6 +1218,9 @@ export default function Index() {
       if (active === "privacy" || active === "terms" || active === "agreement" || active === "offer") return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
       if (active === "pricing") return <PricingSection setActive={go} />;
       return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} />;
+    }
+    if (isLocked && LOCKED_SECTIONS.includes(active)) {
+      return <ProviderDashboard setActive={go} />;
     }
     switch (active) {
       case "home": return <HomeSection setActive={go} role={role} openChat={openChat} />;
@@ -1415,6 +1442,24 @@ export default function Index() {
       </footer>
 
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onOpenDoc={(s) => { setAuthOpen(false); go(s); }} />}
+
+      {paywallOpen && (
+        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPaywallOpen(false)}>
+          <div className="bg-card border border-gold/40 rounded-sm max-w-md w-full p-8 text-center security-glow" onClick={(e) => e.stopPropagation()}>
+            <div className="w-14 h-14 gold-gradient rounded-sm flex items-center justify-center mx-auto mb-5 glow-gold-sm">
+              <Icon name="Lock" size={26} className="text-[hsl(220,20%,6%)]" />
+            </div>
+            <h2 className="font-montserrat font-extrabold text-xl text-foreground mb-2">{tr("paywallTitle")}</h2>
+            <p className="text-sm text-muted-foreground mb-6">{tr("paywallText")}</p>
+            <button onClick={() => { setPaywallOpen(false); setActive("dashboard"); window.scrollTo({ top: 0 }); }} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity mb-2">
+              {tr("paywallBtn")}
+            </button>
+            <button onClick={() => setPaywallOpen(false)} className="w-full text-xs text-muted-foreground hover:text-foreground py-2 font-montserrat font-semibold">
+              {tr("cancel")}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2600,6 +2645,9 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     setCaseFormOpen(false);
   };
 
+  const locked = sub !== null && !sub.active;
+  const ALLOWED_WHEN_LOCKED = ["verify", "plan"];
+
   const tabs = [
     { id: "stats" as const, key: "pdTab1" as const, icon: "ChartNoAxesColumn" },
     { id: "plan" as const, key: "pdTab2" as const, icon: "Wallet" },
@@ -2608,6 +2656,16 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     { id: "verify" as const, key: "pdTabVerify" as const, icon: "BadgeCheck" },
     { id: "contacts" as const, key: "pdTabContacts" as const, icon: "Contact" },
   ];
+
+  useEffect(() => {
+    if (locked && !ALLOWED_WHEN_LOCKED.includes(tab)) setTab("verify");
+  }, [locked]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleTab = (id: typeof tab) => {
+    if (locked && !ALLOWED_WHEN_LOCKED.includes(id)) { setPaywallOpen(true); return; }
+    setTab(id);
+  };
+  const [paywallOpen, setPaywallOpen] = useState(false);
 
   const [contacts, setContacts] = useState({ phone: "", email: "", whatsapp: "", telegram: "", website: "", vk: "", instagram: "", linkedin: "" });
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -2808,16 +2866,32 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
         </button>
       </div>
 
+      {locked && (
+        <div className="border border-gold/40 rounded-sm bg-gold/10 p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
+          <Icon name="Lock" size={18} className="text-gold shrink-0" />
+          <div className="flex-1">
+            <div className="font-montserrat font-bold text-sm text-foreground">{tr("paywallTitle")}</div>
+            <div className="text-xs text-muted-foreground">{tr("paywallText")}</div>
+          </div>
+          <button onClick={() => setTab("plan")} className="shrink-0 gold-gradient text-[hsl(220,20%,6%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+            {tr("paywallBtn")}
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <aside className="lg:col-span-1">
           <div className="border border-border rounded-sm bg-card p-2 lg:sticky lg:top-24 flex lg:flex-col gap-1 overflow-x-auto">
-            {tabs.map((tb) => (
-              <button key={tb.id} onClick={() => setTab(tb.id)}
-                className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(220,20%,6%)]" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
-                <Icon name={tb.icon} fallback="LayoutDashboard" size={15} />
-                {tr(tb.key)}
-              </button>
-            ))}
+            {tabs.map((tb) => {
+              const tabLocked = locked && !ALLOWED_WHEN_LOCKED.includes(tb.id);
+              return (
+                <button key={tb.id} onClick={() => handleTab(tb.id)}
+                  className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(220,20%,6%)]" : tabLocked ? "text-muted-foreground/50 hover:bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                  <Icon name={tabLocked ? "Lock" : tb.icon} fallback="LayoutDashboard" size={15} />
+                  {tr(tb.key)}
+                </button>
+              );
+            })}
           </div>
         </aside>
 
@@ -3513,6 +3587,24 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
           )}
         </div>
       </div>
+
+      {paywallOpen && (
+        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPaywallOpen(false)}>
+          <div className="bg-card border border-gold/40 rounded-sm max-w-md w-full p-8 text-center security-glow" onClick={(e) => e.stopPropagation()}>
+            <div className="w-14 h-14 gold-gradient rounded-sm flex items-center justify-center mx-auto mb-5 glow-gold-sm">
+              <Icon name="Lock" size={26} className="text-[hsl(220,20%,6%)]" />
+            </div>
+            <h2 className="font-montserrat font-extrabold text-xl text-foreground mb-2">{tr("paywallTitle")}</h2>
+            <p className="text-sm text-muted-foreground mb-6">{tr("paywallText")}</p>
+            <button onClick={() => { setPaywallOpen(false); setTab("plan"); }} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity mb-2">
+              {tr("paywallBtn")}
+            </button>
+            <button onClick={() => setPaywallOpen(false)} className="w-full text-xs text-muted-foreground hover:text-foreground py-2 font-montserrat font-semibold">
+              {tr("cancel")}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -5192,6 +5284,20 @@ function SecurityPolicySection({ setActive }: { setActive: (s: Section) => void 
             ))}
           </div>
 
+          {/* Реквизиты оператора */}
+          <div className="mt-8 border border-gold/30 rounded-sm bg-card p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Icon name="Building2" size={16} className="text-gold shrink-0" />
+              <h2 className="font-montserrat font-bold text-sm text-foreground uppercase tracking-widest">{tr("reqTitle")}</h2>
+            </div>
+            <div className="text-xs text-muted-foreground leading-relaxed space-y-1">
+              <div className="font-semibold text-foreground">{tr("reqName")}</div>
+              <div>{tr("reqOgrnip")} · {tr("reqInn")}</div>
+              <div>{tr("reqAddress")}</div>
+              <div>{tr("reqTaxOffice")}</div>
+            </div>
+          </div>
+
           {/* Contact callout */}
           <div className="mt-8 border border-gold/30 rounded-sm glass-card p-8 text-center security-glow">
             <Icon name="LifeBuoy" size={32} className="text-gold mx-auto mb-4" />
@@ -5338,7 +5444,20 @@ function LegalDocSection({ doc, setActive }: { doc: LegalDoc; setActive: (s: Sec
             ))}
           </div>
 
-          <div className="mt-8 border border-border rounded-sm bg-card/60 p-5 flex items-start gap-3">
+          <div className="mt-8 border border-gold/30 rounded-sm bg-card p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Icon name="Building2" size={16} className="text-gold shrink-0" />
+              <h2 className="font-montserrat font-bold text-sm text-foreground uppercase tracking-widest">{tr("reqTitle")}</h2>
+            </div>
+            <div className="text-xs text-muted-foreground leading-relaxed space-y-1">
+              <div className="font-semibold text-foreground">{tr("reqName")}</div>
+              <div>{tr("reqOgrnip")} · {tr("reqInn")}</div>
+              <div>{tr("reqAddress")}</div>
+              <div>{tr("reqTaxOffice")}</div>
+            </div>
+          </div>
+
+          <div className="mt-6 border border-border rounded-sm bg-card/60 p-5 flex items-start gap-3">
             <Icon name="Info" size={16} className="text-gold mt-0.5 shrink-0" />
             <p className="text-xs text-muted-foreground leading-relaxed">{tr("lglDisclaimer")}</p>
           </div>

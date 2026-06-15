@@ -1049,6 +1049,10 @@ export const t: Dict = {
   forumBlock: { ru: "Заблокировать", en: "Block" },
   forumDelete: { ru: "Удалить", en: "Delete" },
   forumDeleteConfirm: { ru: "Удалить тему вместе со всеми сообщениями?", en: "Delete the topic with all its posts?" },
+  reqTitle: { ru: "Реквизиты оператора", en: "Operator details" },
+  paywallTitle: { ru: "Нужен активный тариф", en: "Active subscription required" },
+  paywallText: { ru: "Заполните карточку и оплатите тариф, чтобы открыть чаты, форум, курсы и поиск заказов.", en: "Complete your profile and purchase a plan to unlock chats, forum, courses and order search." },
+  paywallBtn: { ru: "Перейти к оплате тарифа", en: "Go to subscription" },
 };
 
 interface LangCtx {
