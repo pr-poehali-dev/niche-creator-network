@@ -953,7 +953,7 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-type AdminProvider = { slug: string; name: { ru: string; en: string }; legalStatus: string; verified: boolean; licenseVerified: boolean; licenses: string[]; active: boolean; documents: { title: string; url: string }[]; fullName: string; registry: string };
+type AdminProvider = { slug: string; name: { ru: string; en: string }; legalStatus: string; verified: boolean; licenseVerified: boolean; licenses: (string | { number?: string; date?: string; authority?: string })[]; active: boolean; documents: { title: string; url: string }[]; fullName: string; registry: string };
 
 function AdminPanel() {
   const { lang, tr } = useLang();
@@ -1100,9 +1100,13 @@ function AdminPanel() {
                         <div className="text-[10px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest mb-1.5">{tr("adminLicensesList")}</div>
                         {p.licenses.length ? (
                           <div className="space-y-1">
-                            {p.licenses.map((l, i) => (
-                              <div key={i} className="flex items-center gap-1.5 text-xs text-foreground"><Icon name="Award" size={13} className="text-gold shrink-0" />{l}</div>
-                            ))}
+                            {p.licenses.map((l, i) => {
+                              const lic = typeof l === "string" ? { number: l, date: "", authority: "" } : (l as { number?: string; date?: string; authority?: string });
+                              const extra = [lic.authority, lic.date].filter(Boolean).join(", ");
+                              return (
+                                <div key={i} className="flex items-center gap-1.5 text-xs text-foreground"><Icon name="Award" size={13} className="text-gold shrink-0" />{lic.number}{extra ? <span className="text-muted-foreground"> — {extra}</span> : null}</div>
+                              );
+                            })}
                           </div>
                         ) : <div className="text-xs text-muted-foreground">{tr("adminNoLicenses")}</div>}
                       </div>
@@ -1825,7 +1829,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
                 <Icon name="ArrowRight" size={18} />
               </button>
               <button
-                onClick={() => setActive(isClient ? "profile" : "dashboard")}
+                onClick={() => setActive(isClient ? "services" : "dashboard")}
                 className="border border-border text-foreground px-7 py-4 font-montserrat font-semibold text-sm tracking-wide hover:border-gold hover:text-gold transition-all rounded-sm flex items-center gap-2"
               >
                 {tr(isClient ? "heroClientCta2" : "heroProviderCta2")}
@@ -1928,7 +1932,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
             <div className="tag-security mb-3 inline-block">{tr("specialists")}</div>
             <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("topExperts")}</h2>
           </div>
-          <button onClick={() => setActive("profile")} className="text-sm text-gold hover:gap-2 font-montserrat hidden md:flex items-center gap-1 transition-all">
+          <button onClick={() => setActive("services")} className="text-sm text-gold hover:gap-2 font-montserrat hidden md:flex items-center gap-1 transition-all">
             {tr("allSpecialists")} <Icon name="ArrowRight" size={14} />
           </button>
         </div>
@@ -2571,6 +2575,8 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   );
 }
 
+type LicenseEntry = { number: string; date: string; authority: string };
+
 function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const { lang, tr } = useLang();
   const { logout, user } = useAuth();
@@ -2625,7 +2631,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     showFullName: true, showLegalStatus: true, showLicense: true, showRegistry: true,
     pseudonym: "", usePseudonym: false,
     gender: "m" as "m" | "f", age: "" as string, birthDate: "" as string,
-    licenses: [""] as string[],
+    licenses: [{ number: "", date: "", authority: "" }] as LicenseEntry[],
     documents: [] as { title: string; url: string }[],
     bio: "",
     showBio: true, showAge: true, showDocuments: true,
@@ -2654,7 +2660,11 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
           showFullName: !!v.showFullName, showLegalStatus: !!v.showLegalStatus, showLicense: !!v.showLicense, showRegistry: !!v.showRegistry,
           pseudonym: v.pseudonym || "", usePseudonym: !!v.usePseudonym,
           gender: v.gender === "f" ? "f" : "m", age: v.age != null ? String(v.age) : "", birthDate: v.birthDate || "",
-          licenses: Array.isArray(v.licenses) && v.licenses.length ? v.licenses : [""],
+          licenses: Array.isArray(v.licenses) && v.licenses.length
+            ? v.licenses.map((l: unknown) => typeof l === "string"
+                ? { number: l, date: "", authority: "" }
+                : { number: (l as LicenseEntry).number || "", date: (l as LicenseEntry).date || "", authority: (l as LicenseEntry).authority || "" })
+            : [{ number: "", date: "", authority: "" }],
           documents: Array.isArray(v.documents) ? v.documents : [],
           bio: v.bio || "",
           showBio: !!v.showBio, showAge: !!v.showAge, showDocuments: !!v.showDocuments,
@@ -2670,7 +2680,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     setVfState("saving");
     try {
       const autoAge = computeAge(vf.birthDate);
-      const payload = { ...vf, licenses: vf.licenses.filter((l) => l.trim()), age: autoAge ?? (vf.age ? parseInt(vf.age) : null), birthDate: vf.birthDate || null };
+      const payload = { ...vf, licenses: vf.licenses.filter((l) => l.number.trim()), age: autoAge ?? (vf.age ? parseInt(vf.age) : null), birthDate: vf.birthDate || null };
       const res = await fetch(func2url["save-verification"], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2686,7 +2696,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     setSvcSaveState("saving");
     try {
       const autoAge = computeAge(vf.birthDate);
-      const payload = { ...vf, licenses: vf.licenses.filter((l) => l.trim()), age: autoAge ?? (vf.age ? parseInt(vf.age) : null), birthDate: vf.birthDate || null };
+      const payload = { ...vf, licenses: vf.licenses.filter((l) => l.number.trim()), age: autoAge ?? (vf.age ? parseInt(vf.age) : null), birthDate: vf.birthDate || null };
       const res = await fetch(func2url["save-verification"], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3296,19 +3306,29 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                     {tr(vf.showLicense ? "pdVfShow" : "pdVfHidden")}
                   </button>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {vf.licenses.map((lic, i) => (
-                    <div key={i} className="flex gap-2">
-                      <input value={lic} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = e.target.value; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr("pdVfLicensePh")} className="flex-1 min-w-0 bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                    <div key={i} className="border border-border rounded-sm p-3 bg-secondary/40 space-y-2 relative">
                       {vf.licenses.length > 1 && (
-                        <button onClick={() => { setVf({ ...vf, licenses: vf.licenses.filter((_, idx) => idx !== i) }); setVfState("idle"); }} className="shrink-0 px-3 border border-border rounded-sm text-muted-foreground hover:border-destructive hover:text-destructive transition-colors" aria-label={tr("remove")}>
-                          <Icon name="Trash2" size={14} />
+                        <button onClick={() => { setVf({ ...vf, licenses: vf.licenses.filter((_, idx) => idx !== i) }); setVfState("idle"); }} className="absolute top-2 end-2 px-2 py-1 border border-border rounded-sm text-muted-foreground hover:border-destructive hover:text-destructive transition-colors bg-card" aria-label={tr("remove")}>
+                          <Icon name="Trash2" size={13} />
                         </button>
                       )}
+                      <input value={lic.number} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], number: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr("pdVfLicensePh")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1">{tr("pdVfLicenseDate")}</label>
+                          <input type="date" value={lic.date} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], date: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1">{tr("pdVfLicenseAuthority")}</label>
+                          <input value={lic.authority} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], authority: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr("pdVfLicenseAuthorityPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
-                <button onClick={() => { setVf({ ...vf, licenses: [...vf.licenses, ""] }); setVfState("idle"); }} className="mt-2 inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-gold hover:underline">
+                <button onClick={() => { setVf({ ...vf, licenses: [...vf.licenses, { number: "", date: "", authority: "" }] }); setVfState("idle"); }} className="mt-2 inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-gold hover:underline">
                   <Icon name="Plus" size={13} />{tr("pdVfAddLicense")}
                 </button>
               </div>
@@ -4020,7 +4040,6 @@ function ProfileSection({ setActive, openChat }: { setActive: (s: Section) => vo
           <div className="border border-border rounded-sm bg-card p-5">
             <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("certificates")}</div>
             {[
-              { title: { ru: "Лицензия ФСИН", en: "FSIN License" }, year: "2019" },
               { title: { ru: "AAPP Certified Polygraphist", en: "AAPP Certified Polygraphist" }, year: "2021" },
               { title: { ru: "Частный детектив РФ", en: "Licensed PI" }, year: "2018" },
             ].map((c) => (
@@ -4290,13 +4309,14 @@ function SearchSection({ setActive }: { setActive: (s: Section) => void }) {
   const [licensedOnly, setLicensedOnly] = useState(false);
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
+  const [searched, setSearched] = useState(false);
 
   const servicesInCat = category ? services.filter((s) => s.cat === category) : services;
   const serviceOptions = servicesInCat.map((s) => L(s.title, lang));
   const cityOptions = Array.from(new Set(providers.map((p) => L(p.city, lang)).filter(Boolean))).sort();
   const countryOptions = Array.from(new Set(providers.map((p) => (p.country ? L(p.country, lang) : "")).filter(Boolean))).sort();
 
-  const reset = () => { setService(""); setCategory(""); setMinRating(0); setLicensedOnly(false); setCity(""); setCountry(""); };
+  const reset = () => { setService(""); setCategory(""); setMinRating(0); setLicensedOnly(false); setCity(""); setCountry(""); setSearched(false); };
 
   const matchesText = (p: Provider, q: string) => {
     const tags = (lang === "ru" ? p.tags.ru : p.tags.en).map((t) => t.toLowerCase());
@@ -4379,12 +4399,18 @@ function SearchSection({ setActive }: { setActive: (s: Section) => void }) {
             </button>
           </div>
         </div>
-        {activeFilters > 0 && (
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-            <span className="text-xs text-muted-foreground">{tr("searchFound")}: <span className="text-gold font-bold">{results.length}</span></span>
-            <button onClick={reset} className="text-xs font-montserrat font-semibold text-muted-foreground hover:text-gold flex items-center gap-1.5"><Icon name="X" size={13} />{tr("searchReset")}</button>
-          </div>
-        )}
+        <div className="flex flex-col sm:flex-row items-center gap-3 mt-5 pt-5 border-t border-border">
+          <button
+            onClick={() => setSearched(true)}
+            className="w-full sm:w-auto flex-1 shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-extrabold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm flex items-center justify-center gap-2"
+          >
+            <Icon name="Search" size={16} />
+            {tr("searchBtn")}
+          </button>
+          {(activeFilters > 0 || searched) && (
+            <button onClick={reset} className="text-xs font-montserrat font-semibold text-muted-foreground hover:text-gold flex items-center gap-1.5 shrink-0"><Icon name="X" size={13} />{tr("searchReset")}</button>
+          )}
+        </div>
       </div>
 
       {geo && geo.city && (
@@ -4394,18 +4420,26 @@ function SearchSection({ setActive }: { setActive: (s: Section) => void }) {
         </div>
       )}
 
-      {results.length === 0 ? (
+      {!searched ? (
+        <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
+          <Icon name="Search" size={40} className="text-muted-foreground/30" />
+          <span className="text-sm text-muted-foreground">{tr("searchPrompt")}</span>
+        </div>
+      ) : results.length === 0 ? (
         <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
           <Icon name="SearchX" size={40} className="text-muted-foreground/30" />
           <span className="text-sm text-muted-foreground">{tr("filterNoResults")}</span>
           <button onClick={reset} className="text-xs font-montserrat font-semibold text-gold hover:underline">{tr("searchReset")}</button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
-          {results.map((p) => (
-            <ProviderResultCard key={p.slug} p={p} onOpen={() => setActive("profile")} />
-          ))}
-        </div>
+        <>
+          <div className="text-xs text-muted-foreground mb-4">{tr("searchFound")}: <span className="text-gold font-bold">{results.length}</span></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+            {results.map((p) => (
+              <ProviderResultCard key={p.slug} p={p} onOpen={() => setActive("profile")} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -4775,7 +4809,7 @@ function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatIn
             <div className="flex-1 overflow-y-auto scrollbar-thin">
               {rooms.map((r) => (
                 <button key={r.id} onClick={() => setRoom(r.id)} className={`w-full text-left px-4 py-3 cursor-pointer hover:bg-secondary transition-colors border-b border-border last:border-0 ${room === r.id ? "bg-secondary" : ""}`}>
-                  <div className={`text-xs font-montserrat font-medium ${room === r.id ? "text-gold" : "text-foreground"}`}># {L(r.title, lang)}</div>
+                  <div className={`text-xs font-montserrat font-medium ${room === r.id ? "text-gold" : "text-foreground"}`}>{L(r.title, lang)}</div>
                 </button>
               ))}
             </div>
@@ -4783,7 +4817,7 @@ function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatIn
 
           <div className="flex-1 flex flex-col min-w-0">
             <div className="p-4 border-b border-border flex items-center gap-3">
-              <div className="text-sm font-montserrat font-semibold text-foreground truncate"># {L(activeRoom.title, lang)}</div>
+              <div className="text-sm font-montserrat font-semibold text-foreground truncate">{L(activeRoom.title, lang)}</div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-thin">
@@ -4886,7 +4920,17 @@ function ForumSection() {
   };
 
   const catTitle = (id: string) => { const c = serviceCategories.find((x) => x.id === id); return c ? L(c.title, lang) : id || "—"; };
-  const fmtDate = (iso: string | null) => iso ? new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" }) : "";
+  const fmtDate = (iso: string | null) => iso ? new Date(iso).toLocaleDateString(lang, { day: "numeric", month: "short", year: "numeric" }) : "";
+
+  const moderate = async (topicId: number, action: "forum_delete" | "forum_block") => {
+    if (action === "forum_delete" && !window.confirm(tr("forumDeleteConfirm"))) return;
+    await fetch(func2url["messages"], {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Auth-Token": localStorage.getItem("shchit_auth_token") || "" },
+      body: JSON.stringify({ action, topicId }),
+    });
+    loadTopics(cat);
+  };
 
   if (openTopic) {
     return (
@@ -4959,23 +5003,33 @@ function ForumSection() {
       <div className="space-y-3">
         {topics.length === 0 && <div className="text-sm text-muted-foreground border border-dashed border-border rounded-sm py-12 text-center">{tr("forumEmpty")}</div>}
         {topics.map((tp) => (
-          <button key={tp.id} onClick={() => loadTopic(tp)} className="w-full text-left border border-border rounded-sm bg-card p-4 card-hover cursor-pointer">
+          <div key={tp.id} className="border border-border rounded-sm bg-card p-4 card-hover">
             <div className="md:grid grid-cols-12 gap-4 items-center">
-              <div className="col-span-8">
+              <div className="col-span-8 cursor-pointer" onClick={() => loadTopic(tp)}>
                 <div className="flex items-center gap-2 mb-1"><span className="tag-security">{catTitle(tp.category)}</span></div>
                 <div className="font-montserrat font-semibold text-sm text-foreground mt-2">{tp.title}</div>
                 <div className="text-[10px] text-muted-foreground mt-1">{tp.author} · {fmtDate(tp.createdAt)}</div>
               </div>
-              <div className="col-span-2 text-center mt-3 md:mt-0">
+              <div className="col-span-2 text-center mt-3 md:mt-0 cursor-pointer" onClick={() => loadTopic(tp)}>
                 <div className="text-xs font-montserrat font-bold text-foreground">{tp.replies}</div>
                 <div className="text-[10px] text-muted-foreground">{tr("repliesLower")}</div>
               </div>
-              <div className="col-span-2 text-center">
+              <div className="col-span-2 text-center cursor-pointer" onClick={() => loadTopic(tp)}>
                 <div className="text-xs font-montserrat font-bold text-foreground">{tp.views}</div>
                 <div className="text-[10px] text-muted-foreground">{tr("viewsLower")}</div>
               </div>
             </div>
-          </button>
+            {user?.isAdmin && (
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                <button onClick={() => moderate(tp.id, "forum_block")} className="flex items-center gap-1.5 text-[11px] font-montserrat font-semibold text-muted-foreground hover:text-amber-400 transition-colors">
+                  <Icon name="Ban" size={12} />{tr("forumBlock")}
+                </button>
+                <button onClick={() => moderate(tp.id, "forum_delete")} className="flex items-center gap-1.5 text-[11px] font-montserrat font-semibold text-muted-foreground hover:text-destructive transition-colors">
+                  <Icon name="Trash2" size={12} />{tr("forumDelete")}
+                </button>
+              </div>
+            )}
+          </div>
         ))}
       </div>
     </div>

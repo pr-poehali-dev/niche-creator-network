@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from datetime import datetime
 import psycopg2
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
@@ -39,6 +40,22 @@ def _resp(status, payload):
     return {'statusCode': status, 'headers': CORS, 'body': json.dumps(payload, ensure_ascii=False)}
 
 
+def _is_admin(cur, token):
+    '''Проверяет, что токен сессии принадлежит администратору.'''
+    if not token:
+        return False
+    esc_token = token.replace("'", "''")
+    cur.execute(
+        f"SELECT u.email, s.expires_at FROM {SCHEMA}.sessions s "
+        f"JOIN {SCHEMA}.users u ON u.id = s.user_id WHERE s.token = '{esc_token}'"
+    )
+    row = cur.fetchone()
+    if not row or row[1] < datetime.utcnow():
+        return False
+    email = str(row[0] or '')
+    return email.startswith('admin+') and email.endswith('@shchit.local')
+
+
 def handler(event: dict, context) -> dict:
     '''
     Business: хранилище переписок — профессиональные чаты по категориям, форум и личные сообщения.
@@ -69,9 +86,9 @@ def handler(event: dict, context) -> dict:
 
             if kind == 'forum':
                 category = esc(params.get('category'), 40)
-                where = ''
+                where = 'WHERE t.blocked = false'
                 if category:
-                    where = f"WHERE t.category='{category}'"
+                    where += f" AND t.category='{category}'"
                 cur.execute(
                     f"SELECT t.id, t.category, t.title, t.author_name, t.views, t.created_at, "
                     f"COUNT(p.id) AS replies "
@@ -157,6 +174,22 @@ def handler(event: dict, context) -> dict:
                     f"INSERT INTO {SCHEMA}.forum_posts (topic_id, author_id, author_name, text) "
                     f"VALUES ({topic_id}, '{author_id}', '{author_name}', '{text}')"
                 )
+                conn.commit()
+                return _resp(200, {'success': True})
+
+            if action in ('forum_delete', 'forum_block', 'forum_unblock'):
+                token = (event.get('headers') or {}).get('X-Auth-Token') or (event.get('headers') or {}).get('x-auth-token') or ''
+                if not _is_admin(cur, token):
+                    return _resp(403, {'error': 'forbidden'})
+                topic_id = int(body.get('topicId') or 0)
+                if not topic_id:
+                    return _resp(400, {'error': 'no topic'})
+                if action == 'forum_delete':
+                    cur.execute(f"DELETE FROM {SCHEMA}.forum_posts WHERE topic_id={topic_id}")
+                    cur.execute(f"DELETE FROM {SCHEMA}.forum_topics WHERE id={topic_id}")
+                else:
+                    blocked = 'true' if action == 'forum_block' else 'false'
+                    cur.execute(f"UPDATE {SCHEMA}.forum_topics SET blocked={blocked} WHERE id={topic_id}")
                 conn.commit()
                 return _resp(200, {'success': True})
 

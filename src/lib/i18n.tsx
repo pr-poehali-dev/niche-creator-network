@@ -1041,6 +1041,14 @@ export const t: Dict = {
   cdNoReviews: { ru: "Пока нет отзывов", en: "No reviews yet" },
   dcEmpty: { ru: "Напишите первое сообщение, чтобы начать диалог", en: "Send the first message to start the conversation" },
   chatGuestName: { ru: "Гость", en: "Guest" },
+  searchBtn: { ru: "Поиск", en: "Search" },
+  searchPrompt: { ru: "Задайте критерии и нажмите «Поиск», чтобы увидеть специалистов", en: "Set the criteria and press “Search” to see specialists" },
+  pdVfLicenseDate: { ru: "Дата выдачи", en: "Issue date" },
+  pdVfLicenseAuthority: { ru: "Орган выдачи", en: "Issuing authority" },
+  pdVfLicenseAuthorityPh: { ru: "Например: Росгвардия, МВД, ФСБ", en: "E.g. Rosgvardia, Ministry of Interior" },
+  forumBlock: { ru: "Заблокировать", en: "Block" },
+  forumDelete: { ru: "Удалить", en: "Delete" },
+  forumDeleteConfirm: { ru: "Удалить тему вместе со всеми сообщениями?", en: "Delete the topic with all its posts?" },
 };
 
 interface LangCtx {
