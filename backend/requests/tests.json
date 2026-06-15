@@ -1,0 +1,40 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Create request",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "create",
+        "clientId": "test-client-1",
+        "clientName": "Test Client",
+        "category": "polygraph",
+        "service": "Полиграфолог",
+        "description": "Нужна проверка кандидата",
+        "budget": "от 8000",
+        "city": "Москва"
+      },
+      "expectedStatus": 200,
+      "expectedBody": { "success": true },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Client requests list",
+      "method": "GET",
+      "path": "/?clientId=test-client-1",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Provider open requests",
+      "method": "GET",
+      "path": "/?view=provider&providerSlug=morozov&category=polygraph",
+      "expectedStatus": 200
+    }
+  ]
+}

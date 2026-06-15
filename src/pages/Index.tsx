@@ -4,7 +4,7 @@ import { useLang, t, LANGS, type Lang } from "@/lib/i18n";
 import { dataExtra } from "@/lib/i18n-extra";
 import { downloadReceipt } from "@/lib/receipt";
 import { useGeo, haversineKm } from "@/lib/geo";
-import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, type Provider } from "@/lib/providers";
+import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, type Provider, type LS } from "@/lib/providers";
 import { useAuth, type AuthRole } from "@/lib/auth";
 import func2url from "../../backend/func2url.json";
 
@@ -1154,6 +1154,7 @@ export default function Index() {
   const [active, setActive] = useState<Section>("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
+  const [chatTarget, setChatTarget] = useState<{ name: string; title: string; avatar?: string | null } | null>(null);
   const [secBannerOpen, setSecBannerOpen] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
   const { geo } = useGeo();
@@ -1174,6 +1175,11 @@ export default function Index() {
     setActive(s);
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const openChat = (target: { name: string; title: string; avatar?: string | null }) => {
+    setChatTarget(target);
+    go("chat");
   };
 
   const openCabinet = () => {
@@ -1198,12 +1204,14 @@ export default function Index() {
     }
     switch (active) {
       case "home": return <HomeSection setActive={go} role={role} />;
-      case "profile": return <ProfileSection setActive={go} />;
+      case "profile": return <ProfileSection setActive={go} openChat={openChat} />;
       case "cases": return <CasesSection />;
       case "services": return role === "client" ? <SearchSection setActive={go} /> : <ServicesSection />;
       case "courses": return <CoursesSection />;
       case "guards": return <GuardsSection />;
-      case "chat": return <ChatSection chatInput={chatInput} setChatInput={setChatInput} />;
+      case "chat": return chatTarget
+        ? <DirectChatSection target={chatTarget} chatInput={chatInput} setChatInput={setChatInput} onBack={() => setChatTarget(null)} />
+        : <ChatSection chatInput={chatInput} setChatInput={setChatInput} />;
       case "forum": return <ForumSection />;
       case "contacts": return <ContactsSection />;
       case "policy": return <SecurityPolicySection setActive={go} />;
@@ -2240,19 +2248,53 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
     }
   };
 
+  type ReqResponse = { providerSlug: string; providerName: string; message: string; price: string; status: string };
+  type ClientReq = { id: number; category: string; service: string; description: string; budget: string; city: string; status: string; chosenProvider: string; createdAt: string | null; responses: ReqResponse[] };
+  const [myReqs, setMyReqs] = useState<ClientReq[]>([]);
+  const [reqFormOpen, setReqFormOpen] = useState(false);
+  const [newReq, setNewReq] = useState({ category: "", service: "", description: "", budget: "", city: "" });
+  const [reqBusy, setReqBusy] = useState(false);
+
+  const loadReqs = useCallback(() => {
+    fetch(`${func2url["requests"]}?clientId=demo-client`)
+      .then((r) => r.json())
+      .then((d) => { if (Array.isArray(d.requests)) setMyReqs(d.requests); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => { loadReqs(); }, [loadReqs]);
+
+  const createReq = async () => {
+    if (!newReq.category && !newReq.service.trim()) return;
+    setReqBusy(true);
+    try {
+      await fetch(func2url["requests"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create", clientId: "demo-client", clientName: clientData.fullName || L(DEMO_CLIENT.name, lang), ...newReq }),
+      });
+      setNewReq({ category: "", service: "", description: "", budget: "", city: "" });
+      setReqFormOpen(false);
+      loadReqs();
+    } finally {
+      setReqBusy(false);
+    }
+  };
+
+  const chooseProvider = async (requestId: number, providerSlug: string) => {
+    await fetch(func2url["requests"], {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "choose", clientId: "demo-client", requestId, providerSlug }),
+    });
+    loadReqs();
+  };
+
   const providerReviews = [
     { name: { ru: "А. Морозов", en: "A. Morozov" }, role: { ru: "Полиграфолог", en: "Polygraph examiner" }, rating: 5, text: { ru: "Корректный и пунктуальный клиент. Чёткое ТЗ, оплата без задержек. Рекомендую коллегам.", en: "Correct and punctual client. Clear brief, payment without delays. Recommended." }, date: { ru: "1 неделю назад", en: "1 week ago" }, img: DETECTIVE_IMAGE },
     { name: { ru: "И. Семёнов", en: "I. Semenov" }, role: { ru: "TSCM-специалист", en: "TSCM specialist" }, rating: 5, text: { ru: "Приятно работать — предоставил весь доступ к объекту, не вмешивался в процесс.", en: "A pleasure to work with — provided full site access, didn't interfere with the process." }, date: { ru: "3 недели назад", en: "3 weeks ago" }, img: POLYGRAPH_IMAGE },
     { name: { ru: "Е. Власова", en: "E. Vlasova" }, role: { ru: "Частный детектив", en: "Private investigator" }, rating: 4, text: { ru: "Хорошая коммуникация. В следующий раз желательно более детальное ТЗ заранее.", en: "Good communication. Next time a more detailed brief in advance would help." }, date: { ru: "2 месяца назад", en: "2 months ago" }, img: HERO_IMAGE },
   ];
-
-  const requests = [
-    { service: { ru: "Полиграф-проверка персонала", en: "Staff polygraph check" }, provider: { ru: "А. Морозов", en: "A. Morozov" }, date: { ru: "12 июня 2026", en: "Jun 12, 2026" }, status: "active" as const },
-    { service: { ru: "Поиск прослушки в офисе", en: "Office bug sweep" }, provider: { ru: "И. Семёнов", en: "I. Semenov" }, date: { ru: "28 мая 2026", en: "May 28, 2026" }, status: "done" as const },
-    { service: { ru: "Сбор досье на контрагента", en: "Counterparty dossier" }, provider: { ru: "Е. Власова", en: "E. Vlasova" }, date: { ru: "15 мая 2026", en: "May 15, 2026" }, status: "done" as const },
-  ];
-
-  const statusMap = { active: { key: "cdStatusActive" as const, cls: "text-gold border-gold/40" }, done: { key: "cdStatusDone" as const, cls: "text-green-400 border-green-500/40" }, new: { key: "cdStatusNew" as const, cls: "text-blue-400 border-blue-500/40" } };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
@@ -2349,24 +2391,93 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
 
           {tab === "requests" && (
             <div className="border border-border rounded-sm bg-card p-6">
-              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("cdReqTitle")}</div>
-              <div className="space-y-3">
-                {requests.map((r) => (
-                  <div key={r.service.en} className="flex items-center gap-4 p-4 border border-border rounded-sm hover:border-gold/40 transition-colors">
-                    <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
-                      <Icon name="FileText" size={15} className="text-[hsl(220,20%,6%)]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(r.service, lang)}</div>
-                      <div className="text-xs text-muted-foreground">{L(r.provider, lang)} · {L(r.date, lang)}</div>
-                    </div>
-                    <span className={`tag-security shrink-0 ${statusMap[r.status].cls}`}>{tr(statusMap[r.status].key)}</span>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-4 gap-2">
+                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("cdReqTitle")}</div>
+                <button onClick={() => setReqFormOpen((o) => !o)} className="gold-gradient text-[hsl(220,20%,6%)] px-3 py-1.5 text-[10px] font-montserrat font-bold rounded-sm flex items-center gap-1">
+                  <Icon name={reqFormOpen ? "X" : "Plus"} size={12} />{reqFormOpen ? tr("cancel") : tr("reqNew")}
+                </button>
               </div>
-              <button onClick={() => setActive("services")} className="w-full mt-4 border border-gold text-gold text-xs font-montserrat font-semibold py-2.5 rounded-sm hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all">
-                {tr("cdReqEmpty")}
-              </button>
+
+              {reqFormOpen && (
+                <div className="border border-gold/30 rounded-sm bg-secondary/40 p-4 mb-5 space-y-3">
+                  <p className="text-[11px] text-muted-foreground flex items-start gap-2"><Icon name="Info" size={14} className="text-gold shrink-0 mt-0.5" />{tr("reqBroadcastHint")}</p>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqCategory")}</label>
+                    <select value={newReq.category} onChange={(e) => setNewReq({ ...newReq, category: e.target.value })} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold">
+                      <option value="">{tr("searchAnyCategory")}</option>
+                      {serviceCategories.map((c) => <option key={c.id} value={c.id}>{L(c.title, lang)}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqService")}</label>
+                    <input value={newReq.service} onChange={(e) => setNewReq({ ...newReq, service: e.target.value })} placeholder={tr("reqServicePh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqDesc")}</label>
+                    <textarea value={newReq.description} onChange={(e) => setNewReq({ ...newReq, description: e.target.value })} rows={3} placeholder={tr("reqDescPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold resize-none" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqBudget")}</label>
+                      <input value={newReq.budget} onChange={(e) => setNewReq({ ...newReq, budget: e.target.value })} placeholder={tr("reqBudgetPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqCity")}</label>
+                      <input value={newReq.city} onChange={(e) => setNewReq({ ...newReq, city: e.target.value })} placeholder={tr("reqCityPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
+                    </div>
+                  </div>
+                  <button onClick={createReq} disabled={reqBusy || (!newReq.category && !newReq.service.trim())} className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{reqBusy ? tr("pdSaving") : tr("reqPublish")}</button>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {myReqs.length === 0 && (
+                  <div className="text-xs text-muted-foreground py-10 text-center border border-dashed border-border rounded-sm">{tr("reqEmpty")}</div>
+                )}
+                {myReqs.map((r) => {
+                  const cat = serviceCategories.find((c) => c.id === r.category);
+                  const assigned = r.status === "assigned";
+                  return (
+                    <div key={r.id} className="border border-border rounded-sm p-4">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
+                          <Icon name={cat?.icon || "FileText"} fallback="FileText" size={15} className="text-[hsl(220,20%,6%)]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-montserrat font-semibold text-sm text-foreground">{r.service || (cat ? L(cat.title, lang) : tr("reqService"))}</div>
+                          <div className="text-[11px] text-muted-foreground">{cat ? L(cat.title, lang) : ""}{r.budget ? ` · ${r.budget}` : ""}{r.city ? ` · ${r.city}` : ""}</div>
+                        </div>
+                        <span className={`tag-security shrink-0 ${assigned ? "text-green-400 border-green-500/40" : "text-gold border-gold/40"}`}>{tr(assigned ? "reqStatusAssigned" : "reqStatusOpen")}</span>
+                      </div>
+                      {r.description && <p className="text-xs text-muted-foreground mb-3">{r.description}</p>}
+
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">{tr("reqResponses")} ({r.responses.length})</div>
+                      {r.responses.length === 0 ? (
+                        <div className="text-[11px] text-muted-foreground italic">{tr("reqNoResponses")}</div>
+                      ) : (
+                        <div className="space-y-2">
+                          {r.responses.map((resp) => (
+                            <div key={resp.providerSlug} className={`flex items-start gap-3 p-3 border rounded-sm ${resp.status === "accepted" ? "border-green-500/50 bg-green-500/[0.05]" : "border-border"}`}>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-montserrat font-semibold text-sm text-foreground">{resp.providerName || resp.providerSlug}</div>
+                                {resp.message && <div className="text-xs text-muted-foreground mt-0.5">{resp.message}</div>}
+                                {resp.price && <div className="text-xs text-gold font-semibold mt-1">{resp.price}</div>}
+                              </div>
+                              {assigned ? (
+                                resp.status === "accepted"
+                                  ? <span className="tag-security shrink-0 text-green-400 border-green-500/40">{tr("reqChosen")}</span>
+                                  : <span className="tag-security shrink-0 text-muted-foreground border-border">{tr("reqDeclined")}</span>
+                              ) : (
+                                <button onClick={() => chooseProvider(r.id, resp.providerSlug)} className="gold-gradient text-[hsl(220,20%,6%)] text-[11px] font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90">{tr("reqChoose")}</button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -2451,6 +2562,22 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const { logout } = useAuth();
   const handleLogout = async () => { await logout(); setActive("home"); window.scrollTo({ top: 0 }); };
   const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts" | "verify">("stats");
+
+  type DashCase = { title: LS; category: LS; views: number; published: boolean };
+  const [myCases, setMyCases] = useState<DashCase[]>(() => cases.map((c) => ({ title: c.title, category: c.category, views: c.views, published: true })));
+  const [caseFormOpen, setCaseFormOpen] = useState(false);
+  const [caseTitle, setCaseTitle] = useState("");
+  const [caseCategory, setCaseCategory] = useState("");
+
+  const addCase = () => {
+    const title = caseTitle.trim();
+    if (!title) return;
+    const catTitle = caseCategory.trim() || tr("pdCaseDefaultCat");
+    setMyCases((prev) => [{ title: { ru: title, en: title }, category: { ru: catTitle, en: catTitle }, views: 0, published: false }, ...prev]);
+    setCaseTitle("");
+    setCaseCategory("");
+    setCaseFormOpen(false);
+  };
 
   const tabs = [
     { id: "stats" as const, key: "pdTab1" as const, icon: "ChartNoAxesColumn" },
@@ -2577,12 +2704,34 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     });
   };
 
-  const incoming = [
-    { client: { ru: "ООО «АльфаТех»", en: "AlphaTech LLC" }, service: { ru: "Полиграф для 12 сотрудников", en: "Polygraph for 12 staff" }, budget: { ru: "от 90 000 ₽", en: "from $1,000" }, date: { ru: "сегодня", en: "today" }, status: "new" as const },
-    { client: { ru: "Дмитрий О.", en: "Dmitry O." }, service: { ru: "Проверка кандидата", en: "Candidate check" }, budget: { ru: "8 000 ₽", en: "$90" }, date: { ru: "вчера", en: "yesterday" }, status: "new" as const },
-    { client: { ru: "ЧОП «Барьер»", en: "Barrier Security" }, service: { ru: "Аудит безопасности офиса", en: "Office security audit" }, budget: { ru: "45 000 ₽", en: "$520" }, date: { ru: "2 дня назад", en: "2 days ago" }, status: "active" as const },
-  ];
-  const statusMap = { active: { key: "cdStatusActive" as const, cls: "text-gold border-gold/40" }, new: { key: "cdStatusNew" as const, cls: "text-blue-400 border-blue-500/40" } };
+  type ProvReq = { id: number; clientName: string; category: string; service: string; description: string; budget: string; city: string; createdAt: string | null; myResponse: { message: string; price: string; status: string } | null };
+  const [incoming, setIncoming] = useState<ProvReq[]>([]);
+  const [respDraft, setRespDraft] = useState<Record<number, { message: string; price: string }>>({});
+  const [respOpen, setRespOpen] = useState<number | null>(null);
+
+  const myCatIds = Array.from(new Set(myServices.map((ms) => services.find((s) => s.title.en === ms.key)?.cat).filter(Boolean)));
+
+  const loadIncoming = useCallback(() => {
+    fetch(`${func2url["requests"]}?view=provider&providerSlug=morozov`)
+      .then((r) => r.json())
+      .then((d) => { if (Array.isArray(d.requests)) setIncoming(d.requests); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => { loadIncoming(); }, [loadIncoming]);
+
+  const sendResponse = async (requestId: number) => {
+    const draft = respDraft[requestId] || { message: "", price: "" };
+    await fetch(func2url["requests"], {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "respond", requestId, providerSlug: "morozov", providerName: vf.fullName || L(specialists[0].name, lang), message: draft.message, price: draft.price }),
+    });
+    setRespOpen(null);
+    loadIncoming();
+  };
+
+  const visibleIncoming = incoming.filter((r) => myCatIds.length === 0 || myCatIds.includes(r.category) || !r.category);
 
   const emailReceipt = async (row: { date: string; plan: keyof typeof t; amount: string; i: number }) => {
     const email = window.prompt(tr("pdHistEmailPrompt"), "");
@@ -2823,11 +2972,29 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
               <div className="border border-border rounded-sm bg-card p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdMyCases")}</div>
-                  <button className="gold-gradient text-[hsl(220,20%,6%)] px-3 py-1.5 text-[10px] font-montserrat font-bold rounded-sm">{tr("pdAddCase")}</button>
+                  <button onClick={() => setCaseFormOpen((o) => !o)} className="gold-gradient text-[hsl(220,20%,6%)] px-3 py-1.5 text-[10px] font-montserrat font-bold rounded-sm flex items-center gap-1">
+                    <Icon name={caseFormOpen ? "X" : "Plus"} size={12} />{caseFormOpen ? tr("cancel") : tr("pdAddCase")}
+                  </button>
                 </div>
+                {caseFormOpen && (
+                  <div className="border border-gold/30 rounded-sm bg-secondary/40 p-4 mb-4 space-y-3">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("pdCaseTitle")}</label>
+                      <input value={caseTitle} onChange={(e) => setCaseTitle(e.target.value)} placeholder={tr("pdCaseTitlePh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("pdCaseCat")}</label>
+                      <select value={caseCategory} onChange={(e) => setCaseCategory(e.target.value)} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold">
+                        <option value="">{tr("pdCaseDefaultCat")}</option>
+                        {serviceCategories.map((c) => <option key={c.id} value={L(c.title, lang)}>{L(c.title, lang)}</option>)}
+                      </select>
+                    </div>
+                    <button onClick={addCase} disabled={!caseTitle.trim()} className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{tr("pdCaseSave")}</button>
+                  </div>
+                )}
                 <div className="space-y-3">
-                  {cases.map((c, i) => (
-                    <div key={c.title.en} className="flex items-center gap-3 p-3 border border-border rounded-sm">
+                  {myCases.map((c, i) => (
+                    <div key={`${c.title.en}-${i}`} className="flex items-center gap-3 p-3 border border-border rounded-sm">
                       <div className="w-8 h-8 gold-gradient rounded flex items-center justify-center shrink-0">
                         <Icon name="FolderOpen" size={14} className="text-[hsl(220,20%,6%)]" />
                       </div>
@@ -2835,7 +3002,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                         <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(c.title, lang)}</div>
                         <div className="text-[10px] text-muted-foreground">{c.views} · {L(c.category, lang)}</div>
                       </div>
-                      <span className={`tag-security shrink-0 ${i === 0 ? "text-yellow-500 border-yellow-600/40" : "text-green-400 border-green-500/40"}`}>{tr(i === 0 ? "pdDraft" : "pdPublished")}</span>
+                      <span className={`tag-security shrink-0 ${c.published ? "text-green-400 border-green-500/40" : "text-yellow-500 border-yellow-600/40"}`}>{tr(c.published ? "pdPublished" : "pdDraft")}</span>
                     </div>
                   ))}
                 </div>
@@ -2928,27 +3095,60 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
 
           {tab === "requests" && (
             <div className="border border-border rounded-sm bg-card p-6">
-              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("pdReqTitle")}</div>
+              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("pdReqTitle")}</div>
+              <p className="text-[11px] text-muted-foreground mb-4">{tr("pdReqHint")}</p>
               <div className="space-y-3">
-                {incoming.map((r) => (
-                  <div key={r.service.en} className="p-4 border border-border rounded-sm hover:border-gold/40 transition-colors">
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div>
-                        <div className="font-montserrat font-bold text-sm text-foreground">{L(r.client, lang)}</div>
-                        <div className="text-xs text-muted-foreground">{tr("pdReqService")}: {L(r.service, lang)}</div>
+                {visibleIncoming.length === 0 && (
+                  <div className="text-xs text-muted-foreground py-10 text-center border border-dashed border-border rounded-sm">{tr("pdReqEmpty")}</div>
+                )}
+                {visibleIncoming.map((r) => {
+                  const cat = serviceCategories.find((c) => c.id === r.category);
+                  const responded = !!r.myResponse;
+                  const accepted = r.myResponse?.status === "accepted";
+                  const declined = r.myResponse?.status === "declined";
+                  const draft = respDraft[r.id] || { message: "", price: "" };
+                  return (
+                    <div key={r.id} className="p-4 border border-border rounded-sm">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="min-w-0">
+                          <div className="font-montserrat font-bold text-sm text-foreground">{r.clientName || tr("pdReqClient")}</div>
+                          <div className="text-xs text-muted-foreground">{tr("pdReqService")}: {r.service || (cat ? L(cat.title, lang) : "—")}</div>
+                          {cat && <div className="text-[10px] text-muted-foreground mt-0.5">{L(cat.title, lang)}</div>}
+                        </div>
+                        {accepted ? <span className="tag-security shrink-0 text-green-400 border-green-500/40">{tr("reqChosen")}</span>
+                          : declined ? <span className="tag-security shrink-0 text-muted-foreground border-border">{tr("reqDeclined")}</span>
+                          : responded ? <span className="tag-security shrink-0 text-gold border-gold/40">{tr("pdResponded")}</span>
+                          : <span className="tag-security shrink-0 text-blue-400 border-blue-500/40">{tr("cdStatusNew")}</span>}
                       </div>
-                      <span className={`tag-security shrink-0 ${statusMap[r.status].cls}`}>{tr(statusMap[r.status].key)}</span>
+                      {r.description && <p className="text-xs text-muted-foreground mb-2">{r.description}</p>}
+                      <div className="flex items-center gap-4 mb-3 flex-wrap">
+                        {r.budget && <span className="text-xs text-muted-foreground">{tr("pdReqBudget")}: <span className="text-gold font-semibold">{r.budget}</span></span>}
+                        {r.city && <span className="text-xs text-muted-foreground">{r.city}</span>}
+                      </div>
+
+                      {responded && r.myResponse && (
+                        <div className="text-[11px] text-muted-foreground border-t border-border pt-2 mb-2">
+                          {tr("pdYourOffer")}: {r.myResponse.price && <span className="text-gold font-semibold">{r.myResponse.price}</span>} {r.myResponse.message}
+                        </div>
+                      )}
+
+                      {!accepted && !declined && (
+                        respOpen === r.id ? (
+                          <div className="space-y-2">
+                            <input value={draft.price} onChange={(e) => setRespDraft({ ...respDraft, [r.id]: { ...draft, price: e.target.value } })} placeholder={tr("pdOfferPrice")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
+                            <textarea value={draft.message} onChange={(e) => setRespDraft({ ...respDraft, [r.id]: { ...draft, message: e.target.value } })} rows={2} placeholder={tr("pdOfferMsg")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold resize-none" />
+                            <div className="flex gap-2">
+                              <button onClick={() => sendResponse(r.id)} className="flex-1 gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90">{tr("pdSendOffer")}</button>
+                              <button onClick={() => setRespOpen(null)} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm">{tr("cancel")}</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button onClick={() => setRespOpen(r.id)} className="w-full gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity">{responded ? tr("pdEditOffer") : tr("pdRespond")}</button>
+                        )
+                      )}
                     </div>
-                    <div className="flex items-center gap-4 mb-3">
-                      <span className="text-xs text-muted-foreground">{tr("pdReqBudget")}: <span className="text-gold font-semibold">{L(r.budget, lang)}</span></span>
-                      <span className="text-[10px] text-muted-foreground ml-auto">{L(r.date, lang)}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <button className="flex-1 gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity">{tr("pdAccept")}</button>
-                      <button className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all">{tr("pdDecline")}</button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -3725,7 +3925,7 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
   );
 }
 
-function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
+function ProfileSection({ setActive, openChat }: { setActive: (s: Section) => void; openChat: (t: { name: string; title: string; avatar?: string | null }) => void }) {
   const { lang, tr } = useLang();
   const [activeTab, setActiveTab] = useState<"cases" | "services" | "reviews">("cases");
   const { providers } = useProviders();
@@ -3774,7 +3974,7 @@ function ProfileSection({ setActive }: { setActive: (s: Section) => void }) {
               </div>
               <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-montserrat font-semibold mb-2">{tr("contactTitle")}</div>
               {provider && <AvailabilityNote p={provider} />}
-              {provider && <ContactButtons p={provider} onChat={() => setActive("chat")} />}
+              {provider && <ContactButtons p={provider} onChat={() => openChat({ name: L(provider.name, lang), title: L(provider.title, lang), avatar: provider.img })} />}
               <button className="w-full mt-2 border border-border text-muted-foreground py-2.5 text-xs font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">{tr("orderService")}</button>
             </div>
           </div>
@@ -4128,11 +4328,10 @@ function SearchSection({ setActive }: { setActive: (s: Section) => void }) {
           </div>
           <div>
             <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFService")}</label>
-            <div className="flex items-center gap-2 border border-border bg-secondary rounded-sm px-3">
-              <Icon name="Briefcase" size={14} className="text-muted-foreground" />
-              <input list="svc-list" value={service} onChange={(e) => setService(e.target.value)} placeholder={tr("searchAnyService")} className="flex-1 bg-transparent py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
-              <datalist id="svc-list">{serviceOptions.map((s) => <option key={s} value={s} />)}</datalist>
-            </div>
+            <select value={service} onChange={(e) => setService(e.target.value)} className="w-full border border-border bg-secondary rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold">
+              <option value="">{tr("searchAnyService")}</option>
+              {serviceOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
           </div>
           <div>
             <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFCity")}</label>
@@ -4445,6 +4644,71 @@ function GuardsSection() {
               <div className="text-xs text-muted-foreground leading-relaxed">{L(x.desc, lang)}</div>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DirectChatSection({ target, chatInput, setChatInput, onBack }: { target: { name: string; title: string; avatar?: string | null }; chatInput: string; setChatInput: (v: string) => void; onBack: () => void }) {
+  const { tr } = useLang();
+  const [msgs, setMsgs] = useState<{ me: boolean; text: string; time: string }[]>([
+    { me: false, text: tr("dcGreeting"), time: "10:24" },
+  ]);
+  const initial = (target.name || "?").trim()[0] || "?";
+
+  const send = () => {
+    const text = chatInput.trim();
+    if (!text) return;
+    const time = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    setMsgs((m) => [...m, { me: true, text, time }]);
+    setChatInput("");
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-10">
+      <button onClick={onBack} className="text-xs text-muted-foreground hover:text-gold transition-colors font-montserrat flex items-center gap-1 mb-4">
+        <Icon name="ArrowLeft" size={13} />{tr("back")}
+      </button>
+      <div className="border border-border rounded-sm bg-card overflow-hidden flex flex-col" style={{ height: "600px" }}>
+        <div className="p-4 border-b border-border flex items-center gap-3">
+          <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
+            {target.avatar ? <img src={target.avatar} alt="" className="w-full h-full object-cover" /> : <span className="font-montserrat font-bold text-sm text-[hsl(220,20%,6%)]">{initial}</span>}
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-montserrat font-semibold text-foreground truncate">{target.name}</div>
+            <div className="text-[11px] text-muted-foreground truncate">{target.title}</div>
+          </div>
+          <div className="flex items-center gap-1 ms-auto">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            <span className="text-xs text-muted-foreground">{tr("online")}</span>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-3 scrollbar-thin">
+          {msgs.map((m, i) => (
+            <div key={i} className={`flex ${m.me ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[75%] rounded-sm px-3.5 py-2 ${m.me ? "gold-gradient text-[hsl(220,20%,6%)]" : "bg-secondary text-foreground"}`}>
+                <div className="text-sm leading-relaxed">{m.text}</div>
+                <div className={`text-[10px] mt-1 ${m.me ? "text-[hsl(220,20%,6%)]/70" : "text-muted-foreground"}`}>{m.time}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="p-4 border-t border-border">
+          <div className="flex gap-3">
+            <input
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") send(); }}
+              placeholder={tr("writeMessage")}
+              className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+            />
+            <button onClick={send} className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
+              <Icon name="Send" size={16} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
