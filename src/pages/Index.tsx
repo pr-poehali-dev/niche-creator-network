@@ -1381,12 +1381,16 @@ export default function Index() {
                 <div key={l} className="text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2">{tr(l)}</div>
               ))}
             </div>
-            <div>
-              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerCommunity")}</div>
-              {(["navForum", "navChat", "fEvents", "fNews"] as const).map(l => (
-                <div key={l} className="text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2">{tr(l)}</div>
-              ))}
-            </div>
+            {isAuthed && role === "provider" ? (
+              <div>
+                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerCommunity")}</div>
+                {([["navForum", "forum"], ["navChat", "chat"]] as const).map(([l, sec]) => (
+                  <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
+                ))}
+              </div>
+            ) : (
+              <div />
+            )}
             <div>
               <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerDocs")}</div>
               <button onClick={() => go("policy")} className="flex items-center gap-1.5 text-xs text-gold hover:opacity-80 cursor-pointer transition-colors mb-2 font-medium">
