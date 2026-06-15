@@ -15,12 +15,6 @@ const DETECTIVE_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b
 const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/3ab23f4f-4190-41a8-a1f3-206d541e0669.jpg";
 const SPY_AVATAR_M = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/61fc9ccd-a5ee-4375-8640-5c890da0df33.jpg";
 const SPY_AVATAR_F = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b40d29de-2a29-448c-82c8-a2baa711ee57.jpg";
-const PROVIDER_EMAIL = "a.morozov@shchit.ru";
-const DEMO_CLIENT = {
-  name: { ru: "Дмитрий Орлов", en: "Dmitry Orlov" },
-  city: { ru: "Москва", en: "Moscow" },
-  email: "d.orlov@email.com",
-};
 
 type Section = "home" | "profile" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "admin";
 type Role = "client" | "provider";
@@ -2237,7 +2231,8 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
 
 function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const { lang, tr } = useLang();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const clientId = user ? `client-${user.id}` : "demo-client";
   const handleLogout = async () => { await logout(); setActive("home"); window.scrollTo({ top: 0 }); };
   const [tab, setTab] = useState<"profile" | "requests" | "favorites" | "settings">("profile");
 
@@ -2253,7 +2248,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [clientAvatar, setClientAvatar] = useState<string>("");
 
   useEffect(() => {
-    fetch(`${func2url["clients"]}?clientId=demo-client`)
+    fetch(`${func2url["clients"]}?clientId=${encodeURIComponent(clientId)}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.client) {
@@ -2262,7 +2257,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [clientId]);
 
   const saveClient = async () => {
     setClientState("saving");
@@ -2270,7 +2265,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
       const res = await fetch(func2url["clients"], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId: "demo-client", ...clientData }),
+        body: JSON.stringify({ clientId, ...clientData }),
       });
       setClientState(res.ok ? "saved" : "error");
     } catch {
@@ -2286,11 +2281,11 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [reqBusy, setReqBusy] = useState(false);
 
   const loadReqs = useCallback(() => {
-    fetch(`${func2url["requests"]}?clientId=demo-client`)
+    fetch(`${func2url["requests"]}?clientId=${encodeURIComponent(clientId)}`)
       .then((r) => r.json())
       .then((d) => { if (Array.isArray(d.requests)) setMyReqs(d.requests); })
       .catch(() => {});
-  }, []);
+  }, [clientId]);
 
   useEffect(() => { loadReqs(); }, [loadReqs]);
 
@@ -2301,7 +2296,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
       await fetch(func2url["requests"], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "create", clientId: "demo-client", clientName: clientData.fullName || L(DEMO_CLIENT.name, lang), ...newReq }),
+        body: JSON.stringify({ action: "create", clientId, clientName: clientData.fullName || user?.name || "", ...newReq }),
       });
       setNewReq({ category: "", service: "", description: "", budget: "", city: "" });
       setReqFormOpen(false);
@@ -2315,16 +2310,14 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
     await fetch(func2url["requests"], {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "choose", clientId: "demo-client", requestId, providerSlug }),
+      body: JSON.stringify({ action: "choose", clientId, requestId, providerSlug }),
     });
     loadReqs();
   };
 
-  const providerReviews = [
-    { name: { ru: "А. Морозов", en: "A. Morozov" }, role: { ru: "Полиграфолог", en: "Polygraph examiner" }, rating: 5, text: { ru: "Корректный и пунктуальный клиент. Чёткое ТЗ, оплата без задержек. Рекомендую коллегам.", en: "Correct and punctual client. Clear brief, payment without delays. Recommended." }, date: { ru: "1 неделю назад", en: "1 week ago" }, img: DETECTIVE_IMAGE },
-    { name: { ru: "И. Семёнов", en: "I. Semenov" }, role: { ru: "TSCM-специалист", en: "TSCM specialist" }, rating: 5, text: { ru: "Приятно работать — предоставил весь доступ к объекту, не вмешивался в процесс.", en: "A pleasure to work with — provided full site access, didn't interfere with the process." }, date: { ru: "3 недели назад", en: "3 weeks ago" }, img: POLYGRAPH_IMAGE },
-    { name: { ru: "Е. Власова", en: "E. Vlasova" }, role: { ru: "Частный детектив", en: "Private investigator" }, rating: 4, text: { ru: "Хорошая коммуникация. В следующий раз желательно более детальное ТЗ заранее.", en: "Good communication. Next time a more detailed brief in advance would help." }, date: { ru: "2 месяца назад", en: "2 months ago" }, img: HERO_IMAGE },
-  ];
+  const providerReviews: { name: LS; role: LS; rating: number; text: LS; date: LS; img: string }[] = [];
+  const completedOrders = myReqs.filter((r) => r.status === "closed" || r.chosenProvider).length;
+  const displayName = clientData.fullName || user?.name || tr("dashWelcome");
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
@@ -2336,12 +2329,11 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
         <div className="flex-1">
           <div className="text-xs text-muted-foreground font-montserrat mb-1">{tr("dashWelcome")},</div>
           <div className="font-montserrat font-extrabold text-2xl text-foreground flex items-center gap-2">
-            {L(DEMO_CLIENT.name, lang)}
+            {displayName}
             <Icon name="BadgeCheck" size={18} className="text-gold" />
           </div>
           <div className="flex items-center gap-3 mt-2">
-            <StarRating rating={4.9} />
-            <span className="text-xs text-muted-foreground">4.9 · {tr("dashSince")} 2024</span>
+            <span className="text-xs text-muted-foreground">{user?.email || ""}</span>
           </div>
         </div>
         <button onClick={handleLogout} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5">
@@ -2370,29 +2362,21 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
             <>
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { n: "27", l: "cdOrdersDone" as const },
-                  { n: "19", l: "cdReviewsCount" as const },
-                  { n: "96%", l: "cdResponseRate" as const },
+                  { n: String(myReqs.length), l: "cdTab2" as const },
+                  { n: String(completedOrders), l: "cdOrdersDone" as const },
+                  { n: String(providerReviews.length), l: "cdReviewsCount" as const },
                 ].map((s) => (
-                  <div key={s.n} className="border border-border rounded-sm bg-card p-5 text-center">
+                  <div key={s.l} className="border border-border rounded-sm bg-card p-5 text-center">
                     <div className="stat-number text-2xl mb-1">{s.n}</div>
                     <div className="text-[10px] text-muted-foreground">{tr(s.l)}</div>
                   </div>
                 ))}
               </div>
-              <div className="border border-gold/30 rounded-sm bg-card p-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <Icon name="Award" size={18} className="text-gold" />
-                  <div className="font-montserrat font-bold text-sm text-foreground">{tr("cdRatingTitle")}</div>
-                </div>
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="stat-number text-4xl">4.9</span>
-                  <StarRating rating={4.9} />
-                </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{tr("cdRatingDesc")}</p>
-              </div>
               <div className="border border-border rounded-sm bg-card p-6">
                 <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("cdReviewsTitle")}</div>
+                {providerReviews.length === 0 && (
+                  <div className="text-sm text-muted-foreground text-center py-8">{tr("cdNoReviews")}</div>
+                )}
                 <div className="space-y-4">
                   {providerReviews.map((r) => (
                     <div key={r.name.en} className="flex gap-3 pb-4 border-b border-border last:border-0 last:pb-0">
@@ -2545,7 +2529,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 <p className="text-xs text-muted-foreground leading-relaxed">{tr("cdClientDataHint")}</p>
               </div>
 
-              <AvatarUploader current={clientAvatar} gender={clientData.gender} role="client" recordId="demo-client" onUploaded={setClientAvatar} />
+              <AvatarUploader current={clientAvatar} gender={clientData.gender} role="client" recordId={clientId} onUploaded={setClientAvatar} />
               <div>
                 <label className="text-xs font-montserrat font-semibold text-foreground block mb-2">{tr("genderLabel")}</label>
                 <div className="grid grid-cols-2 gap-2 max-w-xs">
@@ -2589,12 +2573,13 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
 
 function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const { lang, tr } = useLang();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const slug = user ? `provider-${user.id}` : "morozov";
   const handleLogout = async () => { await logout(); setActive("home"); window.scrollTo({ top: 0 }); };
   const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts" | "verify">("requests");
 
   type DashCase = { title: LS; category: LS; views: number; published: boolean };
-  const [myCases, setMyCases] = useState<DashCase[]>(() => cases.map((c) => ({ title: c.title, category: c.category, views: c.views, published: true })));
+  const [myCases, setMyCases] = useState<DashCase[]>([]);
   const [caseFormOpen, setCaseFormOpen] = useState(false);
   const [caseTitle, setCaseTitle] = useState("");
   const [caseCategory, setCaseCategory] = useState("");
@@ -2627,7 +2612,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
       const res = await fetch(func2url["save-contacts"], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: "morozov", ...contacts }),
+        body: JSON.stringify({ slug, ...contacts }),
       });
       setSaveState(res.ok ? "saved" : "error");
     } catch {
@@ -2654,7 +2639,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [svcSaveState, setSvcSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   useEffect(() => {
-    fetch(`${func2url["save-verification"]}?slug=morozov`)
+    fetch(`${func2url["save-verification"]}?slug=${encodeURIComponent(slug)}`)
       .then((r) => r.json())
       .then((d) => {
         const v = d.verification;
@@ -2679,7 +2664,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
         if (v.avatarUrl) setAvatarUrl(v.avatarUrl);
       })
       .catch(() => {});
-  }, []);
+  }, [slug]);
 
   const saveVerification = async () => {
     setVfState("saving");
@@ -2689,7 +2674,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
       const res = await fetch(func2url["save-verification"], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: "morozov", ...payload, services: myServices }),
+        body: JSON.stringify({ slug, ...payload, services: myServices }),
       });
       setVfState(res.ok ? "saved" : "error");
     } catch {
@@ -2705,7 +2690,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
       const res = await fetch(func2url["save-verification"], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: "morozov", ...payload, services: next }),
+        body: JSON.stringify({ slug, ...payload, services: next }),
       });
       setSvcSaveState(res.ok ? "saved" : "error");
       if (res.ok) setTimeout(() => setSvcSaveState("idle"), 2000);
@@ -2744,11 +2729,11 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const myCatIds = Array.from(new Set(myServices.map((ms) => services.find((s) => s.title.en === ms.key)?.cat).filter(Boolean)));
 
   const loadIncoming = useCallback(() => {
-    fetch(`${func2url["requests"]}?view=provider&providerSlug=morozov`)
+    fetch(`${func2url["requests"]}?view=provider&providerSlug=${encodeURIComponent(slug)}`)
       .then((r) => r.json())
       .then((d) => { if (Array.isArray(d.requests)) setIncoming(d.requests); })
       .catch(() => {});
-  }, []);
+  }, [slug]);
 
   useEffect(() => { loadIncoming(); }, [loadIncoming]);
 
@@ -2757,7 +2742,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     await fetch(func2url["requests"], {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "respond", requestId, providerSlug: "morozov", providerName: vf.fullName || L(specialists[0].name, lang), message: draft.message, price: draft.price }),
+      body: JSON.stringify({ action: "respond", requestId, providerSlug: slug, providerName: vf.usePseudonym && vf.pseudonym ? vf.pseudonym : (vf.fullName || user?.name || ""), message: draft.message, price: draft.price }),
     });
     setRespOpen(null);
     loadIncoming();
@@ -2778,7 +2763,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
           plan: tr(row.plan),
           period: tr("payOneMonth"),
           amount: row.amount,
-          payer: L(specialists[0].name, lang),
+          payer: vf.fullName || user?.name || "",
           method: tr("payCard") + " •••• 4242",
           lang,
           email,
@@ -2795,17 +2780,16 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
       {/* Header card */}
       <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-5 security-glow">
         <div className="w-16 h-16 rounded-sm overflow-hidden border-2 border-gold shrink-0">
-          <img src={DETECTIVE_IMAGE} alt="avatar" className="w-full h-full object-cover" />
+          <img src={resolveAvatar(avatarUrl, vf.gender)} alt="avatar" className="w-full h-full object-cover" />
         </div>
         <div className="flex-1">
           <div className="text-xs text-muted-foreground font-montserrat mb-1">{tr("dashWelcome")},</div>
           <div className="font-montserrat font-extrabold text-2xl text-foreground flex items-center gap-2">
-            {L(specialists[0].name, lang)}
+            {(vf.usePseudonym && vf.pseudonym ? vf.pseudonym : (vf.fullName || user?.name || ""))}
             <Icon name="BadgeCheck" size={18} className="text-gold" />
           </div>
           <div className="flex items-center gap-3 mt-2">
-            <StarRating rating={specialists[0].rating} />
-            <span className="text-xs text-muted-foreground">{specialists[0].rating} · {L(specialists[0].title, lang)}</span>
+            <span className="text-xs text-muted-foreground">{user?.email || ""}</span>
           </div>
         </div>
         <button onClick={handleLogout} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5">
@@ -2832,10 +2816,10 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { n: "2 480", l: "pdStatViews" as const, icon: "Eye" },
-                  { n: "34", l: "pdStatRequests" as const, icon: "Inbox" },
-                  { n: "4.9", l: "pdStatRating" as const, icon: "Star" },
-                  { n: "18%", l: "pdStatConversion" as const, icon: "TrendingUp" },
+                  { n: "—", l: "pdStatViews" as const, icon: "Eye" },
+                  { n: String(incoming.length), l: "pdStatRequests" as const, icon: "Inbox" },
+                  { n: "—", l: "pdStatRating" as const, icon: "Star" },
+                  { n: "—", l: "pdStatConversion" as const, icon: "TrendingUp" },
                 ].map((s) => (
                   <div key={s.l} className="border border-border rounded-sm bg-card p-5">
                     <div className="flex items-center justify-between mb-2">
@@ -3572,7 +3556,7 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
     plan: tr(plan.name),
     period: period === "year" ? tr("payOneYear") : tr("payOneMonth"),
     amount: amountStr,
-    payer: (to || email) || L(specialists[0].name, lang),
+    payer: (to || email) || "",
     method: tr(method === "card" ? "payCard" : "paySbp"),
     lang,
   });
@@ -4676,16 +4660,14 @@ function GuardsSection() {
 }
 
 function DirectChatSection({ target, chatInput, setChatInput, onBack }: { target: { name: string; title: string; avatar?: string | null }; chatInput: string; setChatInput: (v: string) => void; onBack: () => void }) {
-  const { tr } = useLang();
-  const [msgs, setMsgs] = useState<{ me: boolean; text: string; time: string }[]>([
-    { me: false, text: tr("dcGreeting"), time: "10:24" },
-  ]);
+  const { lang, tr } = useLang();
+  const [msgs, setMsgs] = useState<{ me: boolean; text: string; time: string }[]>([]);
   const initial = (target.name || "?").trim()[0] || "?";
 
   const send = () => {
     const text = cleanText(chatInput.trim());
     if (!text) return;
-    const time = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    const time = new Date().toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
     setMsgs((m) => [...m, { me: true, text, time }]);
     setChatInput("");
   };
@@ -4711,6 +4693,9 @@ function DirectChatSection({ target, chatInput, setChatInput, onBack }: { target
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-3 scrollbar-thin">
+          {msgs.length === 0 && (
+            <div className="h-full flex items-center justify-center text-center text-sm text-muted-foreground">{tr("dcEmpty")}</div>
+          )}
           {msgs.map((m, i) => (
             <div key={i} className={`flex ${m.me ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[75%] rounded-sm px-3.5 py-2 ${m.me ? "gold-gradient text-[hsl(220,20%,6%)]" : "bg-secondary text-foreground"}`}>
@@ -4742,11 +4727,12 @@ function DirectChatSection({ target, chatInput, setChatInput, onBack }: { target
 
 function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatInput: (v: string) => void }) {
   const { lang, tr } = useLang();
+  const { user } = useAuth();
   const rooms = [{ id: "general", title: { ru: "Общий чат", en: "General" } }, ...serviceCategories.map((c) => ({ id: c.id, title: c.title }))];
   const [room, setRoom] = useState("general");
   const [msgs, setMsgs] = useState<{ author: string; text: string; createdAt: string | null }[]>([]);
-  const me = "morozov";
-  const myName = L(specialists[0].name, lang);
+  const me = user ? `user-${user.id}` : "guest";
+  const myName = user?.name || tr("chatGuestName");
   const endRef = useRef<HTMLDivElement | null>(null);
 
   const loadMsgs = useCallback((r: string) => {
@@ -4771,7 +4757,7 @@ function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatIn
     loadMsgs(room);
   };
 
-  const fmtTime = (iso: string | null) => iso ? new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) : "";
+  const fmtTime = (iso: string | null) => iso ? new Date(iso).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" }) : "";
   const activeRoom = rooms.find((r) => r.id === room) || rooms[0];
 
   return (
@@ -4845,8 +4831,9 @@ type ForumPost = { author: string; text: string; createdAt: string | null };
 
 function ForumSection() {
   const { lang, tr } = useLang();
-  const me = "morozov";
-  const myName = L(specialists[0].name, lang);
+  const { user } = useAuth();
+  const me = user ? `user-${user.id}` : "guest";
+  const myName = user?.name || tr("chatGuestName");
   const [cat, setCat] = useState("");
   const [topics, setTopics] = useState<ForumTopic[]>([]);
   const [newOpen, setNewOpen] = useState(false);

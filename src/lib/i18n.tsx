@@ -1038,6 +1038,9 @@ export const t: Dict = {
   cdClientPhone: { ru: "Номер телефона", en: "Phone number" },
   cdClientSaved: { ru: "Данные сохранены", en: "Details saved" },
   cdClientSaveErr: { ru: "Не удалось сохранить. Попробуйте ещё раз.", en: "Failed to save. Please try again." },
+  cdNoReviews: { ru: "Пока нет отзывов", en: "No reviews yet" },
+  dcEmpty: { ru: "Напишите первое сообщение, чтобы начать диалог", en: "Send the first message to start the conversation" },
+  chatGuestName: { ru: "Гость", en: "Guest" },
 };
 
 interface LangCtx {
