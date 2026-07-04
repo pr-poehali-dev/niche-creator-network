@@ -16,7 +16,7 @@ const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-2
 const SPY_AVATAR_M = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/61fc9ccd-a5ee-4375-8640-5c890da0df33.jpg";
 const SPY_AVATAR_F = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b40d29de-2a29-448c-82c8-a2baa711ee57.jpg";
 
-type Section = "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "admin" | "mobileapp";
+type Section = "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "admin" | "mobileapp" | "about";
 type Role = "client" | "provider";
 
 type NavItem = { id: Section; key: keyof typeof t; icon: string };
@@ -1218,6 +1218,7 @@ export default function Index() {
       if (active === "privacy" || active === "terms" || active === "agreement" || active === "offer") return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
       if (active === "pricing") return <PricingSection setActive={go} />;
       if (active === "mobileapp") return <MobileAppSection setActive={go} />;
+      if (active === "about") return <AboutSection setActive={go} />;
       return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} />;
     }
     if (isLocked && LOCKED_SECTIONS.includes(active)) {
@@ -1238,6 +1239,7 @@ export default function Index() {
       case "contacts": return <ContactsSection />;
       case "policy": return <SecurityPolicySection setActive={go} />;
       case "mobileapp": return <MobileAppSection setActive={go} />;
+      case "about": return <AboutSection setActive={go} />;
       case "pricing": return <PricingSection setActive={go} />;
       case "privacy": case "terms": case "agreement": case "offer": return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
       case "dashboard": return role === "client" ? <ClientDashboard setActive={go} /> : <ProviderDashboard setActive={go} />;
@@ -1436,7 +1438,7 @@ export default function Index() {
             <div>
               <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerAboutShchit")}</div>
               {([
-                ["fAbout", "policy"],
+                ["fAbout", "about"],
                 ["navMobileApp", "mobileapp"],
                 ["navPolicy", "policy"],
               ] as const).map(([l, sec]) => (
@@ -5585,6 +5587,116 @@ function MobileAppSection({ setActive }: { setActive: (s: Section) => void }) {
           className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
         >
           {tr("maHelpBtn")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AboutSection({ setActive }: { setActive: (s: Section) => void }) {
+  const { tr } = useLang();
+
+  const values = [
+    { icon: "ShieldCheck", title: "aboutVal1Title" as const, text: "aboutVal1Text" as const },
+    { icon: "Globe", title: "aboutVal2Title" as const, text: "aboutVal2Text" as const },
+    { icon: "BadgeCheck", title: "aboutVal3Title" as const, text: "aboutVal3Text" as const },
+    { icon: "HandCoins", title: "aboutVal4Title" as const, text: "aboutVal4Text" as const },
+  ];
+
+  const stats = [
+    { n: "1 240+", l: "statSpecialists" as const },
+    { n: "4 800+", l: "statCases" as const },
+    { n: "320+", l: "statServices" as const },
+    { n: "98%", l: "statClients" as const },
+  ];
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-10">
+      {/* Header */}
+      <div className="border border-gold/30 rounded-sm glass-card p-8 md:p-10 mb-8 relative overflow-hidden security-glow ambient-gold">
+        <div className="absolute inset-0 grid-line-bg opacity-30" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
+          <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
+            <Icon name="Shield" size={30} className="text-[hsl(220,20%,6%)]" />
+          </div>
+          <div>
+            <div className="tag-security mb-3 inline-block">{tr("aboutTag")}</div>
+            <h1 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-2">{tr("aboutPageTitle")}</h1>
+            <p className="text-sm text-muted-foreground max-w-2xl">{tr("aboutIntro")}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Mission */}
+      <div className="border border-border rounded-sm bg-card p-6 md:p-8 mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Icon name="Target" size={18} className="text-gold shrink-0" />
+          <h2 className="font-montserrat font-bold text-lg text-foreground">{tr("aboutMissionTitle")}</h2>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">{tr("aboutMissionText")}</p>
+      </div>
+
+      {/* Story */}
+      <div className="border border-border rounded-sm bg-card p-6 md:p-8 mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Icon name="BookOpen" size={18} className="text-gold shrink-0" />
+          <h2 className="font-montserrat font-bold text-lg text-foreground">{tr("aboutStoryTitle")}</h2>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">{tr("aboutStoryText")}</p>
+      </div>
+
+      {/* Stats */}
+      <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mb-8 security-glow">
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
+          {stats.map((s) => (
+            <div key={s.n} className="text-center px-2">
+              <div className="stat-number text-2xl md:text-3xl mb-1">{s.n}</div>
+              <div className="text-xs text-muted-foreground">{tr(s.l)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Values */}
+      <div className="mb-8">
+        <h2 className="font-montserrat font-bold text-lg text-foreground mb-4">{tr("aboutValuesTitle")}</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 stagger">
+          {values.map((v) => (
+            <div key={v.title} className="border border-border rounded-sm bg-card p-6 card-hover">
+              <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-4 glow-gold-sm">
+                <Icon name={v.icon} fallback="Check" size={19} className="text-[hsl(220,20%,6%)]" />
+              </div>
+              <h3 className="font-montserrat font-bold text-sm text-foreground mb-2">{tr(v.title)}</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">{tr(v.text)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Requisites */}
+      <div className="border border-gold/30 rounded-sm bg-card p-6 mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Icon name="Building2" size={16} className="text-gold shrink-0" />
+          <h2 className="font-montserrat font-bold text-sm text-foreground uppercase tracking-widest">{tr("reqTitle")}</h2>
+        </div>
+        <div className="text-xs text-muted-foreground leading-relaxed space-y-1">
+          <div className="font-semibold text-foreground">{tr("reqName")}</div>
+          <div>{tr("reqOgrnip")} · {tr("reqInn")}</div>
+          <div>{tr("reqAddress")}</div>
+          <div>{tr("reqTaxOffice")}</div>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div className="border border-gold/30 rounded-sm glass-card p-8 text-center security-glow">
+        <Icon name="LifeBuoy" size={32} className="text-gold mx-auto mb-4" />
+        <h2 className="font-montserrat font-bold text-xl text-foreground mb-2">{tr("aboutCtaTitle")}</h2>
+        <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-6">{tr("aboutCtaText")}</p>
+        <button
+          onClick={() => setActive("contacts")}
+          className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+        >
+          {tr("aboutCtaBtn")}
         </button>
       </div>
     </div>
