@@ -5657,6 +5657,24 @@ function AboutSection({ setActive }: { setActive: (s: Section) => void }) {
         </div>
       </div>
 
+      {/* Trust badges */}
+      <div className="mb-8">
+        <h2 className="font-montserrat font-bold text-lg text-foreground mb-4 text-center">{tr("aboutTrustTitle")}</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {([
+            ["BadgeCheck", "aboutTrust1"],
+            ["ShieldCheck", "aboutTrust2"],
+            ["Globe", "aboutTrust3"],
+            ["Lock", "aboutTrust4"],
+          ] as const).map(([icon, key]) => (
+            <div key={key} className="border border-gold/30 rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2">
+              <Icon name={icon} size={22} className="text-gold" />
+              <span className="text-xs font-montserrat font-semibold text-foreground leading-snug">{tr(key)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Values */}
       <div className="mb-8">
         <h2 className="font-montserrat font-bold text-lg text-foreground mb-4">{tr("aboutValuesTitle")}</h2>
