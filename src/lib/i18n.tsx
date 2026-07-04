@@ -140,31 +140,31 @@ export const t: Dict = {
   authBackToLogin: { ru: "Назад ко входу", en: "Back to sign in" },
 
   // Minimal home / promo
-  promoBadge: { ru: "Единственная в мире платформа в сфере безопасности", en: "The world's only security industry platform" },
-  promoTitle1: { ru: "Единственная международная платформа", en: "The only international platform" },
-  promoTitle2: { ru: "специалистов по безопасности", en: "for security specialists" },
-  promoDesc: { ru: "Детективы, телохранители, полиграфологи, кибербезопасность и охранные агентства со всего мира — все в одном месте. Не нужно искать по разным площадкам и регистрироваться на десятках сайтов.", en: "Detectives, bodyguards, polygraph examiners, cybersecurity experts and security agencies worldwide — all in one place. No need to search across different sites or sign up on dozens of platforms." },
-  promoForClients: { ru: "Клиентам — все специалисты в одном месте, подбор и связь бесплатно", en: "For clients — every specialist in one place, search and contact for free" },
-  promoForProviders: { ru: "Исполнителям — поток заказов без затрат на рекламу, сообщество и обучение", en: "For providers — a flow of orders with no ad spend, plus community and training" },
+  promoBadge: { ru: "Международная платформа безопасности", en: "International security platform" },
+  promoTitle1: { ru: "Специалисты по безопасности", en: "Security specialists" },
+  promoTitle2: { ru: "проверены и на связи", en: "verified and available" },
+  promoDesc: { ru: "Детективы, телохранители, полиграфологи, специалисты по кибербезопасности и охранные агентства со всего мира — в одном каталоге с проверкой документов и защищённой связью.", en: "Detectives, bodyguards, polygraph examiners, cybersecurity experts and security agencies worldwide — in one directory with document verification and secure communication." },
+  promoForClients: { ru: "Клиентам — поиск и связь со специалистом бесплатно", en: "For clients — free search and contact with a specialist" },
+  promoForProviders: { ru: "Специалистам — заказы по фиксированной подписке, без комиссии с сделок", en: "For specialists — orders on a fixed subscription, no deal commission" },
   homeSecTitle: { ru: "Безопасность платформы", en: "Platform security" },
   homeSec1: { ru: "Проверка лицензий и документов исполнителей", en: "License and document verification of providers" },
   homeSec2: { ru: "Шифрование данных и защита переписки", en: "Data encryption and message protection" },
   homeSec3: { ru: "Конфиденциальность и право на псевдоним", en: "Confidentiality and the right to an alias" },
-  homeOpenCabinet: { ru: "Войти в кабинет", en: "Open account" },
+  homeOpenCabinet: { ru: "Войти в кабинет", en: "Sign in" },
   homeReadPolicy: { ru: "Подробнее о безопасности", en: "More about security" },
 
   // Why us
   whyUsTag: { ru: "Почему ЩИТ", en: "Why SHCHIT" },
-  whyUsTitle: { ru: "Одна платформа вместо десятка", en: "One platform instead of a dozen" },
-  whyUsSubtitle: { ru: "Мы — единственная международная площадка в сфере безопасности. Всё, что раньше было разбросано по разным сайтам, теперь в одном месте.", en: "We are the only international platform in the security field. Everything that used to be scattered across different sites is now in one place." },
-  whyUs1Title: { ru: "Единственные на рынке", en: "The only one on the market" },
-  whyUs1Desc: { ru: "Единственная международная платформа, объединяющая специалистов по безопасности со всего мира.", en: "The only international platform uniting security specialists from around the world." },
-  whyUs2Title: { ru: "Всё в одном месте", en: "All in one place" },
-  whyUs2Desc: { ru: "Детективы, охрана, полиграфологи, кибербезопасность и агентства — без регистрации на десятках сайтов.", en: "Detectives, security, polygraph examiners, cybersecurity and agencies — without signing up on dozens of sites." },
-  whyUs3Title: { ru: "Без затрат на рекламу", en: "No ad spend" },
-  whyUs3Desc: { ru: "Исполнителям не нужно тратить бюджет на продвижение на других площадках — заказы приходят сами.", en: "Providers don't need to spend on promotion elsewhere — orders come to them." },
+  whyUsTitle: { ru: "Пять направлений в одном каталоге", en: "Five specializations in one directory" },
+  whyUsSubtitle: { ru: "Детективы, охрана, полиграфологи, кибербезопасность и охранные агентства — раньше их искали по разным сайтам и знакомым. Теперь достаточно одной проверенной платформы.", en: "Detectives, security, polygraph examiners, cybersecurity and agencies used to be scattered across different sites and personal contacts. Now one verified platform is enough." },
+  whyUs1Title: { ru: "Международный охват", en: "International reach" },
+  whyUs1Desc: { ru: "Специалисты и клиенты из разных стран на одной платформе, с поддержкой нескольких языков.", en: "Specialists and clients from different countries on one platform, with multi-language support." },
+  whyUs2Title: { ru: "Пять специализаций сразу", en: "Five specializations at once" },
+  whyUs2Desc: { ru: "Детективы, охрана, полиграфологи, кибербезопасность и агентства — без регистрации на разных сайтах.", en: "Detectives, security, polygraph examiners, cybersecurity and agencies — without signing up on different sites." },
+  whyUs3Title: { ru: "Без комиссии с заказов", en: "No commission on orders" },
+  whyUs3Desc: { ru: "Специалисты платят фиксированную подписку и оставляют себе весь доход от заказов.", en: "Specialists pay a fixed subscription and keep all the income from their orders." },
   whyUs4Title: { ru: "Сообщество и обучение", en: "Community and training" },
-  whyUs4Desc: { ru: "Живое общение с коллегами со всего мира, актуальные курсы и повышение квалификации.", en: "Live communication with colleagues worldwide, up-to-date courses and professional development." },
+  whyUs4Desc: { ru: "Закрытый форум для обмена опытом с коллегами и курсы повышения квалификации.", en: "A private forum for exchanging experience with colleagues and professional development courses." },
 
   // Roles
   roleClient: { ru: "Я клиент", en: "I'm a client" },
@@ -220,7 +220,7 @@ export const t: Dict = {
 
   // Sections common
   specialists: { ru: "Специалисты", en: "Specialists" },
-  topExperts: { ru: "Топ-эксперты платформы", en: "Top platform experts" },
+  topExperts: { ru: "Ведущие специалисты платформы", en: "Leading specialists on the platform" },
   allSpecialists: { ru: "Все специалисты", en: "All specialists" },
   contactBtn: { ru: "Связаться", en: "Contact" },
   profileBtn: { ru: "Профиль", en: "Profile" },
@@ -1036,11 +1036,11 @@ export const t: Dict = {
   // Sales / social proof
   heroProofRating: { ru: "4.9 из 5 — средняя оценка", en: "4.9 out of 5 — average rating" },
   heroProofReviews: { ru: "на основе 2 800+ отзывов", en: "based on 2,800+ reviews" },
-  heroProofTrusted: { ru: "Нам доверяют 1 240+ специалистов и сотни компаний", en: "Trusted by 1,240+ specialists and hundreds of companies" },
-  heroFast: { ru: "Подбор за 5 минут", en: "Matched in 5 minutes" },
+  heroProofTrusted: { ru: "1 240+ верифицированных специалистов на платформе", en: "1,240+ verified specialists on the platform" },
+  heroFast: { ru: "Регистрация за 5 минут", en: "Sign up in 5 minutes" },
   heroNoFeeBig: { ru: "Без комиссии для клиентов", en: "No fees for clients" },
   heroGuarantee: { ru: "Проверенные лицензии и гарантия качества", en: "Verified licenses & quality guarantee" },
-  ctaUrgency: { ru: "Начните сегодня — первый контакт бесплатно", en: "Start today — first contact is free" },
+  ctaUrgency: { ru: "Свяжитесь со специалистом напрямую и бесплатно", en: "Contact a specialist directly, free of charge" },
 
   // Provider contacts editor
   pdTabContacts: { ru: "Контакты", en: "Contacts" },
@@ -1080,7 +1080,7 @@ export const t: Dict = {
 
   // Avatar
   avatarTitle: { ru: "Фото профиля", en: "Profile photo" },
-  avatarHint: { ru: "Загрузите фото или оставьте шпионский аватар", en: "Upload a photo or keep the spy avatar" },
+  avatarHint: { ru: "Загрузите фото или оставьте аватар по умолчанию", en: "Upload a photo or keep the default avatar" },
   avatarUpload: { ru: "Загрузить фото", en: "Upload photo" },
   avatarUploading: { ru: "Загрузка...", en: "Uploading..." },
   avatarRemove: { ru: "Убрать фото", en: "Remove photo" },
@@ -1143,7 +1143,7 @@ export const t: Dict = {
   searchPrompt: { ru: "Задайте критерии и нажмите «Поиск», чтобы увидеть специалистов", en: "Set the criteria and press “Search” to see specialists" },
   pdVfLicenseDate: { ru: "Дата выдачи", en: "Issue date" },
   pdVfLicenseAuthority: { ru: "Орган выдачи", en: "Issuing authority" },
-  pdVfLicenseAuthorityPh: { ru: "Например: Росгвардия, МВД, ФСБ", en: "E.g. Rosgvardia, Ministry of Interior" },
+  pdVfLicenseAuthorityPh: { ru: "Например: Росгвардия, МВД", en: "E.g. Rosgvardia, Ministry of Interior" },
   forumBlock: { ru: "Заблокировать", en: "Block" },
   forumDelete: { ru: "Удалить", en: "Delete" },
   forumDeleteConfirm: { ru: "Удалить тему вместе со всеми сообщениями?", en: "Delete the topic with all its posts?" },
@@ -1156,7 +1156,7 @@ export const t: Dict = {
   promoLabel: { ru: "Скидка по акции", en: "Promo discount" },
   promoUntil: { ru: "Акция −30% действует до 1 августа 2026", en: "−30% promo valid until August 1, 2026" },
   promoBannerTitle: { ru: "Скидка 30% на все тарифы", en: "30% off all plans" },
-  promoBannerText: { ru: "Успейте оформить подписку со скидкой 30% — акция действует до 1 августа 2026 года.", en: "Get 30% off your subscription — offer valid until August 1, 2026." },
+  promoBannerText: { ru: "Оформите подписку со скидкой 30% — акция действует до 1 августа 2026 года.", en: "Get 30% off your subscription — offer valid until August 1, 2026." },
 };
 
 interface LangCtx {
