@@ -16,7 +16,7 @@ const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-2
 const SPY_AVATAR_M = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/61fc9ccd-a5ee-4375-8640-5c890da0df33.jpg";
 const SPY_AVATAR_F = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b40d29de-2a29-448c-82c8-a2baa711ee57.jpg";
 
-type Section = "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "admin";
+type Section = "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "admin" | "mobileapp";
 type Role = "client" | "provider";
 
 type NavItem = { id: Section; key: keyof typeof t; icon: string };
@@ -1217,6 +1217,7 @@ export default function Index() {
       if (active === "policy") return <SecurityPolicySection setActive={go} />;
       if (active === "privacy" || active === "terms" || active === "agreement" || active === "offer") return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
       if (active === "pricing") return <PricingSection setActive={go} />;
+      if (active === "mobileapp") return <MobileAppSection setActive={go} />;
       return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} />;
     }
     if (isLocked && LOCKED_SECTIONS.includes(active)) {
@@ -1236,6 +1237,7 @@ export default function Index() {
       case "forum": return role === "client" ? <HomeSection setActive={go} role={role} openChat={openChat} /> : <ForumSection />;
       case "contacts": return <ContactsSection />;
       case "policy": return <SecurityPolicySection setActive={go} />;
+      case "mobileapp": return <MobileAppSection setActive={go} />;
       case "pricing": return <PricingSection setActive={go} />;
       case "privacy": case "terms": case "agreement": case "offer": return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
       case "dashboard": return role === "client" ? <ClientDashboard setActive={go} /> : <ProviderDashboard setActive={go} />;
@@ -1420,6 +1422,10 @@ export default function Index() {
             )}
             <div>
               <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerDocs")}</div>
+              <button onClick={() => go("mobileapp")} className="flex items-center gap-1.5 text-xs text-gold hover:opacity-80 cursor-pointer transition-colors mb-2 font-medium">
+                <Icon name="Smartphone" size={12} />
+                {tr("navMobileApp")}
+              </button>
               <button onClick={() => go("policy")} className="flex items-center gap-1.5 text-xs text-gold hover:opacity-80 cursor-pointer transition-colors mb-2 font-medium">
                 <Icon name="ShieldCheck" size={12} />
                 {tr("navPolicy")}
@@ -5310,6 +5316,217 @@ function ContactsSection() {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+type MobilePlatform = "ios" | "android" | "desktop";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+function detectMobilePlatform(): MobilePlatform {
+  if (typeof navigator === "undefined") return "desktop";
+  const ua = navigator.userAgent || "";
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && typeof document !== "undefined" && "ontouchend" in document);
+  if (isIOS) return "ios";
+  if (/Android/i.test(ua)) return "android";
+  return "desktop";
+}
+
+function MobileAppSection({ setActive }: { setActive: (s: Section) => void }) {
+  const { tr } = useLang();
+  const [platform, setPlatform] = useState<MobilePlatform>("desktop");
+  const [tab, setTab] = useState<MobilePlatform>("ios");
+  const [installEvt, setInstallEvt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installed, setInstalled] = useState(false);
+
+  useEffect(() => {
+    const p = detectMobilePlatform();
+    setPlatform(p);
+    setTab(p === "desktop" ? "android" : p);
+    const standalone = window.matchMedia?.("(display-mode: standalone)").matches
+      || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+    setInstalled(!!standalone);
+    const onPrompt = (e: Event) => { e.preventDefault(); setInstallEvt(e as BeforeInstallPromptEvent); };
+    const onInstalled = () => { setInstalled(true); setInstallEvt(null); };
+    window.addEventListener("beforeinstallprompt", onPrompt);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onPrompt);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  const doInstall = async () => {
+    if (!installEvt) return;
+    installEvt.prompt();
+    const res = await installEvt.userChoice;
+    if (res?.outcome === "accepted") setInstalled(true);
+    setInstallEvt(null);
+  };
+
+  const steps: Record<MobilePlatform, { icon: string; title: keyof typeof t; text: keyof typeof t }[]> = {
+    ios: [
+      { icon: "Compass", title: "maIosS1T", text: "maIosS1D" },
+      { icon: "Share", title: "maIosS2T", text: "maIosS2D" },
+      { icon: "SquarePlus", title: "maIosS3T", text: "maIosS3D" },
+      { icon: "Check", title: "maIosS4T", text: "maIosS4D" },
+    ],
+    android: [
+      { icon: "Chrome", title: "maAndS1T", text: "maAndS1D" },
+      { icon: "EllipsisVertical", title: "maAndS2T", text: "maAndS2D" },
+      { icon: "Download", title: "maAndS3T", text: "maAndS3D" },
+      { icon: "Check", title: "maAndS4T", text: "maAndS4D" },
+    ],
+    desktop: [
+      { icon: "Globe", title: "maDeskS1T", text: "maDeskS1D" },
+      { icon: "MonitorDown", title: "maDeskS2T", text: "maDeskS2D" },
+      { icon: "Check", title: "maDeskS3T", text: "maDeskS3D" },
+    ],
+  };
+
+  const tabs: { id: MobilePlatform; icon: string; label: keyof typeof t }[] = [
+    { id: "ios", icon: "Apple", label: "maTabIos" },
+    { id: "android", icon: "Smartphone", label: "maTabAndroid" },
+    { id: "desktop", icon: "Monitor", label: "maTabDesktop" },
+  ];
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-10">
+      {/* Header */}
+      <div className="border border-gold/30 rounded-sm glass-card p-8 md:p-10 mb-8 relative overflow-hidden security-glow ambient-gold">
+        <div className="absolute inset-0 grid-line-bg opacity-30" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
+          <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
+            <Icon name="Smartphone" size={30} className="text-[hsl(220,20%,6%)]" />
+          </div>
+          <div>
+            <div className="tag-security mb-3 inline-block">{tr("maTag")}</div>
+            <h1 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-2">{tr("maTitle")}</h1>
+            <p className="text-sm text-muted-foreground max-w-2xl">{tr("maSubtitle")}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* What is it — honest explanation */}
+      <div className="border border-gold/40 rounded-sm bg-card p-6 md:p-7 mb-6 flex items-start gap-4">
+        <Icon name="Info" size={22} className="text-gold shrink-0 mt-0.5" />
+        <div>
+          <h2 className="font-montserrat font-bold text-base text-foreground mb-2">{tr("maWhatTitle")}</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">{tr("maWhatText")}</p>
+        </div>
+      </div>
+
+      {/* Benefits */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        {([["Zap", "maBen1T", "maBen1D"], ["WifiOff", "maBen2T", "maBen2D"], ["ShieldCheck", "maBen3T", "maBen3D"]] as const).map(([ic, tt, dd]) => (
+          <div key={tt} className="border border-border rounded-sm bg-card p-5">
+            <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center mb-3 glow-gold-sm">
+              <Icon name={ic} size={18} className="text-[hsl(220,20%,6%)]" />
+            </div>
+            <div className="font-montserrat font-bold text-sm text-foreground mb-1">{tr(tt)}</div>
+            <div className="text-xs text-muted-foreground leading-relaxed">{tr(dd)}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* One-tap install (if browser supports) */}
+      {installed ? (
+        <div className="border border-gold/40 rounded-sm glass-card p-6 mb-8 flex items-center gap-4 security-glow">
+          <Icon name="CircleCheckBig" size={28} className="text-gold shrink-0" />
+          <div>
+            <div className="font-montserrat font-bold text-sm text-foreground">{tr("maInstalledTitle")}</div>
+            <div className="text-xs text-muted-foreground">{tr("maInstalledText")}</div>
+          </div>
+        </div>
+      ) : installEvt ? (
+        <div className="border border-gold/40 rounded-sm glass-card p-6 md:p-7 mb-8 text-center security-glow">
+          <Icon name="Download" size={30} className="text-gold mx-auto mb-3" />
+          <h2 className="font-montserrat font-bold text-lg text-foreground mb-2">{tr("maQuickTitle")}</h2>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">{tr("maQuickText")}</p>
+          <button
+            onClick={doInstall}
+            className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2"
+          >
+            <Icon name="Download" size={16} />
+            {tr("maQuickBtn")}
+          </button>
+        </div>
+      ) : null}
+
+      {/* Platform tabs */}
+      <div className="mb-5">
+        <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("maInstrTitle")}</div>
+        <div className="flex flex-wrap gap-2">
+          {tabs.map((tb) => (
+            <button
+              key={tb.id}
+              onClick={() => setTab(tb.id)}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-sm text-sm font-montserrat font-semibold transition-all border ${
+                tab === tb.id
+                  ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent"
+                  : "bg-card text-muted-foreground border-border hover:border-gold hover:text-gold"
+              }`}
+            >
+              <Icon name={tb.icon} fallback="Smartphone" size={16} />
+              {tr(tb.label)}
+              {platform === tb.id && <span className="text-[10px] opacity-70">· {tr("maYourDevice")}</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Steps */}
+      <div className="space-y-4 stagger mb-8">
+        {steps[tab].map((s, i) => (
+          <div key={s.title} className="border border-border rounded-sm bg-card p-5 md:p-6 flex items-start gap-4 card-hover">
+            <div className="flex flex-col items-center shrink-0">
+              <div className="w-10 h-10 gold-gradient rounded-full flex items-center justify-center glow-gold-sm">
+                <span className="font-montserrat font-bold text-sm text-[hsl(220,20%,6%)]">{i + 1}</span>
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Icon name={s.icon} fallback="ChevronRight" size={16} className="text-gold shrink-0" />
+                <h3 className="font-montserrat font-bold text-sm text-foreground">{tr(s.title)}</h3>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">{tr(s.text)}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* FAQ / stores note */}
+      <div className="border border-border rounded-sm bg-card p-6 md:p-7 mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Icon name="HelpCircle" size={18} className="text-gold shrink-0" />
+          <h2 className="font-montserrat font-bold text-sm text-foreground uppercase tracking-widest">{tr("maFaqTitle")}</h2>
+        </div>
+        <div className="space-y-4">
+          {([["maFaq1Q", "maFaq1A"], ["maFaq2Q", "maFaq2A"], ["maFaq3Q", "maFaq3A"]] as const).map(([q, a]) => (
+            <div key={q}>
+              <div className="text-sm font-montserrat font-semibold text-foreground mb-1">{tr(q)}</div>
+              <div className="text-xs text-muted-foreground leading-relaxed">{tr(a)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Contact callout */}
+      <div className="border border-gold/30 rounded-sm glass-card p-8 text-center security-glow">
+        <Icon name="LifeBuoy" size={32} className="text-gold mx-auto mb-4" />
+        <h2 className="font-montserrat font-bold text-xl text-foreground mb-2">{tr("maHelpTitle")}</h2>
+        <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-6">{tr("maHelpText")}</p>
+        <button
+          onClick={() => setActive("contacts")}
+          className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+        >
+          {tr("maHelpBtn")}
+        </button>
       </div>
     </div>
   );
