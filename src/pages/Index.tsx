@@ -1487,6 +1487,29 @@ export default function Index() {
   );
 }
 
+function TrustBadges() {
+  const { tr } = useLang();
+  return (
+    <section className="border-t border-border bg-card/30">
+      <div className="max-w-7xl mx-auto px-4 py-10">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {([
+            ["BadgeCheck", "aboutTrust1"],
+            ["ShieldCheck", "aboutTrust2"],
+            ["Globe", "aboutTrust3"],
+            ["Lock", "aboutTrust4"],
+          ] as const).map(([icon, key]) => (
+            <div key={key} className="border border-gold/30 rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2">
+              <Icon name={icon} size={22} className="text-gold" />
+              <span className="text-xs font-montserrat font-semibold text-foreground leading-snug">{tr(key)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; onPolicy: () => void }) {
   const { tr } = useLang();
   return (
@@ -1553,6 +1576,8 @@ function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; onPolicy:
           </div>
         </div>
       </section>
+
+      <TrustBadges />
 
       <LandingStats />
       <LandingWhyUs />
@@ -1974,6 +1999,8 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
           </div>
         </div>
       </section>
+
+      <TrustBadges />
 
       {appBannerOpen && (
         <section className="border-t border-b border-gold/30 bg-card">
