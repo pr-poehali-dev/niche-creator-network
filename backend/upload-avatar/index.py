@@ -22,6 +22,8 @@ def handler(event: dict, context) -> dict:
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
     }
 
     if method == 'OPTIONS':
@@ -61,16 +63,15 @@ def handler(event: dict, context) -> dict:
     s3.put_object(Bucket='files', Key=key, Body=data, ContentType=ALLOWED_EXT[ext])
     cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{key}"
 
-    safe_id = rec_id.replace("'", "''")
-    safe_url = cdn_url.replace("'", "''")
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     if role == 'provider':
-        cur.execute(f"UPDATE {SCHEMA}.providers SET avatar_url='{safe_url}' WHERE slug='{safe_id}'")
+        cur.execute(f"UPDATE {SCHEMA}.providers SET avatar_url=%s WHERE slug=%s", (cdn_url, rec_id))
     else:
         cur.execute(
-            f"INSERT INTO {SCHEMA}.clients (client_id, avatar_url) VALUES ('{safe_id}', '{safe_url}') "
-            f"ON CONFLICT (client_id) DO UPDATE SET avatar_url=EXCLUDED.avatar_url, updated_at=now()"
+            f"INSERT INTO {SCHEMA}.clients (client_id, avatar_url) VALUES (%s, %s) "
+            f"ON CONFLICT (client_id) DO UPDATE SET avatar_url=EXCLUDED.avatar_url, updated_at=now()",
+            (rec_id, cdn_url),
         )
     conn.commit()
     cur.close()

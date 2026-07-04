@@ -9,7 +9,7 @@ ALLOWED_STATUS = {'self', 'ip', 'company', ''}
 
 
 def esc(v):
-    return str(v if v is not None else '').strip().replace("'", "''")[:300]
+    return str(v if v is not None else '').strip()[:300]
 
 
 def handler(event: dict, context) -> dict:
@@ -27,6 +27,8 @@ def handler(event: dict, context) -> dict:
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
     }
 
     if method == 'OPTIONS':
@@ -47,7 +49,8 @@ def handler(event: dict, context) -> dict:
             f"show_bio, show_age, show_documents, gender, avatar_url, "
             f"timezone, always_available, quiet_start, quiet_end, license_verified, "
             f"plan, subscription_active, subscription_until, services, birth_date "
-            f"FROM {SCHEMA}.providers WHERE slug='{slug}'"
+            f"FROM {SCHEMA}.providers WHERE slug=%s",
+            (slug,),
         )
         row = cur.fetchone()
         cur.close()
@@ -105,16 +108,13 @@ def handler(event: dict, context) -> dict:
     license_info = esc(body.get('license'))
     registry = esc(body.get('registry'))
 
-    def b(v):
-        return 'true' if bool(v) else 'false'
-
-    show_name = b(body.get('showFullName'))
-    show_status = b(body.get('showLegalStatus'))
-    show_license = b(body.get('showLicense'))
-    show_registry = b(body.get('showRegistry'))
+    show_name = bool(body.get('showFullName'))
+    show_status = bool(body.get('showLegalStatus'))
+    show_license = bool(body.get('showLicense'))
+    show_registry = bool(body.get('showRegistry'))
 
     pseudonym = esc(body.get('pseudonym'))
-    use_pseudonym = b(body.get('usePseudonym'))
+    use_pseudonym = bool(body.get('usePseudonym'))
 
     gender = esc(body.get('gender')) or 'm'
     if gender not in ('m', 'f'):
@@ -123,7 +123,7 @@ def handler(event: dict, context) -> dict:
     # Несколько лицензий
     raw_licenses = body.get('licenses') or []
     licenses = [str(x).strip()[:300] for x in raw_licenses if str(x).strip()] if isinstance(raw_licenses, list) else []
-    licenses_json = json.dumps(licenses, ensure_ascii=False).replace("'", "''")
+    licenses_json = json.dumps(licenses, ensure_ascii=False)
 
     # Документы (дипломы/сертификаты)
     raw_docs = body.get('documents') or []
@@ -135,9 +135,9 @@ def handler(event: dict, context) -> dict:
                 u = str(d.get('url', '')).strip()[:500]
                 if t or u:
                     documents.append({'title': t, 'url': u})
-    documents_json = json.dumps(documents, ensure_ascii=False).replace("'", "''")
+    documents_json = json.dumps(documents, ensure_ascii=False)
 
-    bio = str(body.get('bio') or '').strip()[:2000].replace("'", "''")
+    bio = str(body.get('bio') or '').strip()[:2000]
 
     # Дата рождения + автоматический расчёт возраста
     birth_raw = str(body.get('birthDate') or '').strip()[:10]
@@ -150,7 +150,6 @@ def handler(event: dict, context) -> dict:
                 birth_date = bd
         except ValueError:
             birth_date = None
-    birth_sql = f"'{birth_date.isoformat()}'" if birth_date else 'NULL'
 
     if birth_date is not None:
         today = datetime.utcnow().date()
@@ -163,22 +162,21 @@ def handler(event: dict, context) -> dict:
                 age = None
         except (TypeError, ValueError):
             age = None
-    age_sql = str(age) if age is not None else 'NULL'
 
-    show_bio = b(body.get('showBio'))
-    show_age = b(body.get('showAge'))
-    show_documents = b(body.get('showDocuments'))
+    show_bio = bool(body.get('showBio'))
+    show_age = bool(body.get('showAge'))
+    show_documents = bool(body.get('showDocuments'))
 
     timezone = esc(body.get('timezone'))[:64]
-    always_available = b(body.get('alwaysAvailable'))
+    always_available = bool(body.get('alwaysAvailable'))
 
     def time_or_empty(v):
         s = str(v or '').strip()
         if len(s) == 5 and s[2] == ':' and s[:2].isdigit() and s[3:].isdigit():
             return s
         return ''
-    quiet_start = time_or_empty(body.get('quietStart')).replace("'", "''")
-    quiet_end = time_or_empty(body.get('quietEnd')).replace("'", "''")
+    quiet_start = time_or_empty(body.get('quietStart'))
+    quiet_end = time_or_empty(body.get('quietEnd'))
 
     # Выбранные услуги: список объектов {key, price}.
     # Поддерживаем старый формат (список строк-ключей).
@@ -197,38 +195,28 @@ def handler(event: dict, context) -> dict:
                 seen.add(key)
                 sel_services.append({'key': key, 'price': price})
         sel_services = sel_services[:50]
-    services_json = json.dumps(sel_services, ensure_ascii=False).replace("'", "''")
+    services_json = json.dumps(sel_services, ensure_ascii=False)
 
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     cur.execute(
         f"UPDATE {SCHEMA}.providers SET "
-        f"full_name='{full_name}', "
-        f"passport_number='{passport}', "
-        f"legal_status='{legal_status}', "
-        f"license_info='{license_info}', "
-        f"registry_number='{registry}', "
-        f"show_full_name={show_name}, "
-        f"show_legal_status={show_status}, "
-        f"show_license={show_license}, "
-        f"show_registry={show_registry}, "
-        f"pseudonym='{pseudonym}', "
-        f"use_pseudonym={use_pseudonym}, "
-        f"gender='{gender}', "
-        f"licenses='{licenses_json}'::jsonb, "
-        f"documents='{documents_json}'::jsonb, "
-        f"bio='{bio}', "
-        f"age={age_sql}, "
-        f"birth_date={birth_sql}, "
-        f"show_bio={show_bio}, "
-        f"show_age={show_age}, "
-        f"show_documents={show_documents}, "
-        f"timezone='{timezone}', "
-        f"always_available={always_available}, "
-        f"quiet_start='{quiet_start}', "
-        f"quiet_end='{quiet_end}', "
-        f"services='{services_json}'::jsonb "
-        f"WHERE slug='{slug}'"
+        f"full_name=%s, passport_number=%s, legal_status=%s, license_info=%s, registry_number=%s, "
+        f"show_full_name=%s, show_legal_status=%s, show_license=%s, show_registry=%s, "
+        f"pseudonym=%s, use_pseudonym=%s, gender=%s, "
+        f"licenses=%s::jsonb, documents=%s::jsonb, bio=%s, age=%s, birth_date=%s, "
+        f"show_bio=%s, show_age=%s, show_documents=%s, timezone=%s, always_available=%s, "
+        f"quiet_start=%s, quiet_end=%s, services=%s::jsonb "
+        f"WHERE slug=%s",
+        (
+            full_name, passport, legal_status, license_info, registry,
+            show_name, show_status, show_license, show_registry,
+            pseudonym, use_pseudonym, gender,
+            licenses_json, documents_json, bio, age, birth_date,
+            show_bio, show_age, show_documents, timezone, always_available,
+            quiet_start, quiet_end, services_json,
+            slug,
+        ),
     )
     updated = cur.rowcount
     conn.commit()

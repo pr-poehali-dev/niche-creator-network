@@ -11,6 +11,8 @@ CORS = {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
     'Content-Type': 'application/json',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
 }
 
 
@@ -21,10 +23,10 @@ def _resp(status: int, body: dict) -> dict:
 def _is_admin(cur, token: str) -> bool:
     if not token:
         return False
-    esc = token.replace("'", "''")
     cur.execute(
         f"SELECT u.email, s.expires_at FROM {SCHEMA}.sessions s "
-        f"JOIN {SCHEMA}.users u ON u.id = s.user_id WHERE s.token = '{esc}'"
+        f"JOIN {SCHEMA}.users u ON u.id = s.user_id WHERE s.token = %s",
+        (token,),
     )
     row = cur.fetchone()
     if not row or row[1] < datetime.utcnow():
@@ -91,20 +93,25 @@ def handler(event: dict, context) -> dict:
 
         if method == 'POST':
             body = json.loads(event.get('body') or '{}')
-            slug = str(body.get('slug') or '').strip().replace("'", "''")[:64]
+            slug = str(body.get('slug') or '').strip()[:64]
             if not slug:
                 return _resp(400, {'error': 'slug required'})
 
             sets = []
+            params = []
             if 'licenseVerified' in body:
-                sets.append(f"license_verified={'true' if bool(body.get('licenseVerified')) else 'false'}")
+                sets.append("license_verified=%s")
+                params.append(bool(body.get('licenseVerified')))
             if 'verified' in body:
-                sets.append(f"verified={'true' if bool(body.get('verified')) else 'false'}")
+                sets.append("verified=%s")
+                params.append(bool(body.get('verified')))
             if not sets:
                 return _resp(400, {'error': 'nothing to update'})
+            params.append(slug)
 
             cur.execute(
-                f"UPDATE {SCHEMA}.providers SET {', '.join(sets)} WHERE slug='{slug}'"
+                f"UPDATE {SCHEMA}.providers SET {', '.join(sets)} WHERE slug=%s",
+                tuple(params),
             )
             updated = cur.rowcount
             conn.commit()

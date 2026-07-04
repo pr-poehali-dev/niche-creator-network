@@ -34,21 +34,21 @@
       "bodyMatcher": "partial"
     },
     {
-      "name": "YooKassa succeeded activates",
+      "name": "YooKassa succeeded rejected without server-side verification",
       "method": "POST",
       "path": "/",
-      "body": {"event": "payment.succeeded", "object": {"id": "1", "metadata": {"slug": "morozov", "plan": "premium", "period": "month"}}},
-      "expectedStatus": 200,
-      "expectedBody": {"provider": "yookassa", "ok": true},
+      "body": {"event": "payment.succeeded", "object": {"id": "fake-unverifiable-id", "metadata": {"slug": "morozov", "plan": "premium", "period": "month"}}},
+      "expectedStatus": 403,
+      "expectedBody": {"error": "verification_failed"},
       "bodyMatcher": "partial"
     },
     {
-      "name": "Paddle completed activates",
+      "name": "Paddle completed rejected without valid signature",
       "method": "POST",
       "path": "/",
-      "body": {"event_type": "transaction.completed", "data": {"custom_data": {"slug": "semenov", "plan": "pro", "period": "month"}}},
-      "expectedStatus": 200,
-      "expectedBody": {"provider": "paddle", "ok": true},
+      "body": {"event_type": "transaction.completed", "data": {"id": "fake-txn", "custom_data": {"slug": "semenov", "plan": "pro", "period": "month"}}},
+      "expectedStatus": 403,
+      "expectedBody": {"error": "bad_signature"},
       "bodyMatcher": "partial"
     }
   ]

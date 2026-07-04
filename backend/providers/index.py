@@ -33,6 +33,8 @@ def handler(event: dict, context) -> dict:
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
     }
 
     if method == 'OPTIONS':

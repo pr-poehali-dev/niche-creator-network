@@ -6,7 +6,7 @@ SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
 
 def esc(v):
-    return str(v if v is not None else '').strip().replace("'", "''")[:200]
+    return str(v if v is not None else '').strip()[:200]
 
 
 def handler(event: dict, context) -> dict:
@@ -23,6 +23,8 @@ def handler(event: dict, context) -> dict:
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
     }
 
     if method == 'OPTIONS':
@@ -39,7 +41,8 @@ def handler(event: dict, context) -> dict:
             conn.close()
             return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'clientId required'})}
         cur.execute(
-            f"SELECT full_name, phone, email, avatar_url, gender FROM {SCHEMA}.clients WHERE client_id='{client_id}'"
+            f"SELECT full_name, phone, email, avatar_url, gender FROM {SCHEMA}.clients WHERE client_id=%s",
+            (client_id,),
         )
         row = cur.fetchone()
         cur.close()
@@ -65,9 +68,10 @@ def handler(event: dict, context) -> dict:
             gender = 'm'
         cur.execute(
             f"INSERT INTO {SCHEMA}.clients (client_id, full_name, phone, email, gender) "
-            f"VALUES ('{client_id}', '{full_name}', '{phone}', '{email}', '{gender}') "
+            f"VALUES (%s, %s, %s, %s, %s) "
             f"ON CONFLICT (client_id) DO UPDATE SET "
-            f"full_name=EXCLUDED.full_name, phone=EXCLUDED.phone, email=EXCLUDED.email, gender=EXCLUDED.gender, updated_at=now()"
+            f"full_name=EXCLUDED.full_name, phone=EXCLUDED.phone, email=EXCLUDED.email, gender=EXCLUDED.gender, updated_at=now()",
+            (client_id, full_name, phone, email, gender),
         )
         conn.commit()
         cur.close()

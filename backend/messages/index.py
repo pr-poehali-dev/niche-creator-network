@@ -11,6 +11,8 @@ CORS = {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
 }
 
 # Базовый список нецензурных корней (RU + EN). Маскируются звёздочками.
@@ -33,7 +35,7 @@ def clean_text(text):
 
 
 def esc(v, limit=2000):
-    return str(v if v is not None else '').strip().replace("'", "''")[:limit]
+    return str(v if v is not None else '').strip()[:limit]
 
 
 def _resp(status, payload):
@@ -44,10 +46,10 @@ def _is_admin(cur, token):
     '''Проверяет, что токен сессии принадлежит администратору.'''
     if not token:
         return False
-    esc_token = token.replace("'", "''")
     cur.execute(
         f"SELECT u.email, s.expires_at FROM {SCHEMA}.sessions s "
-        f"JOIN {SCHEMA}.users u ON u.id = s.user_id WHERE s.token = '{esc_token}'"
+        f"JOIN {SCHEMA}.users u ON u.id = s.user_id WHERE s.token = %s",
+        (token,),
     )
     row = cur.fetchone()
     if not row or row[1] < datetime.utcnow():
@@ -79,23 +81,33 @@ def handler(event: dict, context) -> dict:
                 room = esc(params.get('room'), 40) or 'general'
                 cur.execute(
                     f"SELECT author_name, text, created_at FROM {SCHEMA}.chat_messages "
-                    f"WHERE room='{room}' ORDER BY created_at ASC LIMIT 200"
+                    f"WHERE room=%s ORDER BY created_at ASC LIMIT 200",
+                    (room,),
                 )
                 msgs = [{'author': r[0], 'text': r[1], 'createdAt': r[2].isoformat() if r[2] else None} for r in cur.fetchall()]
                 return _resp(200, {'messages': msgs})
 
             if kind == 'forum':
                 category = esc(params.get('category'), 40)
-                where = 'WHERE t.blocked = false'
                 if category:
-                    where += f" AND t.category='{category}'"
-                cur.execute(
-                    f"SELECT t.id, t.category, t.title, t.author_name, t.views, t.created_at, "
-                    f"COUNT(p.id) AS replies "
-                    f"FROM {SCHEMA}.forum_topics t "
-                    f"LEFT JOIN {SCHEMA}.forum_posts p ON p.topic_id=t.id "
-                    f"{where} GROUP BY t.id ORDER BY t.created_at DESC LIMIT 200"
-                )
+                    cur.execute(
+                        f"SELECT t.id, t.category, t.title, t.author_name, t.views, t.created_at, "
+                        f"COUNT(p.id) AS replies "
+                        f"FROM {SCHEMA}.forum_topics t "
+                        f"LEFT JOIN {SCHEMA}.forum_posts p ON p.topic_id=t.id "
+                        f"WHERE t.blocked = false AND t.category=%s "
+                        f"GROUP BY t.id ORDER BY t.created_at DESC LIMIT 200",
+                        (category,),
+                    )
+                else:
+                    cur.execute(
+                        f"SELECT t.id, t.category, t.title, t.author_name, t.views, t.created_at, "
+                        f"COUNT(p.id) AS replies "
+                        f"FROM {SCHEMA}.forum_topics t "
+                        f"LEFT JOIN {SCHEMA}.forum_posts p ON p.topic_id=t.id "
+                        f"WHERE t.blocked = false "
+                        f"GROUP BY t.id ORDER BY t.created_at DESC LIMIT 200"
+                    )
                 topics = [{
                     'id': r[0], 'category': r[1], 'title': r[2], 'author': r[3],
                     'views': r[4], 'createdAt': r[5].isoformat() if r[5] else None, 'replies': int(r[6]),
@@ -103,18 +115,23 @@ def handler(event: dict, context) -> dict:
                 return _resp(200, {'topics': topics})
 
             if kind == 'forum_topic':
-                topic_id = int(params.get('topicId') or 0)
-                cur.execute(f"UPDATE {SCHEMA}.forum_topics SET views=views+1 WHERE id={topic_id}")
+                try:
+                    topic_id = int(params.get('topicId') or 0)
+                except (TypeError, ValueError):
+                    topic_id = 0
+                cur.execute(f"UPDATE {SCHEMA}.forum_topics SET views=views+1 WHERE id=%s", (topic_id,))
                 conn.commit()
                 cur.execute(
-                    f"SELECT id, category, title, author_name, created_at FROM {SCHEMA}.forum_topics WHERE id={topic_id}"
+                    f"SELECT id, category, title, author_name, created_at FROM {SCHEMA}.forum_topics WHERE id=%s",
+                    (topic_id,),
                 )
                 t = cur.fetchone()
                 if not t:
                     return _resp(404, {'error': 'not found'})
                 cur.execute(
                     f"SELECT author_name, text, created_at FROM {SCHEMA}.forum_posts "
-                    f"WHERE topic_id={topic_id} ORDER BY created_at ASC LIMIT 500"
+                    f"WHERE topic_id=%s ORDER BY created_at ASC LIMIT 500",
+                    (topic_id,),
                 )
                 posts = [{'author': p[0], 'text': p[1], 'createdAt': p[2].isoformat() if p[2] else None} for p in cur.fetchall()]
                 return _resp(200, {'topic': {'id': t[0], 'category': t[1], 'title': t[2], 'author': t[3], 'createdAt': t[4].isoformat() if t[4] else None}, 'posts': posts})
@@ -123,7 +140,8 @@ def handler(event: dict, context) -> dict:
                 pair = esc(params.get('pair'), 160)
                 cur.execute(
                     f"SELECT from_id, from_name, text, created_at FROM {SCHEMA}.direct_messages "
-                    f"WHERE pair_key='{pair}' ORDER BY created_at ASC LIMIT 500"
+                    f"WHERE pair_key=%s ORDER BY created_at ASC LIMIT 500",
+                    (pair,),
                 )
                 msgs = [{'fromId': r[0], 'fromName': r[1], 'text': r[2], 'createdAt': r[3].isoformat() if r[3] else None} for r in cur.fetchall()]
                 return _resp(200, {'messages': msgs})
@@ -138,41 +156,47 @@ def handler(event: dict, context) -> dict:
                 room = esc(body.get('room'), 40) or 'general'
                 author_id = esc(body.get('authorId'), 64)
                 author_name = esc(body.get('authorName'), 200)
-                text = clean_text(esc(body.get('text'), 2000)).replace("'", "''")
+                text = clean_text(esc(body.get('text'), 2000))
                 if not text.strip():
                     return _resp(400, {'error': 'empty'})
                 cur.execute(
                     f"INSERT INTO {SCHEMA}.chat_messages (room, author_id, author_name, text) "
-                    f"VALUES ('{room}', '{author_id}', '{author_name}', '{text}')"
+                    f"VALUES (%s, %s, %s, %s)",
+                    (room, author_id, author_name, text),
                 )
                 conn.commit()
                 return _resp(200, {'success': True})
 
             if action == 'forum_create':
                 category = esc(body.get('category'), 40)
-                title = clean_text(esc(body.get('title'), 300)).replace("'", "''")
+                title = clean_text(esc(body.get('title'), 300))
                 author_id = esc(body.get('authorId'), 64)
                 author_name = esc(body.get('authorName'), 200)
                 if not title.strip():
                     return _resp(400, {'error': 'empty title'})
                 cur.execute(
                     f"INSERT INTO {SCHEMA}.forum_topics (category, title, author_id, author_name) "
-                    f"VALUES ('{category}', '{title}', '{author_id}', '{author_name}') RETURNING id"
+                    f"VALUES (%s, %s, %s, %s) RETURNING id",
+                    (category, title, author_id, author_name),
                 )
                 new_id = cur.fetchone()[0]
                 conn.commit()
                 return _resp(200, {'success': True, 'id': new_id})
 
             if action == 'forum_reply':
-                topic_id = int(body.get('topicId') or 0)
+                try:
+                    topic_id = int(body.get('topicId') or 0)
+                except (TypeError, ValueError):
+                    topic_id = 0
                 author_id = esc(body.get('authorId'), 64)
                 author_name = esc(body.get('authorName'), 200)
-                text = clean_text(esc(body.get('text'), 2000)).replace("'", "''")
+                text = clean_text(esc(body.get('text'), 2000))
                 if not topic_id or not text.strip():
                     return _resp(400, {'error': 'empty'})
                 cur.execute(
                     f"INSERT INTO {SCHEMA}.forum_posts (topic_id, author_id, author_name, text) "
-                    f"VALUES ({topic_id}, '{author_id}', '{author_name}', '{text}')"
+                    f"VALUES (%s, %s, %s, %s)",
+                    (topic_id, author_id, author_name, text),
                 )
                 conn.commit()
                 return _resp(200, {'success': True})
@@ -181,15 +205,18 @@ def handler(event: dict, context) -> dict:
                 token = (event.get('headers') or {}).get('X-Auth-Token') or (event.get('headers') or {}).get('x-auth-token') or ''
                 if not _is_admin(cur, token):
                     return _resp(403, {'error': 'forbidden'})
-                topic_id = int(body.get('topicId') or 0)
+                try:
+                    topic_id = int(body.get('topicId') or 0)
+                except (TypeError, ValueError):
+                    topic_id = 0
                 if not topic_id:
                     return _resp(400, {'error': 'no topic'})
                 if action == 'forum_delete':
-                    cur.execute(f"DELETE FROM {SCHEMA}.forum_posts WHERE topic_id={topic_id}")
-                    cur.execute(f"DELETE FROM {SCHEMA}.forum_topics WHERE id={topic_id}")
+                    cur.execute(f"DELETE FROM {SCHEMA}.forum_posts WHERE topic_id=%s", (topic_id,))
+                    cur.execute(f"DELETE FROM {SCHEMA}.forum_topics WHERE id=%s", (topic_id,))
                 else:
-                    blocked = 'true' if action == 'forum_block' else 'false'
-                    cur.execute(f"UPDATE {SCHEMA}.forum_topics SET blocked={blocked} WHERE id={topic_id}")
+                    blocked = action == 'forum_block'
+                    cur.execute(f"UPDATE {SCHEMA}.forum_topics SET blocked=%s WHERE id=%s", (blocked, topic_id))
                 conn.commit()
                 return _resp(200, {'success': True})
 
@@ -198,12 +225,13 @@ def handler(event: dict, context) -> dict:
                 from_id = esc(body.get('fromId'), 64)
                 from_name = esc(body.get('fromName'), 200)
                 to_id = esc(body.get('toId'), 64)
-                text = clean_text(esc(body.get('text'), 2000)).replace("'", "''")
+                text = clean_text(esc(body.get('text'), 2000))
                 if not pair or not text.strip():
                     return _resp(400, {'error': 'empty'})
                 cur.execute(
                     f"INSERT INTO {SCHEMA}.direct_messages (pair_key, from_id, from_name, to_id, text) "
-                    f"VALUES ('{pair}', '{from_id}', '{from_name}', '{to_id}', '{text}')"
+                    f"VALUES (%s, %s, %s, %s, %s)",
+                    (pair, from_id, from_name, to_id, text),
                 )
                 conn.commit()
                 return _resp(200, {'success': True})

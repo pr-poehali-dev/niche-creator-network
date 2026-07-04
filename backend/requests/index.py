@@ -9,6 +9,8 @@ CORS = {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
 }
 
 ALLOWED_CATEGORIES = {
@@ -17,7 +19,7 @@ ALLOWED_CATEGORIES = {
 
 
 def esc(v, limit=200):
-    return str(v if v is not None else '').strip().replace("'", "''")[:limit]
+    return str(v if v is not None else '').strip()[:limit]
 
 
 def _resp(status, payload):
@@ -46,16 +48,24 @@ def handler(event: dict, context) -> dict:
             if view == 'provider':
                 slug = esc(params.get('providerSlug'), 64)
                 category = esc(params.get('category'), 40)
-                where = "WHERE r.status='open'"
                 if category and category in ALLOWED_CATEGORIES and category != '':
-                    where += f" AND r.category='{category}'"
-                cur.execute(
-                    f"SELECT r.id, r.client_name, r.category, r.service, r.description, r.budget, r.city, r.created_at, "
-                    f"rr.id, rr.message, rr.price, rr.status "
-                    f"FROM {SCHEMA}.client_requests r "
-                    f"LEFT JOIN {SCHEMA}.request_responses rr ON rr.request_id=r.id AND rr.provider_slug='{slug}' "
-                    f"{where} ORDER BY r.created_at DESC LIMIT 100"
-                )
+                    cur.execute(
+                        f"SELECT r.id, r.client_name, r.category, r.service, r.description, r.budget, r.city, r.created_at, "
+                        f"rr.id, rr.message, rr.price, rr.status "
+                        f"FROM {SCHEMA}.client_requests r "
+                        f"LEFT JOIN {SCHEMA}.request_responses rr ON rr.request_id=r.id AND rr.provider_slug=%s "
+                        f"WHERE r.status='open' AND r.category=%s ORDER BY r.created_at DESC LIMIT 100",
+                        (slug, category),
+                    )
+                else:
+                    cur.execute(
+                        f"SELECT r.id, r.client_name, r.category, r.service, r.description, r.budget, r.city, r.created_at, "
+                        f"rr.id, rr.message, rr.price, rr.status "
+                        f"FROM {SCHEMA}.client_requests r "
+                        f"LEFT JOIN {SCHEMA}.request_responses rr ON rr.request_id=r.id AND rr.provider_slug=%s "
+                        f"WHERE r.status='open' ORDER BY r.created_at DESC LIMIT 100",
+                        (slug,),
+                    )
                 rows = cur.fetchall()
                 items = []
                 for x in rows:
@@ -73,16 +83,17 @@ def handler(event: dict, context) -> dict:
                 return _resp(400, {'error': 'clientId required'})
             cur.execute(
                 f"SELECT id, category, service, description, budget, city, status, chosen_provider, created_at "
-                f"FROM {SCHEMA}.client_requests WHERE client_id='{client_id}' ORDER BY created_at DESC LIMIT 100"
+                f"FROM {SCHEMA}.client_requests WHERE client_id=%s ORDER BY created_at DESC LIMIT 100",
+                (client_id,),
             )
             reqs = cur.fetchall()
             req_ids = [r[0] for r in reqs]
             responses_by_req = {}
             if req_ids:
-                ids_sql = ','.join(str(i) for i in req_ids)
                 cur.execute(
                     f"SELECT request_id, provider_slug, provider_name, message, price, status "
-                    f"FROM {SCHEMA}.request_responses WHERE request_id IN ({ids_sql}) ORDER BY created_at ASC"
+                    f"FROM {SCHEMA}.request_responses WHERE request_id = ANY(%s) ORDER BY created_at ASC",
+                    (req_ids,),
                 )
                 for rr in cur.fetchall():
                     responses_by_req.setdefault(rr[0], []).append({
@@ -116,14 +127,18 @@ def handler(event: dict, context) -> dict:
                 city = esc(body.get('city'), 120)
                 cur.execute(
                     f"INSERT INTO {SCHEMA}.client_requests (client_id, client_name, category, service, description, budget, city) "
-                    f"VALUES ('{client_id}', '{client_name}', '{category}', '{service}', '{description}', '{budget}', '{city}') RETURNING id"
+                    f"VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                    (client_id, client_name, category, service, description, budget, city),
                 )
                 new_id = cur.fetchone()[0]
                 conn.commit()
                 return _resp(200, {'success': True, 'id': new_id})
 
             if action == 'respond':
-                request_id = int(body.get('requestId') or 0)
+                try:
+                    request_id = int(body.get('requestId') or 0)
+                except (TypeError, ValueError):
+                    request_id = 0
                 slug = esc(body.get('providerSlug'), 64)
                 if not request_id or not slug:
                     return _resp(400, {'error': 'requestId and providerSlug required'})
@@ -132,30 +147,37 @@ def handler(event: dict, context) -> dict:
                 price = esc(body.get('price'), 80)
                 cur.execute(
                     f"INSERT INTO {SCHEMA}.request_responses (request_id, provider_slug, provider_name, message, price) "
-                    f"VALUES ({request_id}, '{slug}', '{provider_name}', '{message}', '{price}') "
+                    f"VALUES (%s, %s, %s, %s, %s) "
                     f"ON CONFLICT (request_id, provider_slug) DO UPDATE SET "
-                    f"message=EXCLUDED.message, price=EXCLUDED.price, provider_name=EXCLUDED.provider_name, status='sent'"
+                    f"message=EXCLUDED.message, price=EXCLUDED.price, provider_name=EXCLUDED.provider_name, status='sent'",
+                    (request_id, slug, provider_name, message, price),
                 )
                 conn.commit()
                 return _resp(200, {'success': True})
 
             if action == 'choose':
-                request_id = int(body.get('requestId') or 0)
+                try:
+                    request_id = int(body.get('requestId') or 0)
+                except (TypeError, ValueError):
+                    request_id = 0
                 slug = esc(body.get('providerSlug'), 64)
                 client_id = esc(body.get('clientId'), 64)
                 if not request_id or not slug:
                     return _resp(400, {'error': 'requestId and providerSlug required'})
                 cur.execute(
-                    f"UPDATE {SCHEMA}.client_requests SET status='assigned', chosen_provider='{slug}' "
-                    f"WHERE id={request_id} AND client_id='{client_id}'"
+                    f"UPDATE {SCHEMA}.client_requests SET status='assigned', chosen_provider=%s "
+                    f"WHERE id=%s AND client_id=%s",
+                    (slug, request_id, client_id),
                 )
                 cur.execute(
                     f"UPDATE {SCHEMA}.request_responses SET status='accepted' "
-                    f"WHERE request_id={request_id} AND provider_slug='{slug}'"
+                    f"WHERE request_id=%s AND provider_slug=%s",
+                    (request_id, slug),
                 )
                 cur.execute(
                     f"UPDATE {SCHEMA}.request_responses SET status='declined' "
-                    f"WHERE request_id={request_id} AND provider_slug<>'{slug}'"
+                    f"WHERE request_id=%s AND provider_slug<>%s",
+                    (request_id, slug),
                 )
                 conn.commit()
                 return _resp(200, {'success': True})

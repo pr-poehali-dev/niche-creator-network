@@ -1,8 +1,16 @@
 import json
 import os
+import re
+import html
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+
+
+def _esc(v, limit=200):
+    return html.escape(str(v or '')[:limit])
 
 
 def handler(event: dict, context) -> dict:
@@ -18,6 +26,8 @@ def handler(event: dict, context) -> dict:
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
     }
 
     if method == 'OPTIONS':
@@ -27,18 +37,18 @@ def handler(event: dict, context) -> dict:
         return {'statusCode': 405, 'headers': cors, 'body': json.dumps({'error': 'Method not allowed'})}
 
     body = json.loads(event.get('body') or '{}')
-    email = (body.get('email') or '').strip()
-    if not email or '@' not in email:
+    email = (body.get('email') or '').strip()[:200]
+    if not email or not EMAIL_RE.match(email):
         return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'Invalid email'})}
 
     lang = body.get('lang', 'ru')
-    receipt_no = body.get('receiptNo', '')
-    date = body.get('date', '')
-    plan = body.get('plan', '')
-    period = body.get('period', '')
-    amount = body.get('amount', '')
-    payer = body.get('payer', '')
-    pay_method = body.get('method', '')
+    receipt_no = _esc(body.get('receiptNo', ''), 64)
+    date = _esc(body.get('date', ''), 32)
+    plan = _esc(body.get('plan', ''), 100)
+    period = _esc(body.get('period', ''), 64)
+    amount = _esc(body.get('amount', ''), 64)
+    payer = _esc(body.get('payer', ''), 200)
+    pay_method = _esc(body.get('method', ''), 64)
 
     if lang == 'en':
         subject = f'SHCHIT — Payment receipt {receipt_no}'

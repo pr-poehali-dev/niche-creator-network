@@ -18,6 +18,8 @@ def handler(event: dict, context) -> dict:
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
     }
 
     if method == 'OPTIONS':
@@ -42,15 +44,9 @@ def handler(event: dict, context) -> dict:
 
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
-    safe_slug = slug.replace("'", "''")
     cur.execute(
-        f"UPDATE {SCHEMA}.providers SET "
-        f"phone='{phone.replace(chr(39), chr(39)*2)}', "
-        f"email='{email.replace(chr(39), chr(39)*2)}', "
-        f"whatsapp='{whatsapp.replace(chr(39), chr(39)*2)}', "
-        f"telegram='{telegram.replace(chr(39), chr(39)*2)}', "
-        f"website='{website.replace(chr(39), chr(39)*2)}' "
-        f"WHERE slug='{safe_slug}'"
+        f"UPDATE {SCHEMA}.providers SET phone=%s, email=%s, whatsapp=%s, telegram=%s, website=%s WHERE slug=%s",
+        (phone, email, whatsapp, telegram, website, slug),
     )
     updated = cur.rowcount
     conn.commit()

@@ -106,7 +106,7 @@ export const t: Dict = {
   authToLogin: { ru: "Войти", en: "Sign in" },
   authErrInvalid: { ru: "Неверный email или пароль", en: "Invalid email or password" },
   authErrExists: { ru: "Пользователь с таким email уже есть", en: "User with this email already exists" },
-  authErrWeak: { ru: "Пароль минимум 6 символов", en: "Password must be at least 6 characters" },
+  authErrWeak: { ru: "Пароль минимум 8 символов, с буквами и цифрами", en: "Password must be at least 8 characters, with letters and numbers" },
   authErrEmail: { ru: "Введите корректный email", en: "Enter a valid email" },
   authErrGeneric: { ru: "Что-то пошло не так. Попробуйте ещё раз", en: "Something went wrong. Try again" },
   authSecureNote: { ru: "Данные защищены шифрованием", en: "Your data is encrypted" },

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import hashlib
 import hmac
 import smtplib
@@ -14,6 +15,13 @@ SCHEMA = 't_p50633472_niche_creator_networ'
 SESSION_DAYS = 30
 CODE_TTL_MIN = 10
 MAX_2FA_ATTEMPTS = 5
+
+# Rate limiting: не более N попыток входа за окно времени на email и на IP
+LOGIN_WINDOW_MIN = 15
+MAX_ATTEMPTS_PER_IDENTIFIER = 8
+MAX_ATTEMPTS_PER_IP = 20
+
+EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
 
 def _conn():
@@ -84,12 +92,13 @@ def _send_2fa_email(to_email: str, code: str, lang: str = 'ru') -> bool:
 def _start_2fa(cur, user_id: int, email: str, lang: str) -> dict:
     code = ''.join(pysecrets.choice('0123456789') for _ in range(6))
     challenge = pysecrets.token_hex(24)
-    expires = (datetime.utcnow() + timedelta(minutes=CODE_TTL_MIN)).strftime('%Y-%m-%d %H:%M:%S')
-    code_hash = _hash_code(code).replace("'", "''")
-    cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE user_id = {user_id}")
+    expires = datetime.utcnow() + timedelta(minutes=CODE_TTL_MIN)
+    code_hash = _hash_code(code)
+    cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE user_id = %s", (user_id,))
     cur.execute(
         f"INSERT INTO {SCHEMA}.two_factor_codes (challenge_id, user_id, code_hash, expires_at) "
-        f"VALUES ('{challenge}', {user_id}, '{code_hash}', '{expires}')"
+        f"VALUES (%s, %s, %s, %s)",
+        (challenge, user_id, code_hash, expires),
     )
     sent = _send_2fa_email(email, code, lang)
     return {'challengeId': challenge, 'sent': sent}
@@ -113,6 +122,46 @@ def _verify_password(password: str, stored: str) -> bool:
     return hmac.compare_digest(_hash_password(password, salt), digest)
 
 
+def _client_ip(event: dict) -> str:
+    try:
+        ip = (event.get('requestContext', {}).get('identity', {}).get('sourceIp') or '')
+    except (AttributeError, TypeError):
+        ip = ''
+    if not ip:
+        headers = event.get('headers') or {}
+        fwd = headers.get('X-Forwarded-For') or headers.get('x-forwarded-for') or ''
+        ip = fwd.split(',')[0].strip()
+    return str(ip)[:64]
+
+
+def _too_many_attempts(cur, identifier: str, ip: str) -> bool:
+    '''Rate limiting: считаем неудачные попытки входа за последние LOGIN_WINDOW_MIN минут.'''
+    since = datetime.utcnow() - timedelta(minutes=LOGIN_WINDOW_MIN)
+    cur.execute(
+        f"SELECT COUNT(*) FROM {SCHEMA}.login_attempts WHERE identifier = %s AND created_at > %s",
+        (identifier, since),
+    )
+    by_id = cur.fetchone()[0]
+    if by_id >= MAX_ATTEMPTS_PER_IDENTIFIER:
+        return True
+    if ip:
+        cur.execute(
+            f"SELECT COUNT(*) FROM {SCHEMA}.login_attempts WHERE ip = %s AND created_at > %s",
+            (ip, since),
+        )
+        by_ip = cur.fetchone()[0]
+        if by_ip >= MAX_ATTEMPTS_PER_IP:
+            return True
+    return False
+
+
+def _record_attempt(cur, identifier: str, ip: str) -> None:
+    cur.execute(
+        f"INSERT INTO {SCHEMA}.login_attempts (identifier, ip) VALUES (%s, %s)",
+        (identifier, ip),
+    )
+
+
 def _resp(status: int, body: dict) -> dict:
     return {
         'statusCode': status,
@@ -121,6 +170,9 @@ def _resp(status: int, body: dict) -> dict:
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
             'Content-Type': 'application/json',
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'DENY',
+            'Referrer-Policy': 'strict-origin-when-cross-origin',
         },
         'body': json.dumps(body),
         'isBase64Encoded': False,
@@ -139,6 +191,7 @@ def handler(event: dict, context) -> dict:
 
     headers = event.get('headers') or {}
     token = headers.get('X-Auth-Token') or headers.get('x-auth-token') or ''
+    client_ip = _client_ip(event)
 
     raw_body = (event.get('body') or '').strip()
     try:
@@ -155,66 +208,70 @@ def handler(event: dict, context) -> dict:
         if action == 'admin_login':
             password = body.get('password') or ''
             admin_pwd = os.environ.get('ADMIN_PASSWORD', '')
+            identifier = f'admin:{client_ip}'
+            if _too_many_attempts(cur, identifier, client_ip):
+                return _resp(429, {'error': 'too_many_attempts'})
             if not admin_pwd or not hmac.compare_digest(password, admin_pwd):
+                _record_attempt(cur, identifier, client_ip)
                 return _resp(401, {'error': 'invalid_credentials'})
             role = body.get('role') if body.get('role') in ('client', 'provider') else 'client'
             admin_email = f"admin+{role}@shchit.local"
-            esc_email = admin_email.replace("'", "''")
-            esc_role = role.replace("'", "''")
-            cur.execute(f"SELECT id, role, name FROM {SCHEMA}.users WHERE email = '{esc_email}'")
+            cur.execute(f"SELECT id, role, name FROM {SCHEMA}.users WHERE email = %s", (admin_email,))
             row = cur.fetchone()
             if row:
                 user_id = int(row[0])
-                cur.execute(f"UPDATE {SCHEMA}.users SET role = '{esc_role}' WHERE id = {user_id}")
+                cur.execute(f"UPDATE {SCHEMA}.users SET role = %s WHERE id = %s", (role, user_id))
             else:
-                placeholder = _make_hash(pysecrets.token_hex(16)).replace("'", "''")
+                placeholder = _make_hash(pysecrets.token_hex(16))
                 cur.execute(
                     f"INSERT INTO {SCHEMA}.users (email, password_hash, role, name) "
-                    f"VALUES ('{esc_email}', '{placeholder}', '{esc_role}', 'Администратор') RETURNING id"
+                    f"VALUES (%s, %s, %s, %s) RETURNING id",
+                    (admin_email, placeholder, role, 'Администратор'),
                 )
                 user_id = cur.fetchone()[0]
             new_token = _create_session(cur, user_id)
             return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': admin_email, 'role': role, 'name': 'Администратор', 'isAdmin': True}})
 
         if action == 'register':
-            email = (body.get('email') or '').strip().lower()
+            email = (body.get('email') or '').strip().lower()[:200]
             password = body.get('password') or ''
             role = body.get('role') if body.get('role') in ('client', 'provider') else 'client'
             name = (body.get('name') or '').strip()[:200]
             consent = bool(body.get('consent'))
-            if not email or '@' not in email:
+            if not email or not EMAIL_RE.match(email):
                 return _resp(400, {'error': 'invalid_email'})
-            if len(password) < 6:
+            if len(password) < 8 or len(password) > 200:
+                return _resp(400, {'error': 'weak_password'})
+            if not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
                 return _resp(400, {'error': 'weak_password'})
             if not consent:
                 return _resp(400, {'error': 'consent'})
-            esc_email = email.replace("'", "''")
-            cur.execute(f"SELECT id FROM {SCHEMA}.users WHERE email = '{esc_email}'")
+            cur.execute(f"SELECT id FROM {SCHEMA}.users WHERE email = %s", (email,))
             if cur.fetchone():
                 return _resp(409, {'error': 'email_exists'})
-            pwd_hash = _make_hash(password).replace("'", "''")
-            esc_name = name.replace("'", "''")
-            consent_version = (str(body.get('consentVersion') or '1.0'))[:20].replace("'", "''")
-            try:
-                src_ip = (event.get('requestContext', {}).get('identity', {}).get('sourceIp') or '')[:64].replace("'", "''")
-            except (AttributeError, TypeError):
-                src_ip = ''
+            pwd_hash = _make_hash(password)
+            consent_version = (str(body.get('consentVersion') or '1.0'))[:20]
+            src_ip = client_ip
             cur.execute(
                 f"INSERT INTO {SCHEMA}.users (email, password_hash, role, name, consent_accepted_at, consent_version, consent_ip) "
-                f"VALUES ('{esc_email}', '{pwd_hash}', '{role}', '{esc_name}', now(), '{consent_version}', '{src_ip}') RETURNING id"
+                f"VALUES (%s, %s, %s, %s, now(), %s, %s) RETURNING id",
+                (email, pwd_hash, role, name, consent_version, src_ip),
             )
             user_id = cur.fetchone()[0]
             new_token = _create_session(cur, user_id)
             return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': email, 'role': role, 'name': name}})
 
         if action == 'login':
-            email = (body.get('email') or '').strip().lower()
+            email = (body.get('email') or '').strip().lower()[:200]
             password = body.get('password') or ''
             lang = body.get('lang') if body.get('lang') in ('ru', 'en') else 'ru'
-            esc_email = email.replace("'", "''")
-            cur.execute(f"SELECT id, password_hash, role, name, twofa_enabled FROM {SCHEMA}.users WHERE email = '{esc_email}'")
+            identifier = f'login:{email}'
+            if _too_many_attempts(cur, identifier, client_ip):
+                return _resp(429, {'error': 'too_many_attempts'})
+            cur.execute(f"SELECT id, password_hash, role, name, twofa_enabled FROM {SCHEMA}.users WHERE email = %s", (email,))
             row = cur.fetchone()
             if not row or not _verify_password(password, row[1]):
+                _record_attempt(cur, identifier, client_ip)
                 return _resp(401, {'error': 'invalid_credentials'})
             twofa_on = bool(row[4]) if len(row) > 4 else True
             if twofa_on:
@@ -224,28 +281,33 @@ def handler(event: dict, context) -> dict:
             return _resp(200, {'token': new_token, 'user': {'id': row[0], 'email': email, 'role': row[2], 'name': row[3]}})
 
         if action == 'verify_2fa':
-            challenge = (body.get('challengeId') or '').strip().replace("'", "''")[:64]
+            challenge = (body.get('challengeId') or '').strip()[:64]
             code = (body.get('code') or '').strip()
             if not challenge or not code.isdigit() or len(code) != 6:
                 return _resp(400, {'error': 'invalid_code'})
+            identifier = f'2fa:{challenge}'
+            if _too_many_attempts(cur, identifier, client_ip):
+                return _resp(429, {'error': 'too_many_attempts'})
             cur.execute(
-                f"SELECT id, user_id, code_hash, attempts, expires_at FROM {SCHEMA}.two_factor_codes WHERE challenge_id = '{challenge}'"
+                f"SELECT id, user_id, code_hash, attempts, expires_at FROM {SCHEMA}.two_factor_codes WHERE challenge_id = %s",
+                (challenge,),
             )
             rec = cur.fetchone()
             if not rec:
                 return _resp(400, {'error': 'challenge_not_found'})
             rec_id, uid, code_hash, attempts, expires_at = rec
             if expires_at < datetime.utcnow():
-                cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE id = {rec_id}")
+                cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE id = %s", (rec_id,))
                 return _resp(400, {'error': 'code_expired'})
             if attempts >= MAX_2FA_ATTEMPTS:
-                cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE id = {rec_id}")
+                cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE id = %s", (rec_id,))
                 return _resp(429, {'error': 'too_many_attempts'})
             if not hmac.compare_digest(code_hash, _hash_code(code)):
-                cur.execute(f"UPDATE {SCHEMA}.two_factor_codes SET attempts = attempts + 1 WHERE id = {rec_id}")
+                cur.execute(f"UPDATE {SCHEMA}.two_factor_codes SET attempts = attempts + 1 WHERE id = %s", (rec_id,))
+                _record_attempt(cur, identifier, client_ip)
                 return _resp(401, {'error': 'wrong_code'})
-            cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE id = {rec_id}")
-            cur.execute(f"SELECT id, email, role, name FROM {SCHEMA}.users WHERE id = {uid}")
+            cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE id = %s", (rec_id,))
+            cur.execute(f"SELECT id, email, role, name FROM {SCHEMA}.users WHERE id = %s", (uid,))
             u = cur.fetchone()
             if not u:
                 return _resp(401, {'error': 'invalid_session'})
@@ -253,15 +315,19 @@ def handler(event: dict, context) -> dict:
             return _resp(200, {'token': new_token, 'user': {'id': u[0], 'email': u[1], 'role': u[2], 'name': u[3]}})
 
         if action == 'resend_2fa':
-            challenge = (body.get('challengeId') or '').strip().replace("'", "''")[:64]
+            challenge = (body.get('challengeId') or '').strip()[:64]
             lang = body.get('lang') if body.get('lang') in ('ru', 'en') else 'ru'
             if not challenge:
                 return _resp(400, {'error': 'challenge_not_found'})
-            cur.execute(f"SELECT user_id FROM {SCHEMA}.two_factor_codes WHERE challenge_id = '{challenge}'")
+            identifier = f'resend:{challenge}'
+            if _too_many_attempts(cur, identifier, client_ip):
+                return _resp(429, {'error': 'too_many_attempts'})
+            _record_attempt(cur, identifier, client_ip)
+            cur.execute(f"SELECT user_id FROM {SCHEMA}.two_factor_codes WHERE challenge_id = %s", (challenge,))
             rec = cur.fetchone()
             if not rec:
                 return _resp(400, {'error': 'challenge_not_found'})
-            cur.execute(f"SELECT email FROM {SCHEMA}.users WHERE id = {rec[0]}")
+            cur.execute(f"SELECT email FROM {SCHEMA}.users WHERE id = %s", (rec[0],))
             ur = cur.fetchone()
             if not ur:
                 return _resp(400, {'error': 'challenge_not_found'})
@@ -271,11 +337,11 @@ def handler(event: dict, context) -> dict:
         if action == 'me':
             if not token:
                 return _resp(401, {'error': 'no_token'})
-            esc_token = token.replace("'", "''")
             cur.execute(
                 f"SELECT u.id, u.email, u.role, u.name, s.expires_at "
                 f"FROM {SCHEMA}.sessions s JOIN {SCHEMA}.users u ON u.id = s.user_id "
-                f"WHERE s.token = '{esc_token}'"
+                f"WHERE s.token = %s",
+                (token,),
             )
             row = cur.fetchone()
             if not row or row[4] < datetime.utcnow():
@@ -285,8 +351,7 @@ def handler(event: dict, context) -> dict:
 
         if action == 'logout':
             if token:
-                esc_token = token.replace("'", "''")
-                cur.execute(f"UPDATE {SCHEMA}.sessions SET expires_at = now() WHERE token = '{esc_token}'")
+                cur.execute(f"UPDATE {SCHEMA}.sessions SET expires_at = now() WHERE token = %s", (token,))
             return _resp(200, {'ok': True})
 
         return _resp(400, {'error': 'unknown_action'})
@@ -296,9 +361,10 @@ def handler(event: dict, context) -> dict:
 
 def _create_session(cur, user_id: int) -> str:
     token = pysecrets.token_hex(32)
-    expires = (datetime.utcnow() + timedelta(days=SESSION_DAYS)).strftime('%Y-%m-%d %H:%M:%S')
+    expires = datetime.utcnow() + timedelta(days=SESSION_DAYS)
     cur.execute(
         f"INSERT INTO {SCHEMA}.sessions (token, user_id, expires_at) "
-        f"VALUES ('{token}', {user_id}, '{expires}')"
+        f"VALUES (%s, %s, %s)",
+        (token, user_id, expires),
     )
     return token
