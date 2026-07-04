@@ -3,6 +3,7 @@ import os
 import re
 from datetime import datetime
 import psycopg2
+from crypto_utils import encrypt_field, decrypt_field
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -143,7 +144,7 @@ def handler(event: dict, context) -> dict:
                     f"WHERE pair_key=%s ORDER BY created_at ASC LIMIT 500",
                     (pair,),
                 )
-                msgs = [{'fromId': r[0], 'fromName': r[1], 'text': r[2], 'createdAt': r[3].isoformat() if r[3] else None} for r in cur.fetchall()]
+                msgs = [{'fromId': r[0], 'fromName': r[1], 'text': decrypt_field(r[2]), 'createdAt': r[3].isoformat() if r[3] else None} for r in cur.fetchall()]
                 return _resp(200, {'messages': msgs})
 
             return _resp(400, {'error': 'unknown kind'})
@@ -228,10 +229,11 @@ def handler(event: dict, context) -> dict:
                 text = clean_text(esc(body.get('text'), 2000))
                 if not pair or not text.strip():
                     return _resp(400, {'error': 'empty'})
+                # Личные сообщения шифруются перед записью в БД
                 cur.execute(
                     f"INSERT INTO {SCHEMA}.direct_messages (pair_key, from_id, from_name, to_id, text) "
                     f"VALUES (%s, %s, %s, %s, %s)",
-                    (pair, from_id, from_name, to_id, text),
+                    (pair, from_id, from_name, to_id, encrypt_field(text)),
                 )
                 conn.commit()
                 return _resp(200, {'success': True})

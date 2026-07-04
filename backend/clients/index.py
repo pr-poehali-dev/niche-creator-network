@@ -1,6 +1,7 @@
 import json
 import os
 import psycopg2
+from crypto_utils import encrypt_field, decrypt_field
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -50,7 +51,13 @@ def handler(event: dict, context) -> dict:
         if not row:
             return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'client': None})}
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({
-            'client': {'fullName': row[0], 'phone': row[1], 'email': row[2], 'avatarUrl': row[3] or '', 'gender': row[4] or 'm'}
+            'client': {
+                'fullName': decrypt_field(row[0] or ''),
+                'phone': decrypt_field(row[1] or ''),
+                'email': decrypt_field(row[2] or ''),
+                'avatarUrl': row[3] or '',
+                'gender': row[4] or 'm',
+            }
         })}
 
     if method == 'POST':
@@ -71,7 +78,7 @@ def handler(event: dict, context) -> dict:
             f"VALUES (%s, %s, %s, %s, %s) "
             f"ON CONFLICT (client_id) DO UPDATE SET "
             f"full_name=EXCLUDED.full_name, phone=EXCLUDED.phone, email=EXCLUDED.email, gender=EXCLUDED.gender, updated_at=now()",
-            (client_id, full_name, phone, email, gender),
+            (client_id, encrypt_field(full_name), encrypt_field(phone), encrypt_field(email), gender),
         )
         conn.commit()
         cur.close()

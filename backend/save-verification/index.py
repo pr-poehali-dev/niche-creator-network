@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 import psycopg2
+from crypto_utils import encrypt_field, decrypt_field
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -71,8 +72,8 @@ def handler(event: dict, context) -> dict:
             lic = [row[3].strip()]
         docs = row[12] if isinstance(row[12], list) else (json.loads(row[12]) if row[12] else [])
         data = {
-            'fullName': row[0] or '', 'passportNumber': row[1] or '', 'legalStatus': row[2] or 'ip',
-            'registry': row[4] or '',
+            'fullName': decrypt_field(row[0] or ''), 'passportNumber': decrypt_field(row[1] or ''), 'legalStatus': row[2] or 'ip',
+            'registry': decrypt_field(row[4] or ''),
             'showFullName': bool(row[5]), 'showLegalStatus': bool(row[6]),
             'showLicense': bool(row[7]), 'showRegistry': bool(row[8]),
             'pseudonym': row[9] or '', 'usePseudonym': bool(row[10]),
@@ -107,6 +108,11 @@ def handler(event: dict, context) -> dict:
         legal_status = ''
     license_info = esc(body.get('license'))
     registry = esc(body.get('registry'))
+
+    # ФИО, паспорт и регистрационный номер — чувствительные персональные данные, шифруем перед записью
+    enc_full_name = encrypt_field(full_name)
+    enc_passport = encrypt_field(passport)
+    enc_registry = encrypt_field(registry)
 
     show_name = bool(body.get('showFullName'))
     show_status = bool(body.get('showLegalStatus'))
@@ -209,7 +215,7 @@ def handler(event: dict, context) -> dict:
         f"quiet_start=%s, quiet_end=%s, services=%s::jsonb "
         f"WHERE slug=%s",
         (
-            full_name, passport, legal_status, license_info, registry,
+            enc_full_name, enc_passport, legal_status, license_info, enc_registry,
             show_name, show_status, show_license, show_registry,
             pseudonym, use_pseudonym, gender,
             licenses_json, documents_json, bio, age, birth_date,

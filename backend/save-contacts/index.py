@@ -1,6 +1,7 @@
 import json
 import os
 import psycopg2
+from crypto_utils import encrypt_field
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -42,11 +43,18 @@ def handler(event: dict, context) -> dict:
     telegram = clean(body.get('telegram')).lstrip('@')
     website = clean(body.get('website'))
 
+    # Телефон, email и WhatsApp/Telegram шифруются перед записью в БД (AES).
+    # Сайт (website) не шифруем — он и так публичный URL.
+    enc_phone = encrypt_field(phone)
+    enc_email = encrypt_field(email)
+    enc_whatsapp = encrypt_field(whatsapp)
+    enc_telegram = encrypt_field(telegram)
+
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     cur.execute(
         f"UPDATE {SCHEMA}.providers SET phone=%s, email=%s, whatsapp=%s, telegram=%s, website=%s WHERE slug=%s",
-        (phone, email, whatsapp, telegram, website, slug),
+        (enc_phone, enc_email, enc_whatsapp, enc_telegram, website, slug),
     )
     updated = cur.rowcount
     conn.commit()

@@ -2,6 +2,7 @@ import json
 import os
 import re
 import psycopg2
+from crypto_utils import decrypt_field
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -98,10 +99,10 @@ def handler(event: dict, context) -> dict:
                 item['isPseudonym'] = False
             item['img'] = (r[35] or '').strip() or r[15]
             item['contacts'] = {
-                'phone': r[18],
-                'email': r[19],
-                'whatsapp': r[20],
-                'telegram': r[21],
+                'phone': decrypt_field(r[18]),
+                'email': decrypt_field(r[19]),
+                'whatsapp': decrypt_field(r[20]),
+                'telegram': decrypt_field(r[21]),
                 'website': r[22],
             }
             # Публичная верификация: только поля с включённой видимостью.
@@ -110,7 +111,7 @@ def handler(event: dict, context) -> dict:
             documents_raw = r[38] if isinstance(r[38], list) else (json.loads(r[38]) if r[38] else [])
             public_verification = {}
             if bool(r[29]) and r[25]:
-                public_verification['fullName'] = r[25]
+                public_verification['fullName'] = decrypt_field(r[25])
             if bool(r[30]) and r[26]:
                 public_verification['legalStatus'] = r[26]
             if bool(r[31]):
@@ -121,7 +122,7 @@ def handler(event: dict, context) -> dict:
                 if lic_list:
                     public_verification['licenses'] = lic_list
             if bool(r[32]) and r[28]:
-                public_verification['registry'] = r[28]
+                public_verification['registry'] = decrypt_field(r[28])
             if bool(r[43]) and documents_raw:
                 docs = []
                 for d in documents_raw:

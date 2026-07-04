@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 
 import psycopg2
+from crypto_utils import decrypt_field
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -86,8 +87,8 @@ def handler(event: dict, context) -> dict:
                     'licenses': lic,
                     'active': bool(r[8]),
                     'documents': docs,
-                    'fullName': r[10] or '',
-                    'registry': r[11] or '',
+                    'fullName': decrypt_field(r[10] or ''),
+                    'registry': decrypt_field(r[11] or ''),
                 })
             return _resp(200, {'providers': items})
 
