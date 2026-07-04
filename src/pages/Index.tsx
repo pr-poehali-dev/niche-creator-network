@@ -1404,33 +1404,46 @@ export default function Index() {
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">{tr("footerDesc")}</p>
             </div>
+
             <div>
-              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerPlatform")}</div>
-              {(["fAbout", "fSpecialists", "navCases", "navServices", "navCourses"] as const).map(l => (
-                <div key={l} className="text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2">{tr(l)}</div>
+              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerForClients")}</div>
+              {([
+                ["heroClientCta1", "services"],
+                ["specialists", "specialists"],
+                ["navCases", "cases"],
+                ["fHowToOrder", "policy"],
+                ["fSafetyDeal", "policy"],
+                ["navContacts", "contacts"],
+              ] as const).map(([l, sec]) => (
+                <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
               ))}
             </div>
-            {isAuthed && role === "provider" ? (
-              <div>
-                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerCommunity")}</div>
-                {([["navForum", "forum"], ["navChat", "chat"]] as const).map(([l, sec]) => (
-                  <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
-                ))}
-              </div>
-            ) : (
-              <div />
-            )}
+
             <div>
-              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerDocs")}</div>
-              <button onClick={() => go("mobileapp")} className="flex items-center gap-1.5 text-xs text-gold hover:opacity-80 cursor-pointer transition-colors mb-2 font-medium">
-                <Icon name="Smartphone" size={12} />
-                {tr("navMobileApp")}
-              </button>
-              <button onClick={() => go("policy")} className="flex items-center gap-1.5 text-xs text-gold hover:opacity-80 cursor-pointer transition-colors mb-2 font-medium">
-                <Icon name="ShieldCheck" size={12} />
-                {tr("navPolicy")}
-              </button>
-              {([["fPrivacy", "privacy"], ["fTerms", "terms"], ["fAgreement", "agreement"], ["fOffer", "offer"], ["navPricing", "pricing"]] as const).map(([l, sec]) => (
+              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerForSpecialists")}</div>
+              {([
+                ["fBecomeProvider", "pricing"],
+                ["navPricing", "pricing"],
+                ["navCourses", "courses"],
+                ["navForum", "forum"],
+                ["navChat", "chat"],
+                ["fSpecialistFaq", "policy"],
+              ] as const).map(([l, sec]) => (
+                <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
+              ))}
+            </div>
+
+            <div>
+              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerAboutShchit")}</div>
+              {([
+                ["fAbout", "policy"],
+                ["navMobileApp", "mobileapp"],
+                ["navPolicy", "policy"],
+              ] as const).map(([l, sec]) => (
+                <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
+              ))}
+              <div className="divider-gold my-3" />
+              {([["fPrivacy", "privacy"], ["fTerms", "terms"], ["fAgreement", "agreement"], ["fOffer", "offer"]] as const).map(([l, sec]) => (
                 <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
               ))}
             </div>
