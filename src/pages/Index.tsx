@@ -1810,8 +1810,24 @@ function LandingFinalCta({ onCabinet }: { onCabinet: () => void }) {
   );
 }
 
+const MOBILE_APP_BANNER_KEY = "shchit_mobileapp_banner_dismissed";
+
 function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) => void; role: Role; openChat?: (t: { name: string; title: string; avatar?: string | null }) => void }) {
   const { lang, tr } = useLang();
+  const [appBannerOpen, setAppBannerOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(MOBILE_APP_BANNER_KEY)) setAppBannerOpen(true);
+    } catch {
+      setAppBannerOpen(true);
+    }
+  }, []);
+
+  const dismissAppBanner = () => {
+    setAppBannerOpen(false);
+    try { localStorage.setItem(MOBILE_APP_BANNER_KEY, "1"); } catch { /* noop */ }
+  };
   const isClient = role === "client";
   const { geo } = useGeo();
   const { providers } = useProviders();
@@ -1943,6 +1959,36 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
           </div>
         </div>
       </section>
+
+      {appBannerOpen && (
+        <section className="border-t border-b border-gold/30 bg-card">
+          <div className="max-w-7xl mx-auto px-4 py-5">
+            <div className="relative flex flex-col sm:flex-row items-center gap-4 sm:gap-5 border border-gold/30 rounded-sm glass-card p-5 sm:p-6 security-glow">
+              <button
+                onClick={dismissAppBanner}
+                className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="close"
+              >
+                <Icon name="X" size={16} />
+              </button>
+              <div className="w-12 h-12 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
+                <Icon name="Smartphone" size={22} className="text-[hsl(220,20%,6%)]" />
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <div className="font-montserrat font-bold text-sm text-foreground mb-0.5">{tr("appBannerTitle")}</div>
+                <div className="text-xs text-muted-foreground">{tr("appBannerText")}</div>
+              </div>
+              <button
+                onClick={() => setActive("mobileapp")}
+                className="shrink-0 gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2 whitespace-nowrap"
+              >
+                <Icon name="Download" size={16} />
+                {tr("appBannerBtn")}
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {!isClient && (
         <section className="border-t border-border bg-card py-20 relative overflow-hidden ambient-gold">

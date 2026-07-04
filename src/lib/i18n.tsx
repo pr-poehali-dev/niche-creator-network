@@ -77,6 +77,9 @@ export const t: Dict = {
   maHelpTitle: { ru: "Нужна помощь с установкой?", en: "Need help installing?" },
   maHelpText: { ru: "Если что-то не получается — напишите нам, поможем установить приложение на ваше устройство.", en: "If something doesn't work, contact us — we'll help you install the app on your device." },
   maHelpBtn: { ru: "Связаться с поддержкой", en: "Contact support" },
+  appBannerTitle: { ru: "Установите ЩИТ как приложение", en: "Install SHCHIT as an app" },
+  appBannerText: { ru: "Быстрый доступ с главного экрана телефона — без App Store и Google Play.", en: "Quick access from your phone's home screen — no App Store or Google Play needed." },
+  appBannerBtn: { ru: "Установить", en: "Install" },
 
   // Brand / header
   brandSub: { ru: "Международная профессиональная платформа безопасности", en: "International Professional Security Platform" },
