@@ -53,28 +53,42 @@ def handler(event: dict, context) -> dict:
     if len(data) > 5 * 1024 * 1024:
         return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'file too large'})}
 
+    print(f"[upload-avatar] start role={role} id={rec_id} ext={ext} bytes={len(data)}")
+
     key = f"avatars/{role}/{uuid.uuid4().hex}.{ext}"
-    s3 = boto3.client(
-        's3',
-        endpoint_url='https://bucket.poehali.dev',
-        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-    )
-    s3.put_object(Bucket='files', Key=key, Body=data, ContentType=ALLOWED_EXT[ext])
-    cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{key}"
-
-    conn = psycopg2.connect(os.environ['DATABASE_URL'])
-    cur = conn.cursor()
-    if role == 'provider':
-        cur.execute(f"UPDATE {SCHEMA}.providers SET avatar_url=%s WHERE slug=%s", (cdn_url, rec_id))
-    else:
-        cur.execute(
-            f"INSERT INTO {SCHEMA}.clients (client_id, avatar_url) VALUES (%s, %s) "
-            f"ON CONFLICT (client_id) DO UPDATE SET avatar_url=EXCLUDED.avatar_url, updated_at=now()",
-            (rec_id, cdn_url),
+    try:
+        s3 = boto3.client(
+            's3',
+            endpoint_url='https://bucket.poehali.dev',
+            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
         )
-    conn.commit()
-    cur.close()
-    conn.close()
+        s3.put_object(Bucket='files', Key=key, Body=data, ContentType=ALLOWED_EXT[ext])
+    except Exception as e:
+        print(f"[upload-avatar] S3 ERROR: {type(e).__name__}: {e}")
+        return {'statusCode': 500, 'headers': cors, 'body': json.dumps({'error': 'storage_failed', 'detail': str(e)})}
 
+    cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{key}"
+    print(f"[upload-avatar] uploaded to S3 key={key}")
+
+    try:
+        conn = psycopg2.connect(os.environ['DATABASE_URL'])
+        cur = conn.cursor()
+        if role == 'provider':
+            cur.execute(f"UPDATE {SCHEMA}.providers SET avatar_url=%s WHERE slug=%s", (cdn_url, rec_id))
+        else:
+            cur.execute(
+                f"INSERT INTO {SCHEMA}.clients (client_id, avatar_url) VALUES (%s, %s) "
+                f"ON CONFLICT (client_id) DO UPDATE SET avatar_url=EXCLUDED.avatar_url, updated_at=now()",
+                (rec_id, cdn_url),
+            )
+        rows = cur.rowcount
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"[upload-avatar] DB ERROR: {type(e).__name__}: {e}")
+        return {'statusCode': 500, 'headers': cors, 'body': json.dumps({'error': 'db_failed', 'detail': str(e)})}
+
+    print(f"[upload-avatar] done rows={rows} url={cdn_url}")
     return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'success': True, 'url': cdn_url})}
