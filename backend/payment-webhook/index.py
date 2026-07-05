@@ -26,6 +26,43 @@ VALID_PLANS = ('start', 'pro', 'premium')
 PLAN_PRICES_RUB = {'start': 1990, 'pro': 4490, 'premium': 7990}
 MIN_ACCEPTABLE_FACTOR = 0.5  # не даём активировать тариф, если оплачено меньше половины минимальной цены
 
+# Функция отправки чека на почту (отдельная cloud-функция send-receipt)
+RECEIPT_URL = 'https://functions.poehali.dev/4a87b00b-70a2-4af4-846b-156ef2a08b97'
+PLAN_TITLES = {'start': 'Старт', 'pro': 'Профи', 'premium': 'Премиум'}
+
+
+def _send_receipt(email, plan, period, amount, currency, payment_id):
+    '''Отправляет чек об оплате на email плательщика. Best-effort: ошибки не мешают webhook.'''
+    if not email or '@' not in email:
+        return
+    period_ru = 'Годовая подписка' if period == 'year' else 'Месячная подписка'
+    cur_sign = {'RUB': '₽', 'USD': '$', 'EUR': '€'}.get(currency, currency)
+    try:
+        amount_str = f'{float(amount):,.2f}'.replace(',', ' ') + f' {cur_sign}'
+    except (TypeError, ValueError):
+        amount_str = f'{amount} {cur_sign}'
+    payload = {
+        'email': email,
+        'lang': 'ru',
+        'receiptNo': str(payment_id)[:16].upper(),
+        'date': datetime.utcnow().strftime('%d.%m.%Y'),
+        'plan': PLAN_TITLES.get(plan, plan),
+        'period': period_ru,
+        'amount': amount_str,
+        'payer': email,
+        'method': 'Онлайн-оплата',
+    }
+    try:
+        req = urllib.request.Request(
+            RECEIPT_URL,
+            data=json.dumps(payload).encode('utf-8'),
+            headers={'Content-Type': 'application/json'},
+            method='POST',
+        )
+        urllib.request.urlopen(req, timeout=15).read()
+    except (urllib.error.URLError, urllib.error.HTTPError, ValueError, TimeoutError) as e:
+        print(f'receipt send failed for {email}: {e}')
+
 
 def _resp(status, body):
     return {'statusCode': status, 'headers': CORS, 'body': json.dumps(body, ensure_ascii=False), 'isBase64Encoded': False}
@@ -51,26 +88,22 @@ def _activate(slug, plan, period):
 
 
 def _already_processed(payment_id: str, provider: str) -> bool:
-    '''Идемпотентность: одно и то же событие оплаты не должно активировать подписку дважды.'''
+    '''Идемпотентность: одно и то же событие оплаты не должно активировать подписку дважды.
+    Атомарная вставка ON CONFLICT: если строка вставилась — платёж новый (False),
+    если конфликт (уже есть) — повтор (True). Без гонок и без падений на дубле.'''
     if not payment_id:
         return False
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
-    cur.execute(
-        f"CREATE TABLE IF NOT EXISTS {SCHEMA}.processed_payments "
-        f"(payment_id VARCHAR(200) PRIMARY KEY, provider VARCHAR(20), created_at TIMESTAMP DEFAULT now())"
-    )
-    conn.commit()
     try:
         cur.execute(
-            f"INSERT INTO {SCHEMA}.processed_payments (payment_id, provider) VALUES (%s, %s)",
+            f"INSERT INTO {SCHEMA}.processed_payments (payment_id, provider) "
+            f"VALUES (%s, %s) ON CONFLICT (payment_id) DO NOTHING RETURNING payment_id",
             (payment_id, provider),
         )
+        inserted = cur.fetchone() is not None
         conn.commit()
-        return False
-    except psycopg2.IntegrityError:
-        conn.rollback()
-        return True
+        return not inserted
     finally:
         cur.close()
         conn.close()
@@ -154,7 +187,19 @@ def handler(event, context):
             if status not in ('completed', 'paid'):
                 return _resp(200, {'ok': False, 'error': 'not_paid'})
             cd = data.get('custom_data') or {}
-            ok = _activate(cd.get('slug', ''), (cd.get('plan') or '').lower(), cd.get('period', 'month'))
+            p_plan = (cd.get('plan') or '').lower()
+            p_period = cd.get('period', 'month')
+            ok = _activate(cd.get('slug', ''), p_plan, p_period)
+            if ok and p_plan in VALID_PLANS:
+                details = data.get('details') or {}
+                totals = (details.get('totals') or {})
+                p_amount = totals.get('grand_total') or totals.get('total') or 0
+                try:
+                    p_amount = float(p_amount) / 100  # Paddle отдаёт сумму в минорных единицах
+                except (TypeError, ValueError):
+                    p_amount = 0
+                p_currency = data.get('currency_code', 'USD')
+                _send_receipt(cd.get('email', ''), p_plan, p_period, p_amount, p_currency, payment_id)
             return _resp(200, {'ok': ok, 'provider': 'paddle'})
         return _resp(200, {'ok': True, 'ignored': etype})
 
@@ -186,6 +231,10 @@ def handler(event, context):
             if paid_amount < expected_min:
                 return _resp(400, {'error': 'amount_mismatch'})
             ok = _activate(slug, plan, period)
+            if ok:
+                pay_email = md.get('email') or (verified.get('receipt') or {}).get('customer', {}).get('email', '')
+                currency = (verified.get('amount') or {}).get('currency', 'RUB')
+                _send_receipt(pay_email, plan, period, paid_amount, currency, payment_id)
             return _resp(200, {'ok': ok, 'provider': 'yookassa'})
         return _resp(200, {'ok': True, 'ignored': etype})
 

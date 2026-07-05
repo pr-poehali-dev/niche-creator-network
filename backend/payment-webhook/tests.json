@@ -37,7 +37,7 @@
       "name": "YooKassa succeeded rejected without server-side verification",
       "method": "POST",
       "path": "/",
-      "body": {"event": "payment.succeeded", "object": {"id": "fake-unverifiable-id", "metadata": {"slug": "morozov", "plan": "premium", "period": "month"}}},
+      "body": {"event": "payment.succeeded", "object": {"id": "fake-unverifiable-test-2026-07-05-a", "metadata": {"slug": "morozov", "plan": "premium", "period": "month"}}},
       "expectedStatus": 403,
       "expectedBody": {"error": "verification_failed"},
       "bodyMatcher": "partial"
