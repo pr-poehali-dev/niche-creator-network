@@ -3054,21 +3054,41 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 const planName = ({ start: "planStartName", pro: "planProName", premium: "planPremiumName", enterprise: "planEntName" } as const)[(sub?.plan || "start")] || "planStartName";
                 const planPrice = ({ start: "planStartPrice", pro: "planProPrice", premium: "planPremiumPrice", enterprise: "planEntPrice" } as const)[(sub?.plan || "start")] || "planStartPrice";
                 const active = sub?.active ?? false;
-                const untilStr = sub?.until ? new Date(sub.until).toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US") : null;
+                const untilDate = sub?.until ? new Date(sub.until) : null;
+                const untilStr = untilDate ? untilDate.toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US", { day: "numeric", month: "long", year: "numeric" }) : null;
+                const daysLeft = untilDate ? Math.ceil((untilDate.getTime() - Date.now()) / 86400000) : null;
+                const expiringSoon = active && daysLeft !== null && daysLeft >= 0 && daysLeft <= 7;
                 return (
                   <div className={`border rounded-sm glass-card p-6 ${active ? "border-gold/30 security-glow" : "border-border"}`}>
                     <div className="flex items-center justify-between mb-4">
                       <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdCurrentPlan")}</div>
                       <span className={`text-xs font-montserrat font-semibold px-3 py-1 rounded-sm ${active ? "bg-green-500/15 text-green-400" : "bg-secondary text-muted-foreground"}`}>{active ? tr("pdActive") : tr("pdInactive")}</span>
                     </div>
-                    <div className="flex items-end gap-2 mb-1 flex-wrap">
+                    <div className="flex items-end gap-2 mb-3 flex-wrap">
                       {sub?.plan === "premium" && <Icon name="Crown" size={20} className="text-gold mb-1" />}
                       <span className="font-montserrat font-extrabold text-2xl text-foreground">{tr(planName)}</span>
                       <span className="font-montserrat font-bold text-lg text-gold">{tr(planPrice)}{tr("perMonth")}</span>
                     </div>
-                    <div className="text-xs text-muted-foreground mb-5">
-                      {active && untilStr ? `${tr("pdRenews")}: ${untilStr}` : (!active ? tr("pdNoSub") : tr("pdActive"))}
-                    </div>
+                    {active && untilStr ? (
+                      <div className="mb-5 space-y-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Icon name="CalendarCheck" size={15} className="text-gold shrink-0" />
+                          <span className="text-muted-foreground">{tr("pdPaidUntil")}:</span>
+                          <span className="font-montserrat font-bold text-foreground">{untilStr}</span>
+                        </div>
+                        {daysLeft !== null && daysLeft >= 0 && (
+                          <div className={`inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold px-2.5 py-1 rounded-sm ${expiringSoon ? "bg-destructive/15 text-destructive" : "bg-secondary text-muted-foreground"}`}>
+                            <Icon name={expiringSoon ? "TriangleAlert" : "Clock"} size={12} />
+                            {daysLeft === 0 ? tr("pdExpiresToday") : `${tr("pdDaysLeft")}: ${daysLeft}`}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-5">
+                        <Icon name="CircleAlert" size={14} className="text-muted-foreground shrink-0" />
+                        {tr("pdNoSub")}
+                      </div>
+                    )}
                     <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{active ? tr("pdChangePlan") : tr("choosePlan")}</button>
                   </div>
                 );

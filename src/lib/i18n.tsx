@@ -899,6 +899,9 @@ export const t: Dict = {
   // Provider plan
   pdCurrentPlan: { ru: "Текущий тариф", en: "Current plan" },
   pdRenews: { ru: "Продление", en: "Renews on" },
+  pdPaidUntil: { ru: "Оплачено до", en: "Paid until" },
+  pdDaysLeft: { ru: "осталось дней", en: "days left" },
+  pdExpiresToday: { ru: "Истекает сегодня", en: "Expires today" },
   pdActive: { ru: "Активен", en: "Active" },
   pdChangePlan: { ru: "Сменить тариф", en: "Change plan" },
   pdPaymentMethod: { ru: "Способ оплаты", en: "Payment method" },
