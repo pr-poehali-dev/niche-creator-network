@@ -15,7 +15,7 @@ CORS = {
 }
 
 ALLOWED_CATEGORIES = {
-    'physical', 'cyber', 'economic', 'investigation', 'engineering', 'polygraph', ''
+    'physical', 'cyber', 'economic', 'crisis', ''
 }
 
 
