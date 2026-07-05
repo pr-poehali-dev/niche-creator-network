@@ -89,12 +89,30 @@ def _create_yookassa(amount_rub, plan, email, return_url, slug, period):
     secret = os.environ.get('YOOKASSA_SECRET_KEY', '')
     if not shop_id or not secret:
         return None, 'yookassa_not_configured'
+
+    # Контакт покупателя для чека (54-ФЗ). Если email не передан — используем почту магазина.
+    receipt_email = (email or '').strip() or os.environ.get('SMTP_USER', '') or 'noreply@shieldpspl.ru'
+    period_ru = 'год' if period == 'year' else 'месяц'
+    # vat_code=1 — «Без НДС» (для ИП на УСН). payment_subject=service — услуга.
+    receipt = {
+        'customer': {'email': receipt_email},
+        'items': [{
+            'description': f'Подписка «{plan}» на {period_ru}'[:128],
+            'quantity': '1.00',
+            'amount': {'value': f'{amount_rub:.2f}', 'currency': 'RUB'},
+            'vat_code': 1,
+            'payment_subject': 'service',
+            'payment_mode': 'full_payment',
+        }],
+    }
+
     payload = {
         'amount': {'value': f'{amount_rub:.2f}', 'currency': 'RUB'},
         'capture': True,
         'confirmation': {'type': 'redirect', 'return_url': return_url or 'https://example.com/return'},
         'description': f'Подписка «{plan}»',
         'metadata': {'plan': plan, 'email': email, 'slug': slug, 'period': period},
+        'receipt': receipt,
     }
     data = json.dumps(payload).encode('utf-8')
     token = base64.b64encode(f'{shop_id}:{secret}'.encode()).decode()
@@ -114,6 +132,10 @@ def _create_yookassa(amount_rub, plan, email, return_url, slug, period):
         confirm = (res.get('confirmation') or {}).get('confirmation_url')
         return {'paymentId': res.get('id'), 'confirmationUrl': confirm, 'provider': 'yookassa'}, None
     except urllib.error.HTTPError as e:
+        try:
+            print(f'YooKassa HTTP {e.code}: {e.read().decode("utf-8")}')
+        except (ValueError, AttributeError, TypeError):
+            pass
         return None, f'yookassa_error_{e.code}'
     except (urllib.error.URLError, ValueError, TimeoutError):
         return None, 'yookassa_unavailable'
