@@ -1220,6 +1220,9 @@ export const t: Dict = {
   riskFreeProvider: { ru: "0% комиссии · Отмена в любой момент", en: "0% commission · Cancel anytime" },
   liveOnline: { ru: "специалистов на платформе", en: "specialists on the platform" },
   liveVerified: { ru: "проверено модератором", en: "verified by moderator" },
+  planCancelAnytime: { ru: "Отмена в любой момент · без комиссии со сделок", en: "Cancel anytime · no commission on deals" },
+  planPopularProof: { ru: "Оптимальный выбор большинства", en: "Most specialists choose this" },
+  planGuarantee: { ru: "Оплата защищена · чек на почту сразу после оплаты", en: "Secure payment · receipt emailed instantly" },
 };
 
 interface LangCtx {

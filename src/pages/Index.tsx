@@ -4188,7 +4188,9 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
               </div>
             )}
             {p.featured && !p.premium && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 badge-pro whitespace-nowrap">{tr("mostPopular")}</div>
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 badge-pro whitespace-nowrap flex items-center gap-1">
+                <Icon name="Star" size={10} className="fill-current" />{tr("mostPopular")}
+              </div>
             )}
             <div className="mb-5">
               <div className="flex items-center gap-2 mb-1">
@@ -4196,6 +4198,12 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
                 <span className={`font-montserrat font-bold text-foreground ${p.premium ? "text-xl gold-text-gradient" : "text-lg"}`}>{tr(p.name)}</span>
               </div>
               <div className="text-xs text-muted-foreground">{tr(p.for)}</div>
+              {p.featured && !p.premium && (
+                <div className="inline-flex items-center gap-1 mt-2 text-[10px] font-montserrat font-semibold text-gold">
+                  <Icon name="TrendingUp" size={11} />
+                  {tr("planPopularProof")}
+                </div>
+              )}
             </div>
             <div className="mb-6">
               {promoActive && !p.enterprise ? (() => {
@@ -4256,8 +4264,19 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
             >
               {p.enterprise ? tr("contactSales") : p.premium ? tr("choosePremium") : tr("choosePlan")}
             </button>
+            {!p.enterprise && (
+              <div className="mt-2.5 flex items-center justify-center gap-1 text-[10px] text-muted-foreground text-center leading-tight">
+                <Icon name="ShieldCheck" size={11} className="text-green-400 shrink-0" />
+                <span>{tr("planCancelAnytime")}</span>
+              </div>
+            )}
           </div>
         ))}
+      </div>
+
+      <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground text-center">
+        <Icon name="Lock" size={13} className="text-green-400 shrink-0" />
+        <span>{tr("planGuarantee")}</span>
       </div>
 
       {payPlan && (
