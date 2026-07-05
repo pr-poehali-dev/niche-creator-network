@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Reject invalid email",
+      "method": "POST",
+      "path": "/",
+      "body": {"name": "Test", "email": "not-an-email", "subject": "Test", "message": "Hello"},
+      "expectedStatus": 400
+    },
+    {
+      "name": "Reject empty message",
+      "method": "POST",
+      "path": "/",
+      "body": {"name": "Test", "email": "user@example.com", "subject": "Test", "message": ""},
+      "expectedStatus": 400
+    }
+  ]
+}

@@ -25,7 +25,7 @@ type NavItem = { id: Section; key: keyof typeof t; icon: string };
 const CLIENT_NAV: NavItem[] = [
   { id: "home", key: "navHome", icon: "Home" },
   { id: "services", key: "navSearch", icon: "Search" },
-  { id: "contacts", key: "navContacts", icon: "Phone" },
+  { id: "contacts", key: "navContacts", icon: "Mail" },
 ];
 
 const PROVIDER_NAV: NavItem[] = [
@@ -34,7 +34,7 @@ const PROVIDER_NAV: NavItem[] = [
   { id: "chat", key: "navChat", icon: "MessageSquare" },
   { id: "forum", key: "navForum", icon: "MessagesSquare" },
   { id: "dashboard", key: "navDashboard", icon: "LayoutDashboard" },
-  { id: "contacts", key: "navContacts", icon: "Phone" },
+  { id: "contacts", key: "navContacts", icon: "Mail" },
 ];
 
 type LS = { ru: string; en: string };
@@ -5394,6 +5394,39 @@ function ForumSection() {
 
 function ContactsSection() {
   const { tr } = useLang();
+  const [fbName, setFbName] = useState("");
+  const [fbEmail, setFbEmail] = useState("");
+  const [fbSubject, setFbSubject] = useState("");
+  const [fbMessage, setFbMessage] = useState("");
+  const [fbState, setFbState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(fbEmail.trim());
+  const canSend = emailValid && fbMessage.trim().length > 0 && fbState !== "sending";
+
+  const subjects = [tr("subjVerify"), tr("subjPayment"), tr("subjTech"), tr("subjComplaint"), tr("subjOther")];
+
+  const sendFeedback = async () => {
+    if (!canSend) return;
+    setFbState("sending");
+    try {
+      const res = await fetch(func2url["feedback"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fbName.trim(),
+          email: fbEmail.trim(),
+          subject: fbSubject || subjects[0],
+          message: fbMessage.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error("send failed");
+      setFbState("sent");
+      setFbName(""); setFbEmail(""); setFbSubject(""); setFbMessage("");
+    } catch {
+      setFbState("error");
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="mb-10">
@@ -5405,41 +5438,52 @@ function ContactsSection() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="border border-border rounded-sm bg-card p-8">
           <div className="text-sm font-montserrat font-bold text-foreground mb-6">{tr("writeSupport")}</div>
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("name")}</label>
-              <input placeholder={tr("yourName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+          {fbState === "sent" ? (
+            <div className="flex flex-col items-center text-center py-10">
+              <div className="w-14 h-14 gold-gradient rounded-full flex items-center justify-center mb-4 glow-gold-sm">
+                <Icon name="CheckCircle2" size={26} className="text-[hsl(220,20%,6%)]" />
+              </div>
+              <div className="font-montserrat font-bold text-base text-foreground mb-1">{tr("feedbackSentTitle")}</div>
+              <div className="text-sm text-muted-foreground mb-6">{tr("feedbackSentDesc")}</div>
+              <button onClick={() => setFbState("idle")} className="border border-gold text-gold text-xs font-montserrat font-semibold px-5 py-2.5 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">
+                {tr("feedbackSendAnother")}
+              </button>
             </div>
-            <div>
-              <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">Email</label>
-              <input placeholder="your@email.com" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("name")}</label>
+                <input value={fbName} onChange={(e) => { setFbName(e.target.value); setFbState("idle"); }} placeholder={tr("yourName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+              </div>
+              <div>
+                <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">Email</label>
+                <input type="email" value={fbEmail} onChange={(e) => { setFbEmail(e.target.value); setFbState("idle"); }} placeholder="your@email.com" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+              </div>
+              <div>
+                <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("subject")}</label>
+                <select value={fbSubject} onChange={(e) => setFbSubject(e.target.value)} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground outline-none focus:border-gold transition-colors">
+                  {subjects.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("message")}</label>
+                <textarea rows={4} value={fbMessage} onChange={(e) => { setFbMessage(e.target.value); setFbState("idle"); }} placeholder={tr("describeQuestion")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none" />
+              </div>
+              {fbState === "error" && (
+                <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("feedbackError")}</div>
+              )}
+              <button onClick={sendFeedback} disabled={!canSend} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
+                {fbState === "sending" ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Send" size={16} />}
+                {tr("sendMessage")}
+              </button>
             </div>
-            <div>
-              <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("subject")}</label>
-              <select className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-muted-foreground outline-none focus:border-gold transition-colors">
-                <option>{tr("subjVerify")}</option>
-                <option>{tr("subjPayment")}</option>
-                <option>{tr("subjTech")}</option>
-                <option>{tr("subjComplaint")}</option>
-                <option>{tr("subjOther")}</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("message")}</label>
-              <textarea rows={4} placeholder={tr("describeQuestion")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none" />
-            </div>
-            <button className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity">
-              {tr("sendMessage")}
-            </button>
-          </div>
+          )}
         </div>
 
         <div className="space-y-5">
           {[
-            { icon: "Mail", title: tr("emailSupport"), val: "support@securenet.ru", desc: tr("emailSupportDesc") },
-            { icon: "Phone", title: tr("phone"), val: "+7 (495) 123-45-67", desc: tr("phoneDesc") },
-            { icon: "MessageSquare", title: "Telegram", val: "@securenet_support", desc: tr("telegramDesc") },
-            { icon: "MapPin", title: tr("legalAddress"), val: "125009, Москва, ул. Тверская, д. 1", desc: "ООО «СекьюрНет», ИНН 7701234567" },
+            { icon: "Mail", title: tr("emailSupport"), val: "support@shieldpspl.ru", desc: tr("emailSupportDesc") },
+            { icon: "MapPin", title: tr("legalAddress"), val: "Московская обл., г. Электросталь, пос. Всеволодово", desc: "ИП Давыдов Алексей Владимирович · ОГРНИП 320222500068242 · ИНН 222111361597" },
           ].map((c) => (
             <div key={c.title} className="border border-border rounded-sm bg-card p-5 flex gap-4 card-hover">
               <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">
@@ -5453,23 +5497,13 @@ function ContactsSection() {
             </div>
           ))}
 
-          <div className="border border-gold/30 rounded-sm bg-card p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Icon name="Clock" size={14} className="text-gold" />
-              <div className="text-xs font-montserrat font-semibold text-gold">{tr("workHours")}</div>
+          <div className="border border-gold/30 rounded-sm bg-card p-5 flex gap-4">
+            <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">
+              <Icon name="Clock" size={18} className="text-[hsl(220,20%,6%)]" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { d: tr("monFri"), t: "09:00 – 20:00" },
-                { d: tr("sat"), t: "10:00 – 16:00" },
-                { d: tr("sun"), t: tr("dayOff") },
-                { d: tr("holidays"), t: tr("bySchedule") },
-              ].map((w) => (
-                <div key={w.d}>
-                  <div className="text-[10px] text-muted-foreground">{w.d}</div>
-                  <div className="text-xs font-montserrat font-semibold text-foreground">{w.t}</div>
-                </div>
-              ))}
+            <div>
+              <div className="text-xs font-montserrat font-semibold text-gold uppercase tracking-widest mb-1">{tr("feedbackReplyTitle")}</div>
+              <div className="text-xs text-muted-foreground">{tr("feedbackReplyDesc")}</div>
             </div>
           </div>
         </div>
