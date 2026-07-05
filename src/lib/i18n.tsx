@@ -1163,7 +1163,7 @@ export const t: Dict = {
   reqOgrnip: { ru: "ОГРНИП: 320222500068242", en: "OGRNIP: 320222500068242" },
   reqInn: { ru: "ИНН: 222111361597", en: "INN: 222111361597" },
   reqAddress: { ru: "Московская обл., г. Электросталь, пос. Всеволодово", en: "Vsevolodovo, Elektrostal, Moscow Region, Russia" },
-  reqTaxOffice: { ru: "support@shieldpspl.ru", en: "support@shieldpspl.ru" },
+  reqTaxOffice: { ru: "kackad.rf@yandex.ru", en: "kackad.rf@yandex.ru" },
   paywallTitle: { ru: "Нужен активный тариф", en: "Active subscription required" },
   paywallText: { ru: "Заполните карточку и оплатите тариф, чтобы открыть чаты, форум, курсы и поиск заказов.", en: "Complete your profile and purchase a plan to unlock chats, forum, courses and order search." },
   paywallBtn: { ru: "Перейти к оплате тарифа", en: "Go to subscription" },
