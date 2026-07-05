@@ -3766,6 +3766,8 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
   const [quote, setQuote] = useState<{ currency: string; amount: number; provider: string; countryCode: string; promo?: boolean; promoDiscount?: number; promoUntil?: string; fullAmount?: number } | null>(null);
   const [payErr, setPayErr] = useState("");
 
+  useEffect(() => { console.log("[PaymentModal] mounted", { plan, defaultEmail, slug }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const planKey = PLAN_KEY_MAP[plan.name as string] || "pro";
 
   useEffect(() => {
