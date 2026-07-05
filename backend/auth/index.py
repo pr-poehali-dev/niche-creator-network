@@ -258,6 +258,19 @@ def handler(event: dict, context) -> dict:
                 (email, pwd_hash, role, name, consent_version, src_ip),
             )
             user_id = cur.fetchone()[0]
+            # Для исполнителя сразу создаём пустой профиль в providers,
+            # чтобы работали сохранение данных, оплата и активация подписки.
+            if role == 'provider':
+                prov_slug = f'provider-{user_id}'
+                cur.execute(
+                    f"INSERT INTO {SCHEMA}.providers "
+                    f"(slug, name_ru, name_en, title_ru, title_en, city_ru, city_en, "
+                    f"price_ru, price_en, tags_ru, tags_en, country_ru, country_en, "
+                    f"verified, subscription_active, plan) "
+                    f"VALUES (%s, %s, %s, '', '', '', '', '', '', '', '', '', '', "
+                    f"false, false, 'start') ON CONFLICT (slug) DO NOTHING",
+                    (prov_slug, name or 'Специалист', name or 'Specialist'),
+                )
             new_token = _create_session(cur, user_id)
             return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': email, 'role': role, 'name': name}})
 
