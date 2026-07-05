@@ -85,6 +85,8 @@ export const t: Dict = {
   brandSub: { ru: "Международная профессиональная платформа безопасности", en: "International Professional Security Platform" },
   brandSub1: { ru: "Международная профессиональная", en: "International Professional" },
   brandSub2: { ru: "платформа безопасности", en: "Security Platform" },
+  navMenuOpen: { ru: "Открыть меню", en: "Open menu" },
+  navMenuClose: { ru: "Закрыть меню", en: "Close menu" },
   login: { ru: "Войти", en: "Sign in" },
   join: { ru: "Вступить", en: "Join" },
 

@@ -6,7 +6,8 @@ import { downloadReceipt } from "@/lib/receipt";
 import { useGeo, haversineKm } from "@/lib/geo";
 import { cleanText } from "@/lib/moderation";
 import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, type Provider, type LS } from "@/lib/providers";
-import { useAuth, authHeaders, type AuthRole } from "@/lib/auth";
+import { useAuth, type AuthRole } from "@/lib/auth";
+import { authHeaders } from "@/lib/authToken";
 import func2url from "../../backend/func2url.json";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/92040949-913f-4126-80f9-fa681d96ea82.jpg";
@@ -1326,7 +1327,7 @@ export default function Index() {
                 {tr("authCabinet")}
               </button>
             )}
-            <button className="lg:hidden text-muted-foreground ms-0.5 shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="menu">
+            <button className="lg:hidden text-muted-foreground hover:text-foreground transition-colors ms-0.5 shrink-0 p-2 -me-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label={tr(mobileMenuOpen ? "navMenuClose" : "navMenuOpen")}>
               <Icon name={mobileMenuOpen ? "X" : "Menu"} size={22} />
             </button>
           </div>
@@ -1914,24 +1915,24 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
               </div>
             </div>
             {isClient ? (
-              <h1 className="font-montserrat font-extrabold text-5xl md:text-6xl lg:text-7xl text-foreground leading-[0.95] mb-6 tracking-tight">
+              <h1 className="font-montserrat font-extrabold text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-foreground leading-[1.02] sm:leading-[0.95] mb-6 tracking-tight">
                 {tr("heroClientTitle1")}<br />
                 <span className="gold-text-gradient">{tr("heroClientTitle2")}</span><br />
                 {tr("heroClientTitle3")}
               </h1>
             ) : (
-              <h1 className="font-montserrat font-extrabold text-5xl md:text-6xl lg:text-7xl text-foreground leading-[0.95] mb-6 tracking-tight">
+              <h1 className="font-montserrat font-extrabold text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-foreground leading-[1.02] sm:leading-[0.95] mb-6 tracking-tight">
                 {tr("heroProviderTitle1")}<br />
                 <span className="gold-text-gradient">{tr("heroProviderTitle2")}</span>
               </h1>
             )}
-            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-xl">
+            <p className="text-muted-foreground text-base sm:text-lg leading-relaxed mb-8 max-w-xl">
               {tr(isClient ? "heroClientDesc" : "heroProviderDesc")}
             </p>
             <div className="flex flex-wrap gap-3 items-center">
               <button
                 onClick={() => setActive(isClient ? "services" : "dashboard")}
-                className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-9 py-4 font-montserrat font-extrabold text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm flex items-center gap-2.5"
+                className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-6 sm:px-9 py-3.5 sm:py-4 font-montserrat font-extrabold text-sm sm:text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm flex items-center gap-2.5"
               >
                 <Icon name="Search" size={18} />
                 {tr(isClient ? "heroClientCta1" : "heroProviderFindOrders")}
@@ -2100,7 +2101,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
             <span className="text-sm text-muted-foreground">{tr("filterNoResults")}</span>
           </div>
         ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 stagger">
           {sortedSpecialists.map((s) => {
             const tags = lang === "ru" ? s.tags.ru : s.tags.en;
             return s.active ? (
@@ -2205,7 +2206,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
             <div className="tag-security mb-3 inline-block">{tr("process")}</div>
             <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("howItWorks")}</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-5 stagger">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 stagger">
             {[
               { n: "01", icon: "UserPlus", title: "step1Title" as const, desc: "step1Desc" as const },
               { n: "02", icon: "FolderOpen", title: "step2Title" as const, desc: "step2Desc" as const },
