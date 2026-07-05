@@ -2,6 +2,8 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
+  fallback?: ReactNode;
+  onReset?: () => void;
 }
 
 interface State {
@@ -23,11 +25,13 @@ class ErrorBoundary extends Component<Props, State> {
 
   handleReload = () => {
     this.setState({ hasError: false });
+    if (this.props.onReset) { this.props.onReset(); return; }
     if (typeof window !== "undefined") window.location.assign("/");
   };
 
   render() {
     if (this.state.hasError) {
+      if (this.props.fallback !== undefined) return this.props.fallback;
       return (
         <div className="min-h-screen flex items-center justify-center bg-background px-4">
           <div className="text-center max-w-md">

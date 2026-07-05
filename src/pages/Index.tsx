@@ -8,6 +8,7 @@ import { cleanText } from "@/lib/moderation";
 import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, type Provider, type LS } from "@/lib/providers";
 import { useAuth, type AuthRole } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import func2url from "../../backend/func2url.json";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/92040949-913f-4126-80f9-fa681d96ea82.jpg";
@@ -3791,12 +3792,13 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
   const localAmountStr = quote ? fmtCurrency(quote.amount, quote.currency) : null;
 
   // Parse the monthly price string ("2 490 ₽" / "from $90") into number + currency formatting
-  const priceStr = tr(plan.price);
+  const priceStr = String(tr(plan.price) ?? "");
   const priceNum = parseFloat(priceStr.replace(/[^\d.,]/g, "").replace(/\s/g, "").replace(",", ".")) || 0;
   const fmt = (n: number) => {
-    const rounded = Math.round(n);
+    const safe = Number.isFinite(n) ? n : 0;
+    const rounded = Math.round(safe);
     const grouped = rounded.toLocaleString(lang === "ru" ? "ru-RU" : "en-US");
-    return priceStr.replace(/[\d\s.,]+/, grouped);
+    return priceStr ? priceStr.replace(/[\d\s.,]+/, grouped) : `${grouped} ₽`;
   };
   const yearlyFull = priceNum * 12;
   const yearlyDiscounted = Math.round(yearlyFull * 0.83);
@@ -4229,7 +4231,11 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
         ))}
       </div>
 
-      {payPlan && <PaymentModal plan={payPlan} onClose={() => setPayPlan(null)} defaultEmail={PROVIDER_EMAIL} slug="morozov" />}
+      {payPlan && (
+        <ErrorBoundary fallback={null} onReset={() => setPayPlan(null)}>
+          <PaymentModal plan={payPlan} onClose={() => setPayPlan(null)} defaultEmail={PROVIDER_EMAIL} slug="morozov" />
+        </ErrorBoundary>
+      )}
 
       {/* No-commission promise */}
       <div className="mt-10 border border-gold/30 rounded-sm glass-card p-6 flex flex-col md:flex-row items-start md:items-center gap-4 security-glow">
