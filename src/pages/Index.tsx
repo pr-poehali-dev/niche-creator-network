@@ -2886,6 +2886,16 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
           quietStart: v.quietStart || "23:00", quietEnd: v.quietEnd || "08:00",
         });
         if (v.avatarUrl) setAvatarUrl(v.avatarUrl);
+        if (v.contacts) {
+          setContacts((prev) => ({
+            ...prev,
+            phone: v.contacts.phone || "",
+            email: v.contacts.email || "",
+            whatsapp: v.contacts.whatsapp || "",
+            telegram: v.contacts.telegram || "",
+            website: v.contacts.website || "",
+          }));
+        }
       })
       .catch(() => {});
   }, [slug]);

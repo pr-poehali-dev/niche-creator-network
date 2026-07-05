@@ -77,7 +77,8 @@ def handler(event: dict, context) -> dict:
             f"pseudonym, use_pseudonym, licenses, documents, bio, age, "
             f"show_bio, show_age, show_documents, gender, avatar_url, "
             f"timezone, always_available, quiet_start, quiet_end, license_verified, "
-            f"plan, subscription_active, subscription_until, services, birth_date "
+            f"plan, subscription_active, subscription_until, services, birth_date, "
+            f"phone, email, whatsapp, telegram, website "
             f"FROM {SCHEMA}.providers WHERE slug=%s",
             (slug,),
         )
@@ -116,6 +117,13 @@ def handler(event: dict, context) -> dict:
             'subscriptionActive': bool(row[26]),
             'subscriptionUntil': row[27].isoformat() if row[27] else None,
             'services': svc,
+            'contacts': {
+                'phone': decrypt_field(row[30] or ''),
+                'email': decrypt_field(row[31] or ''),
+                'whatsapp': decrypt_field(row[32] or ''),
+                'telegram': decrypt_field(row[33] or ''),
+                'website': row[34] or '',
+            },
         }
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'verification': data})}
 
