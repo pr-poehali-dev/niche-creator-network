@@ -2873,7 +2873,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
       const payload = { ...vf, licenses: vf.licenses.filter((l) => l.number.trim()), age: vf.age ? parseInt(vf.age) : null };
       const res = await fetch(func2url["save-verification"], {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ slug, ...payload, services: next }),
       });
       setSvcSaveState(res.ok ? "saved" : "error");
