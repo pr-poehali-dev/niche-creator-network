@@ -303,6 +303,8 @@ export const t: Dict = {
   servicesTitle: { ru: "Услуги специалистов", en: "Specialist services" },
   servicesDesc: { ru: "Профессиональные услуги верифицированных экспертов с гарантией качества", en: "Professional services from verified experts with a quality guarantee" },
   catSpecialties: { ru: "специальностей", en: "specialties" },
+  catFindSpecialist: { ru: "Найти специалиста", en: "Find a specialist" },
+  catBackToCatalog: { ru: "Назад к каталогу", en: "Back to catalog" },
   searchServices: { ru: "Поиск услуг...", en: "Search services..." },
   search: { ru: "Найти", en: "Search" },
   order: { ru: "Заказать", en: "Order" },

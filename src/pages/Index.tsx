@@ -1248,7 +1248,7 @@ export default function Index() {
       case "profile": return <ProfileSection setActive={go} openChat={openChat} />;
       case "specialists": return <SpecialistsListSection setActive={go} />;
       case "cases": return <CasesSection />;
-      case "services": return role === "client" ? <SearchSection setActive={go} /> : <ServicesSection />;
+      case "services": return role === "client" ? <ClientServices setActive={go} /> : <ServicesSection />;
       case "courses": return <CoursesSection />;
       case "guards": return <GuardsSection />;
       case "chat": return chatTarget
@@ -4554,17 +4554,17 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
   );
 }
 
-function SearchSection({ setActive }: { setActive: (s: Section) => void }) {
+function SearchSection({ setActive, initialCategory = "", initialService = "" }: { setActive: (s: Section) => void; initialCategory?: string; initialService?: string }) {
   const { lang, tr } = useLang();
   const { providers } = useProviders();
   const { geo } = useGeo();
-  const [service, setService] = useState("");
-  const [category, setCategory] = useState("");
+  const [service, setService] = useState(initialService);
+  const [category, setCategory] = useState(initialCategory);
   const [minRating, setMinRating] = useState(0);
   const [licensedOnly, setLicensedOnly] = useState(false);
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
-  const [searched, setSearched] = useState(false);
+  const [searched, setSearched] = useState(!!(initialCategory || initialService));
 
   const servicesInCat = category ? services.filter((s) => s.cat === category) : services;
   const serviceOptions = servicesInCat.map((s) => L(s.title, lang));
@@ -4751,7 +4751,35 @@ function SpecialistsListSection({ setActive }: { setActive: (s: Section) => void
   );
 }
 
-function ServicesSection() {
+function ClientServices({ setActive }: { setActive: (s: Section) => void }) {
+  const [mode, setMode] = useState<"catalog" | "search">("catalog");
+  const [prefillCat, setPrefillCat] = useState("");
+  const { tr } = useLang();
+
+  if (mode === "search") {
+    return (
+      <div>
+        <div className="max-w-7xl mx-auto px-4 pt-6">
+          <button
+            onClick={() => setMode("catalog")}
+            className="inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-muted-foreground hover:text-gold transition-colors"
+          >
+            <Icon name="ArrowLeft" size={14} />{tr("catBackToCatalog")}
+          </button>
+        </div>
+        <SearchSection setActive={setActive} initialCategory={prefillCat} />
+      </div>
+    );
+  }
+
+  return (
+    <ServicesSection
+      onOrder={(catId) => { setPrefillCat(catId); setMode("search"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+    />
+  );
+}
+
+function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTitleEn?: string) => void } = {}) {
   const { lang, tr } = useLang();
   const { servicePrices } = useProviders();
   const [query, setQuery] = useState("");
@@ -4818,7 +4846,11 @@ function ServicesSection() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.filter((s) => s.cat === cat.id).map((s) => (
-              <div key={s.title.en} className="group border border-border rounded-sm bg-card p-6 card-hover shine-on-hover cursor-pointer">
+              <div
+                key={s.title.en}
+                onClick={onOrder ? () => onOrder(s.cat, s.title.en) : undefined}
+                className={`group border border-border rounded-sm bg-card p-6 card-hover shine-on-hover ${onOrder ? "cursor-pointer" : ""}`}
+              >
                 <div className="flex items-start justify-between mb-5">
                   <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
                     <Icon name={s.icon} fallback="ShieldCheck" size={20} className="text-[hsl(220,20%,6%)]" />
@@ -4838,7 +4870,13 @@ function ServicesSection() {
                       <Icon name="Clock" size={10} />{L(s.time, lang)}
                     </div>
                   </div>
-                  <button className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">{tr("order")}</button>
+                  <button
+                    onClick={onOrder ? (e) => { e.stopPropagation(); onOrder(s.cat, s.title.en); } : undefined}
+                    className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm inline-flex items-center gap-1.5"
+                  >
+                    {onOrder ? tr("catFindSpecialist") : tr("order")}
+                    {onOrder && <Icon name="ArrowRight" size={13} />}
+                  </button>
                 </div>
               </div>
             ))}
