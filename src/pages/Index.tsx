@@ -3154,9 +3154,16 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 <div className="space-y-1">
                   {payHistory.map((row, i) => {
                     const planKey = ({ start: "planStartName", pro: "planProName", premium: "planPremiumName", enterprise: "planEntName" } as const)[row.plan] || "planProName";
-                    const amountStr = row.currency === "RUB"
-                      ? `${Math.round(row.amount).toLocaleString("ru-RU")} ₽`
-                      : new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US", { style: "currency", currency: row.currency, maximumFractionDigits: 2 }).format(row.amount);
+                    let amountStr: string;
+                    if (row.currency === "RUB") {
+                      amountStr = `${Math.round(row.amount).toLocaleString("ru-RU")} ₽`;
+                    } else {
+                      try {
+                        amountStr = new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US", { style: "currency", currency: row.currency, maximumFractionDigits: 2 }).format(row.amount);
+                      } catch {
+                        amountStr = `${Math.round(row.amount).toLocaleString("ru-RU")} ${row.currency || ""}`.trim();
+                      }
+                    }
                     const periodStr = tr(row.period === "year" ? "payOneYear" : "payOneMonth");
                     const st = { paid: { key: "pdHistPaid" as const, cls: "text-green-400 border-green-500/40" }, pending: { key: "pdHistPending" as const, cls: "text-gold border-gold/40" }, failed: { key: "pdHistFailed" as const, cls: "text-destructive border-destructive/40" } }[row.status] || { key: "pdHistPaid" as const, cls: "text-green-400 border-green-500/40" };
                     return (
@@ -3774,9 +3781,14 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
   }, [planKey, period, geo?.countryCode]);
 
   const isForeign = !!quote && quote.countryCode !== "RU";
-  const localAmountStr = quote
-    ? new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US", { style: "currency", currency: quote.currency, maximumFractionDigits: quote.currency === "RUB" ? 0 : 2 }).format(quote.amount)
-    : null;
+  const fmtCurrency = (amount: number, currency: string) => {
+    try {
+      return new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US", { style: "currency", currency, maximumFractionDigits: currency === "RUB" ? 0 : 2 }).format(amount);
+    } catch {
+      return `${Math.round(amount).toLocaleString(lang === "ru" ? "ru-RU" : "en-US")} ${currency || ""}`.trim();
+    }
+  };
+  const localAmountStr = quote ? fmtCurrency(quote.amount, quote.currency) : null;
 
   // Parse the monthly price string ("2 490 ₽" / "from $90") into number + currency formatting
   const priceStr = tr(plan.price);

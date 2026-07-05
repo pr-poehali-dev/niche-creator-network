@@ -15,8 +15,10 @@ class ErrorBoundary extends Component<Props, State> {
     return { hasError: true };
   }
 
-  componentDidCatch(_error: Error, _info: ErrorInfo) {
-    // Перехватываем ошибку рендера, чтобы пользователь не увидел белый экран.
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    // Перехватываем ошибку рендера, чтобы пользователь не увидел белый экран,
+    // и логируем её для диагностики.
+    console.error("[ErrorBoundary]", error?.message, error?.stack, info?.componentStack);
   }
 
   handleReload = () => {
