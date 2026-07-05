@@ -87,6 +87,26 @@ def _activate(slug, plan, period):
     return updated > 0
 
 
+def _record_payment(slug, plan, period, amount, currency, provider, payment_id, email):
+    '''Записывает успешный платёж в историю. Best-effort: не мешает основной обработке.'''
+    if not slug:
+        return
+    try:
+        conn = psycopg2.connect(os.environ['DATABASE_URL'])
+        cur = conn.cursor()
+        cur.execute(
+            f"INSERT INTO {SCHEMA}.payments "
+            f"(slug, plan, period, amount, currency, status, provider, payment_id, payer_email) "
+            f"VALUES (%s, %s, %s, %s, %s, 'paid', %s, %s, %s)",
+            (slug, plan, period, amount, currency, provider, str(payment_id)[:200], (email or '')[:200]),
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f'record_payment failed for {slug}: {e}')
+
+
 def _already_processed(payment_id: str, provider: str) -> bool:
     '''Идемпотентность: одно и то же событие оплаты не должно активировать подписку дважды.
     Атомарная вставка ON CONFLICT: если строка вставилась — платёж новый (False),
@@ -200,6 +220,7 @@ def handler(event, context):
                     p_amount = 0
                 p_currency = data.get('currency_code', 'USD')
                 _send_receipt(cd.get('email', ''), p_plan, p_period, p_amount, p_currency, payment_id)
+                _record_payment(cd.get('slug', ''), p_plan, p_period, p_amount, p_currency, 'paddle', payment_id, cd.get('email', ''))
             return _resp(200, {'ok': ok, 'provider': 'paddle'})
         return _resp(200, {'ok': True, 'ignored': etype})
 
@@ -235,6 +256,7 @@ def handler(event, context):
                 pay_email = md.get('email') or (verified.get('receipt') or {}).get('customer', {}).get('email', '')
                 currency = (verified.get('amount') or {}).get('currency', 'RUB')
                 _send_receipt(pay_email, plan, period, paid_amount, currency, payment_id)
+                _record_payment(slug, plan, period, paid_amount, currency, 'yookassa', payment_id, pay_email)
             return _resp(200, {'ok': ok, 'provider': 'yookassa'})
         return _resp(200, {'ok': True, 'ignored': etype})
 

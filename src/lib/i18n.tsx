@@ -957,6 +957,8 @@ export const t: Dict = {
   pdHistFailed: { ru: "Отклонено", en: "Failed" },
   pdHistDownload: { ru: "Скачать", en: "Download" },
   pdHistTotal: { ru: "Всего оплачено", en: "Total paid" },
+  pdHistLoading: { ru: "Загружаем историю оплат...", en: "Loading payment history..." },
+  pdHistEmpty: { ru: "Оплат пока нет. После первой оплаты тарифа здесь появится история.", en: "No payments yet. Your history will appear here after the first plan payment." },
 
   // Receipt by email
   payEmailLabel: { ru: "Отправить чек на email", en: "Send receipt to email" },

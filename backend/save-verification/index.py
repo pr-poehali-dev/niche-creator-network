@@ -43,6 +43,29 @@ def handler(event: dict, context) -> dict:
         return {'statusCode': 401, 'headers': cors, 'body': json.dumps({'error': 'unauthorized'})}
     owner_slug = provider_slug(user)
 
+    # GET ?action=payments: история платежей владельца (для кабинета).
+    params = event.get('queryStringParameters') or {}
+    if method == 'GET' and (params.get('action') == 'payments'):
+        conn = psycopg2.connect(os.environ['DATABASE_URL'])
+        cur = conn.cursor()
+        cur.execute(
+            f"SELECT to_char(created_at, 'DD.MM.YYYY'), plan, period, amount, currency, status, "
+            f"provider, payment_id FROM {SCHEMA}.payments "
+            f"WHERE slug=%s ORDER BY created_at DESC LIMIT 100",
+            (owner_slug,),
+        )
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        payments = [{
+            'date': r[0], 'plan': r[1], 'period': r[2],
+            'amount': float(r[3]) if r[3] is not None else 0,
+            'currency': r[4], 'status': r[5], 'provider': r[6],
+            'paymentId': r[7],
+        } for r in rows]
+        total = sum(p['amount'] for p in payments if p['status'] == 'paid' and p['currency'] == 'RUB')
+        return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'payments': payments, 'totalRub': total})}
+
     # GET: владелец загружает свои данные в форму редактирования (с паспортом).
     if method == 'GET':
         slug = owner_slug

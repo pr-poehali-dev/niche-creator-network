@@ -2803,6 +2803,8 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [vfState, setVfState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [sub, setSub] = useState<{ plan: string; active: boolean; until: string | null } | null>(null);
+  const [payHistory, setPayHistory] = useState<{ date: string; plan: string; period: string; amount: number; currency: string; status: string; paymentId: string }[] | null>(null);
+  const [payTotalRub, setPayTotalRub] = useState(0);
   const [myServices, setMyServices] = useState<{ key: string; price: string }[]>([]);
   const [svcPickerOpen, setSvcPickerOpen] = useState(false);
   const [svcSaveState, setSvcSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -2850,6 +2852,17 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
       })
       .catch(() => {});
   }, [slug]);
+
+  useEffect(() => {
+    if (tab !== "plan" || payHistory !== null) return;
+    fetch(func2url["save-verification"] + "?action=payments", { headers: authHeaders() })
+      .then((r) => r.json())
+      .then((d) => {
+        setPayHistory(Array.isArray(d.payments) ? d.payments : []);
+        setPayTotalRub(d.totalRub || 0);
+      })
+      .catch(() => setPayHistory([]));
+  }, [tab, payHistory]);
 
   const saveVerification = async () => {
     setVfState("saving");
@@ -2934,31 +2947,6 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   };
 
   const visibleIncoming = incoming.filter((r) => myCatIds.length === 0 || myCatIds.includes(r.category) || !r.category);
-
-  const emailReceipt = async (row: { date: string; plan: keyof typeof t; amount: string; i: number }) => {
-    const email = window.prompt(tr("pdHistEmailPrompt"), "");
-    if (!email || !email.includes("@")) return;
-    try {
-      const res = await fetch(func2url["send-receipt"], {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          receiptNo: "SN-" + row.date.split(".").reverse().join("") + "-" + (row.i + 1),
-          date: row.date,
-          plan: tr(row.plan),
-          period: tr("payOneMonth"),
-          amount: row.amount,
-          payer: vf.fullName || user?.name || "",
-          method: tr("payCard") + " •••• 4242",
-          lang,
-          email,
-        }),
-      });
-      window.alert(res.ok ? `${tr("pdHistEmailSent")} ${email}` : tr("pdHistEmailFail"));
-    } catch {
-      window.alert(tr("pdHistEmailFail"));
-    }
-  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
@@ -3143,8 +3131,19 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
               <div className="border border-border rounded-sm bg-card p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdHistoryTitle")}</div>
-                  <div className="text-xs text-muted-foreground">{tr("pdHistTotal")}: <span className="font-montserrat font-bold text-gold">14 940 ₽</span></div>
+                  {payTotalRub > 0 && (
+                    <div className="text-xs text-muted-foreground">{tr("pdHistTotal")}: <span className="font-montserrat font-bold text-gold">{payTotalRub.toLocaleString("ru-RU")} ₽</span></div>
+                  )}
                 </div>
+                {payHistory === null ? (
+                  <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground"><Icon name="Loader" size={16} className="animate-spin" />{tr("pdHistLoading")}</div>
+                ) : payHistory.length === 0 ? (
+                  <div className="flex flex-col items-center text-center py-10 text-muted-foreground">
+                    <Icon name="ReceiptText" size={26} className="mb-2 text-muted-foreground/50" />
+                    <div className="text-sm">{tr("pdHistEmpty")}</div>
+                  </div>
+                ) : (
+                <>
                 <div className="hidden sm:grid grid-cols-[1fr_1fr_auto_auto_auto] gap-3 px-3 pb-2 mb-1 border-b border-border text-[10px] font-montserrat font-semibold text-muted-foreground uppercase tracking-widest">
                   <span>{tr("pdHistDate")}</span>
                   <span>{tr("pdHistPlan")}</span>
@@ -3153,45 +3152,36 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                   <span className="text-right">{tr("pdHistReceipt")}</span>
                 </div>
                 <div className="space-y-1">
-                  {([
-                    { date: "13.06.2026", plan: "planProName", amount: "2 490 ₽", status: "paid" },
-                    { date: "13.05.2026", plan: "planProName", amount: "2 490 ₽", status: "paid" },
-                    { date: "13.04.2026", plan: "planProName", amount: "2 490 ₽", status: "paid" },
-                    { date: "13.03.2026", plan: "planStartName", amount: "990 ₽", status: "paid" },
-                    { date: "13.02.2026", plan: "planStartName", amount: "990 ₽", status: "failed" },
-                  ] as const).map((row, i) => {
-                    const st = { paid: { key: "pdHistPaid" as const, cls: "text-green-400 border-green-500/40" }, pending: { key: "pdHistPending" as const, cls: "text-gold border-gold/40" }, failed: { key: "pdHistFailed" as const, cls: "text-destructive border-destructive/40" } }[row.status];
+                  {payHistory.map((row, i) => {
+                    const planKey = ({ start: "planStartName", pro: "planProName", premium: "planPremiumName", enterprise: "planEntName" } as const)[row.plan] || "planProName";
+                    const amountStr = row.currency === "RUB"
+                      ? `${Math.round(row.amount).toLocaleString("ru-RU")} ₽`
+                      : new Intl.NumberFormat(lang === "ru" ? "ru-RU" : "en-US", { style: "currency", currency: row.currency, maximumFractionDigits: 2 }).format(row.amount);
+                    const periodStr = tr(row.period === "year" ? "payOneYear" : "payOneMonth");
+                    const st = { paid: { key: "pdHistPaid" as const, cls: "text-green-400 border-green-500/40" }, pending: { key: "pdHistPending" as const, cls: "text-gold border-gold/40" }, failed: { key: "pdHistFailed" as const, cls: "text-destructive border-destructive/40" } }[row.status] || { key: "pdHistPaid" as const, cls: "text-green-400 border-green-500/40" };
                     return (
-                      <div key={i} className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_auto_auto_auto] gap-2 sm:gap-3 items-center px-3 py-3 rounded-sm hover:bg-secondary transition-colors text-xs">
+                      <div key={row.paymentId || i} className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_auto_auto_auto] gap-2 sm:gap-3 items-center px-3 py-3 rounded-sm hover:bg-secondary transition-colors text-xs">
                         <span className="text-muted-foreground">{row.date}</span>
-                        <span className="font-montserrat font-semibold text-foreground">{tr(row.plan)}</span>
-                        <span className="font-montserrat font-bold text-gold sm:text-right">{row.amount}</span>
+                        <span className="font-montserrat font-semibold text-foreground">{tr(planKey)}</span>
+                        <span className="font-montserrat font-bold text-gold sm:text-right">{amountStr}</span>
                         <span className="sm:text-center"><span className={`tag-security ${st.cls}`}>{tr(st.key)}</span></span>
                         <span className="sm:text-right">
                           {row.status === "paid" ? (
-                            <span className="inline-flex items-center gap-3">
-                              <button
-                                onClick={() => downloadReceipt({
-                                  receiptNo: "SN-" + row.date.split(".").reverse().join("") + "-" + (i + 1),
-                                  date: row.date,
-                                  plan: tr(row.plan),
-                                  period: tr("payOneMonth"),
-                                  amount: row.amount,
-                                  payer: L(specialists[0].name, lang),
-                                  method: tr("payCard") + " •••• 4242",
-                                  lang,
-                                })}
-                                className="inline-flex items-center gap-1 text-muted-foreground hover:text-gold transition-colors font-montserrat font-semibold"
-                              >
-                                <Icon name="Download" size={13} /> <span className="hidden lg:inline">{tr("pdHistDownload")}</span>
-                              </button>
-                              <button
-                                onClick={() => emailReceipt({ date: row.date, plan: row.plan, amount: row.amount, i })}
-                                className="inline-flex items-center gap-1 text-muted-foreground hover:text-gold transition-colors font-montserrat font-semibold"
-                              >
-                                <Icon name="Mail" size={13} /> <span className="hidden lg:inline">{tr("pdHistEmail")}</span>
-                              </button>
-                            </span>
+                            <button
+                              onClick={() => downloadReceipt({
+                                receiptNo: (row.paymentId || "SN-" + (i + 1)).slice(0, 16).toUpperCase(),
+                                date: row.date,
+                                plan: tr(planKey),
+                                period: periodStr,
+                                amount: amountStr,
+                                payer: vf.fullName || "",
+                                method: tr("payCard"),
+                                lang,
+                              })}
+                              className="inline-flex items-center gap-1 text-muted-foreground hover:text-gold transition-colors font-montserrat font-semibold"
+                            >
+                              <Icon name="Download" size={13} /> <span className="hidden lg:inline">{tr("pdHistDownload")}</span>
+                            </button>
                           ) : (
                             <span className="text-muted-foreground/40">—</span>
                           )}
@@ -3200,6 +3190,8 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                     );
                   })}
                 </div>
+                </>
+                )}
               </div>
             </>
           )}
