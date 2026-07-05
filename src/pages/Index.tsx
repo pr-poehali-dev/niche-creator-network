@@ -3766,8 +3766,6 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
   const [quote, setQuote] = useState<{ currency: string; amount: number; provider: string; countryCode: string; promo?: boolean; promoDiscount?: number; promoUntil?: string; fullAmount?: number } | null>(null);
   const [payErr, setPayErr] = useState("");
 
-  useEffect(() => { console.log("[PaymentModal] mounted", { plan, defaultEmail, slug }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   const planKey = PLAN_KEY_MAP[plan.name as string] || "pro";
 
   useEffect(() => {
@@ -4067,6 +4065,7 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
 
 function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
   const { tr } = useLang();
+  const { user } = useAuth();
   const [payPlan, setPayPlan] = useState<PayPlan | null>(null);
   const promoActive = new Date() < new Date("2026-08-01T00:00:00Z");
   const plans = [
@@ -4235,7 +4234,7 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
 
       {payPlan && (
         <ErrorBoundary fallback={null} onReset={() => setPayPlan(null)}>
-          <PaymentModal plan={payPlan} onClose={() => setPayPlan(null)} defaultEmail={PROVIDER_EMAIL} slug="morozov" />
+          <PaymentModal plan={payPlan} onClose={() => setPayPlan(null)} defaultEmail={user?.email || ""} slug={user ? `provider-${user.id}` : ""} />
         </ErrorBoundary>
       )}
 
