@@ -7,24 +7,24 @@
       "expectedStatus": 200
     },
     {
-      "name": "GET without clientId returns 400",
+      "name": "GET without token returns 401",
       "method": "GET",
       "path": "/",
-      "expectedStatus": 400
+      "expectedStatus": 401
     },
     {
-      "name": "Save client data",
+      "name": "POST without token returns 401",
       "method": "POST",
       "path": "/",
-      "body": {"clientId": "demo-client", "fullName": "Дмитрий Орлов", "phone": "+79990000000", "email": "d.orlov@email.com"},
-      "expectedStatus": 200
+      "body": {"fullName": "Дмитрий Орлов", "phone": "+79990000000", "email": "d.orlov@email.com"},
+      "expectedStatus": 401
     },
     {
-      "name": "GET saved client",
+      "name": "Invalid token returns 401",
       "method": "GET",
-      "path": "/?clientId=demo-client",
-      "queryStringParameters": {"clientId": "demo-client"},
-      "expectedStatus": 200
+      "path": "/",
+      "headers": {"X-Auth-Token": "invalid-token-123"},
+      "expectedStatus": 401
     }
   ]
 }

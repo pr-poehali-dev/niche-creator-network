@@ -2,6 +2,7 @@ import json
 import os
 import psycopg2
 from crypto_utils import encrypt_field
+from auth_utils import get_auth_user, provider_slug
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -17,7 +18,7 @@ def handler(event: dict, context) -> dict:
     cors = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
         'Content-Type': 'application/json',
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
@@ -29,10 +30,13 @@ def handler(event: dict, context) -> dict:
     if method != 'POST':
         return {'statusCode': 405, 'headers': cors, 'body': json.dumps({'error': 'Method not allowed'})}
 
+    # Владение профилем определяется по токену сессии, а НЕ по slug из тела запроса.
+    user = get_auth_user(event)
+    if not user:
+        return {'statusCode': 401, 'headers': cors, 'body': json.dumps({'error': 'unauthorized'})}
+    slug = provider_slug(user)
+
     body = json.loads(event.get('body') or '{}')
-    slug = (body.get('slug') or '').strip()
-    if not slug:
-        return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'slug required'})}
 
     def clean(v):
         return (str(v).strip() if v is not None else '')[:200]

@@ -7,18 +7,19 @@
       "expectedStatus": 200
     },
     {
-      "name": "Missing slug returns 400",
+      "name": "No token returns 401",
       "method": "POST",
       "path": "/",
       "body": {"phone": "+700"},
-      "expectedStatus": 400
+      "expectedStatus": 401
     },
     {
-      "name": "Save contacts for morozov",
+      "name": "Invalid token returns 401",
       "method": "POST",
       "path": "/",
-      "body": {"slug": "morozov", "phone": "+74951234567", "email": "a.morozov@securenet.ru", "whatsapp": "+74951234567", "telegram": "morozov_polygraph", "website": "https://securenet.ru/morozov"},
-      "expectedStatus": 200
+      "headers": {"X-Auth-Token": "invalid-token-123"},
+      "body": {"phone": "+74951234567", "email": "a@b.ru"},
+      "expectedStatus": 401
     }
   ]
 }

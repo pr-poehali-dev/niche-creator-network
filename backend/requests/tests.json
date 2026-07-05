@@ -7,34 +7,23 @@
       "expectedStatus": 200
     },
     {
-      "name": "Create request",
+      "name": "Create without token returns 401",
       "method": "POST",
       "path": "/",
-      "body": {
-        "action": "create",
-        "clientId": "test-client-1",
-        "clientName": "Test Client",
-        "category": "polygraph",
-        "service": "Полиграфолог",
-        "description": "Нужна проверка кандидата",
-        "budget": "от 8000",
-        "city": "Москва"
-      },
-      "expectedStatus": 200,
-      "expectedBody": { "success": true },
-      "bodyMatcher": "partial"
+      "body": {"action": "create", "category": "polygraph", "service": "Полиграфолог", "description": "Нужна проверка", "budget": "от 8000", "city": "Москва"},
+      "expectedStatus": 401
     },
     {
-      "name": "Client requests list",
+      "name": "Client list without token returns 401",
       "method": "GET",
-      "path": "/?clientId=test-client-1",
-      "expectedStatus": 200
+      "path": "/",
+      "expectedStatus": 401
     },
     {
-      "name": "Provider open requests",
+      "name": "Provider view without token returns 401",
       "method": "GET",
-      "path": "/?view=provider&providerSlug=morozov&category=polygraph",
-      "expectedStatus": 200
+      "path": "/?view=provider",
+      "expectedStatus": 401
     }
   ]
 }

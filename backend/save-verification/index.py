@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 import psycopg2
 from crypto_utils import encrypt_field, decrypt_field
+from auth_utils import get_auth_user, provider_slug
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -26,7 +27,7 @@ def handler(event: dict, context) -> dict:
     cors = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
         'Content-Type': 'application/json',
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
@@ -35,12 +36,16 @@ def handler(event: dict, context) -> dict:
     if method == 'OPTIONS':
         return {'statusCode': 200, 'headers': cors, 'body': ''}
 
+    # Верификационные данные (паспорт, ФИО, реквизиты) доступны только владельцу.
+    # Slug определяется по токену сессии, а не по параметру запроса.
+    user = get_auth_user(event)
+    if not user:
+        return {'statusCode': 401, 'headers': cors, 'body': json.dumps({'error': 'unauthorized'})}
+    owner_slug = provider_slug(user)
+
     # GET: владелец загружает свои данные в форму редактирования (с паспортом).
     if method == 'GET':
-        params = event.get('queryStringParameters') or {}
-        slug = esc(params.get('slug'))
-        if not slug:
-            return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'slug required'})}
+        slug = owner_slug
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
         cur = conn.cursor()
         cur.execute(
@@ -97,9 +102,7 @@ def handler(event: dict, context) -> dict:
         return {'statusCode': 405, 'headers': cors, 'body': json.dumps({'error': 'Method not allowed'})}
 
     body = json.loads(event.get('body') or '{}')
-    slug = esc(body.get('slug'))
-    if not slug:
-        return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'slug required'})}
+    slug = owner_slug
 
     full_name = esc(body.get('fullName'))
     passport = esc(body.get('passportNumber'))

@@ -2,6 +2,7 @@ import json
 import os
 import psycopg2
 from crypto_utils import encrypt_field, decrypt_field
+import auth_utils
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -22,7 +23,7 @@ def handler(event: dict, context) -> dict:
     cors = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
         'Content-Type': 'application/json',
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
@@ -31,16 +32,16 @@ def handler(event: dict, context) -> dict:
     if method == 'OPTIONS':
         return {'statusCode': 200, 'headers': cors, 'body': ''}
 
+    # Данные клиента доступны только их владельцу. clientId определяется по токену.
+    user = auth_utils.get_auth_user(event)
+    if not user:
+        return {'statusCode': 401, 'headers': cors, 'body': json.dumps({'error': 'unauthorized'})}
+    client_id = auth_utils.client_id(user)
+
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
 
     if method == 'GET':
-        params = event.get('queryStringParameters') or {}
-        client_id = esc(params.get('clientId'))
-        if not client_id:
-            cur.close()
-            conn.close()
-            return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'clientId required'})}
         cur.execute(
             f"SELECT full_name, phone, email, avatar_url, gender FROM {SCHEMA}.clients WHERE client_id=%s",
             (client_id,),
@@ -62,11 +63,6 @@ def handler(event: dict, context) -> dict:
 
     if method == 'POST':
         body = json.loads(event.get('body') or '{}')
-        client_id = esc(body.get('clientId'))
-        if not client_id:
-            cur.close()
-            conn.close()
-            return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'clientId required'})}
         full_name = esc(body.get('fullName'))
         phone = esc(body.get('phone'))
         email = esc(body.get('email'))

@@ -21,6 +21,17 @@ type AuthContextValue = {
 const TOKEN_KEY = "shchit_auth_token";
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/** Токен текущей сессии из localStorage (или null). */
+export function getAuthToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+/** Заголовки с авторизацией для защищённых запросов к backend. */
+export function authHeaders(base: Record<string, string> = {}): Record<string, string> {
+  const token = getAuthToken();
+  return token ? { ...base, "X-Auth-Token": token } : base;
+}
+
 async function callAuth(payload: Record<string, unknown>, token?: string) {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers["X-Auth-Token"] = token;

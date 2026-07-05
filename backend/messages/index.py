@@ -4,13 +4,14 @@ import re
 from datetime import datetime
 import psycopg2
 from crypto_utils import encrypt_field, decrypt_field
+import auth_utils
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
 CORS = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
     'Content-Type': 'application/json',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
@@ -139,6 +140,10 @@ def handler(event: dict, context) -> dict:
 
             if kind == 'dm':
                 pair = esc(params.get('pair'), 160)
+                # Личную переписку может читать только её участник
+                user = auth_utils.get_auth_user(event)
+                if not user or not auth_utils.is_dm_participant(user, pair):
+                    return _resp(403, {'error': 'forbidden'})
                 cur.execute(
                     f"SELECT from_id, from_name, text, created_at FROM {SCHEMA}.direct_messages "
                     f"WHERE pair_key=%s ORDER BY created_at ASC LIMIT 500",
@@ -223,7 +228,11 @@ def handler(event: dict, context) -> dict:
 
             if action == 'dm_send':
                 pair = esc(body.get('pair'), 160)
-                from_id = esc(body.get('fromId'), 64)
+                # Отправитель определяется по токену; отправлять можно только в свою переписку
+                user = auth_utils.get_auth_user(event)
+                if not user or not auth_utils.is_dm_participant(user, pair):
+                    return _resp(403, {'error': 'forbidden'})
+                from_id = auth_utils.user_dm_id(user)
                 from_name = esc(body.get('fromName'), 200)
                 to_id = esc(body.get('toId'), 64)
                 text = clean_text(esc(body.get('text'), 2000))

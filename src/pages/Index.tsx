@@ -6,7 +6,7 @@ import { downloadReceipt } from "@/lib/receipt";
 import { useGeo, haversineKm } from "@/lib/geo";
 import { cleanText } from "@/lib/moderation";
 import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, type Provider, type LS } from "@/lib/providers";
-import { useAuth, type AuthRole } from "@/lib/auth";
+import { useAuth, authHeaders, type AuthRole } from "@/lib/auth";
 import func2url from "../../backend/func2url.json";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/92040949-913f-4126-80f9-fa681d96ea82.jpg";
@@ -424,7 +424,7 @@ function DocFileButton({ slug, url, onUploaded }: { slug: string; url: string; o
       try {
         const res = await fetch(func2url["upload-document"], {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ slug, fileBase64: base64, ext }),
         });
         const data = await res.json();
@@ -474,7 +474,7 @@ function AvatarUploader({ current, gender, role, recordId, onUploaded }: { curre
       try {
         const res = await fetch(func2url["upload-avatar"], {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ role, id: recordId, imageBase64: base64, ext }),
         });
         const data = await res.json();
@@ -1166,7 +1166,7 @@ export default function Index() {
   useEffect(() => {
     if (!isProvider || !providerSlug) { setSubActive(null); return; }
     let alive = true;
-    fetch(`${func2url["save-verification"]}?slug=${encodeURIComponent(providerSlug)}`)
+    fetch(func2url["save-verification"], { headers: authHeaders() })
       .then((r) => r.json())
       .then((d) => { if (alive) setSubActive(!!(d.verification && d.verification.subscriptionActive)); })
       .catch(() => { if (alive) setSubActive(false); });
@@ -2393,7 +2393,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [clientAvatar, setClientAvatar] = useState<string>("");
 
   useEffect(() => {
-    fetch(`${func2url["clients"]}?clientId=${encodeURIComponent(clientId)}`)
+    fetch(func2url["clients"], { headers: authHeaders() })
       .then((r) => r.json())
       .then((d) => {
         if (d.client) {
@@ -2409,8 +2409,8 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
     try {
       const res = await fetch(func2url["clients"], {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId, ...clientData }),
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ ...clientData }),
       });
       setClientState(res.ok ? "saved" : "error");
     } catch {
@@ -2426,11 +2426,11 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [reqBusy, setReqBusy] = useState(false);
 
   const loadReqs = useCallback(() => {
-    fetch(`${func2url["requests"]}?clientId=${encodeURIComponent(clientId)}`)
+    fetch(func2url["requests"], { headers: authHeaders() })
       .then((r) => r.json())
       .then((d) => { if (Array.isArray(d.requests)) setMyReqs(d.requests); })
       .catch(() => {});
-  }, [clientId]);
+  }, []);
 
   useEffect(() => { loadReqs(); }, [loadReqs]);
 
@@ -2440,8 +2440,8 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
     try {
       await fetch(func2url["requests"], {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "create", clientId, clientName: clientData.fullName || user?.name || "", ...newReq }),
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ action: "create", clientName: clientData.fullName || user?.name || "", ...newReq }),
       });
       setNewReq({ category: "", service: "", description: "", budget: "", city: "" });
       setReqFormOpen(false);
@@ -2454,8 +2454,8 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const chooseProvider = async (requestId: number, providerSlug: string) => {
     await fetch(func2url["requests"], {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "choose", clientId, requestId, providerSlug }),
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action: "choose", requestId, providerSlug }),
     });
     loadReqs();
   };
@@ -2759,8 +2759,8 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     try {
       const res = await fetch(func2url["save-contacts"], {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, ...contacts }),
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ ...contacts }),
       });
       setSaveState(res.ok ? "saved" : "error");
     } catch {
@@ -2799,7 +2799,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   };
 
   useEffect(() => {
-    fetch(`${func2url["save-verification"]}?slug=${encodeURIComponent(slug)}`)
+    fetch(func2url["save-verification"], { headers: authHeaders() })
       .then((r) => r.json())
       .then((d) => {
         const v = d.verification;
@@ -2837,8 +2837,8 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
       const payload = { ...vf, licenses: vf.licenses.filter((l) => l.number.trim()), age: autoAge ?? (vf.age ? parseInt(vf.age) : null), birthDate: vf.birthDate || null };
       const res = await fetch(func2url["save-verification"], {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, ...payload, services: myServices }),
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ ...payload, services: myServices }),
       });
       setVfState(res.ok ? "saved" : "error");
     } catch {
@@ -2893,11 +2893,11 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const myCatIds = Array.from(new Set(myServices.map((ms) => services.find((s) => s.title.en === ms.key)?.cat).filter(Boolean)));
 
   const loadIncoming = useCallback(() => {
-    fetch(`${func2url["requests"]}?view=provider&providerSlug=${encodeURIComponent(slug)}`)
+    fetch(`${func2url["requests"]}?view=provider`, { headers: authHeaders() })
       .then((r) => r.json())
       .then((d) => { if (Array.isArray(d.requests)) setIncoming(d.requests); })
       .catch(() => {});
-  }, [slug]);
+  }, []);
 
   useEffect(() => { loadIncoming(); }, [loadIncoming]);
 
@@ -2905,8 +2905,8 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     const draft = respDraft[requestId] || { message: "", price: "" };
     await fetch(func2url["requests"], {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "respond", requestId, providerSlug: slug, providerName: vf.usePseudonym && vf.pseudonym ? vf.pseudonym : (vf.fullName || user?.name || ""), message: draft.message, price: draft.price }),
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action: "respond", requestId, providerName: vf.usePseudonym && vf.pseudonym ? vf.pseudonym : (vf.fullName || user?.name || ""), message: draft.message, price: draft.price }),
     });
     setRespOpen(null);
     loadIncoming();
@@ -3357,7 +3357,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
               </div>
 
               {/* Avatar upload */}
-              <AvatarUploader current={avatarUrl} gender={vf.gender} role="provider" recordId="morozov" onUploaded={setAvatarUrl} />
+              <AvatarUploader current={avatarUrl} gender={vf.gender} role="provider" recordId={slug} onUploaded={setAvatarUrl} />
 
               {/* Gender + Age */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

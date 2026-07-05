@@ -1,13 +1,14 @@
 import json
 import os
 import psycopg2
+import auth_utils
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
 CORS = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
     'Content-Type': 'application/json',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
@@ -38,6 +39,11 @@ def handler(event: dict, context) -> dict:
     if method == 'OPTIONS':
         return {'statusCode': 200, 'headers': CORS, 'body': ''}
 
+    # Все операции требуют авторизации. Личность (клиент/исполнитель) — из токена.
+    user = auth_utils.get_auth_user(event)
+    if not user:
+        return _resp(401, {'error': 'unauthorized'})
+
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     try:
@@ -46,7 +52,7 @@ def handler(event: dict, context) -> dict:
             view = esc(params.get('view'), 20)
 
             if view == 'provider':
-                slug = esc(params.get('providerSlug'), 64)
+                slug = auth_utils.provider_slug(user)
                 category = esc(params.get('category'), 40)
                 if category and category in ALLOWED_CATEGORIES and category != '':
                     cur.execute(
@@ -77,10 +83,8 @@ def handler(event: dict, context) -> dict:
                     })
                 return _resp(200, {'requests': items})
 
-            # default: client view
-            client_id = esc(params.get('clientId'), 64)
-            if not client_id:
-                return _resp(400, {'error': 'clientId required'})
+            # default: client view — только свои заявки
+            client_id = auth_utils.client_id(user)
             cur.execute(
                 f"SELECT id, category, service, description, budget, city, status, chosen_provider, created_at "
                 f"FROM {SCHEMA}.client_requests WHERE client_id=%s ORDER BY created_at DESC LIMIT 100",
@@ -114,9 +118,7 @@ def handler(event: dict, context) -> dict:
             action = esc(body.get('action'), 20)
 
             if action == 'create':
-                client_id = esc(body.get('clientId'), 64)
-                if not client_id:
-                    return _resp(400, {'error': 'clientId required'})
+                client_id = auth_utils.client_id(user)
                 category = esc(body.get('category'), 40)
                 if category not in ALLOWED_CATEGORIES:
                     category = ''
@@ -139,9 +141,9 @@ def handler(event: dict, context) -> dict:
                     request_id = int(body.get('requestId') or 0)
                 except (TypeError, ValueError):
                     request_id = 0
-                slug = esc(body.get('providerSlug'), 64)
-                if not request_id or not slug:
-                    return _resp(400, {'error': 'requestId and providerSlug required'})
+                slug = auth_utils.provider_slug(user)
+                if not request_id:
+                    return _resp(400, {'error': 'requestId required'})
                 provider_name = esc(body.get('providerName'))
                 message = esc(body.get('message'), 2000)
                 price = esc(body.get('price'), 80)
@@ -161,7 +163,7 @@ def handler(event: dict, context) -> dict:
                 except (TypeError, ValueError):
                     request_id = 0
                 slug = esc(body.get('providerSlug'), 64)
-                client_id = esc(body.get('clientId'), 64)
+                client_id = auth_utils.client_id(user)
                 if not request_id or not slug:
                     return _resp(400, {'error': 'requestId and providerSlug required'})
                 cur.execute(
