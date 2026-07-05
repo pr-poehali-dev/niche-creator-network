@@ -3847,10 +3847,10 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan: planKey, period, email, slug, countryCode: geo?.countryCode || "", returnUrl: window.location.href }),
       });
-      const d = await res.json();
+      const d = await res.json().catch(() => ({}));
       const redirect = d.confirmationUrl || d.checkoutUrl;
-      if (d.configured && redirect) {
-        window.location.href = redirect;
+      if (d.configured && typeof redirect === "string" && redirect) {
+        window.location.assign(redirect);
         return;
       }
       // Платёжная система ещё не настроена — показываем демо-успех
