@@ -25,12 +25,12 @@
       "bodyMatcher": "partial"
     },
     {
-      "name": "Quote for US premium uses paddle",
+      "name": "Quote for US premium charges in RUB via yookassa",
       "method": "POST",
       "path": "/",
       "body": {"plan": "premium", "action": "quote", "countryCode": "US"},
       "expectedStatus": 200,
-      "expectedBody": {"currency": "USD", "provider": "paddle"},
+      "expectedBody": {"currency": "USD", "provider": "yookassa", "chargedCurrency": "RUB"},
       "bodyMatcher": "partial"
     },
     {

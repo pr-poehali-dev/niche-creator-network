@@ -231,7 +231,12 @@ def handler(event, context):
         'promoDiscount': int(PROMO_DISCOUNT * 100) if promo else 0,
         'promoUntil': PROMO_UNTIL.date().isoformat(),
         'period': 'year' if months == 12 else 'month',
-        'provider': 'yookassa' if cc == 'RU' else 'paddle',
+        # Оплата всегда через ЮКассу (в рублях). ЮКасса принимает и иностранные карты,
+        # поэтому специалисты из других стран платят рублёвую сумму — цена в местной
+        # валюте показывается только справочно.
+        'provider': 'yookassa',
+        'chargedCurrency': 'RUB',
+        'chargedAmount': base_rub,
     }
 
     if action == 'quote':
@@ -242,10 +247,8 @@ def handler(event, context):
     slug = (body.get('slug') or '').strip()[:64]
     per = 'year' if months == 12 else 'month'
 
-    if cc == 'RU':
-        result, err = _create_yookassa(base_rub, plan, email, return_url, slug, per)
-    else:
-        result, err = _create_paddle(local_amount, currency, plan, email, slug, per)
+    # Списываем всегда в рублях через ЮКассу — независимо от страны специалиста
+    result, err = _create_yookassa(base_rub, plan, email, return_url, slug, per)
 
     if err:
         return _resp(200, {**quote, 'configured': False, 'error': err})

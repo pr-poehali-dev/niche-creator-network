@@ -3984,7 +3984,7 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
                   <span className="font-montserrat font-extrabold text-2xl text-gold">{amountStr}</span>
                   <span className="text-xs text-muted-foreground ms-1">{period === "year" ? tr("billPerYear") : tr("perMonth")}</span>
                   {isForeign && localAmountStr && (
-                    <div className="text-[11px] text-gold mt-1 flex items-center justify-end gap-1"><Icon name="Globe" size={11} />≈ {localAmountStr}</div>
+                    <div className="text-[11px] text-muted-foreground mt-1 flex items-center justify-end gap-1"><Icon name="Globe" size={11} className="text-gold" />{tr("payApproxInCurrency")} {localAmountStr}</div>
                   )}
                 </div>
               </div>
@@ -4042,7 +4042,7 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
               {status === "processing" ? (
                 <><Icon name="Loader" size={16} className="animate-spin" /> {tr("payProcessing")}</>
               ) : (
-                <><Icon name="Lock" size={15} /> {tr("payButton")} {isForeign && localAmountStr ? localAmountStr : amountStr}</>
+                <><Icon name="Lock" size={15} /> {tr("payButton")} {amountStr}</>
               )}
             </button>
             <div className="flex items-center justify-center gap-1.5 mt-3 text-[10px] text-muted-foreground">

@@ -650,7 +650,8 @@ export const t: Dict = {
   pdPremB4: { ru: "Знак доверия рядом с именем.", en: "A trust mark next to your name." },
 
   // Payment (YooKassa + Paddle + currency)
-  payForeignNote: { ru: "Оплата для вашей страны проходит через защищённый платёжный сервис Paddle. После нажатия вы перейдёте на безопасную страницу оплаты — сумма спишется в вашей местной валюте.", en: "Payment for your country is processed via the secure Paddle service. After clicking, you'll be redirected to a secure checkout — the amount is charged in your local currency." },
+  payForeignNote: { ru: "Оплата проходит банковской картой через защищённый сервис ЮKassa. Принимаются карты Visa, Mastercard и «Мир». После нажатия вы перейдёте на безопасную страницу оплаты. Списание производится в рублях (₽); сумма в вашей валюте показана справочно по текущему курсу.", en: "Payment is made by bank card via the secure YooKassa service, which accepts Visa, Mastercard and Mir. After clicking, you'll be redirected to a secure checkout. The charge is made in Russian rubles (₽); the amount in your currency is shown for reference at the current rate." },
+  payApproxInCurrency: { ru: "≈ в вашей валюте:", en: "≈ in your currency:" },
   payNotConfigured: { ru: "Это демо-оплата: платёжная система ещё подключается. Реальное списание не произведено.", en: "This is a demo payment: the payment system is still being connected. No real charge was made." },
   payError: { ru: "Не удалось создать платёж. Попробуйте ещё раз.", en: "Failed to create the payment. Please try again." },
   pdInactive: { ru: "Не активна", en: "Inactive" },
