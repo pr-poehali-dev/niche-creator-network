@@ -5534,6 +5534,7 @@ function MobileAppSection({ setActive }: { setActive: (s: Section) => void }) {
   const [tab, setTab] = useState<MobilePlatform>("ios");
   const [installEvt, setInstallEvt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
+  const instrRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const p = detectMobilePlatform();
@@ -5553,11 +5554,17 @@ function MobileAppSection({ setActive }: { setActive: (s: Section) => void }) {
   }, []);
 
   const doInstall = async () => {
-    if (!installEvt) return;
-    installEvt.prompt();
-    const res = await installEvt.userChoice;
-    if (res?.outcome === "accepted") setInstalled(true);
-    setInstallEvt(null);
+    if (installEvt) {
+      // Браузер поддерживает установку в один клик (Chrome, Edge, Android)
+      installEvt.prompt();
+      const res = await installEvt.userChoice;
+      if (res?.outcome === "accepted") setInstalled(true);
+      setInstallEvt(null);
+      return;
+    }
+    // Браузер без автоустановки (Safari/iOS и др.) — показываем инструкцию для устройства
+    setTab(platform === "desktop" ? "android" : platform);
+    instrRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const steps: Record<MobilePlatform, { icon: string; title: keyof typeof t; text: keyof typeof t }[]> = {
@@ -5634,23 +5641,26 @@ function MobileAppSection({ setActive }: { setActive: (s: Section) => void }) {
             <div className="text-xs text-muted-foreground">{tr("maInstalledText")}</div>
           </div>
         </div>
-      ) : installEvt ? (
-        <div className="border border-gold/40 rounded-sm glass-card p-6 md:p-7 mb-8 text-center security-glow">
-          <Icon name="Download" size={30} className="text-gold mx-auto mb-3" />
-          <h2 className="font-montserrat font-bold text-lg text-foreground mb-2">{tr("maQuickTitle")}</h2>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">{tr("maQuickText")}</p>
+      ) : (
+        <div className="border border-gold/40 rounded-sm glass-card p-6 md:p-8 mb-8 text-center security-glow">
+          <Icon name="Download" size={32} className="text-gold mx-auto mb-3" />
+          <h2 className="font-montserrat font-bold text-lg md:text-xl text-foreground mb-2">{installEvt ? tr("maQuickTitle") : tr("maQuickTitleManual")}</h2>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">{installEvt ? tr("maQuickText") : tr("maQuickTextManual")}</p>
           <button
             onClick={doInstall}
-            className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2"
+            className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2 glow-gold-sm"
           >
             <Icon name="Download" size={16} />
             {tr("maQuickBtn")}
           </button>
+          {!installEvt && (
+            <p className="text-[11px] text-muted-foreground mt-3">{tr("maQuickHint")}</p>
+          )}
         </div>
-      ) : null}
+      )}
 
       {/* Platform tabs */}
-      <div className="mb-5">
+      <div className="mb-5" ref={instrRef}>
         <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("maInstrTitle")}</div>
         <div className="flex flex-wrap gap-2">
           {tabs.map((tb) => (
