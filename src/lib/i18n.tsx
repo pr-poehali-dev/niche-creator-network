@@ -1209,6 +1209,17 @@ export const t: Dict = {
   promoUntil: { ru: "Акция −30% действует до 1 августа 2026", en: "−30% promo valid until August 1, 2026" },
   promoBannerTitle: { ru: "Скидка 30% на все тарифы", en: "30% off all plans" },
   promoBannerText: { ru: "Оформите подписку со скидкой 30% — акция действует до 1 августа 2026 года.", en: "Get 30% off your subscription — offer valid until August 1, 2026." },
+  urgencyPrefix: { ru: "Успейте: скидка −30% на все тарифы", en: "Hurry: −30% on all plans" },
+  urgencyEnds: { ru: "до конца акции", en: "left" },
+  urgencyDays: { ru: "дн", en: "d" },
+  urgencyHours: { ru: "ч", en: "h" },
+  urgencyMins: { ru: "мин", en: "m" },
+  urgencySecs: { ru: "сек", en: "s" },
+  urgencyCta: { ru: "Забрать скидку", en: "Claim discount" },
+  riskFreeClient: { ru: "Бесплатно для клиентов · Без комиссии", en: "Free for clients · No commission" },
+  riskFreeProvider: { ru: "0% комиссии · Отмена в любой момент", en: "0% commission · Cancel anytime" },
+  liveOnline: { ru: "специалистов на платформе", en: "specialists on the platform" },
+  liveVerified: { ru: "проверено модератором", en: "verified by moderator" },
 };
 
 interface LangCtx {

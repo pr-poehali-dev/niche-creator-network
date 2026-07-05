@@ -10,6 +10,7 @@ import { useAuth, type AuthRole } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Reveal from "@/components/Reveal";
+import UrgencyBanner from "@/components/UrgencyBanner";
 import func2url from "../../backend/func2url.json";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/92040949-913f-4126-80f9-fa681d96ea82.jpg";
@@ -1882,6 +1883,8 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
   const isClient = role === "client";
   const { geo } = useGeo();
   const { providers } = useProviders();
+  // Живое соц-доказательство на реальных данных: число активных специалистов.
+  const liveCount = providers.filter((p) => p.active !== false).length;
   const [verifiedOnly, setVerifiedOnly] = useState(false);
 
   const hasVerifiedDocs = (s: Provider) =>
@@ -1905,6 +1908,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
 
   return (
     <div>
+      <UrgencyBanner onCta={() => setActive("pricing")} />
       <section className="relative overflow-hidden grid-line-bg min-h-[92vh] flex items-center vignette">
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/40 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
@@ -1956,9 +1960,15 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
                 {tr(isClient ? "heroClientCta2" : "heroProviderCta2")}
               </button>
             </div>
-            <div className="flex items-center gap-1.5 mt-3 text-xs text-gold font-montserrat font-semibold">
-              <Icon name="Zap" size={13} />
-              {tr(isClient ? "heroFast" : "ctaUrgency")}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-4">
+              <div className="flex items-center gap-1.5 text-xs text-gold font-montserrat font-semibold">
+                <Icon name="Zap" size={13} />
+                {tr(isClient ? "heroFast" : "ctaUrgency")}
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-montserrat">
+                <Icon name="ShieldCheck" size={13} className="text-green-400" />
+                {tr(isClient ? "riskFreeClient" : "riskFreeProvider")}
+              </div>
             </div>
 
             {/* Social proof */}
@@ -1969,7 +1979,9 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
                     <img src={img} alt="" className="w-full h-full object-cover" />
                   </div>
                 ))}
-                <div className="w-9 h-9 rounded-full border-2 border-background bg-gold flex items-center justify-center text-[10px] font-montserrat font-extrabold text-[hsl(220,20%,6%)]">1k+</div>
+                {liveCount > 3 && (
+                  <div className="w-9 h-9 rounded-full border-2 border-background bg-gold flex items-center justify-center text-[10px] font-montserrat font-extrabold text-[hsl(220,20%,6%)]">+{liveCount - 3}</div>
+                )}
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
@@ -1979,6 +1991,19 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
                 <div className="text-[11px] text-muted-foreground font-montserrat">{tr("heroProofReviews")}</div>
               </div>
             </div>
+
+            {liveCount > 0 && (
+              <div className="flex items-center gap-2 mt-4 text-xs font-montserrat">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
+                </span>
+                <span className="text-foreground font-bold">{liveCount}</span>
+                <span className="text-muted-foreground">{tr("liveOnline")}</span>
+                <span className="text-muted-foreground/50">·</span>
+                <span className="text-muted-foreground">{tr("liveVerified")}</span>
+              </div>
+            )}
 
             <div className="flex items-center gap-x-6 gap-y-2 mt-6 flex-wrap">
               {(isClient
