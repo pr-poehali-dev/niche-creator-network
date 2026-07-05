@@ -126,6 +126,9 @@ def handler(event: dict, context) -> dict:
 
     body = json.loads(event.get('body') or '{}')
     slug = owner_slug
+    print(f"[save-verification] POST slug={slug} keys={sorted(list(body.keys()))} "
+          f"fullName_len={len(str(body.get('fullName') or ''))} "
+          f"body_len={len(event.get('body') or '')}")
 
     full_name = esc(body.get('fullName'))
     passport = esc(body.get('passportNumber'))
@@ -254,6 +257,8 @@ def handler(event: dict, context) -> dict:
     conn.commit()
     cur.close()
     conn.close()
+    print(f"[save-verification] UPDATE done slug={slug} rows={updated} "
+          f"enc_fullName_len={len(enc_full_name)} licenses={len(licenses)}")
 
     if updated == 0:
         return {'statusCode': 404, 'headers': cors, 'body': json.dumps({'error': 'provider not found'})}
