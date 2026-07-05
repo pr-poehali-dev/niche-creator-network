@@ -45,18 +45,6 @@ const L = (v: LS, lang: Lang) => {
   return dataExtra[lang as keyof typeof dataExtra]?.[v.en] ?? v.en;
 };
 
-const computeAge = (birthDate?: string): number | null => {
-  if (!birthDate) return null;
-  const d = new Date(birthDate + "T12:00:00");
-  if (isNaN(d.getTime())) return null;
-  const now = new Date();
-  let age = now.getFullYear() - d.getFullYear();
-  const m = now.getMonth() - d.getMonth();
-  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
-  if (age < 0 || age > 120) return null;
-  return age;
-};
-
 const spyAvatar = (gender?: string) => (gender === "f" ? SPY_AVATAR_F : SPY_AVATAR_M);
 const resolveAvatar = (img: string | null | undefined, gender?: string) => (img && img.trim() ? img : spyAvatar(gender));
 const isImageUrl = (url?: string) => !!url && /\.(png|jpe?g|webp|gif)(\?|$)/i.test(url);
@@ -2171,7 +2159,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
                     {s.distance != null && <span className="text-gold font-semibold">· {s.distance} {tr("geoKm")}</span>}
                   </span>
                 </div>
-                {s.verification && ((s.verification.licenses && s.verification.licenses.length > 0) || s.verification.registry || s.verification.fullName) && (
+                {s.verification && ((s.verification.licenses && s.verification.licenses.length > 0) || (s.verification.documents && s.verification.documents.length > 0)) && (
                   <div className="inline-flex items-center gap-1.5 mb-4 px-2.5 py-1.5 rounded-sm bg-green-500/10 border border-green-500/30 w-fit">
                     <Icon name="ShieldCheck" size={13} className="text-green-400" />
                     <span className="text-[11px] font-montserrat font-bold text-green-400">{tr("verifyDocsConfirmed")}</span>
@@ -2791,10 +2779,10 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   };
 
   const [vf, setVf] = useState({
-    fullName: "", passportNumber: "", legalStatus: "ip", registry: "",
-    showFullName: true, showLegalStatus: true, showLicense: true, showRegistry: true,
+    legalStatus: "ip",
+    showLegalStatus: true, showLicense: true,
     pseudonym: "", usePseudonym: false,
-    gender: "m" as "m" | "f", age: "" as string, birthDate: "" as string,
+    gender: "m" as "m" | "f", age: "" as string,
     licenses: [{ number: "", date: "", authority: "" }] as LicenseEntry[],
     documents: [] as { title: string; url: string }[],
     bio: "",
@@ -2833,11 +2821,10 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
           setMyServices(v.services.map((s: unknown) => typeof s === "string" ? { key: s, price: "" } : { key: (s as { key: string }).key, price: (s as { price?: string }).price || "" }));
         }
         setVf({
-          fullName: v.fullName || "", passportNumber: v.passportNumber || "", legalStatus: v.legalStatus || "ip",
-          registry: v.registry || "",
-          showFullName: !!v.showFullName, showLegalStatus: !!v.showLegalStatus, showLicense: !!v.showLicense, showRegistry: !!v.showRegistry,
+          legalStatus: v.legalStatus || "ip",
+          showLegalStatus: !!v.showLegalStatus, showLicense: !!v.showLicense,
           pseudonym: v.pseudonym || "", usePseudonym: !!v.usePseudonym,
-          gender: v.gender === "f" ? "f" : "m", age: v.age != null ? String(v.age) : "", birthDate: v.birthDate || "",
+          gender: v.gender === "f" ? "f" : "m", age: v.age != null ? String(v.age) : "",
           licenses: Array.isArray(v.licenses) && v.licenses.length
             ? v.licenses.map((l: unknown) => typeof l === "string"
                 ? { number: l, date: "", authority: "" }
@@ -2868,8 +2855,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const saveVerification = async () => {
     setVfState("saving");
     try {
-      const autoAge = computeAge(vf.birthDate);
-      const payload = { ...vf, licenses: vf.licenses.filter((l) => l.number.trim()), age: autoAge ?? (vf.age ? parseInt(vf.age) : null), birthDate: vf.birthDate || null };
+      const payload = { ...vf, licenses: vf.licenses.filter((l) => l.number.trim()), age: vf.age ? parseInt(vf.age) : null };
       const res = await fetch(func2url["save-verification"], {
         method: "POST",
         headers: authHeaders({ "Content-Type": "application/json" }),
@@ -2884,8 +2870,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const saveServices = async (next: { key: string; price: string }[]) => {
     setSvcSaveState("saving");
     try {
-      const autoAge = computeAge(vf.birthDate);
-      const payload = { ...vf, licenses: vf.licenses.filter((l) => l.number.trim()), age: autoAge ?? (vf.age ? parseInt(vf.age) : null), birthDate: vf.birthDate || null };
+      const payload = { ...vf, licenses: vf.licenses.filter((l) => l.number.trim()), age: vf.age ? parseInt(vf.age) : null };
       const res = await fetch(func2url["save-verification"], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3415,38 +3400,17 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfBirthDate")}</label>
+                    <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfAge")}</label>
                     <button onClick={() => setVf({ ...vf, showAge: !vf.showAge })}
                       className={`flex items-center gap-1 text-[10px] font-montserrat font-bold px-2 py-1 rounded-sm transition-colors ${vf.showAge ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"}`}>
                       <Icon name={vf.showAge ? "Eye" : "EyeOff"} size={12} />
                       {tr(vf.showAge ? "pdVfShow" : "pdVfHidden")}
                     </button>
                   </div>
-                  <input type="date" max={new Date().toISOString().slice(0, 10)} value={vf.birthDate} onChange={(e) => { setVf({ ...vf, birthDate: e.target.value }); setVfState("idle"); }} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
-                  <div className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
-                    <Icon name="Calendar" size={12} className="text-gold" />
-                    {computeAge(vf.birthDate) != null
-                      ? `${tr("pdVfAge")}: ${computeAge(vf.birthDate)} ${tr("pdVfYears")}`
-                      : tr("pdVfBirthHint")}
-                  </div>
+                  <input type="number" min={18} max={100} value={vf.age} onChange={(e) => { setVf({ ...vf, age: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfAge")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
                 </div>
               </div>
               <div className="divider-gold" />
-
-              {/* Full name (with visibility toggle) */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfFullName")}</label>
-                  <button
-                    onClick={() => setVf({ ...vf, showFullName: !vf.showFullName })}
-                    className={`flex items-center gap-1 text-[10px] font-montserrat font-bold px-2 py-1 rounded-sm transition-colors ${vf.showFullName ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"}`}
-                  >
-                    <Icon name={vf.showFullName ? "Eye" : "EyeOff"} size={12} />
-                    {tr(vf.showFullName ? "pdVfShow" : "pdVfHidden")}
-                  </button>
-                </div>
-                <input value={vf.fullName} onChange={(e) => { setVf({ ...vf, fullName: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfFullName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
-              </div>
 
               {/* Pseudonym */}
               <div className="border border-border rounded-sm bg-secondary/40 p-4 space-y-3">
@@ -3464,16 +3428,6 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                     <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-card transition-all ${vf.usePseudonym ? "start-5" : "start-0.5"}`} />
                   </span>
                 </button>
-              </div>
-
-              {/* Passport — never public */}
-              <div>
-                <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2">
-                  <Icon name="Lock" size={13} className="text-muted-foreground" />
-                  {tr("pdVfPassport")}
-                </label>
-                <input value={vf.passportNumber} onChange={(e) => { setVf({ ...vf, passportNumber: e.target.value }); setVfState("idle"); }} placeholder="0000 000000" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
-                <div className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1"><Icon name="ShieldCheck" size={11} className="text-green-400" />{tr("pdVfPassportNote")}</div>
               </div>
 
               {/* Legal status (with visibility toggle) */}
@@ -3587,21 +3541,6 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                   </button>
                 </div>
                 <textarea value={vf.bio} onChange={(e) => { setVf({ ...vf, bio: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfBioPh")} rows={4} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none" />
-              </div>
-
-              {/* Registry (with visibility toggle) */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfRegistry")}</label>
-                  <button
-                    onClick={() => setVf({ ...vf, showRegistry: !vf.showRegistry })}
-                    className={`flex items-center gap-1 text-[10px] font-montserrat font-bold px-2 py-1 rounded-sm transition-colors ${vf.showRegistry ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"}`}
-                  >
-                    <Icon name={vf.showRegistry ? "Eye" : "EyeOff"} size={12} />
-                    {tr(vf.showRegistry ? "pdVfShow" : "pdVfHidden")}
-                  </button>
-                </div>
-                <input value={vf.registry} onChange={(e) => { setVf({ ...vf, registry: e.target.value }); setVfState("idle"); }} placeholder="ОГРНИП / ИНН" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
               </div>
 
               <div className="border border-border rounded-sm bg-secondary/40 p-4 space-y-4">

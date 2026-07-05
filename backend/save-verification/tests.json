@@ -10,7 +10,7 @@
       "name": "No token POST returns 401",
       "method": "POST",
       "path": "/",
-      "body": {"fullName": "Test"},
+      "body": {"legalStatus": "ip"},
       "expectedStatus": 401
     },
     {

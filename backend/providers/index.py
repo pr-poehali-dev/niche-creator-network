@@ -110,8 +110,6 @@ def handler(event: dict, context) -> dict:
             licenses_raw = r[37] if isinstance(r[37], list) else (json.loads(r[37]) if r[37] else [])
             documents_raw = r[38] if isinstance(r[38], list) else (json.loads(r[38]) if r[38] else [])
             public_verification = {}
-            if bool(r[29]) and r[25]:
-                public_verification['fullName'] = decrypt_field(r[25])
             if bool(r[30]) and r[26]:
                 public_verification['legalStatus'] = r[26]
             if bool(r[31]):
@@ -121,8 +119,6 @@ def handler(event: dict, context) -> dict:
                     lic_list = [r[27].strip()]
                 if lic_list:
                     public_verification['licenses'] = lic_list
-            if bool(r[32]) and r[28]:
-                public_verification['registry'] = decrypt_field(r[28])
             if bool(r[43]) and documents_raw:
                 docs = []
                 for d in documents_raw:

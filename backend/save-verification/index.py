@@ -16,10 +16,10 @@ def esc(v):
 
 def handler(event: dict, context) -> dict:
     '''
-    Business: сохраняет данные верификации исполнителя (ФИО, паспорт, статус,
-              лицензия, реквизиты) и флаги видимости каждого поля для клиентов.
-    Args: event с httpMethod, body (JSON: slug, fullName, passportNumber, legalStatus,
-          license, registry, showFullName, showLegalStatus, showLicense, showRegistry)
+    Business: сохраняет данные верификации исполнителя (статус, лицензия,
+              псевдоним, возраст и т.д.) и флаги видимости полей для клиентов.
+    Args: event с httpMethod, body (JSON: legalStatus, license, showLegalStatus,
+          showLicense, pseudonym, usePseudonym, gender, age, licenses, documents, bio)
     Returns: HTTP-ответ со статусом сохранения
     '''
     method = event.get('httpMethod', 'POST')
@@ -100,10 +100,9 @@ def handler(event: dict, context) -> dict:
             lic = [row[3].strip()]
         docs = row[12] if isinstance(row[12], list) else (json.loads(row[12]) if row[12] else [])
         data = {
-            'fullName': decrypt_field(row[0] or ''), 'passportNumber': decrypt_field(row[1] or ''), 'legalStatus': row[2] or 'ip',
-            'registry': decrypt_field(row[4] or ''),
-            'showFullName': bool(row[5]), 'showLegalStatus': bool(row[6]),
-            'showLicense': bool(row[7]), 'showRegistry': bool(row[8]),
+            'legalStatus': row[2] or 'ip',
+            'showLegalStatus': bool(row[6]),
+            'showLicense': bool(row[7]),
             'pseudonym': row[9] or '', 'usePseudonym': bool(row[10]),
             'licenses': [str(x) for x in lic],
             'documents': [{'title': str(d.get('title', '')), 'url': str(d.get('url', ''))} for d in docs if isinstance(d, dict)],
@@ -117,7 +116,6 @@ def handler(event: dict, context) -> dict:
             'subscriptionActive': bool(row[26]),
             'subscriptionUntil': row[27].isoformat() if row[27] else None,
             'services': svc,
-            'birthDate': row[29].isoformat() if row[29] else '',
         }
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'verification': data})}
 
@@ -127,26 +125,15 @@ def handler(event: dict, context) -> dict:
     body = json.loads(event.get('body') or '{}')
     slug = owner_slug
     print(f"[save-verification] POST slug={slug} keys={sorted(list(body.keys()))} "
-          f"fullName_len={len(str(body.get('fullName') or ''))} "
           f"body_len={len(event.get('body') or '')}")
 
-    full_name = esc(body.get('fullName'))
-    passport = esc(body.get('passportNumber'))
     legal_status = esc(body.get('legalStatus'))
     if legal_status not in ALLOWED_STATUS:
         legal_status = ''
     license_info = esc(body.get('license'))
-    registry = esc(body.get('registry'))
 
-    # ФИО, паспорт и регистрационный номер — чувствительные персональные данные, шифруем перед записью
-    enc_full_name = encrypt_field(full_name)
-    enc_passport = encrypt_field(passport)
-    enc_registry = encrypt_field(registry)
-
-    show_name = bool(body.get('showFullName'))
     show_status = bool(body.get('showLegalStatus'))
     show_license = bool(body.get('showLicense'))
-    show_registry = bool(body.get('showRegistry'))
 
     pseudonym = esc(body.get('pseudonym'))
     use_pseudonym = bool(body.get('usePseudonym'))
@@ -174,29 +161,14 @@ def handler(event: dict, context) -> dict:
 
     bio = str(body.get('bio') or '').strip()[:2000]
 
-    # Дата рождения + автоматический расчёт возраста
-    birth_raw = str(body.get('birthDate') or '').strip()[:10]
-    birth_date = None
-    if len(birth_raw) == 10 and birth_raw[4] == '-' and birth_raw[7] == '-':
-        try:
-            bd = datetime.strptime(birth_raw, '%Y-%m-%d').date()
-            today = datetime.utcnow().date()
-            if 1900 < bd.year and bd <= today:
-                birth_date = bd
-        except ValueError:
-            birth_date = None
-
-    if birth_date is not None:
-        today = datetime.utcnow().date()
-        age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
-    else:
-        age_val = body.get('age')
-        try:
-            age = int(age_val)
-            if age < 18 or age > 100:
-                age = None
-        except (TypeError, ValueError):
+    # Возраст — только ручной ввод (18..100), без даты рождения
+    age_val = body.get('age')
+    try:
+        age = int(age_val)
+        if age < 18 or age > 100:
             age = None
+    except (TypeError, ValueError):
+        age = None
 
     show_bio = bool(body.get('showBio'))
     show_age = bool(body.get('showAge'))
@@ -236,18 +208,18 @@ def handler(event: dict, context) -> dict:
     cur = conn.cursor()
     cur.execute(
         f"UPDATE {SCHEMA}.providers SET "
-        f"full_name=%s, passport_number=%s, legal_status=%s, license_info=%s, registry_number=%s, "
-        f"show_full_name=%s, show_legal_status=%s, show_license=%s, show_registry=%s, "
+        f"legal_status=%s, license_info=%s, "
+        f"show_legal_status=%s, show_license=%s, "
         f"pseudonym=%s, use_pseudonym=%s, gender=%s, "
-        f"licenses=%s::jsonb, documents=%s::jsonb, bio=%s, age=%s, birth_date=%s, "
+        f"licenses=%s::jsonb, documents=%s::jsonb, bio=%s, age=%s, "
         f"show_bio=%s, show_age=%s, show_documents=%s, timezone=%s, always_available=%s, "
         f"quiet_start=%s, quiet_end=%s, services=%s::jsonb "
         f"WHERE slug=%s",
         (
-            enc_full_name, enc_passport, legal_status, license_info, enc_registry,
-            show_name, show_status, show_license, show_registry,
+            legal_status, license_info,
+            show_status, show_license,
             pseudonym, use_pseudonym, gender,
-            licenses_json, documents_json, bio, age, birth_date,
+            licenses_json, documents_json, bio, age,
             show_bio, show_age, show_documents, timezone, always_available,
             quiet_start, quiet_end, services_json,
             slug,
@@ -258,7 +230,7 @@ def handler(event: dict, context) -> dict:
     cur.close()
     conn.close()
     print(f"[save-verification] UPDATE done slug={slug} rows={updated} "
-          f"enc_fullName_len={len(enc_full_name)} licenses={len(licenses)}")
+          f"licenses={len(licenses)}")
 
     if updated == 0:
         return {'statusCode': 404, 'headers': cors, 'body': json.dumps({'error': 'provider not found'})}
