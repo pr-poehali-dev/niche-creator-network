@@ -867,10 +867,10 @@ const cases = [
 ];
 
 const serviceCategories = [
-  { id: "physical", icon: "ShieldCheck", title: { ru: "Физическая безопасность и личная охрана", en: "Physical security & close protection" } },
-  { id: "cyber", icon: "Lock", title: { ru: "Информационная и кибербезопасность", en: "Information & cybersecurity" } },
-  { id: "economic", icon: "Briefcase", title: { ru: "Экономическая безопасность, комплаенс и расследования", en: "Economic security, compliance & investigations" } },
-  { id: "crisis", icon: "Siren", title: { ru: "Антикризисное управление и спецоперации", en: "Crisis management & special operations" } },
+  { id: "physical", icon: "ShieldCheck", cover: "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/4abecc8c-8973-4f64-9041-7b9c295dac3d.jpg", title: { ru: "Физическая безопасность и личная охрана", en: "Physical security & close protection" } },
+  { id: "cyber", icon: "Lock", cover: "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/3e2ad14f-b4f9-4f8f-84aa-3ebc69cdfda0.jpg", title: { ru: "Информационная и кибербезопасность", en: "Information & cybersecurity" } },
+  { id: "economic", icon: "Briefcase", cover: "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b43df6f7-0042-48ef-a8b1-46caf5e0eeac.jpg", title: { ru: "Экономическая безопасность, комплаенс и расследования", en: "Economic security, compliance & investigations" } },
+  { id: "crisis", icon: "Siren", cover: "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/d8c5a74f-afd1-467c-8d29-90583c23cb03.jpg", title: { ru: "Антикризисное управление и спецоперации", en: "Crisis management & special operations" } },
 ] as const;
 
 const services = [
@@ -4796,21 +4796,32 @@ function ServicesSection() {
         <div className="text-center text-muted-foreground text-sm py-16 border border-dashed border-border rounded-sm">{tr("searchNoResults")}</div>
       )}
 
-      {shownCats.map((cat) => (
+      {shownCats.map((cat) => {
+        const catCount = filtered.filter((s) => s.cat === cat.id).length;
+        return (
         <div key={cat.id} className="mb-12">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
-              <Icon name={cat.icon} fallback="Shield" size={17} className="text-[hsl(220,20%,6%)]" />
+          <div className="relative overflow-hidden rounded-sm border border-border mb-6 h-36 sm:h-40 group">
+            <img src={cat.cover} alt={L(cat.title, lang)} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[hsl(220,20%,6%)] via-[hsl(220,20%,6%)]/85 to-transparent" />
+            <div className="relative h-full flex items-center gap-4 px-5 sm:px-7">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 gold-gradient rounded flex items-center justify-center shrink-0 glow-gold-sm">
+                <Icon name={cat.icon} fallback="Shield" size={24} className="text-[hsl(220,20%,6%)]" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-montserrat font-extrabold text-lg sm:text-2xl text-foreground leading-tight">{L(cat.title, lang)}</h3>
+                <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-montserrat font-semibold text-gold bg-gold/10 border border-gold/30 rounded-sm px-2 py-0.5">
+                  <Icon name="LayoutGrid" size={12} />
+                  {catCount} {tr("catSpecialties")}
+                </div>
+              </div>
             </div>
-            <h3 className="font-montserrat font-bold text-lg text-foreground">{L(cat.title, lang)}</h3>
-            <div className="h-px flex-1 bg-border" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.filter((s) => s.cat === cat.id).map((s) => (
               <div key={s.title.en} className="group border border-border rounded-sm bg-card p-6 card-hover shine-on-hover cursor-pointer">
                 <div className="flex items-start justify-between mb-5">
                   <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                    <Icon name={s.icon} size={20} className="text-[hsl(220,20%,6%)]" />
+                    <Icon name={s.icon} fallback="ShieldCheck" size={20} className="text-[hsl(220,20%,6%)]" />
                   </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Icon name="Star" size={11} className="text-gold fill-current" />
@@ -4833,7 +4844,8 @@ function ServicesSection() {
             ))}
           </div>
         </div>
-      ))}
+        );
+      })}
 
       <div className="mt-10 border border-gold/30 rounded-sm bg-card p-6 flex flex-col md:flex-row items-start md:items-center gap-4">
         <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">
