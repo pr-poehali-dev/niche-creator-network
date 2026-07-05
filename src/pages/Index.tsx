@@ -2741,14 +2741,47 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [caseTitle, setCaseTitle] = useState("");
   const [caseCategory, setCaseCategory] = useState("");
 
+  const saveCases = async (next: DashCase[]) => {
+    try {
+      await fetch(func2url["provider-cases"], {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          cases: next.map((c) => ({
+            title: c.title.ru || c.title.en,
+            category: c.category.ru || c.category.en,
+            views: c.views,
+            published: c.published,
+          })),
+        }),
+      });
+    } catch {
+      /* игнорируем сетевую ошибку — данные останутся в форме */
+    }
+  };
+
   const addCase = () => {
     const title = caseTitle.trim();
     if (!title) return;
     const catTitle = caseCategory.trim() || tr("pdCaseDefaultCat");
-    setMyCases((prev) => [{ title: { ru: title, en: title }, category: { ru: catTitle, en: catTitle }, views: 0, published: false }, ...prev]);
+    const next: DashCase[] = [{ title: { ru: title, en: title }, category: { ru: catTitle, en: catTitle }, views: 0, published: false }, ...myCases];
+    setMyCases(next);
+    saveCases(next);
     setCaseTitle("");
     setCaseCategory("");
     setCaseFormOpen(false);
+  };
+
+  const removeCase = (index: number) => {
+    const next = myCases.filter((_, i) => i !== index);
+    setMyCases(next);
+    saveCases(next);
+  };
+
+  const toggleCasePublished = (index: number) => {
+    const next = myCases.map((c, i) => (i === index ? { ...c, published: !c.published } : c));
+    setMyCases(next);
+    saveCases(next);
   };
 
   const tabs = [
@@ -2809,6 +2842,22 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     if (locked && !ALLOWED_WHEN_LOCKED.includes(id)) { setPaywallOpen(true); return; }
     setTab(id);
   };
+
+  useEffect(() => {
+    fetch(func2url["provider-cases"], { headers: authHeaders() })
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d.cases)) {
+          setMyCases(d.cases.map((c: { title?: string; category?: string; views?: number; published?: boolean }) => ({
+            title: { ru: c.title || "", en: c.title || "" },
+            category: { ru: c.category || "", en: c.category || "" },
+            views: Number(c.views) || 0,
+            published: !!c.published,
+          })));
+        }
+      })
+      .catch(() => {});
+  }, [slug]);
 
   useEffect(() => {
     fetch(func2url["save-verification"], { headers: authHeaders() })
@@ -3224,7 +3273,10 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                         <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(c.title, lang)}</div>
                         <div className="text-[10px] text-muted-foreground">{c.views} · {L(c.category, lang)}</div>
                       </div>
-                      <span className={`tag-security shrink-0 ${c.published ? "text-green-400 border-green-500/40" : "text-yellow-500 border-yellow-600/40"}`}>{tr(c.published ? "pdPublished" : "pdDraft")}</span>
+                      <button onClick={() => toggleCasePublished(i)} title={tr(c.published ? "pdUnpublish" : "pdPublish")} className={`tag-security shrink-0 cursor-pointer transition-colors hover:opacity-80 ${c.published ? "text-green-400 border-green-500/40" : "text-yellow-500 border-yellow-600/40"}`}>{tr(c.published ? "pdPublished" : "pdDraft")}</button>
+                      <button onClick={() => removeCase(i)} title={tr("remove")} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-sm border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition-colors">
+                        <Icon name="Trash2" size={13} />
+                      </button>
                     </div>
                   ))}
                 </div>

@@ -935,6 +935,8 @@ export const t: Dict = {
   pdAddService: { ru: "+ Добавить услугу", en: "+ Add service" },
   pdPublished: { ru: "Опубликовано", en: "Published" },
   pdDraft: { ru: "Черновик", en: "Draft" },
+  pdPublish: { ru: "Опубликовать", en: "Publish" },
+  pdUnpublish: { ru: "Снять с публикации", en: "Unpublish" },
   // Provider requests
   pdReqTitle: { ru: "Входящие заявки", en: "Incoming requests" },
   pdAccept: { ru: "Принять", en: "Accept" },
