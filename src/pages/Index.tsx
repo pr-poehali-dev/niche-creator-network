@@ -18,7 +18,7 @@ const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-2
 const SPY_AVATAR_M = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/61fc9ccd-a5ee-4375-8640-5c890da0df33.jpg";
 const SPY_AVATAR_F = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b40d29de-2a29-448c-82c8-a2baa711ee57.jpg";
 
-type Section = "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "admin" | "mobileapp" | "about";
+type Section = "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "consent" | "admin" | "mobileapp" | "about";
 type Role = "client" | "provider";
 
 type NavItem = { id: Section; key: keyof typeof t; icon: string };
@@ -1223,7 +1223,7 @@ export default function Index() {
   const renderSection = () => {
     if (!isAuthed) {
       if (active === "policy") return <SecurityPolicySection setActive={go} />;
-      if (active === "privacy" || active === "terms" || active === "agreement" || active === "offer") return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
+      if (active === "privacy" || active === "terms" || active === "agreement" || active === "offer" || active === "consent") return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
       if (active === "pricing") return <PricingSection setActive={go} />;
       if (active === "mobileapp") return <MobileAppSection setActive={go} />;
       if (active === "about") return <AboutSection setActive={go} />;
@@ -1249,7 +1249,7 @@ export default function Index() {
       case "mobileapp": return <MobileAppSection setActive={go} />;
       case "about": return <AboutSection setActive={go} />;
       case "pricing": return <PricingSection setActive={go} />;
-      case "privacy": case "terms": case "agreement": case "offer": return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
+      case "privacy": case "terms": case "agreement": case "offer": case "consent": return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
       case "dashboard": return role === "client" ? <ClientDashboard setActive={go} /> : <ProviderDashboard setActive={go} />;
       case "admin": return user?.isAdmin ? <AdminPanel /> : <HomeSection setActive={go} role={role} openChat={openChat} />;
       default: return <HomeSection setActive={go} role={role} openChat={openChat} />;
@@ -1453,7 +1453,7 @@ export default function Index() {
                 <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
               ))}
               <div className="divider-gold my-3" />
-              {([["fPrivacy", "privacy"], ["fTerms", "terms"], ["fAgreement", "agreement"], ["fOffer", "offer"]] as const).map(([l, sec]) => (
+              {([["fPrivacy", "privacy"], ["fConsent", "consent"], ["fTerms", "terms"], ["fAgreement", "agreement"], ["fOffer", "offer"]] as const).map(([l, sec]) => (
                 <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
               ))}
             </div>
@@ -6029,7 +6029,7 @@ type LegalDoc = {
   sections: { title: LegalKey; text: LegalKey }[];
 };
 
-const LEGAL_DOCS: Record<"privacy" | "terms" | "agreement" | "offer", LegalDoc> = {
+const LEGAL_DOCS: Record<"privacy" | "consent" | "terms" | "agreement" | "offer", LegalDoc> = {
   privacy: {
     icon: "ShieldCheck",
     tag: "lglTag",
@@ -6045,6 +6045,21 @@ const LEGAL_DOCS: Record<"privacy" | "terms" | "agreement" | "offer", LegalDoc> 
       { title: "priv7Title", text: "priv7Text" },
       { title: "priv8Title", text: "priv8Text" },
       { title: "priv9Title", text: "priv9Text" },
+    ],
+  },
+  consent: {
+    icon: "FileCheck2",
+    tag: "lglTag",
+    title: "fConsent",
+    intro: "consentIntro",
+    sections: [
+      { title: "consent1Title", text: "consent1Text" },
+      { title: "consent2Title", text: "consent2Text" },
+      { title: "consent3Title", text: "consent3Text" },
+      { title: "consent4Title", text: "consent4Text" },
+      { title: "consent5Title", text: "consent5Text" },
+      { title: "consent6Title", text: "consent6Text" },
+      { title: "consent7Title", text: "consent7Text" },
     ],
   },
   terms: {
