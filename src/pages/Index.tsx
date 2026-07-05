@@ -9,6 +9,7 @@ import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, typ
 import { useAuth, type AuthRole } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import Reveal from "@/components/Reveal";
 import func2url from "../../backend/func2url.json";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/92040949-913f-4126-80f9-fa681d96ea82.jpg";
@@ -1911,7 +1912,8 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
           <img src={isClient ? HERO_IMAGE : GUARDS_IMAGE} alt="Security" className="w-full h-full object-cover opacity-25" />
         </div>
         <div className="absolute top-1/4 -left-40 w-[500px] h-[500px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.1) 0%, transparent 70%)" }} />
-        <div className="relative z-20 max-w-7xl mx-auto px-4 py-24">
+        <div className="aurora-bg z-0" />
+        <div className="relative z-20 max-w-7xl mx-auto px-4 py-28 md:py-36">
           <div className="max-w-2xl stagger">
             <div className="flex items-center gap-3 mb-6 flex-wrap">
               <div className="tag-security inline-flex items-center gap-1.5">
@@ -1924,13 +1926,13 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
               </div>
             </div>
             {isClient ? (
-              <h1 className="font-montserrat font-extrabold text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-foreground leading-[1.02] sm:leading-[0.95] mb-6 tracking-tight">
+              <h1 className="font-montserrat font-extrabold text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-foreground leading-[0.95] sm:leading-[0.9] mb-6 tracking-tight">
                 {tr("heroClientTitle1")}<br />
                 <span className="gold-text-gradient">{tr("heroClientTitle2")}</span><br />
                 {tr("heroClientTitle3")}
               </h1>
             ) : (
-              <h1 className="font-montserrat font-extrabold text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-foreground leading-[1.02] sm:leading-[0.95] mb-6 tracking-tight">
+              <h1 className="font-montserrat font-extrabold text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-foreground leading-[0.95] sm:leading-[0.9] mb-6 tracking-tight">
                 {tr("heroProviderTitle1")}<br />
                 <span className="gold-text-gradient">{tr("heroProviderTitle2")}</span>
               </h1>
@@ -2043,12 +2045,12 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
       )}
 
       {!isClient && (
-        <section className="border-t border-border bg-card py-20 relative overflow-hidden ambient-gold">
+        <section className="border-t border-border bg-card py-28 relative overflow-hidden ambient-gold">
           <div className="max-w-7xl mx-auto px-4 relative z-10">
-            <div className="text-center mb-14">
+            <Reveal className="text-center mb-14">
               <div className="tag-security mb-3 inline-block">{tr("bpTag")}</div>
               <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("bpTitle")}</h2>
-            </div>
+            </Reveal>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-5 stagger">
               {[
                 { n: "01", icon: "UserPlus", title: "bp1Title" as const, desc: "bp1Desc" as const },
@@ -2077,7 +2079,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
       )}
 
       {isClient && (
-      <section className="max-w-7xl mx-auto px-4 py-20">
+      <section className="max-w-7xl mx-auto px-4 py-28">
         <div className="flex items-end justify-between mb-4">
           <div>
             <div className="tag-security mb-3 inline-block">{tr("specialists")}</div>
@@ -2209,12 +2211,12 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
       )}
 
       {isClient && (
-      <section className="border-t border-border bg-card py-20 relative overflow-hidden ambient-gold">
+      <section className="border-t border-border bg-card py-28 relative overflow-hidden ambient-gold">
         <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="text-center mb-14">
+          <Reveal className="text-center mb-14">
             <div className="tag-security mb-3 inline-block">{tr("process")}</div>
             <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("howItWorks")}</h2>
-          </div>
+          </Reveal>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 stagger">
             {[
               { n: "01", icon: "UserPlus", title: "step1Title" as const, desc: "step1Desc" as const },
@@ -2236,12 +2238,12 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
       </section>
       )}
 
-      <section className="py-20">
+      <section className="py-28">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
+          <Reveal className="text-center mb-12">
             <div className="tag-security mb-3 inline-block">{tr("features")}</div>
             <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("whyUs")}</h2>
-          </div>
+          </Reveal>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
               { icon: "ShieldCheck", title: "feat1Title" as const, desc: "feat1Desc" as const },
@@ -2264,9 +2266,9 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
       </section>
 
       {/* Testimonial */}
-      <section className="border-y border-border bg-card py-20 relative overflow-hidden">
+      <section className="border-y border-border bg-card py-28 relative overflow-hidden">
         <div className="absolute inset-0 grid-line-bg opacity-50" />
-        <div className="max-w-4xl mx-auto px-4 relative z-10 text-center">
+        <Reveal className="max-w-4xl mx-auto px-4 relative z-10 text-center">
           <Icon name="Quote" size={40} className="text-gold/30 mx-auto mb-6" />
           <p className="font-montserrat font-medium text-xl md:text-2xl text-foreground leading-relaxed mb-8">
             {tr("testimonialText")}
@@ -2283,15 +2285,15 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
               <div className="text-xs text-muted-foreground">{L(specialists[0].title, lang)} · {specialists[0].experience} {tr("yearsShort")}</div>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* Security / Encryption */}
-      <section className="border-t border-border py-24 relative overflow-hidden ambient-gold">
+      <section className="border-t border-border py-32 relative overflow-hidden ambient-gold">
         <div className="absolute inset-0 grid-line-bg opacity-40" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.07) 0%, transparent 70%)" }} />
         <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="text-center mb-14">
+          <Reveal className="text-center mb-14">
             <div className="inline-flex items-center justify-center mb-6">
               <div className="pulse-ring w-16 h-16 gold-gradient rounded-full flex items-center justify-center security-glow">
                 <Icon name="ShieldCheck" size={28} className="text-[hsl(220,20%,6%)]" />
@@ -2300,7 +2302,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
             <div className="tag-security mb-4 inline-block">{tr("secTag")}</div>
             <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-4">{tr("secTitle")}</h2>
             <p className="text-muted-foreground text-base leading-relaxed max-w-2xl mx-auto">{tr("secDesc")}</p>
-          </div>
+          </Reveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 stagger mb-12">
             {[
@@ -2359,9 +2361,9 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 py-20">
+      <section className="max-w-7xl mx-auto px-4 py-28">
         <div className="border border-gold/30 rounded-sm glass-card p-10 md:p-16 text-center relative overflow-hidden grid-line-bg glow-gold ambient-gold">
-          <div className="relative z-10">
+          <Reveal className="relative z-10">
             <div className="tag-security mb-4 inline-block">{tr("closedAccess")}</div>
             <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-4">
               {tr("ctaTitle1")}<br /><span className="gold-text-gradient">{tr("ctaTitle2")}</span>
@@ -2377,7 +2379,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
                 {tr("contactUs")}
               </button>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
     </div>
