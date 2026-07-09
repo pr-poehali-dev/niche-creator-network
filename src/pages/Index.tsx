@@ -4559,8 +4559,8 @@ function CasesSection() {
           <div className="border border-border rounded-sm bg-card p-5">
             <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("popularTags")}</div>
             <div className="flex flex-wrap gap-2">
-              {["OSINT", "Полиграф", "TSCM", "HR-безопасность", "Корпоративный шпионаж", "RF-сканирование", "Детектив", "Расследование"].map((t) => (
-                <span key={t} className="tag-security cursor-pointer hover:bg-gold/10 transition-colors">{t}</span>
+              {(["popTag1", "popTag2", "popTag3", "popTag4", "popTag5", "popTag6", "popTag7", "popTag8"] as const).map((k) => (
+                <span key={k} className="tag-security cursor-pointer hover:bg-gold/10 transition-colors">{tr(k)}</span>
               ))}
             </div>
           </div>
