@@ -554,3 +554,127 @@ img {
   -webkit-touch-callout: none;
   pointer-events: auto;
 }
+
+/* ===== Per-script fonts (правильные глифы для ja / ar / he) ===== */
+html[lang="ja"] body,
+html[lang="ja"] .font-montserrat,
+html[lang="ja"] .font-ibm {
+  font-family: "Noto Sans JP", "Montserrat", sans-serif;
+}
+html[lang="ar"] body,
+html[lang="ar"] .font-montserrat,
+html[lang="ar"] .font-ibm {
+  font-family: "Noto Sans Arabic", "Montserrat", sans-serif;
+}
+html[lang="he"] body,
+html[lang="he"] .font-montserrat,
+html[lang="he"] .font-ibm {
+  font-family: "Noto Sans Hebrew", "Montserrat", sans-serif;
+}
+
+/* ===== Global RTL logical-flip for common Tailwind utilities =====
+   Автоматически зеркалит физические отступы/выравнивание в RTL,
+   чтобы арабский и иврит выглядели корректно без правки JSX. */
+[dir="rtl"] .text-left {
+  text-align: right;
+}
+[dir="rtl"] .text-right {
+  text-align: left;
+}
+/* Иконка перед текстом внутри кнопок/пунктов: mr-* -> зеркалим в margin-left */
+[dir="rtl"] .mr-1 {
+  margin-right: 0;
+  margin-left: 0.25rem;
+}
+[dir="rtl"] .mr-1\.5 {
+  margin-right: 0;
+  margin-left: 0.375rem;
+}
+[dir="rtl"] .mr-2 {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+[dir="rtl"] .mr-3 {
+  margin-right: 0;
+  margin-left: 0.75rem;
+}
+[dir="rtl"] .ml-1 {
+  margin-left: 0;
+  margin-right: 0.25rem;
+}
+[dir="rtl"] .ml-2 {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+[dir="rtl"] .ml-3 {
+  margin-left: 0;
+  margin-right: 0.75rem;
+}
+/* ml-auto / mr-auto (выравнивание элемента в конец/начало строки) */
+[dir="rtl"] .ml-auto {
+  margin-left: 0;
+  margin-right: auto;
+}
+[dir="rtl"] .mr-auto {
+  margin-right: 0;
+  margin-left: auto;
+}
+/* Padding для иконок в select/dropdown (иконка выбора слева -> справа) */
+[dir="rtl"] .pl-8 {
+  padding-left: 0;
+  padding-right: 2rem;
+}
+[dir="rtl"] .pr-2 {
+  padding-right: 0;
+  padding-left: 0.5rem;
+}
+[dir="rtl"] .pl-2\.5 {
+  padding-left: 0;
+  padding-right: 0.625rem;
+}
+[dir="rtl"] .pr-2\.5 {
+  padding-right: 0;
+  padding-left: 0.625rem;
+}
+/* Абсолютно спозиционированные индикаторы (галочки в select/dropdown) */
+[dir="rtl"] .left-2 {
+  left: auto;
+  right: 0.5rem;
+}
+/* Кнопки закрытия (toast/sheet/dialog) в правом углу -> в левый для RTL */
+[dir="rtl"] .right-2 {
+  right: auto;
+  left: 0.5rem;
+}
+[dir="rtl"] .right-3 {
+  right: auto;
+  left: 0.75rem;
+}
+[dir="rtl"] .right-4 {
+  right: auto;
+  left: 1rem;
+}
+/* Номера шагов в углу карточек */
+[dir="rtl"] .right-5 {
+  right: auto;
+  left: 1.25rem;
+}
+/* Тосты (уведомления) в RTL появляются с левого края */
+@media (min-width: 640px) {
+  [dir="rtl"] .sm\:right-0 {
+    right: auto;
+    left: 0;
+  }
+}
+/* Место под кнопку закрытия у тостов */
+[dir="rtl"] .pr-8 {
+  padding-right: 1.5rem;
+  padding-left: 2rem;
+}
+/* Скруглённые углы календаря при выборе диапазона */
+[dir="rtl"] .rounded-l-md {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+[dir="rtl"] .rounded-r-md {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
