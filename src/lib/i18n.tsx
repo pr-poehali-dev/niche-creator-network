@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { extra, type ExtraLang } from "./i18n-extra";
+import { full } from "./i18n-full";
 
 export type Lang = "ru" | "en" | "fr" | "de" | "ja" | "ar" | "he";
 
@@ -136,11 +137,7 @@ export const t: Dict = {
   auth2faExpired: { ru: "Код истёк. Запросите новый", en: "Code expired. Request a new one" },
   auth2faTooMany: { ru: "Слишком много попыток. Войдите заново", en: "Too many attempts. Sign in again" },
   auth2faNotConfigured: { ru: "Email-рассылка ещё настраивается. Обратитесь к администратору.", en: "Email delivery is being set up. Contact the administrator." },
-  reqName: { ru: "ИП Давыдов Алексей Владимирович", en: "Sole proprietor Aleksey Vladimirovich Davydov" },
-  reqOgrnip: { ru: "ОГРНИП: 320222500068242", en: "OGRNIP: 320222500068242" },
-  reqInn: { ru: "ИНН: 222111361597", en: "TIN: 222111361597" },
-  reqAddress: { ru: "Адрес: Московская область, г. Электросталь, пос. Всеволодово", en: "Address: Moscow Region, Elektrostal, Vsevolodovo settlement" },
-  reqTaxOffice: { ru: "Налоговый орган: Межрайонная инспекция ФНС России №6 по Московской области", en: "Tax authority: Interdistrict Inspectorate of the Federal Tax Service No. 6 for Moscow Region" },
+
   authAdminLink: { ru: "Вход для администратора", en: "Administrator login" },
   authAdminTitle: { ru: "Вход администратора", en: "Administrator login" },
   authAdminPassword: { ru: "Пароль администратора", en: "Administrator password" },
@@ -499,7 +496,7 @@ export const t: Dict = {
 
   // ===== Consent to personal data processing (152-FZ) =====
   fConsent: { ru: "Согласие на обработку данных", en: "Consent to data processing" },
-  consentIntro: {
+  consentDocIntro: {
     ru: "Настоящим Пользователь, регистрируясь на Платформе и/или используя её сервисы, даёт свободное, конкретное, информированное и сознательное согласие на обработку своих персональных данных Оператору — ИП Давыдов Алексей Владимирович (ОГРНИП: 320222500068242, ИНН: 222111361597) — на условиях, изложенных ниже, в соответствии с Федеральным законом от 27.07.2006 № 152-ФЗ «О персональных данных».",
     en: "By registering on the Platform and/or using its services, the User gives free, specific, informed and conscious consent to the processing of their personal data by the Operator — sole proprietor Aleksey Vladimirovich Davydov (OGRNIP: 320222500068242, TIN: 222111361597) — on the terms set out below, in accordance with Russian Federal Law No. 152-FZ of 27.07.2006 'On Personal Data'.",
   },
@@ -1254,7 +1251,11 @@ const COUNTRY_LANG: Record<string, Lang> = {
 
 function translate(key: string, lang: Lang): string {
   if (lang !== "ru" && lang !== "en") {
-    const ex = extra[lang as ExtraLang]?.[key];
+    const el = lang as ExtraLang;
+    // Priority: full UI dictionary → legacy extra → English fallback.
+    const fu = full[el]?.[key];
+    if (fu) return fu;
+    const ex = extra[el]?.[key];
     if (ex) return ex;
     return t[key]?.en ?? t[key]?.ru ?? String(key);
   }

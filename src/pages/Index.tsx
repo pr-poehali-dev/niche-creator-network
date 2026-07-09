@@ -6159,7 +6159,7 @@ const LEGAL_DOCS: Record<"privacy" | "consent" | "terms" | "agreement" | "offer"
     icon: "FileCheck2",
     tag: "lglTag",
     title: "fConsent",
-    intro: "consentIntro",
+    intro: "consentDocIntro",
     sections: [
       { title: "consent1Title", text: "consent1Text" },
       { title: "consent2Title", text: "consent2Text" },
