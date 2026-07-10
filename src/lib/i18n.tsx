@@ -1,6 +1,22 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { extra, type ExtraLang } from "./i18n-extra";
-import { full } from "./i18n-full";
+
+// Тяжёлый словарь переводов (fr/de/ja/ar/he, ~5000 строк) грузится лениво —
+// только когда пользователь выбирает один из этих языков. Для ru/en он не нужен,
+// поэтому не попадает в первичный бандл и сайт открывается быстрее.
+type FullDict = Record<string, Record<string, string>>;
+let full: FullDict = {};
+let fullPromise: Promise<FullDict> | null = null;
+
+function loadFull(): Promise<FullDict> {
+  if (!fullPromise) {
+    fullPromise = import("./i18n-full").then((m) => {
+      full = m.full as FullDict;
+      return full;
+    });
+  }
+  return fullPromise;
+}
 
 export type Lang = "ru" | "en" | "fr" | "de" | "ja" | "ar" | "he";
 
@@ -1281,7 +1297,23 @@ function getInitialLang(): Lang {
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(getInitialLang);
+  // Счётчик для перерендера после ленивой подгрузки словаря переводов.
+  const [dictReady, setDictReady] = useState(0);
   const rtl = RTL_LANGS.includes(lang);
+
+  // Подгружаем тяжёлый словарь только для fr/de/ja/ar/he. До его готовности
+  // показывается английский fallback, затем интерфейс мягко обновляется.
+  useEffect(() => {
+    if (lang !== "ru" && lang !== "en" && !full[lang as ExtraLang]) {
+      let alive = true;
+      loadFull().then(() => {
+        if (alive) setDictReady((v) => v + 1);
+      });
+      return () => {
+        alive = false;
+      };
+    }
+  }, [lang]);
 
   const setLang = (l: Lang) => {
     setLangState(l);
@@ -1334,6 +1366,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, [lang, rtl]);
 
+  // dictReady включён в зависимости, чтобы после ленивой загрузки словаря
+  // все переводы пересчитались с полными строками вместо fallback.
+  void dictReady;
   const tr = (key: keyof typeof t) => translate(key as string, lang);
 
   return (
