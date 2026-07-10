@@ -10,6 +10,7 @@ import { useAuth, type AuthRole } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Reveal from "@/components/Reveal";
+import Brand from "@/components/Brand";
 import UrgencyBanner from "@/components/UrgencyBanner";
 import func2url from "../../backend/func2url.json";
 
@@ -278,7 +279,7 @@ function AuthModal({ onClose, onOpenDoc }: { onClose: () => void; onOpenDoc: (s:
             <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center">
               <Icon name="Shield" size={17} className="text-[hsl(220,20%,6%)]" />
             </div>
-            <span className="font-montserrat font-bold text-lg tracking-[0.2em] text-foreground">Щ<span className="text-gold">ИТ</span></span>
+            <Brand className="font-montserrat font-bold text-lg tracking-[0.2em] text-foreground" />
           </div>
 
           <div className="flex border border-border rounded-sm overflow-hidden mb-6">
@@ -1261,7 +1262,7 @@ export default function Index() {
   const secBarH = secBannerOpen ? 36 : 0;
 
   return (
-    <div className="min-h-screen bg-background font-ibm">
+    <div className="min-h-screen bg-background font-ibm" style={{ ["--header-h" as string]: `${64 + secBarH}px` }}>
       {/* Fixed security strip at the very top */}
       {secBannerOpen && (
         <div className="fixed top-0 left-0 right-0 z-[55] h-9 bg-gradient-to-r from-[hsl(220,20%,9%)] via-[hsl(220,18%,12%)] to-[hsl(220,20%,9%)] border-b border-gold/30">
@@ -1294,7 +1295,7 @@ export default function Index() {
               <Icon name="Shield" size={16} className="text-[hsl(220,20%,6%)]" />
             </div>
             <div>
-              <span className="font-montserrat font-bold text-lg tracking-[0.2em] text-foreground">Щ<span className="text-gold">ИТ</span></span>
+              <Brand className="font-montserrat font-bold text-lg tracking-[0.2em] text-foreground" />
               <div className="hidden md:block lg:hidden xl:block text-[8px] text-muted-foreground font-montserrat tracking-wide uppercase leading-tight whitespace-nowrap">{tr("brandSub1")}</div>
               <div className="hidden md:block lg:hidden xl:block text-[8px] text-muted-foreground font-montserrat tracking-wide uppercase leading-tight whitespace-nowrap">{tr("brandSub2")}</div>
             </div>
@@ -1412,7 +1413,7 @@ export default function Index() {
                 <div className="w-6 h-6 gold-gradient rounded flex items-center justify-center">
                   <Icon name="Shield" size={12} className="text-[hsl(220,20%,6%)]" />
                 </div>
-                <span className="font-montserrat font-bold text-sm text-foreground tracking-[0.2em]">Щ<span className="text-gold">ИТ</span></span>
+                <Brand className="font-montserrat font-bold text-sm text-foreground tracking-[0.2em]" />
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">{tr("footerDesc")}</p>
             </div>
@@ -1511,8 +1512,8 @@ function TrustBadges() {
             ["Globe", "aboutTrust3"],
             ["Lock", "aboutTrust4"],
           ] as const).map(([icon, key]) => (
-            <div key={key} className="border border-gold/30 rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2">
-              <Icon name={icon} size={22} className="text-gold" />
+            <div key={key} className="group border border-border rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2 card-hover">
+              <Icon name={icon} size={22} className="icon-hover text-gold" />
               <span className="text-xs font-montserrat font-semibold text-foreground leading-snug">{tr(key)}</span>
             </div>
           ))}
@@ -1539,9 +1540,9 @@ function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; onPolicy:
               <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse-gold" />
               {tr("promoBadge")}
             </div>
-            <h1 className="font-montserrat font-extrabold text-4xl md:text-6xl text-foreground leading-[1] mb-6 tracking-tight">
-              {tr("promoTitle1")}<br />
-              <span className="gold-text-gradient">{tr("promoTitle2")}</span>
+            <h1 className="font-montserrat font-extrabold text-4xl md:text-5xl lg:text-6xl text-foreground leading-[1.05] mb-6 tracking-tight">
+              <span className="md:whitespace-nowrap">{tr("promoTitle1")}</span><br />
+              <span className="gold-text-gradient md:whitespace-nowrap">{tr("promoTitle2")}</span>
             </h1>
             <p className="text-muted-foreground text-base md:text-lg leading-relaxed mb-7 max-w-xl">
               {tr("promoDesc")}
@@ -1664,9 +1665,9 @@ function LandingWhyUs() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger">
         {cards.map((c) => (
-          <div key={c.title} className={`rounded-sm p-6 border transition-all card-hover ${c.accent ? "border-gold/40 glass-card security-glow" : "border-border bg-card"}`}>
+          <div key={c.title} className="group rounded-sm p-6 border border-border bg-card transition-all card-hover">
             <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
-              <Icon name={c.icon} fallback="ShieldCheck" size={22} className="text-[hsl(220,20%,6%)]" />
+              <Icon name={c.icon} fallback="ShieldCheck" size={22} className="icon-hover text-[hsl(220,20%,6%)]" />
             </div>
             <h3 className="font-montserrat font-bold text-base text-foreground mb-2">{tr(c.title)}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">{tr(c.desc)}</p>
@@ -1689,9 +1690,9 @@ function LandingStats() {
     <section className="border-y border-border bg-card/40">
       <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-6">
         {stats.map((s) => (
-          <div key={s.key} className="text-center">
+          <div key={s.key} className="group text-center">
             <div className="w-11 h-11 gold-gradient rounded-full flex items-center justify-center mx-auto mb-3 glow-gold-sm">
-              <Icon name={s.icon} fallback="Star" size={19} className="text-[hsl(220,20%,6%)]" />
+              <Icon name={s.icon} fallback="Star" size={19} className="icon-hover text-[hsl(220,20%,6%)]" />
             </div>
             <div className="font-montserrat font-extrabold text-2xl md:text-3xl gold-text-gradient">{s.value}</div>
             <div className="text-xs text-muted-foreground mt-1">{tr(s.key)}</div>
@@ -1719,10 +1720,10 @@ function LandingHowItWorks() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5 stagger">
         {steps.map((s, i) => (
-          <div key={s.title} className="relative border border-border rounded-sm bg-card p-6 card-hover">
+          <div key={s.title} className="group relative border border-border rounded-sm bg-card p-6 card-hover">
             <div className="absolute top-4 end-4 font-montserrat font-extrabold text-3xl text-gold/15">{i + 1}</div>
             <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center mb-4 glow-gold-sm">
-              <Icon name={s.icon} fallback="Check" size={21} className="text-[hsl(220,20%,6%)]" />
+              <Icon name={s.icon} fallback="Check" size={21} className="icon-hover text-[hsl(220,20%,6%)]" />
             </div>
             <h3 className="font-montserrat font-bold text-base text-foreground mb-2">{tr(s.title)}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">{tr(s.desc)}</p>
@@ -1743,10 +1744,10 @@ function LandingValue() {
     <section className="border-y border-border bg-card/30">
       <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-2 gap-6">
         {cards.map((c) => (
-          <div key={c.title} className={`rounded-sm p-7 md:p-8 border ${c.accent ? "border-gold/40 glass-card security-glow" : "border-border bg-card"}`}>
+          <div key={c.title} className="group rounded-sm p-7 md:p-8 border border-border bg-card card-hover">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center shrink-0">
-                <Icon name={c.icon} fallback="User" size={21} className="text-[hsl(220,20%,6%)]" />
+                <Icon name={c.icon} fallback="User" size={21} className="icon-hover text-[hsl(220,20%,6%)]" />
               </div>
               <div>
                 <div className="text-[10px] font-montserrat font-bold text-gold uppercase tracking-widest">{tr(c.tag)}</div>
@@ -1781,8 +1782,8 @@ function LandingServices() {
         {services.slice(0, 6).map((s) => (
           <div key={s.title.en} className="group border border-border rounded-sm bg-card p-5 card-hover shine-on-hover">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
-                <Icon name={s.icon} fallback="ShieldCheck" size={18} className="text-[hsl(220,20%,6%)]" />
+              <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">
+                <Icon name={s.icon} fallback="ShieldCheck" size={18} className="icon-hover text-[hsl(220,20%,6%)]" />
               </div>
               <h3 className="font-montserrat font-bold text-sm text-foreground">{L(s.title, lang)}</h3>
             </div>
@@ -1845,11 +1846,11 @@ function LandingFinalCta({ onCabinet }: { onCabinet: () => void }) {
           <p className="text-muted-foreground text-base max-w-xl mx-auto mb-8">{tr("lpCtaDesc")}</p>
           <button
             onClick={onCabinet}
-            className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-extrabold text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm inline-flex items-center gap-2.5"
+            className="group cta-attention shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-extrabold text-base tracking-wide rounded-sm inline-flex items-center gap-2.5"
           >
-            <Icon name="UserPlus" size={18} />
+            <Icon name="UserPlus" size={18} className="icon-hover" />
             {tr("lpCtaBtn")}
-            <Icon name="ArrowRight" size={18} />
+            <Icon name="ArrowRight" size={18} className="icon-hover" />
           </button>
           <div className="flex items-center justify-center gap-5 mt-6 flex-wrap text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5"><Icon name="Check" size={13} className="text-gold" />{tr("lpCtaNote1")}</span>
@@ -1908,7 +1909,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
 
   return (
     <div>
-      <UrgencyBanner onCta={() => setActive("pricing")} />
+      <UrgencyBanner onCta={() => setActive("pricing")} sticky={!isClient} />
       <section className="relative overflow-hidden grid-line-bg min-h-[92vh] flex items-center vignette">
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/40 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
@@ -1922,12 +1923,14 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
             <div className="flex items-center gap-3 mb-6 flex-wrap">
               <div className="tag-security inline-flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse-gold" />
-                {tr(isClient ? "freeForClients" : "becomeProvider")}
+                {tr(isClient ? "freeForClients" : "providerActiveTag")}
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-montserrat">
-                <Icon name="ShieldCheck" size={13} className="text-gold" />
-                {tr("verifyAll")}
-              </div>
+              {isClient && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-montserrat">
+                  <Icon name="ShieldCheck" size={13} className="text-gold" />
+                  {tr("verifyAll")}
+                </div>
+              )}
             </div>
             {isClient ? (
               <h1 className="font-montserrat font-extrabold text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-foreground leading-[0.95] sm:leading-[0.9] mb-6 tracking-tight">
@@ -1937,7 +1940,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
               </h1>
             ) : (
               <h1 className="font-montserrat font-extrabold text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-foreground leading-[0.95] sm:leading-[0.9] mb-6 tracking-tight">
-                {tr("heroProviderTitle1")}<br />
+                <span className="lg:whitespace-nowrap">{tr("heroProviderTitle1")}</span><br />
                 <span className="gold-text-gradient">{tr("heroProviderTitle2")}</span>
               </h1>
             )}
@@ -1963,11 +1966,11 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-4">
               <div className="flex items-center gap-1.5 text-xs text-gold font-montserrat font-semibold">
                 <Icon name="Zap" size={13} />
-                {tr(isClient ? "heroFast" : "ctaUrgency")}
+                {tr(isClient ? "heroFast" : "providerGetClients")}
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-montserrat">
                 <Icon name="ShieldCheck" size={13} className="text-green-400" />
-                {tr(isClient ? "riskFreeClient" : "riskFreeProvider")}
+                {tr(isClient ? "riskFreeClient" : "priceKeepAll")}
               </div>
             </div>
 
@@ -2021,12 +2024,20 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
         <div className="absolute bottom-0 left-0 right-0 z-20 border-t border-border bg-card/90 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
-              {[
-                { n: "1 240+", l: "statSpecialists" as const },
-                { n: "4 800+", l: "statCases" as const },
-                { n: "320+", l: "statServices" as const },
-                { n: "98%", l: "statClients" as const },
-              ].map((s) => (
+              {(isClient
+                ? [
+                    { n: "1 240+", l: "statSpecialists" as const },
+                    { n: "4 800+", l: "statCases" as const },
+                    { n: "320+", l: "statServices" as const },
+                    { n: "98%", l: "statClients" as const },
+                  ]
+                : [
+                    { n: "5 600+", l: "statProvClients" as const },
+                    { n: "4 800+", l: "statCases" as const },
+                    { n: "700+", l: "statProvSearches" as const },
+                    { n: "98%", l: "statClients" as const },
+                  ]
+              ).map((s) => (
                 <div key={s.n} className="py-5 px-6 text-center">
                   <div className="stat-number text-2xl mb-1">{s.n}</div>
                   <div className="text-xs text-muted-foreground">{tr(s.l)}</div>
@@ -2270,17 +2281,27 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
             <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("whyUs")}</h2>
           </Reveal>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[
-              { icon: "ShieldCheck", title: "feat1Title" as const, desc: "feat1Desc" as const },
-              { icon: "Lock", title: "feat2Title" as const, desc: "feat2Desc" as const },
-              { icon: "CreditCard", title: "feat3Title" as const, desc: "feat3Desc" as const },
-              { icon: "BookOpen", title: "feat4Title" as const, desc: "feat4Desc" as const },
-              { icon: "Users", title: "feat5Title" as const, desc: "feat5Desc" as const },
-              { icon: "Star", title: "feat6Title" as const, desc: "feat6Desc" as const },
-            ].map((f) => (
+            {(isClient
+              ? [
+                  { icon: "ShieldCheck", title: "feat1Title" as const, desc: "feat1Desc" as const },
+                  { icon: "Lock", title: "feat2Title" as const, desc: "feat2Desc" as const },
+                  { icon: "CreditCard", title: "feat3Title" as const, desc: "feat3Desc" as const },
+                  { icon: "BookOpen", title: "feat4Title" as const, desc: "feat4Desc" as const },
+                  { icon: "Users", title: "feat5Title" as const, desc: "feat5Desc" as const },
+                  { icon: "Star", title: "feat6Title" as const, desc: "feat6Desc" as const },
+                ]
+              : [
+                  { icon: "Megaphone", title: "featPro1Title" as const, desc: "featPro1Desc" as const },
+                  { icon: "Wallet", title: "featPro2Title" as const, desc: "featPro2Desc" as const },
+                  { icon: "PhoneCall", title: "featPro3Title" as const, desc: "featPro3Desc" as const },
+                  { icon: "Users", title: "featPro4Title" as const, desc: "featPro4Desc" as const },
+                  { icon: "Star", title: "featPro5Title" as const, desc: "featPro5Desc" as const },
+                  { icon: "GraduationCap", title: "featPro6Title" as const, desc: "featPro6Desc" as const },
+                ]
+            ).map((f) => (
               <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-hover cursor-default">
-                <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110">
-                  <Icon name={f.icon} size={18} className="text-[hsl(220,20%,6%)]" />
+                <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center mb-4">
+                  <Icon name={f.icon} size={18} className="icon-hover text-[hsl(220,20%,6%)]" />
                 </div>
                 <div className="font-montserrat font-semibold text-sm text-foreground mb-2">{tr(f.title)}</div>
                 <div className="text-xs text-muted-foreground leading-relaxed">{tr(f.desc)}</div>
@@ -2389,16 +2410,16 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
       <section className="max-w-7xl mx-auto px-4 py-28">
         <div className="border border-gold/30 rounded-sm glass-card p-10 md:p-16 text-center relative overflow-hidden grid-line-bg glow-gold ambient-gold">
           <Reveal className="relative z-10">
-            <div className="tag-security mb-4 inline-block">{tr("closedAccess")}</div>
+            <div className="tag-security mb-4 inline-block">{tr(isClient ? "closedAccess" : "proAccessTag")}</div>
             <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-4">
-              {tr("ctaTitle1")}<br /><span className="gold-text-gradient">{tr("ctaTitle2")}</span>
+              {tr(isClient ? "ctaTitle1" : "proCtaTitle1")}<br /><span className="gold-text-gradient">{tr(isClient ? "ctaTitle2" : "proCtaTitle2")}</span>
             </h2>
             <p className="text-muted-foreground text-sm mb-8 max-w-xl mx-auto">
-              {tr("ctaDesc")}
+              {tr(isClient ? "ctaDesc" : "proCtaDesc")}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <button onClick={() => setActive(isClient ? "services" : "pricing")} className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm">
-                {tr(isClient ? "heroClientCta1" : "applyJoin")}
+              <button onClick={() => setActive(isClient ? "services" : "forum")} className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm">
+                {tr(isClient ? "heroClientCta1" : "proOpenCommunity")}
               </button>
               <button onClick={() => setActive("contacts")} className="border border-border text-foreground px-8 py-4 font-montserrat font-semibold text-sm hover:border-gold hover:text-gold transition-all rounded-sm">
                 {tr("contactUs")}
@@ -4979,7 +5000,7 @@ function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTi
 }
 
 function CoursesSection() {
-  const { lang, tr } = useLang();
+  const { tr } = useLang();
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="mb-6">
@@ -4988,61 +5009,25 @@ function CoursesSection() {
         <p className="text-muted-foreground text-sm">{tr("coursesDesc")}</p>
       </div>
 
-      <div className="mb-8 border border-gold/30 rounded-sm bg-card/60 p-4 flex items-start gap-3">
-        <Icon name="Megaphone" size={16} className="text-gold mt-0.5 shrink-0" />
-        <p className="text-xs text-muted-foreground leading-relaxed">{tr("coursesPartnerNote")}</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10 stagger">
-        {courses.map((c) => (
-          <div key={c.title.en} className="group border border-border rounded-sm bg-card overflow-hidden card-hover shine-on-hover cursor-pointer">
-            <div className="h-44 overflow-hidden relative">
-              <img src={c.img} alt={L(c.title, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
-              <div className="absolute top-3 start-3"><span className="badge-pro">{L(c.level, lang)}</span></div>
-              <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
-                <Icon name="Megaphone" size={11} className="text-gold" />
-                <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("coursesPartnerBadge")}</span>
-              </div>
-            </div>
-            <div className="p-5">
-              <h3 className="font-montserrat font-bold text-sm text-foreground mb-2 leading-snug">{L(c.title, lang)}</h3>
-              <div className="text-xs text-muted-foreground mb-3">{L(c.instructor, lang)} · {L(c.duration, lang)}</div>
-              <div className="flex items-center gap-2 mb-4">
-                <StarRating rating={c.rating} />
-                <span className="text-xs text-muted-foreground">{c.rating}</span>
-                <span className="text-xs text-muted-foreground ms-auto">{c.students} {tr("students")}</span>
-              </div>
-              <div className="divider-gold mb-4" />
-              <div className="flex items-center justify-between">
-                <div className="font-montserrat font-extrabold text-lg text-gold">{L(c.price, lang)}</div>
-                <button className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center gap-1.5">
-                  {tr("coursesGoBtn")}<Icon name="ExternalLink" size={13} />
-                </button>
-              </div>
-              <div className="text-[10px] text-muted-foreground/70 mt-2 text-center">{tr("coursesAdLabel")}</div>
-            </div>
+      <div className="relative overflow-hidden rounded-sm border border-gold/30 glass-card ambient-gold p-10 md:p-16 text-center">
+        <div className="absolute inset-0 grid-line-bg opacity-30" />
+        <div className="relative z-10 max-w-xl mx-auto">
+          <div className="inline-flex items-center gap-2 mb-6">
+            <span className="badge-pro">{tr("coursesSoonBadge")}</span>
           </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { icon: "BookOpen", n: "47", l: tr("coursesStat") },
-          { icon: "Users", n: "2 800+", l: tr("graduates") },
-          { icon: "Award", n: "31", l: tr("instructors") },
-          { icon: "Star", n: "4.8", l: tr("avgRating") },
-        ].map((s) => (
-          <div key={s.icon} className="border border-border rounded-sm bg-card p-5 flex items-center gap-4">
-            <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
-              <Icon name={s.icon} size={16} className="text-[hsl(220,20%,6%)]" />
-            </div>
-            <div>
-              <div className="stat-number text-xl">{s.n}</div>
-              <div className="text-xs text-muted-foreground">{s.l}</div>
-            </div>
+          <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center mx-auto mb-6 glow-gold-sm">
+            <Icon name="GraduationCap" size={30} className="text-[hsl(220,20%,6%)]" />
           </div>
-        ))}
+          <h3 className="font-montserrat font-extrabold text-2xl md:text-3xl text-foreground mb-4">{tr("coursesSoonTitle")}</h3>
+          <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-8">{tr("coursesSoonText")}</p>
+          <div className="flex items-center justify-center gap-2 text-xs text-gold font-montserrat font-semibold">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-gold" />
+            </span>
+            {tr("coursesSoonBadge")}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -5972,8 +5957,8 @@ function AboutSection({ setActive }: { setActive: (s: Section) => void }) {
             ["Globe", "aboutTrust3"],
             ["Lock", "aboutTrust4"],
           ] as const).map(([icon, key]) => (
-            <div key={key} className="border border-gold/30 rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2">
-              <Icon name={icon} size={22} className="text-gold" />
+            <div key={key} className="group border border-border rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2 card-hover">
+              <Icon name={icon} size={22} className="icon-hover text-gold" />
               <span className="text-xs font-montserrat font-semibold text-foreground leading-snug">{tr(key)}</span>
             </div>
           ))}

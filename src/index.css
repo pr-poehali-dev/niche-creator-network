@@ -261,6 +261,47 @@
     transform: translateY(-2px);
   }
 
+  /* Иконка мягко увеличивается при наведении на неё или на её карточку/кнопку */
+  .icon-hover {
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+  }
+  .icon-hover:hover,
+  .group:hover .icon-hover,
+  button:hover .icon-hover,
+  a:hover .icon-hover {
+    transform: scale(1.18);
+  }
+
+  /* Яркая привлекающая CTA: живое золотое свечение-пульс + подъём */
+  .cta-attention {
+    position: relative;
+    animation: ctaPulse 2.2s ease-in-out infinite;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .cta-attention:hover {
+    transform: translateY(-2px) scale(1.02);
+    animation-play-state: paused;
+  }
+  @keyframes ctaPulse {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 0 hsl(43, 80%, 52%, 0.5),
+        0 6px 22px hsl(43, 80%, 52%, 0.28);
+    }
+    50% {
+      box-shadow:
+        0 0 0 10px hsl(43, 80%, 52%, 0),
+        0 6px 30px hsl(43, 80%, 52%, 0.45);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cta-attention {
+      animation: none;
+    }
+  }
+
   .shine-on-hover {
     position: relative;
     overflow: hidden;

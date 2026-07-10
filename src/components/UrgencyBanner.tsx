@@ -19,7 +19,7 @@ function getRemaining() {
  * Баннер срочности с обратным отсчётом (принцип дефицита).
  * Показывается вверху главной, мотивирует оформить подписку до конца акции.
  */
-export function UrgencyBanner({ onCta }: { onCta?: () => void }) {
+export function UrgencyBanner({ onCta, sticky = false }: { onCta?: () => void; sticky?: boolean }) {
   const { tr } = useLang();
   const [time, setTime] = useState(getRemaining());
 
@@ -39,7 +39,7 @@ export function UrgencyBanner({ onCta }: { onCta?: () => void }) {
   );
 
   return (
-    <div className="relative z-30 gold-gradient">
+    <div className={`${sticky ? "sticky top-[var(--header-h,64px)]" : "relative"} z-40 gold-gradient shadow-lg shadow-black/20`}>
       <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-col sm:flex-row items-center justify-center gap-x-5 gap-y-2 flex-wrap">
         <div className="flex items-center gap-2">
           <Icon name="BadgePercent" size={18} className="text-[hsl(220,20%,6%)] shrink-0" />
