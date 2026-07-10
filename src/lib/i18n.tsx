@@ -1307,6 +1307,30 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (typeof document !== "undefined") {
       document.documentElement.lang = lang;
       document.documentElement.dir = rtl ? "rtl" : "ltr";
+
+      // Локализованные SEO-заголовки для вкладки браузера и превью в соцсетях
+      const SEO: Record<string, { title: string; desc: string; locale: string }> = {
+        ru: { title: "ЩИТ — Международная платформа специалистов по безопасности", desc: "Проверенные специалисты по безопасности из разных стран — в одном каталоге: детективы, телохранители, полиграфологи, эксперты по кибербезопасности и охранные агентства.", locale: "ru_RU" },
+        en: { title: "SHCHIT — International Security Specialists Platform", desc: "Verified security specialists worldwide in one directory: detectives, bodyguards, polygraph examiners, cybersecurity experts and security agencies.", locale: "en_US" },
+        fr: { title: "SHCHIT — Plateforme internationale de spécialistes de la sécurité", desc: "Spécialistes de la sécurité vérifiés du monde entier dans un seul annuaire : détectives, gardes du corps, polygraphistes, experts en cybersécurité et agences de sécurité.", locale: "fr_FR" },
+        de: { title: "SHCHIT — Internationale Plattform für Sicherheitsspezialisten", desc: "Verifizierte Sicherheitsspezialisten weltweit in einem Verzeichnis: Detektive, Personenschützer, Polygraf-Prüfer, Cybersicherheitsexperten und Sicherheitsfirmen.", locale: "de_DE" },
+        ja: { title: "SHCHIT — セキュリティ専門家の国際プラットフォーム", desc: "世界中の認証済みセキュリティ専門家を1つのディレクトリに：探偵、ボディガード、ポリグラフ検査官、サイバーセキュリティの専門家、警備会社。", locale: "ja_JP" },
+        ar: { title: "SHCHIT — منصة دولية لخبراء الأمن", desc: "خبراء أمن موثّقون من جميع أنحاء العالم في دليل واحد: محققون، حراس شخصيون، فاحصو كشف الكذب، خبراء الأمن السيبراني وشركات الأمن.", locale: "ar_AR" },
+        he: { title: "SHCHIT — פלטפורמה בינלאומית למומחי אבטחה", desc: "מומחי אבטחה מאומתים מרחבי העולם במדריך אחד: חוקרים, מאבטחים אישיים, בודקי פוליגרף, מומחי סייבר וחברות אבטחה.", locale: "he_IL" },
+      };
+      const seo = SEO[lang] ?? SEO.ru;
+      document.title = seo.title;
+
+      const setMeta = (selector: string, attr: string, value: string) => {
+        const el = document.querySelector(selector);
+        if (el) el.setAttribute(attr, value);
+      };
+      setMeta('meta[name="description"]', "content", seo.desc);
+      setMeta('meta[property="og:title"]', "content", seo.title);
+      setMeta('meta[property="og:description"]', "content", seo.desc);
+      setMeta('meta[property="og:locale"]', "content", seo.locale);
+      setMeta('meta[name="twitter:title"]', "content", seo.title);
+      setMeta('meta[name="twitter:description"]', "content", seo.desc);
     }
   }, [lang, rtl]);
 

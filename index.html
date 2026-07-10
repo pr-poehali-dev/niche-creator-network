@@ -12,6 +12,11 @@
     <link rel="canonical" href="https://shieldpspl.ru/"/>
     <link rel="alternate" hreflang="ru" href="https://shieldpspl.ru/?lang=ru"/>
     <link rel="alternate" hreflang="en" href="https://shieldpspl.ru/?lang=en"/>
+    <link rel="alternate" hreflang="fr" href="https://shieldpspl.ru/?lang=fr"/>
+    <link rel="alternate" hreflang="de" href="https://shieldpspl.ru/?lang=de"/>
+    <link rel="alternate" hreflang="ja" href="https://shieldpspl.ru/?lang=ja"/>
+    <link rel="alternate" hreflang="ar" href="https://shieldpspl.ru/?lang=ar"/>
+    <link rel="alternate" hreflang="he" href="https://shieldpspl.ru/?lang=he"/>
     <link rel="alternate" hreflang="x-default" href="https://shieldpspl.ru/"/>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
     <link rel="manifest" href="/manifest.webmanifest">
@@ -34,6 +39,11 @@
     <meta property="og:url" content="https://shieldpspl.ru/"/>
     <meta property="og:locale" content="ru_RU"/>
     <meta property="og:locale:alternate" content="en_US"/>
+    <meta property="og:locale:alternate" content="fr_FR"/>
+    <meta property="og:locale:alternate" content="de_DE"/>
+    <meta property="og:locale:alternate" content="ja_JP"/>
+    <meta property="og:locale:alternate" content="ar_AR"/>
+    <meta property="og:locale:alternate" content="he_IL"/>
 
     <!-- Twitter card -->
     <meta name="twitter:card" content="summary_large_image"/>
@@ -50,8 +60,11 @@
       "alternateName": "SHCHIT",
       "url": "https://shieldpspl.ru/",
       "logo": "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/17c10fda-78cb-447b-b19c-ac30b01f1c12.jpg",
+      "image": "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/bucket/3f24e17f-41d5-4ea3-91e7-73bee8249a43.png",
       "description": "Международная платформа проверенных специалистов по безопасности: частные детективы, телохранители, полиграфологи, эксперты по кибербезопасности и охранные агентства.",
-      "areaServed": "Worldwide"
+      "email": "shieldpspl@yandex.ru",
+      "areaServed": "Worldwide",
+      "knowsLanguage": ["ru", "en", "fr", "de", "ja", "ar", "he"]
     }
     </script>
     <script type="application/ld+json">
@@ -59,8 +72,77 @@
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "ЩИТ — платформа специалистов по безопасности",
+      "alternateName": "SHCHIT",
       "url": "https://shieldpspl.ru/",
-      "inLanguage": ["ru", "en"]
+      "inLanguage": ["ru", "en", "fr", "de", "ja", "ar", "he"],
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://shieldpspl.ru/?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <!-- Structured data: ProfessionalService (rich rating stars in search) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfessionalService",
+      "name": "ЩИТ — платформа специалистов по безопасности",
+      "url": "https://shieldpspl.ru/",
+      "image": "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/bucket/3f24e17f-41d5-4ea3-91e7-73bee8249a43.png",
+      "description": "Проверенные специалисты по безопасности из разных стран: детективы, телохранители, полиграфологи, эксперты по кибербезопасности и охранные агентства.",
+      "areaServed": "Worldwide",
+      "priceRange": "$$",
+      "serviceType": [
+        "Private investigation",
+        "Bodyguard services",
+        "Polygraph examination",
+        "Cybersecurity",
+        "Security agencies"
+      ],
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "2800",
+        "bestRating": "5",
+        "worstRating": "1"
+      }
+    }
+    </script>
+    <!-- Structured data: FAQ (rich FAQ snippet in search) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Сколько стоит платформа?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Для клиентов платформа полностью бесплатна — вы ищете специалистов и связываетесь с ними без оплаты. Специалисты платят только за подписку, без комиссии с заказов."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Как вы проверяете специалистов?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Каждый специалист проходит проверку документов и квалификации. Значок «Лицензия» появляется только после подтверждения лицензии, статуса ИП/ООО и полной проверки модератором."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "В каких странах работает платформа?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Платформа международная: специалисты присутствуют в 15+ странах. Часовой пояс и доступность для звонков учитываются автоматически."
+          }
+        }
+      ]
     }
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
