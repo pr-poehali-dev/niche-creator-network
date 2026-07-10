@@ -66,6 +66,50 @@
     @apply bg-background text-foreground;
     font-family: "IBM Plex Sans", sans-serif;
     overflow-x: hidden;
+    /* Более чёткий рендеринг шрифтов (Apple-grade сглаживание) */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern", "liga", "calt";
+  }
+
+  /* Плавная прокрутка по якорям, но не мешает reduced-motion */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Доступность WCAG: заметное золотое фокус-кольцо для клавиатуры.
+     Показывается только при навигации с клавиатуры (:focus-visible),
+     не мешает при клике мышью. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--gold));
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+  /* Убираем стандартный синий outline там, где есть focus-visible */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Тактильность: лёгкое «нажатие» интерактивных элементов */
+  button:active,
+  a:active,
+  [role="button"]:active {
+    transform: translateY(0.5px);
+  }
+
+  /* Фирменное выделение текста */
+  ::selection {
+    background: hsl(var(--gold) / 0.28);
+    color: hsl(var(--foreground));
+  }
+
+  /* Изображения по умолчанию не «прыгают» и не растягиваются */
+  img {
+    max-width: 100%;
+    height: auto;
   }
 
   /* Slim global scrollbar so it never overlaps content (e.g. the Logout button) */
@@ -677,4 +721,29 @@ html[lang="he"] .font-ibm {
 }
 [dir="rtl"] .rounded-r-md {
   border-radius: 0.375rem 0 0 0.375rem;
+}
+
+/* ===== Премиум-типографика заголовков ===== */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+  text-wrap: balance; /* красивый перенос заголовков без «висячих» слов */
+}
+p {
+  text-wrap: pretty; /* убирает одинокое слово на последней строке абзаца */
+}
+
+/* ===== Доступность: полное уважение prefers-reduced-motion =====
+   Пользователи с вестибулярными расстройствами (WCAG 2.3.3) получают
+   статичный интерфейс без резких движений. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

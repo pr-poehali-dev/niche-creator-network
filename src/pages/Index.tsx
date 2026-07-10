@@ -440,7 +440,7 @@ function DocFileButton({ slug, url, onUploaded }: { slug: string; url: string; o
       </label>
       {url && isImageUrl(url) && (
         <a href={url} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-sm overflow-hidden border border-border hover:border-gold transition-colors shrink-0">
-          <img src={url} alt="" className="w-full h-full object-cover" />
+          <img src={url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
         </a>
       )}
       {url && <a href={url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-green-400 inline-flex items-center gap-1"><Icon name="Check" size={11} />{tr("pdVfDocAttached")}</a>}
@@ -484,7 +484,7 @@ function AvatarUploader({ current, gender, role, recordId, onUploaded }: { curre
   return (
     <div className="flex items-center gap-4">
       <div className="w-20 h-20 rounded-sm overflow-hidden border-2 border-gold shrink-0 bg-secondary">
-        <img src={resolveAvatar(current, gender)} alt="avatar" className="w-full h-full object-cover" />
+        <img src={resolveAvatar(current, gender)} alt="avatar" loading="lazy" decoding="async" className="w-full h-full object-cover" />
       </div>
       <div className="flex-1">
         <div className="text-xs font-montserrat font-semibold text-foreground mb-1">{tr("avatarTitle")}</div>
@@ -630,7 +630,7 @@ function VerificationBlock({ v }: { v: NonNullable<Provider["verification"]> }) 
                   {documents.map((d, i) => (
                     isImageUrl(d.url) ? (
                       <button key={i} onClick={() => setLightbox({ src: d.url as string, title: d.title })} title={d.title || tr("docOpen")} className="group/doc relative w-16 h-16 rounded-sm overflow-hidden border border-border hover:border-gold transition-colors">
-                        <img src={d.url} alt={d.title || ""} className="w-full h-full object-cover" />
+                        <img src={d.url} alt={d.title || ""} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                         <span className="absolute inset-0 bg-background/60 opacity-0 group-hover/doc:opacity-100 transition-opacity flex items-center justify-center">
                           <Icon name="ZoomIn" size={16} className="text-gold" />
                         </span>
@@ -1913,7 +1913,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/40 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
         <div className="absolute inset-0">
-          <img src={isClient ? HERO_IMAGE : GUARDS_IMAGE} alt="Security" className="w-full h-full object-cover opacity-25" />
+          <img src={isClient ? HERO_IMAGE : GUARDS_IMAGE} alt="Security" fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-25" />
         </div>
         <div className="absolute top-1/4 -left-40 w-[500px] h-[500px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.1) 0%, transparent 70%)" }} />
         <div className="aurora-bg z-0" />
@@ -2300,7 +2300,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
           </p>
           <div className="flex items-center justify-center gap-3">
             <div className="w-11 h-11 rounded-sm overflow-hidden border border-gold/40">
-              <img src={DETECTIVE_IMAGE} alt="Alexander Morozov" className="w-full h-full object-cover" />
+              <img src={DETECTIVE_IMAGE} alt="Alexander Morozov" loading="lazy" decoding="async" className="w-full h-full object-cover" />
             </div>
             <div className="text-start">
               <div className="font-montserrat font-bold text-sm text-foreground flex items-center gap-1.5">
@@ -2506,7 +2506,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
       {/* Header card */}
       <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-5 security-glow">
         <div className="w-16 h-16 rounded-sm overflow-hidden border-2 border-gold shrink-0">
-          <img src={resolveAvatar(clientAvatar, clientData.gender)} alt="avatar" className="w-full h-full object-cover" />
+          <img src={resolveAvatar(clientAvatar, clientData.gender)} alt="avatar" loading="lazy" decoding="async" className="w-full h-full object-cover" />
         </div>
         <div className="flex-1">
           <div className="text-xs text-muted-foreground font-montserrat mb-1">{tr("dashWelcome")},</div>
