@@ -2,6 +2,7 @@ import json
 import os
 import psycopg2
 import auth_utils
+import notify_utils
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -154,6 +155,18 @@ def handler(event: dict, context) -> dict:
                     f"message=EXCLUDED.message, price=EXCLUDED.price, provider_name=EXCLUDED.provider_name, status='sent'",
                     (request_id, slug, provider_name, message, price),
                 )
+                # Уведомляем клиента — автора заявки — о новом отклике.
+                cur.execute(
+                    f"SELECT client_id, service FROM {SCHEMA}.client_requests WHERE id=%s",
+                    (request_id,),
+                )
+                rq = cur.fetchone()
+                if rq:
+                    client_uid = notify_utils.id_from_slug(rq[0])
+                    svc = rq[1] or ''
+                    title = 'Новый отклик на вашу задачу'
+                    text = f'Специалист {provider_name} откликнулся на задачу «{svc}». Цена: {price or "по договорённости"}.'
+                    notify_utils.push(cur, client_uid, 'task', title, text, 'dashboard')
                 conn.commit()
                 return _resp(200, {'success': True})
 
@@ -180,6 +193,17 @@ def handler(event: dict, context) -> dict:
                     f"UPDATE {SCHEMA}.request_responses SET status='declined' "
                     f"WHERE request_id=%s AND provider_slug<>%s",
                     (request_id, slug),
+                )
+                # Уведомляем выбранного специалиста, что клиент выбрал именно его.
+                cur.execute(f"SELECT service FROM {SCHEMA}.client_requests WHERE id=%s", (request_id,))
+                svc_row = cur.fetchone()
+                svc = (svc_row[0] if svc_row else '') or ''
+                provider_uid = notify_utils.id_from_slug(slug)
+                notify_utils.push(
+                    cur, provider_uid, 'task',
+                    'Клиент выбрал вас',
+                    f'Клиент выбрал вас по задаче «{svc}». Свяжитесь с ним, чтобы обсудить детали.',
+                    'dashboard',
                 )
                 conn.commit()
                 return _resp(200, {'success': True})

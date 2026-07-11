@@ -5,6 +5,7 @@ from datetime import datetime
 import psycopg2
 from crypto_utils import encrypt_field, decrypt_field
 import auth_utils
+import notify_utils
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -242,6 +243,14 @@ def handler(event: dict, context) -> dict:
                     f"INSERT INTO {SCHEMA}.direct_messages (pair_key, from_id, from_name, to_id, text) "
                     f"VALUES (%s, %s, %s, %s, %s)",
                     (pair, from_id, from_name, to_id, encrypt_field(text)),
+                )
+                # Уведомляем получателя о новом личном сообщении (без текста — приватность).
+                recipient_uid = notify_utils.id_from_slug(to_id)
+                notify_utils.push(
+                    cur, recipient_uid, 'message',
+                    'Новое сообщение',
+                    f'{from_name or "Пользователь"} написал вам сообщение. Откройте чат, чтобы ответить.',
+                    'chat',
                 )
                 conn.commit()
                 return _resp(200, {'success': True})
