@@ -1,6 +1,7 @@
 import json
 import urllib.request
 import urllib.parse
+import urllib.error
 
 CORS = {
     'Access-Control-Allow-Origin': '*',
@@ -80,7 +81,10 @@ def handler(event: dict, context) -> dict:
             continue
         try:
             translated, detected = _google_translate_one(text, target)
-        except Exception:
+        except (urllib.error.URLError, ValueError, TimeoutError, OSError, KeyError, IndexError) as e:
+            # Перевод одной строки не должен ломать весь батч: при сбое
+            # оставляем исходный текст непереведённым.
+            print(f"[translate] item failed: {type(e).__name__}: {e}")
             translated, detected = None, None
         if translated and detected and detected != target:
             items.append(translated)

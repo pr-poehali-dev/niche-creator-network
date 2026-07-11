@@ -19,7 +19,7 @@ def get_auth_user(event: dict):
     try:
         cur = conn.cursor()
         cur.execute(
-            f"SELECT u.id, u.email, u.role, s.expires_at "
+            f"SELECT u.id, u.email, u.role, s.expires_at, u.is_admin "
             f"FROM {SCHEMA}.sessions s JOIN {SCHEMA}.users u ON u.id = s.user_id "
             f"WHERE s.token = %s",
             (token,),
@@ -31,8 +31,7 @@ def get_auth_user(event: dict):
     if not row or row[3] < datetime.utcnow():
         return None
     email = str(row[1] or '')
-    is_admin = email.startswith('admin+') and email.endswith('@shchit.local')
-    return {'id': int(row[0]), 'email': email, 'role': row[2], 'is_admin': is_admin}
+    return {'id': int(row[0]), 'email': email, 'role': row[2], 'is_admin': bool(row[4])}
 
 
 def user_dm_id(user: dict) -> str:

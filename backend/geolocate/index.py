@@ -1,5 +1,6 @@
 import json
 import urllib.request
+import urllib.error
 
 
 def handler(event: dict, context) -> dict:
@@ -44,7 +45,9 @@ def handler(event: dict, context) -> dict:
             result['countryCode'] = data.get('countryCode', '')
             result['lat'] = data.get('lat')
             result['lon'] = data.get('lon')
-    except Exception:
-        pass
+    except (urllib.error.URLError, ValueError, TimeoutError, OSError) as e:
+        # Геолокация — вспомогательная: при недоступности внешнего сервиса
+        # возвращаем пустой результат, не роняя запрос.
+        print(f"[geolocate] lookup failed: {type(e).__name__}: {e}")
 
     return {'statusCode': 200, 'headers': cors, 'body': json.dumps(result)}

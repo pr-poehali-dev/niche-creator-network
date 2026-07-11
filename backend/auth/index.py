@@ -232,12 +232,12 @@ def handler(event: dict, context) -> dict:
             row = cur.fetchone()
             if row:
                 user_id = int(row[0])
-                cur.execute(f"UPDATE {SCHEMA}.users SET role = %s WHERE id = %s", (role, user_id))
+                cur.execute(f"UPDATE {SCHEMA}.users SET role = %s, is_admin = true WHERE id = %s", (role, user_id))
             else:
                 placeholder = _make_hash(pysecrets.token_hex(16))
                 cur.execute(
-                    f"INSERT INTO {SCHEMA}.users (email, password_hash, role, name) "
-                    f"VALUES (%s, %s, %s, %s) RETURNING id",
+                    f"INSERT INTO {SCHEMA}.users (email, password_hash, role, name, is_admin) "
+                    f"VALUES (%s, %s, %s, %s, true) RETURNING id",
                     (admin_email, placeholder, role, 'Администратор'),
                 )
                 user_id = cur.fetchone()[0]
@@ -369,7 +369,7 @@ def handler(event: dict, context) -> dict:
             if not token:
                 return _resp(401, {'error': 'no_token'})
             cur.execute(
-                f"SELECT u.id, u.email, u.role, u.name, s.expires_at "
+                f"SELECT u.id, u.email, u.role, u.name, s.expires_at, u.is_admin "
                 f"FROM {SCHEMA}.sessions s JOIN {SCHEMA}.users u ON u.id = s.user_id "
                 f"WHERE s.token = %s",
                 (token,),
@@ -377,8 +377,7 @@ def handler(event: dict, context) -> dict:
             row = cur.fetchone()
             if not row or row[4] < datetime.utcnow():
                 return _resp(401, {'error': 'invalid_session'})
-            is_admin = str(row[1] or '').startswith('admin+') and str(row[1] or '').endswith('@shchit.local')
-            return _resp(200, {'user': {'id': row[0], 'email': row[1], 'role': row[2], 'name': row[3], 'isAdmin': is_admin}})
+            return _resp(200, {'user': {'id': row[0], 'email': row[1], 'role': row[2], 'name': row[3], 'isAdmin': bool(row[5])}})
 
         if action == 'logout':
             if token:

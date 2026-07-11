@@ -39,48 +39,45 @@ def handler(event: dict, context) -> dict:
     client_id = auth_utils.client_id(user)
 
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
-    cur = conn.cursor()
+    try:
+        cur = conn.cursor()
 
-    if method == 'GET':
-        cur.execute(
-            f"SELECT full_name, phone, email, avatar_url, gender FROM {SCHEMA}.clients WHERE client_id=%s",
-            (client_id,),
-        )
-        row = cur.fetchone()
-        cur.close()
+        if method == 'GET':
+            cur.execute(
+                f"SELECT full_name, phone, email, avatar_url, gender FROM {SCHEMA}.clients WHERE client_id=%s",
+                (client_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'client': None})}
+            return {'statusCode': 200, 'headers': cors, 'body': json.dumps({
+                'client': {
+                    'fullName': decrypt_field(row[0] or ''),
+                    'phone': decrypt_field(row[1] or ''),
+                    'email': decrypt_field(row[2] or ''),
+                    'avatarUrl': row[3] or '',
+                    'gender': row[4] or 'm',
+                }
+            })}
+
+        if method == 'POST':
+            body = json.loads(event.get('body') or '{}')
+            full_name = esc(body.get('fullName'))
+            phone = esc(body.get('phone'))
+            email = esc(body.get('email'))
+            gender = esc(body.get('gender')) or 'm'
+            if gender not in ('m', 'f'):
+                gender = 'm'
+            cur.execute(
+                f"INSERT INTO {SCHEMA}.clients (client_id, full_name, phone, email, gender) "
+                f"VALUES (%s, %s, %s, %s, %s) "
+                f"ON CONFLICT (client_id) DO UPDATE SET "
+                f"full_name=EXCLUDED.full_name, phone=EXCLUDED.phone, email=EXCLUDED.email, gender=EXCLUDED.gender, updated_at=now()",
+                (client_id, encrypt_field(full_name), encrypt_field(phone), encrypt_field(email), gender),
+            )
+            conn.commit()
+            return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'success': True})}
+
+        return {'statusCode': 405, 'headers': cors, 'body': json.dumps({'error': 'Method not allowed'})}
+    finally:
         conn.close()
-        if not row:
-            return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'client': None})}
-        return {'statusCode': 200, 'headers': cors, 'body': json.dumps({
-            'client': {
-                'fullName': decrypt_field(row[0] or ''),
-                'phone': decrypt_field(row[1] or ''),
-                'email': decrypt_field(row[2] or ''),
-                'avatarUrl': row[3] or '',
-                'gender': row[4] or 'm',
-            }
-        })}
-
-    if method == 'POST':
-        body = json.loads(event.get('body') or '{}')
-        full_name = esc(body.get('fullName'))
-        phone = esc(body.get('phone'))
-        email = esc(body.get('email'))
-        gender = esc(body.get('gender')) or 'm'
-        if gender not in ('m', 'f'):
-            gender = 'm'
-        cur.execute(
-            f"INSERT INTO {SCHEMA}.clients (client_id, full_name, phone, email, gender) "
-            f"VALUES (%s, %s, %s, %s, %s) "
-            f"ON CONFLICT (client_id) DO UPDATE SET "
-            f"full_name=EXCLUDED.full_name, phone=EXCLUDED.phone, email=EXCLUDED.email, gender=EXCLUDED.gender, updated_at=now()",
-            (client_id, encrypt_field(full_name), encrypt_field(phone), encrypt_field(email), gender),
-        )
-        conn.commit()
-        cur.close()
-        conn.close()
-        return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'success': True})}
-
-    cur.close()
-    conn.close()
-    return {'statusCode': 405, 'headers': cors, 'body': json.dumps({'error': 'Method not allowed'})}

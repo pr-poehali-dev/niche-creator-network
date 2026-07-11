@@ -26,8 +26,13 @@ VALID_PLANS = ('start', 'pro', 'premium')
 PLAN_PRICES_RUB = {'start': 1990, 'pro': 4490, 'premium': 7990}
 MIN_ACCEPTABLE_FACTOR = 0.5  # не даём активировать тариф, если оплачено меньше половины минимальной цены
 
-# Функция отправки чека на почту (отдельная cloud-функция send-receipt)
-RECEIPT_URL = 'https://functions.poehali.dev/4a87b00b-70a2-4af4-846b-156ef2a08b97'
+# URL функции отправки чека на почту (send-receipt). Берётся из переменной
+# окружения RECEIPT_FUNCTION_URL, чтобы не хардкодить адрес в коде и менять его
+# без правок. Значение по умолчанию оставлено для обратной совместимости.
+RECEIPT_URL = os.environ.get(
+    'RECEIPT_FUNCTION_URL',
+    'https://functions.poehali.dev/4a87b00b-70a2-4af4-846b-156ef2a08b97',
+)
 PLAN_TITLES = {'start': 'Старт', 'pro': 'Профи', 'premium': 'Премиум'}
 
 

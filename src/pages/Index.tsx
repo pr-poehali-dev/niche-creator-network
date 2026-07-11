@@ -1163,7 +1163,10 @@ export default function Index() {
   }, [isProvider, providerSlug]);
 
   useEffect(() => {
+    // Реагируем только на смену страны; applyGeoLang стабильна по смыслу
+    // и намеренно не включена в зависимости, чтобы не пере-срабатывать.
     if (geo?.countryCode) applyGeoLang(geo.countryCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geo?.countryCode]);
 
   useEffect(() => {

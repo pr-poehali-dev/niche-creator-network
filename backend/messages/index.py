@@ -49,15 +49,14 @@ def _is_admin(cur, token):
     if not token:
         return False
     cur.execute(
-        f"SELECT u.email, s.expires_at FROM {SCHEMA}.sessions s "
+        f"SELECT u.is_admin, s.expires_at FROM {SCHEMA}.sessions s "
         f"JOIN {SCHEMA}.users u ON u.id = s.user_id WHERE s.token = %s",
         (token,),
     )
     row = cur.fetchone()
     if not row or row[1] < datetime.utcnow():
         return False
-    email = str(row[0] or '')
-    return email.startswith('admin+') and email.endswith('@shchit.local')
+    return bool(row[0])
 
 
 def handler(event: dict, context) -> dict:

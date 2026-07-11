@@ -54,7 +54,7 @@ def handler(event: dict, context) -> dict:
             if view == 'provider':
                 slug = auth_utils.provider_slug(user)
                 category = esc(params.get('category'), 40)
-                if category and category in ALLOWED_CATEGORIES and category != '':
+                if category and category in ALLOWED_CATEGORIES:
                     cur.execute(
                         f"SELECT r.id, r.client_name, r.category, r.service, r.description, r.budget, r.city, r.created_at, "
                         f"rr.id, rr.message, rr.price, rr.status "

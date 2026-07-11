@@ -132,7 +132,9 @@ def handler(event: dict, context) -> dict:
 
     body = json.loads(event.get('body') or '{}')
     slug = owner_slug
-    print(f"[save-verification] POST slug={slug} keys={sorted(list(body.keys()))} "
+    # Не логируем имена/содержимое полей (в них могут быть персональные данные) —
+    # только размер запроса и число полей.
+    print(f"[save-verification] POST slug={slug} fields={len(body)} "
           f"body_len={len(event.get('body') or '')}")
 
     legal_status = esc(body.get('legalStatus'))

@@ -116,13 +116,19 @@ def handler(event: dict, context) -> dict:
     msg['To'] = email
     msg.attach(MIMEText(html, 'html', 'utf-8'))
 
-    if smtp_port == 465:
-        server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=20)
-    else:
-        server = smtplib.SMTP(smtp_host, smtp_port, timeout=20)
-        server.starttls()
-    server.login(smtp_user, smtp_password)
-    server.sendmail(smtp_user, [email], msg.as_string())
-    server.quit()
+    try:
+        if smtp_port == 465:
+            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=20)
+        else:
+            server = smtplib.SMTP(smtp_host, smtp_port, timeout=20)
+            server.starttls()
+        server.login(smtp_user, smtp_password)
+        server.sendmail(smtp_user, [email], msg.as_string())
+        server.quit()
+    except smtplib.SMTPAuthenticationError:
+        return {'statusCode': 500, 'headers': cors, 'body': json.dumps({'error': 'smtp_auth'})}
+    except Exception as e:
+        print(f"[send-receipt] SMTP ERROR: {type(e).__name__}: {e}")
+        return {'statusCode': 500, 'headers': cors, 'body': json.dumps({'error': 'smtp_send'})}
 
     return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'success': True, 'sent_to': email})}
