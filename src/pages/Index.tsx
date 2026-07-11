@@ -8,9 +8,11 @@ import { cleanText } from "@/lib/moderation";
 import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, type Provider } from "@/lib/providers";
 import { useAuth, type AuthRole } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
+import { trackGoal, GOALS } from "@/lib/analytics";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Reveal from "@/components/Reveal";
 import Brand from "@/components/Brand";
+import ShareButtons from "@/components/ShareButtons";
 import UrgencyBanner from "@/components/UrgencyBanner";
 import func2url from "../../backend/func2url.json";
 
@@ -128,7 +130,11 @@ function AuthModal({ onClose, onOpenDoc }: { onClose: () => void; onOpenDoc: (s:
       setTwofa({ challengeId: res.challengeId, emailHint: res.emailHint || email, sent: !!res.sent });
       return;
     }
-    if (res.ok) onClose();
+    if (res.ok) {
+      if (mode === "register") trackGoal(role === "provider" ? GOALS.signupProvider : GOALS.signupClient);
+      else if (mode === "login") trackGoal(GOALS.login);
+      onClose();
+    }
     else setError(errText(res.error || "error"));
   };
 
@@ -138,7 +144,11 @@ function AuthModal({ onClose, onOpenDoc }: { onClose: () => void; onOpenDoc: (s:
     setBusy(true);
     const res = await verify2fa(twofa.challengeId, code);
     setBusy(false);
-    if (res.ok) onClose();
+    if (res.ok) {
+      if (mode === "register") trackGoal(role === "provider" ? GOALS.signupProvider : GOALS.signupClient);
+      else if (mode === "login") trackGoal(GOALS.login);
+      onClose();
+    }
     else setError(errText(res.error || "error"));
   };
 
@@ -1187,6 +1197,7 @@ export default function Index() {
   };
 
   const openChat = (target: { name: string; title: string; avatar?: string | null }) => {
+    trackGoal(GOALS.contactProvider);
     setChatTarget(target);
     go("chat");
   };
@@ -1443,6 +1454,7 @@ export default function Index() {
             </div>
           </div>
           <div className="divider-gold mt-8 mb-6" />
+          <ShareButtons className="mb-6" />
           <div className="text-[11px] text-muted-foreground/80 leading-relaxed mb-4 space-y-0.5">
             <div className="font-semibold text-muted-foreground">{tr("reqName")}</div>
             <div>{tr("reqOgrnip")} · {tr("reqInn")}</div>
@@ -2482,6 +2494,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
         headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ action: "create", clientName: clientData.fullName || user?.name || "", ...newReq }),
       });
+      trackGoal(GOALS.createRequest);
       setNewReq({ category: "", service: "", description: "", budget: "", city: "" });
       setReqFormOpen(false);
       loadReqs();
@@ -3018,6 +3031,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
       headers: authHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ action: "respond", requestId, providerName: vf.usePseudonym && vf.pseudonym ? vf.pseudonym : (vf.fullName || user?.name || ""), message: draft.message, price: draft.price }),
     });
+    trackGoal(GOALS.respondRequest);
     setRespOpen(null);
     loadIncoming();
   };
@@ -3889,6 +3903,7 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
       }
       // Платёжная система ещё не настроена — показываем демо-успех
       setStatus("success");
+      trackGoal(GOALS.paymentSuccess);
       if (defaultEmail && defaultEmail.includes("@")) {
         setAutoSent(true);
         sendTo(defaultEmail);
@@ -4100,6 +4115,8 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
   const { user } = useAuth();
   const [payPlan, setPayPlan] = useState<PayPlan | null>(null);
   const promoActive = new Date() < new Date("2026-08-01T00:00:00Z");
+
+  useEffect(() => { trackGoal(GOALS.openPricing); }, []);
   const plans = [
     {
       name: "planStartName" as const,
@@ -4263,7 +4280,7 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
               ))}
             </div>
             <button
-              onClick={() => p.enterprise ? setActive("contacts") : setPayPlan({ name: p.name, price: p.price })}
+              onClick={() => p.enterprise ? setActive("contacts") : (trackGoal(GOALS.startPayment), setPayPlan({ name: p.name, price: p.price }))}
               className={`w-full py-3 text-xs font-montserrat font-bold rounded-sm transition-all ${(p.featured || p.premium) ? "gold-gradient text-[hsl(220,20%,6%)] hover:opacity-90 glow-gold-sm" : "border border-gold text-gold hover:bg-gold hover:text-[hsl(220,20%,6%)]"}`}
             >
               {p.enterprise ? tr("contactSales") : p.premium ? tr("choosePremium") : tr("choosePlan")}
@@ -5447,6 +5464,8 @@ function ContactsSection() {
   const [fbSubject, setFbSubject] = useState("");
   const [fbMessage, setFbMessage] = useState("");
   const [fbState, setFbState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  useEffect(() => { trackGoal(GOALS.openContacts); }, []);
 
   const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(fbEmail.trim());
   const canSend = emailValid && fbMessage.trim().length > 0 && fbState !== "sending";

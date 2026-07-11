@@ -1038,6 +1038,9 @@ export const t: Dict = {
 
   // Footer
   footerDesc: { ru: "Международное закрытое сообщество для специалистов в сфере безопасности", en: "International private community for security professionals" },
+  shareTitle: { ru: "Поделиться платформой", en: "Share the platform" },
+  shareCopied: { ru: "Ссылка скопирована", en: "Link copied" },
+  shareText: { ru: "ЩИТ — международная платформа проверенных специалистов по безопасности", en: "SHCHIT — international platform of verified security specialists" },
   footerPlatform: { ru: "Платформа", en: "Platform" },
   footerCommunity: { ru: "Сообщество", en: "Community" },
   footerDocs: { ru: "Документы", en: "Legal" },
@@ -1312,6 +1315,19 @@ const LanguageContext = createContext<LangCtx>({
 
 function getInitialLang(): Lang {
   if (typeof window === "undefined") return "ru";
+  // Наивысший приоритет — язык из URL (?lang=xx). Это делает многоязычные
+  // ссылки (hreflang, ссылки из соцсетей и поиска) рабочими для SEO:
+  // страница сразу открывается на нужном языке.
+  try {
+    const urlLang = new URLSearchParams(window.location.search).get("lang") as Lang | null;
+    if (urlLang && LANGS.some((l) => l.code === urlLang)) {
+      window.localStorage.setItem("lang", urlLang);
+      window.localStorage.setItem("langChosen", "1");
+      return urlLang;
+    }
+  } catch {
+    // URLSearchParams недоступен — молча пропускаем и идём дальше по приоритетам.
+  }
   const saved = window.localStorage.getItem("lang") as Lang | null;
   if (saved && LANGS.some((l) => l.code === saved)) return saved;
   const browser = window.navigator.language.slice(0, 2) as Lang;
