@@ -2024,7 +2024,8 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
 
   return (
     <div>
-      <UrgencyBanner onCta={() => setActive("pricing")} sticky={!isClient} />
+      {/* Баннер скидки на тарифы — только для исполнителей. Клиенту скидка не нужна. */}
+      {!isClient && <UrgencyBanner onCta={() => setActive("pricing")} sticky />}
       <section className="relative overflow-hidden grid-line-bg min-h-[92vh] flex items-center vignette">
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/40 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
@@ -4321,6 +4322,30 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
 function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider: Provider; onBack: () => void; openChat: (t: { name: string; title: string; avatar?: string | null }) => void }) {
   const { lang, tr } = useLang();
   const tags = lang === "ru" ? p.tags.ru : p.tags.en;
+  const licensed = isLicensed(p);
+  const v = p.verification;
+  const bio = v?.bio ? v.bio : "";
+  const licenseNo = v?.license || (Array.isArray(v?.licenses) && v?.licenses.length
+    ? (typeof v.licenses[0] === "string" ? v.licenses[0] : v.licenses[0]?.number)
+    : "");
+  const hasDocs = !!v && ((Array.isArray(v.licenses) && v.licenses.length > 0) || (Array.isArray(v.documents) && v.documents.length > 0));
+
+  // Строка «да/нет» для пунктов верификации.
+  const checkRow = (ok: boolean, label: string) => (
+    <div className="flex items-center gap-2 text-sm">
+      <Icon name={ok ? "CircleCheck" : "CircleX"} size={16} className={ok ? "text-green-400 shrink-0" : "text-muted-foreground/40 shrink-0"} />
+      <span className={ok ? "text-foreground" : "text-muted-foreground"}>{label}</span>
+    </div>
+  );
+
+  // Пара «подпись — значение» для блока информации.
+  const infoRow = (icon: string, label: string, value: string) => (
+    <div className="flex items-center gap-3 py-2.5 border-b border-border last:border-0">
+      <Icon name={icon} size={16} className="text-gold shrink-0" />
+      <span className="text-xs text-muted-foreground w-28 shrink-0">{label}</span>
+      <span className="text-sm text-foreground font-medium">{value}</span>
+    </div>
+  );
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
@@ -4331,47 +4356,91 @@ function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider:
         </button>
       </div>
 
-      <div className="border border-border rounded-sm bg-card overflow-hidden mb-6">
-        <div className="h-40 overflow-hidden relative">
-          <img src={resolveAvatar(p.img, p.gender)} alt={L(p.name, lang)} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
-          {isLicensed(p) && (
-            <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
-              <Icon name="BadgeCheck" size={12} className="text-gold" />
-              <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licenseBadge")}</span>
-            </div>
-          )}
-        </div>
-        <div className="p-6 -mt-12 relative">
-          <div className="w-20 h-20 rounded-sm border-2 border-gold overflow-hidden mb-3">
-            <img src={resolveAvatar(p.img, p.gender)} alt={L(p.name, lang)} className="w-full h-full object-cover" />
-          </div>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            <div>
-              <div className="font-montserrat font-bold text-2xl text-foreground mb-1">{L(p.name, lang)}</div>
-              <div className="text-gold text-sm font-montserrat font-medium mb-1">{L(p.title, lang)} · {p.experience} {tr("yearsShort")}</div>
-              <div className="text-xs text-muted-foreground flex items-center gap-1"><Icon name="MapPin" size={12} />{L(p.city, lang)}</div>
-              <div className="flex items-center gap-2 mt-3">
-                <StarRating rating={p.rating} />
-                <span className="text-xs text-muted-foreground">{p.rating} ({p.reviews})</span>
-              </div>
-            </div>
-            <div className="border border-gold/30 rounded-sm bg-background px-5 py-3 text-center">
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("cost")}</div>
-              <div className="font-montserrat font-bold text-lg text-gold">{L(p.price, lang)}</div>
+      {/* Шапка: одно фото среднего размера + основные данные */}
+      <div className="border border-border rounded-sm bg-card p-6 mb-6">
+        <div className="flex flex-col sm:flex-row gap-6">
+          <div className="w-full sm:w-56 shrink-0">
+            <div className="relative rounded-sm overflow-hidden border border-border aspect-[4/5] bg-secondary">
+              <img src={resolveAvatar(p.img, p.gender)} alt={L(p.name, lang)} loading="lazy" className="w-full h-full object-cover" />
+              {p.isPseudonym && (
+                <div className="absolute top-2 start-2 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border px-2 py-1 rounded-sm">
+                  <Icon name="VenetianMask" size={11} className="text-muted-foreground" />
+                  <span className="text-[10px] font-montserrat font-semibold text-muted-foreground">{tr("aliasBadge")}</span>
+                </div>
+              )}
             </div>
           </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <h1 className="font-montserrat font-bold text-2xl text-foreground">{L(p.name, lang)}</h1>
+              {p.verified && (
+                <span className="flex items-center gap-1 bg-green-500/10 border border-green-500/40 px-2 py-0.5 rounded-sm">
+                  <Icon name="BadgeCheck" size={13} className="text-green-400" />
+                  <span className="text-[10px] font-montserrat font-semibold text-green-400">{tr("verifyDocsConfirmed")}</span>
+                </span>
+              )}
+              {licensed && (
+                <span className="flex items-center gap-1 bg-gold/10 border border-gold/40 px-2 py-0.5 rounded-sm">
+                  <Icon name="BadgeCheck" size={13} className="text-gold" />
+                  <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licenseBadge")}</span>
+                </span>
+              )}
+            </div>
+            <div className="text-gold text-sm font-montserrat font-medium mb-3">{L(p.title, lang)} · {p.experience} {tr("yearsShort")}</div>
+            <div className="flex items-center gap-2 mb-4">
+              <StarRating rating={p.rating} />
+              <span className="text-xs text-muted-foreground">{p.rating} ({p.reviews} {tr("profileReviewsCount")})</span>
+            </div>
+            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mb-4">
+              <span className="flex items-center gap-1"><Icon name="MapPin" size={13} className="text-gold" />{p.country ? `${L(p.country, lang)}, ` : ""}{L(p.city, lang)}</span>
+              {p.age != null && <span className="flex items-center gap-1"><Icon name="User" size={13} className="text-gold" />{p.age} {tr("yearsOld")}</span>}
+              <span className="flex items-center gap-1"><Icon name="Award" size={13} className="text-gold" />{p.experience} {tr("yearsShort")}</span>
+            </div>
+            <div className="border border-gold/30 rounded-sm bg-background px-4 py-3 inline-flex items-center gap-3">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("cost")}</span>
+              <span className="font-montserrat font-bold text-lg text-gold">{L(p.price, lang)}</span>
+            </div>
+          </div>
         </div>
+        {p.isPseudonym && (
+          <div className="mt-4 flex items-center gap-2 text-[11px] text-muted-foreground bg-secondary/50 border border-border rounded-sm px-3 py-2">
+            <Icon name="Info" size={13} className="shrink-0" />{tr("profileAliasNote")}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          {/* О специалисте */}
+          {bio && (
+            <div className="border border-border rounded-sm bg-card p-6">
+              <h3 className="font-montserrat font-bold text-sm text-foreground mb-3 flex items-center gap-2"><Icon name="UserRound" size={15} className="text-gold" />{tr("profileAbout")}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{bio}</p>
+            </div>
+          )}
+
+          {/* Информация */}
+          <div className="border border-border rounded-sm bg-card p-6">
+            <h3 className="font-montserrat font-bold text-sm text-foreground mb-3 flex items-center gap-2"><Icon name="IdCard" size={15} className="text-gold" />{tr("profileInfo")}</h3>
+            <div>
+              {p.country && infoRow("Globe", tr("profileCountry"), L(p.country, lang))}
+              {infoRow("MapPin", tr("profileCity"), L(p.city, lang))}
+              {p.age != null && infoRow("User", tr("profileAge"), `${p.age} ${tr("yearsOld")}`)}
+              {infoRow("Award", tr("profileExperienceLabel"), `${p.experience} ${tr("yearsShort")}`)}
+              {v?.legalStatus && infoRow("Building2", tr("profileLegalStatus"), v.legalStatus)}
+              {licenseNo && infoRow("FileBadge", tr("profileLicenseNumber"), String(licenseNo))}
+            </div>
+          </div>
+
+          {/* Специализация */}
           <div className="border border-border rounded-sm bg-card p-6">
             <h3 className="font-montserrat font-bold text-sm text-foreground mb-4 flex items-center gap-2"><Icon name="Tag" size={15} className="text-gold" />{tr("profileSpecialization")}</h3>
             <div className="flex flex-wrap gap-2">
               {tags.map((tg) => (<span key={tg} className="tag-security">{tg}</span>))}
             </div>
           </div>
+
+          {/* Счётчики */}
           <div className="grid grid-cols-3 gap-4">
             {[
               { n: p.experience, l: "yearsShort" as const, icon: "Award" },
@@ -4386,7 +4455,19 @@ function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider:
             ))}
           </div>
         </div>
+
         <div className="space-y-5">
+          {/* Проверка и верификация */}
+          <div className="border border-border rounded-sm bg-card p-5">
+            <h3 className="font-montserrat font-bold text-sm text-foreground mb-4 flex items-center gap-2"><Icon name="ShieldCheck" size={15} className="text-gold" />{tr("profileVerification")}</h3>
+            <div className="space-y-2.5">
+              {checkRow(!!p.verified, tr("profileVerifiedIdentity"))}
+              {checkRow(licensed, tr("profileLicenseChecked"))}
+              {checkRow(hasDocs, tr("profileDocsConfirmed"))}
+            </div>
+          </div>
+
+          {/* Контакты */}
           <div className="border border-gold/30 rounded-sm bg-card p-5 security-glow">
             <AvailabilityNote p={p} />
             <div className="mt-3">
