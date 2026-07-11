@@ -7,12 +7,12 @@ import { useLang } from "@/lib/i18n";
  * На мобильных использует нативное системное меню «Поделиться» (Web Share API),
  * плюс явные ссылки на Telegram, WhatsApp, VK и копирование ссылки.
  */
-export default function ShareButtons({ className = "" }: { className?: string }) {
+export default function ShareButtons({ className = "", shareUrl, shareText }: { className?: string; shareUrl?: string; shareText?: string }) {
   const { tr } = useLang();
   const [copied, setCopied] = useState(false);
 
-  const url = typeof window !== "undefined" ? window.location.origin + "/" : "https://shieldpspl.ru/";
-  const text = tr("shareText");
+  const url = shareUrl || (typeof window !== "undefined" ? window.location.origin + "/" : "https://shieldpspl.ru/");
+  const text = shareText || tr("shareText");
 
   const nativeShare = async () => {
     if (typeof navigator !== "undefined" && navigator.share) {

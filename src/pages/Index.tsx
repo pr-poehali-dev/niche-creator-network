@@ -6105,6 +6105,14 @@ function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (
         })}
       </article>
 
+      {/* Share this article */}
+      <div className="border-t border-border mt-10 pt-6">
+        <ShareButtons
+          shareUrl={`https://shieldpspl.ru/?section=blog&post=${post.slug}`}
+          shareText={loc(post.title)}
+        />
+      </div>
+
       {/* CTA to catalog */}
       <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mt-10 text-center security-glow">
         <h2 className="font-montserrat font-bold text-lg text-foreground mb-2">{tr("blogCtaTitle")}</h2>
@@ -6117,10 +6125,22 @@ function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (
   );
 }
 
+function getInitialBlogSlug(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const slug = new URLSearchParams(window.location.search).get("post");
+    if (slug && BLOG_POSTS.some((p) => p.slug === slug)) return slug;
+  } catch {
+    // URLSearchParams недоступен — открываем список статей.
+  }
+  return null;
+}
+
 function BlogSection({ setActive }: { setActive: (s: Section) => void }) {
   const { tr, lang } = useLang();
-  const [openSlug, setOpenSlug] = useState<string | null>(null);
-  const [tab, setTab] = useState<"client" | "provider">("client");
+  const [openSlug, setOpenSlug] = useState<string | null>(getInitialBlogSlug);
+  const initialTab = openSlug ? (BLOG_POSTS.find((p) => p.slug === openSlug)?.audience ?? "client") : "client";
+  const [tab, setTab] = useState<"client" | "provider">(initialTab);
   const loc = (v: { ru: string; en: string }) => (lang === "ru" ? v.ru : v.en);
 
   useEffect(() => { trackGoal(GOALS.openBlog); }, []);
