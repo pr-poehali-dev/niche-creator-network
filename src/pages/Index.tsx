@@ -26,6 +26,9 @@ const DETECTIVE_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b
 const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/3ab23f4f-4190-41a8-a1f3-206d541e0669.jpg";
 const SPY_AVATAR_M = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/61fc9ccd-a5ee-4375-8640-5c890da0df33.jpg";
 const SPY_AVATAR_F = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b40d29de-2a29-448c-82c8-a2baa711ee57.jpg";
+// Гражданские аватары-заглушки для КЛИЕНТОВ (в отличие от «шпионских» у специалистов).
+const CLIENT_AVATAR_M = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/486ba939-2480-4918-8a33-e0c4db578f26.jpg";
+const CLIENT_AVATAR_F = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/600d0761-1767-4e8d-a2ac-7fc9ffb9877a.jpg";
 
 type Section = "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "consent" | "admin" | "mobileapp" | "about" | "blog";
 type Role = "client" | "provider";
@@ -65,8 +68,58 @@ const L = (v: LS, lang: Lang) => {
 };
 
 const spyAvatar = (gender?: string) => (gender === "f" ? SPY_AVATAR_F : SPY_AVATAR_M);
-const resolveAvatar = (img: string | null | undefined, gender?: string) => (img && img.trim() ? img : spyAvatar(gender));
+const civilAvatar = (gender?: string) => (gender === "f" ? CLIENT_AVATAR_F : CLIENT_AVATAR_M);
+// Заглушка аватара. Для клиентов — гражданский образ, для специалистов — «шпионский».
+const resolveAvatar = (img: string | null | undefined, gender?: string, role?: "client" | "provider") =>
+  (img && img.trim() ? img : (role === "client" ? civilAvatar(gender) : spyAvatar(gender)));
 const isImageUrl = (url?: string) => !!url && /\.(png|jpe?g|webp|gif)(\?|$)/i.test(url);
+
+// Скрытие фамилии между оппонентами: показываем имя и первую букву фамилии.
+// «Александр Морозов» → «Александр М.»; одиночное имя остаётся как есть.
+const shortName = (full: string | null | undefined): string => {
+  const s = String(full || "").trim();
+  if (!s) return "";
+  const parts = s.split(/\s+/);
+  if (parts.length < 2) return parts[0];
+  return `${parts[0]} ${parts[1].charAt(0)}.`;
+};
+
+// Избранные специалисты клиента. Хранятся локально по slug.
+const FAVORITES_KEY = "shchit_favorites";
+function readFavorites(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(FAVORITES_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+function useFavorites() {
+  const [favorites, setFavorites] = useState<string[]>(readFavorites);
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => { if (e.key === FAVORITES_KEY) setFavorites(readFavorites()); };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+  const isFavorite = useCallback((slug: string) => favorites.includes(slug), [favorites]);
+  const toggleFavorite = useCallback((slug: string) => {
+    setFavorites((cur) => {
+      const next = cur.includes(slug) ? cur.filter((s) => s !== slug) : [...cur, slug];
+      try { window.localStorage.setItem(FAVORITES_KEY, JSON.stringify(next)); } catch { /* noop */ }
+      return next;
+    });
+  }, []);
+  const removeFavorite = useCallback((slug: string) => {
+    setFavorites((cur) => {
+      const next = cur.filter((s) => s !== slug);
+      try { window.localStorage.setItem(FAVORITES_KEY, JSON.stringify(next)); } catch { /* noop */ }
+      return next;
+    });
+  }, []);
+  return { favorites, isFavorite, toggleFavorite, removeFavorite };
+}
 
 function Lightbox({ src, title, onClose }: { src: string; title?: string; onClose: () => void }) {
   const { tr } = useLang();
@@ -509,7 +562,7 @@ function AvatarUploader({ current, gender, role, recordId, onUploaded }: { curre
   return (
     <div className="flex items-center gap-4">
       <div className="w-20 h-20 rounded-sm overflow-hidden border-2 border-gold shrink-0 bg-secondary">
-        <img src={resolveAvatar(current, gender)} alt="avatar" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+        <img src={resolveAvatar(current, gender, role)} alt="avatar" loading="lazy" decoding="async" className="w-full h-full object-cover" />
       </div>
       <div className="flex-1">
         <div className="text-xs font-montserrat font-semibold text-foreground mb-1">{tr("avatarTitle")}</div>
@@ -2487,6 +2540,8 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
 function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const { lang, tr } = useLang();
   const { logout, user } = useAuth();
+  const { providers } = useProviders();
+  const { favorites, removeFavorite } = useFavorites();
   const clientId = user ? `client-${user.id}` : "demo-client";
   const handleLogout = async () => { await logout(); setActive("home"); window.scrollTo({ top: 0 }); };
   // Намерение «поставить задачу» с главной: открываем сразу вкладку «Мои задачи».
@@ -2505,6 +2560,8 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [clientData, setClientData] = useState({ fullName: "", phone: "", email: "", gender: "m" });
   const [clientState, setClientState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [clientAvatar, setClientAvatar] = useState<string>("");
+  // Профиль блокируется от правок, когда заполнены имя и телефон. Далее — только через поддержку.
+  const [profileLocked, setProfileLocked] = useState(false);
 
   useEffect(() => {
     fetch(func2url["clients"], { headers: authHeaders() })
@@ -2513,12 +2570,14 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
         if (d.client) {
           setClientData({ fullName: d.client.fullName || "", phone: d.client.phone || "", email: d.client.email || "", gender: d.client.gender || "m" });
           setClientAvatar(d.client.avatarUrl || "");
+          if ((d.client.fullName || "").trim() && (d.client.phone || "").trim()) setProfileLocked(true);
         }
       })
       .catch(() => {});
   }, [clientId]);
 
   const saveClient = async () => {
+    if (profileLocked) return;
     setClientState("saving");
     try {
       const res = await fetch(func2url["clients"], {
@@ -2526,17 +2585,54 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
         headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ ...clientData }),
       });
-      setClientState(res.ok ? "saved" : "error");
+      if (res.ok) {
+        setClientState("saved");
+        if (clientData.fullName.trim() && clientData.phone.trim()) setProfileLocked(true);
+      } else {
+        setClientState("error");
+      }
     } catch {
       setClientState("error");
     }
   };
 
+  // Настройки уведомлений/связи/тишины клиента.
+  const [notifEmail, setNotifEmail] = useState<boolean>(true);
+  const [prefContact, setPrefContact] = useState<string>(() => {
+    try { return localStorage.getItem("shchit_pref_contact") || "chat"; } catch { return "chat"; }
+  });
+  const [quietStart, setQuietStart] = useState<string>(() => {
+    try { return localStorage.getItem("shchit_quiet_start") || ""; } catch { return ""; }
+  });
+  const [quietEnd, setQuietEnd] = useState<string>(() => {
+    try { return localStorage.getItem("shchit_quiet_end") || ""; } catch { return ""; }
+  });
+  useEffect(() => {
+    fetch(func2url["notifications"], { headers: authHeaders() })
+      .then((r) => r.json())
+      .then((d) => { if (typeof d.emailEnabled === "boolean") setNotifEmail(d.emailEnabled); })
+      .catch(() => {});
+  }, []);
+  const toggleNotifEmail = async () => {
+    const next = !notifEmail;
+    setNotifEmail(next);
+    await fetch(func2url["notifications"], {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action: "set_email", enabled: next }),
+    }).catch(() => setNotifEmail(!next));
+  };
+  const savePrefContact = (v: string) => { setPrefContact(v); try { localStorage.setItem("shchit_pref_contact", v); } catch { /* noop */ } };
+  const saveQuiet = (start: string, end: string) => {
+    setQuietStart(start); setQuietEnd(end);
+    try { localStorage.setItem("shchit_quiet_start", start); localStorage.setItem("shchit_quiet_end", end); } catch { /* noop */ }
+  };
+
   type ReqResponse = { providerSlug: string; providerName: string; message: string; price: string; status: string };
-  type ClientReq = { id: number; category: string; service: string; description: string; budget: string; city: string; status: string; chosenProvider: string; createdAt: string | null; responses: ReqResponse[]; views?: number };
+  type ClientReq = { id: number; category: string; service: string; description: string; budget: string; city: string; status: string; chosenProvider: string; createdAt: string | null; responses: ReqResponse[]; views?: number; neededDate?: string; neededTime?: string };
   const [myReqs, setMyReqs] = useState<ClientReq[]>([]);
   const [reqFormOpen, setReqFormOpen] = useState(wantNewTask);
-  const [newReq, setNewReq] = useState({ category: "", service: "", description: "", budget: "", city: "" });
+  const [newReq, setNewReq] = useState({ category: "", service: "", description: "", budget: "", city: "", neededDate: "", neededTime: "" });
   const [reqBusy, setReqBusy] = useState(false);
 
   // Одноразовое намерение «поставить задачу» — очищаем флаг после применения.
@@ -2565,7 +2661,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
         body: JSON.stringify({ action: "create", clientName: clientData.fullName || user?.name || "", ...newReq }),
       });
       trackGoal(GOALS.createRequest);
-      setNewReq({ category: "", service: "", description: "", budget: "", city: "" });
+      setNewReq({ category: "", service: "", description: "", budget: "", city: "", neededDate: "", neededTime: "" });
       setReqFormOpen(false);
       loadReqs();
     } finally {
@@ -2582,8 +2678,15 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
     loadReqs();
   };
 
-  const providerReviews: { name: LS; role: LS; rating: number; text: LS; date: LS; img: string }[] = [];
-  const completedOrders = myReqs.filter((r) => r.status === "closed" || r.chosenProvider).length;
+  const completeReq = async (requestId: number) => {
+    await fetch(func2url["requests"], {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action: "complete", requestId }),
+    }).catch(() => {});
+    loadReqs();
+  };
+
   const displayName = clientData.fullName || user?.name || tr("dashWelcome");
 
   return (
@@ -2591,7 +2694,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
       {/* Header card */}
       <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-5 security-glow">
         <div className="w-16 h-16 rounded-sm overflow-hidden border-2 border-gold shrink-0">
-          <img src={resolveAvatar(clientAvatar, clientData.gender)} alt="avatar" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+          <img src={resolveAvatar(clientAvatar, clientData.gender, "client")} alt="avatar" loading="lazy" decoding="async" className="w-full h-full object-cover" />
         </div>
         <div className="flex-1">
           <div className="text-xs text-muted-foreground font-montserrat mb-1">{tr("dashWelcome")},</div>
@@ -2626,48 +2729,59 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
         {/* Content */}
         <div className="lg:col-span-3 space-y-5">
           {tab === "profile" && (
-            <>
-              <div className="grid grid-cols-3 gap-4">
-                {[
-                  { n: String(myReqs.length), l: "cdTab2" as const },
-                  { n: String(completedOrders), l: "cdOrdersDone" as const },
-                  { n: String(providerReviews.length), l: "cdReviewsCount" as const },
-                ].map((s) => (
-                  <div key={s.l} className="border border-border rounded-sm bg-card p-5 text-center">
-                    <div className="stat-number text-2xl mb-1">{s.n}</div>
-                    <div className="text-[10px] text-muted-foreground">{tr(s.l)}</div>
-                  </div>
-                ))}
+            <div className="border border-border rounded-sm bg-card p-6 space-y-5">
+              <div>
+                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("cdClientData")}</div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{tr("cdClientDataHint")}</p>
               </div>
-              <div className="border border-border rounded-sm bg-card p-6">
-                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("cdReviewsTitle")}</div>
-                {providerReviews.length === 0 && (
-                  <div className="text-sm text-muted-foreground text-center py-8">{tr("cdNoReviews")}</div>
-                )}
-                <div className="space-y-4">
-                  {providerReviews.map((r) => (
-                    <div key={r.name.en} className="flex gap-3 pb-4 border-b border-border last:border-0 last:pb-0">
-                      <div className="w-9 h-9 rounded-sm overflow-hidden shrink-0">
-                        <img src={r.img} alt={L(r.name, lang)} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <div>
-                            <span className="text-xs font-montserrat font-bold text-foreground">{L(r.name, lang)}</span>
-                            <span className="text-[10px] text-gold ml-2">{L(r.role, lang)}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <StarRating rating={r.rating} />
-                            <span className="text-[10px] text-muted-foreground">{L(r.date, lang)}</span>
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{L(r.text, lang)}</p>
-                      </div>
-                    </div>
+
+              {profileLocked && (
+                <div className="flex items-start gap-2.5 border border-gold/30 rounded-sm bg-gold/5 px-3 py-2.5">
+                  <Icon name="Lock" size={15} className="text-gold shrink-0 mt-0.5" />
+                  <div className="text-[11px] text-muted-foreground leading-relaxed">
+                    {tr("cdProfileLocked")}{" "}
+                    <a href="https://poehali.dev/help" target="_blank" rel="noreferrer" className="text-gold hover:underline font-semibold">{tr("cdContactSupport")}</a>
+                  </div>
+                </div>
+              )}
+
+              <AvatarUploader current={clientAvatar} gender={clientData.gender} role="client" recordId={clientId} onUploaded={setClientAvatar} />
+              <div>
+                <label className="text-xs font-montserrat font-semibold text-foreground block mb-2">{tr("genderLabel")}</label>
+                <div className="grid grid-cols-2 gap-2 max-w-xs">
+                  {([{ v: "m", k: "genderMale" as const }, { v: "f", k: "genderFemale" as const }]).map((g) => (
+                    <button key={g.v} disabled={profileLocked} onClick={() => { setClientData({ ...clientData, gender: g.v }); setClientState("idle"); }}
+                      className={`py-2 text-xs font-montserrat font-semibold rounded-sm border transition-all disabled:opacity-60 disabled:cursor-not-allowed ${clientData.gender === g.v ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                      {tr(g.k)}
+                    </button>
                   ))}
                 </div>
               </div>
-            </>
+              <div className="divider-gold" />
+
+              <div>
+                <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2"><Icon name="User" size={13} className="text-gold" />{tr("cdClientName")}</label>
+                <input value={clientData.fullName} readOnly={profileLocked} onChange={(e) => { setClientData({ ...clientData, fullName: e.target.value }); setClientState("idle"); }} placeholder={tr("cdClientName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2"><Icon name="Phone" size={13} className="text-gold" />{tr("cdClientPhone")}</label>
+                  <input type="tel" value={clientData.phone} readOnly={profileLocked} onChange={(e) => { setClientData({ ...clientData, phone: e.target.value }); setClientState("idle"); }} placeholder="+7 999 000-00-00" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
+                </div>
+                <div>
+                  <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2"><Icon name="Mail" size={13} className="text-gold" />Email</label>
+                  <input type="email" value={clientData.email} readOnly={profileLocked} onChange={(e) => { setClientData({ ...clientData, email: e.target.value }); setClientState("idle"); }} placeholder="you@email.com" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
+                </div>
+              </div>
+              {clientState === "saved" && <div className="flex items-center gap-2 text-sm text-green-400"><Icon name="CheckCircle2" size={16} />{tr("cdClientSaved")}</div>}
+              {clientState === "error" && <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("cdClientSaveErr")}</div>}
+              {!profileLocked && (
+                <button onClick={saveClient} disabled={clientState === "saving"} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+                  {clientState === "saving" ? <Icon name="Loader" size={15} className="animate-spin" /> : <Icon name="Save" size={15} />}
+                  {tr("dashSave")}
+                </button>
+              )}
+            </div>
           )}
 
           {tab === "requests" && (
@@ -2707,6 +2821,16 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
                       <input value={newReq.city} onChange={(e) => setNewReq({ ...newReq, city: e.target.value })} placeholder={tr("reqCityPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqNeededDate")}</label>
+                      <input type="date" value={newReq.neededDate} onChange={(e) => setNewReq({ ...newReq, neededDate: e.target.value })} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqNeededTime")}</label>
+                      <input type="time" value={newReq.neededTime} onChange={(e) => setNewReq({ ...newReq, neededTime: e.target.value })} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold" />
+                    </div>
+                  </div>
                   <button onClick={createReq} disabled={reqBusy || (!newReq.category && !newReq.service.trim())} className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{reqBusy ? tr("pdSaving") : tr("reqPublish")}</button>
                 </div>
               )}
@@ -2718,6 +2842,8 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 {myReqs.map((r) => {
                   const cat = serviceCategories.find((c) => c.id === r.category);
                   const assigned = r.status === "assigned";
+                  const completed = r.status === "completed";
+                  const statusKey = completed ? "reqStatusDone" : assigned ? "reqStatusAssigned" : "reqStatusOpen";
                   return (
                     <div key={r.id} className="border border-border rounded-sm p-4">
                       <div className="flex items-start gap-3 mb-3">
@@ -2728,7 +2854,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
                           <div className="font-montserrat font-semibold text-sm text-foreground">{r.service || (cat ? L(cat.title, lang) : tr("reqService"))}</div>
                           <div className="text-[11px] text-muted-foreground">{cat ? L(cat.title, lang) : ""}{r.budget ? ` · ${r.budget}` : ""}{r.city ? ` · ${r.city}` : ""}</div>
                         </div>
-                        <span className={`tag-security shrink-0 ${assigned ? "text-green-400 border-green-500/40" : "text-gold border-gold/40"}`}>{tr(assigned ? "reqStatusAssigned" : "reqStatusOpen")}</span>
+                        <span className={`tag-security shrink-0 ${completed ? "text-muted-foreground border-border" : assigned ? "text-green-400 border-green-500/40" : "text-gold border-gold/40"}`}>{tr(statusKey)}</span>
                       </div>
                       {r.description && <p className="text-xs text-muted-foreground mb-3">{r.description}</p>}
 
@@ -2742,6 +2868,12 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
                           <Icon name="MessageSquareReply" size={13} className="text-gold" />
                           {tr("reqResponses")}: <span className="text-foreground font-semibold">{r.responses.length}</span>
                         </span>
+                        {(r.neededDate || r.neededTime) && (
+                          <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-secondary/50 border border-gold/30 rounded-sm px-2.5 py-1">
+                            <Icon name="CalendarClock" size={13} className="text-gold" />
+                            {tr("reqNeededWhen")}: <span className="text-foreground font-semibold">{[r.neededDate ? new Date(r.neededDate).toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US") : "", r.neededTime || ""].filter(Boolean).join(" ")}</span>
+                          </span>
+                        )}
                         {r.createdAt && (
                           <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-secondary/50 border border-border rounded-sm px-2.5 py-1">
                             <Icon name="Clock" size={13} className="text-gold" />
@@ -2749,6 +2881,14 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
                           </span>
                         )}
                       </div>
+
+                      {!completed && (
+                        <div className="flex justify-end mb-3">
+                          <button onClick={() => completeReq(r.id)} className="inline-flex items-center gap-1.5 border border-border text-muted-foreground text-[11px] font-montserrat font-semibold px-3 py-1.5 rounded-sm hover:border-green-500/50 hover:text-green-400 transition-all">
+                            <Icon name="CircleCheckBig" size={13} />{tr("reqComplete")}
+                          </button>
+                        </div>
+                      )}
 
                       <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">{tr("reqResponses")} ({r.responses.length})</div>
                       {r.responses.length === 0 ? (
@@ -2758,7 +2898,7 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
                           {r.responses.map((resp) => (
                             <div key={resp.providerSlug} className={`flex items-start gap-3 p-3 border rounded-sm ${resp.status === "accepted" ? "border-green-500/50 bg-green-500/[0.05]" : "border-border"}`}>
                               <div className="flex-1 min-w-0">
-                                <div className="font-montserrat font-semibold text-sm text-foreground">{resp.providerName || resp.providerSlug}</div>
+                                <div className="font-montserrat font-semibold text-sm text-foreground">{shortName(resp.providerName) || resp.providerSlug}</div>
                                 {resp.message && <div className="text-xs text-muted-foreground mt-0.5">{resp.message}</div>}
                                 {resp.price && <div className="text-xs text-gold font-semibold mt-1">{resp.price}</div>}
                               </div>
@@ -2780,74 +2920,90 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
             </div>
           )}
 
-          {tab === "favorites" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {specialists.map((s) => (
-                <div key={s.name.en} className="border border-border rounded-sm bg-card p-5 card-hover">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-11 h-11 rounded-sm overflow-hidden shrink-0">
-                      <img src={s.img} alt={L(s.name, lang)} loading="lazy" className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <div className="font-montserrat font-bold text-sm text-foreground">{L(s.name, lang)}</div>
-                      <div className="text-xs text-gold">{L(s.title, lang)}</div>
-                    </div>
-                    <Icon name="Heart" size={16} className="text-gold fill-current ml-auto shrink-0" />
-                  </div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <StarRating rating={s.rating} />
-                    <span className="text-xs text-muted-foreground">{s.rating} ({s.reviews})</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => setActive("profile")} className="flex-1 gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity">{tr("cdViewProfile")}</button>
-                    <button className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-3 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all">{tr("cdRemove")}</button>
-                  </div>
+          {tab === "favorites" && (() => {
+            const favProviders = providers.filter((p) => favorites.includes(p.slug));
+            if (favProviders.length === 0) {
+              return (
+                <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
+                  <Icon name="HeartOff" size={40} className="text-muted-foreground/30" />
+                  <span className="text-sm text-muted-foreground max-w-xs">{tr("favEmpty")}</span>
+                  <button onClick={() => setActive("specialists")} className="gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold px-4 py-2 rounded-sm mt-1">{tr("heroClientCta2")}</button>
                 </div>
-              ))}
-            </div>
-          )}
+              );
+            }
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {favProviders.map((s) => (
+                  <div key={s.slug} className="border border-border rounded-sm bg-card p-5 card-hover">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-11 h-11 rounded-sm overflow-hidden shrink-0">
+                        <img src={resolveAvatar(s.img, s.gender)} alt={L(s.name, lang)} loading="lazy" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-montserrat font-bold text-sm text-foreground truncate">{L(s.name, lang)}</div>
+                        <div className="text-xs text-gold truncate">{L(s.title, lang)}</div>
+                      </div>
+                      <button onClick={() => removeFavorite(s.slug)} aria-label={tr("favRemove")} className="ml-auto shrink-0 text-gold hover:text-destructive transition-colors">
+                        <Icon name="Heart" size={16} className="fill-current" />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <StarRating rating={s.rating} />
+                      <span className="text-xs text-muted-foreground">{s.rating} ({s.reviews})</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => setActive("specialists")} className="flex-1 gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity">{tr("cdViewProfile")}</button>
+                      <button onClick={() => removeFavorite(s.slug)} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-3 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all">{tr("cdRemove")}</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
 
           {tab === "settings" && (
-            <div className="border border-border rounded-sm bg-card p-6 space-y-5">
-              <div>
-                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("cdClientData")}</div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{tr("cdClientDataHint")}</p>
+            <div className="space-y-5">
+              <div className="border border-border rounded-sm bg-card p-6">
+                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4 flex items-center gap-2"><Icon name="Bell" size={14} className="text-gold" />{tr("setNotifTitle")}</div>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="text-sm font-montserrat font-semibold text-foreground">{tr("notifEmailDup")}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{notifEmail ? tr("notifEmailOn") : tr("notifEmailOff")}</div>
+                  </div>
+                  <button onClick={toggleNotifEmail} role="switch" aria-checked={notifEmail} className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${notifEmail ? "bg-gold" : "bg-secondary border border-border"}`}>
+                    <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${notifEmail ? "start-[22px]" : "start-0.5"}`} />
+                  </button>
+                </div>
               </div>
 
-              <AvatarUploader current={clientAvatar} gender={clientData.gender} role="client" recordId={clientId} onUploaded={setClientAvatar} />
-              <div>
-                <label className="text-xs font-montserrat font-semibold text-foreground block mb-2">{tr("genderLabel")}</label>
-                <div className="grid grid-cols-2 gap-2 max-w-xs">
-                  {([{ v: "m", k: "genderMale" as const }, { v: "f", k: "genderFemale" as const }]).map((g) => (
-                    <button key={g.v} onClick={() => { setClientData({ ...clientData, gender: g.v }); setClientState("idle"); }}
-                      className={`py-2 text-xs font-montserrat font-semibold rounded-sm border transition-all ${clientData.gender === g.v ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:text-foreground"}`}>
-                      {tr(g.k)}
+              <div className="border border-border rounded-sm bg-card p-6">
+                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4 flex items-center gap-2"><Icon name="MessageCircle" size={14} className="text-gold" />{tr("setContactTitle")}</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {([{ v: "chat", k: "setContactChat" as const, i: "MessageSquare" }, { v: "phone", k: "setContactPhone" as const, i: "Phone" }, { v: "email", k: "setContactEmail" as const, i: "Mail" }, { v: "messenger", k: "setContactMessenger" as const, i: "Send" }]).map((c) => (
+                    <button key={c.v} onClick={() => savePrefContact(c.v)} className={`flex flex-col items-center gap-1.5 py-3 text-xs font-montserrat font-semibold rounded-sm border transition-all ${prefContact === c.v ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                      <Icon name={c.i} size={16} />{tr(c.k)}
                     </button>
                   ))}
                 </div>
               </div>
-              <div className="divider-gold" />
 
-              <div>
-                <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2"><Icon name="User" size={13} className="text-gold" />{tr("cdClientName")}</label>
-                <input value={clientData.fullName} onChange={(e) => { setClientData({ ...clientData, fullName: e.target.value }); setClientState("idle"); }} placeholder={tr("cdClientName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2"><Icon name="Phone" size={13} className="text-gold" />{tr("cdClientPhone")}</label>
-                  <input type="tel" value={clientData.phone} onChange={(e) => { setClientData({ ...clientData, phone: e.target.value }); setClientState("idle"); }} placeholder="+7 999 000-00-00" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+              <div className="border border-border rounded-sm bg-card p-6">
+                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1 flex items-center gap-2"><Icon name="Moon" size={14} className="text-gold" />{tr("setQuietTitle")}</div>
+                <p className="text-xs text-muted-foreground mb-4">{tr("setQuietHint")}</p>
+                <div className="grid grid-cols-2 gap-4 max-w-sm">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("setQuietFrom")}</label>
+                    <input type="time" value={quietStart} onChange={(e) => saveQuiet(e.target.value, quietEnd)} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("setQuietTo")}</label>
+                    <input type="time" value={quietEnd} onChange={(e) => saveQuiet(quietStart, e.target.value)} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold" />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2"><Icon name="Mail" size={13} className="text-gold" />Email</label>
-                  <input type="email" value={clientData.email} onChange={(e) => { setClientData({ ...clientData, email: e.target.value }); setClientState("idle"); }} placeholder="you@email.com" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
-                </div>
+                {(quietStart || quietEnd) && (
+                  <button onClick={() => saveQuiet("", "")} className="mt-3 text-[11px] text-muted-foreground hover:text-gold font-montserrat font-semibold">{tr("setQuietClear")}</button>
+                )}
               </div>
-              {clientState === "saved" && <div className="flex items-center gap-2 text-sm text-green-400"><Icon name="CheckCircle2" size={16} />{tr("cdClientSaved")}</div>}
-              {clientState === "error" && <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("cdClientSaveErr")}</div>}
-              <button onClick={saveClient} disabled={clientState === "saving"} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
-                {clientState === "saving" ? <Icon name="Loader" size={15} className="animate-spin" /> : <Icon name="Save" size={15} />}
-                {tr("dashSave")}
-              </button>
             </div>
           )}
         </div>
@@ -3528,7 +3684,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                     <div key={r.id} className="p-4 border border-border rounded-sm">
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="min-w-0">
-                          <div className="font-montserrat font-bold text-sm text-foreground">{r.clientName || tr("pdReqClient")}</div>
+                          <div className="font-montserrat font-bold text-sm text-foreground">{shortName(r.clientName) || tr("pdReqClient")}</div>
                           <div className="text-xs text-muted-foreground">{tr("pdReqService")}: {r.service || (cat ? L(cat.title, lang) : "—")}</div>
                           {cat && <div className="text-[10px] text-muted-foreground mt-0.5">{L(cat.title, lang)}</div>}
                         </div>
@@ -4844,6 +5000,8 @@ function CasesSection() {
 
 function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) {
   const { lang, tr } = useLang();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const fav = isFavorite(p.slug);
   const tags = lang === "ru" ? p.tags.ru : p.tags.en;
   const premium = isPremium(p);
   return (
@@ -4856,6 +5014,13 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
           <Icon name="Crown" size={11} />{tr("premiumBadge")}
         </div>
       )}
+      <button
+        onClick={(e) => { e.stopPropagation(); toggleFavorite(p.slug); }}
+        aria-label={tr(fav ? "favRemove" : "favAdd")}
+        className={`absolute z-20 end-3 ${premium ? "top-9" : "top-3"} w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm border transition-colors ${fav ? "bg-gold/90 border-gold text-[hsl(220,20%,6%)]" : "bg-card/80 border-border text-muted-foreground hover:text-gold hover:border-gold"}`}
+      >
+        <Icon name="Heart" size={15} className={fav ? "fill-current" : ""} />
+      </button>
       <div className={`h-48 overflow-hidden relative ${premium ? "mt-6" : ""}`}>
         <img src={resolveAvatar(p.img, p.gender)} alt={L(p.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
@@ -4910,44 +5075,38 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
   const { lang, tr } = useLang();
   const { providers } = useProviders();
   const { geo } = useGeo();
-  const [service, setService] = useState(initialService);
+  // Простой поиск: одна строка запроса + чипы категорий + тумблер «проверенные».
+  const [query, setQuery] = useState(initialService);
   const [category, setCategory] = useState(initialCategory);
-  const [minRating, setMinRating] = useState(0);
   const [licensedOnly, setLicensedOnly] = useState(false);
-  const [city, setCity] = useState("");
-  const [country, setCountry] = useState("");
-  const [searched, setSearched] = useState(!!(initialCategory || initialService));
-
-  const servicesInCat = category ? services.filter((s) => s.cat === category) : services;
-  const serviceOptions = servicesInCat.map((s) => L(s.title, lang));
-  const cityOptions = Array.from(new Set(providers.map((p) => L(p.city, lang)).filter(Boolean))).sort();
-  const countryOptions = Array.from(new Set(providers.map((p) => (p.country ? L(p.country, lang) : "")).filter(Boolean))).sort();
-
-  const reset = () => { setService(""); setCategory(""); setMinRating(0); setLicensedOnly(false); setCity(""); setCountry(""); setSearched(false); };
 
   const matchesText = (p: Provider, q: string) => {
+    if (!q.trim()) return true;
     const tags = (lang === "ru" ? p.tags.ru : p.tags.en).map((t) => t.toLowerCase());
     const title = L(p.title, lang).toLowerCase();
+    const name = L(p.name, lang).toLowerCase();
+    const cityName = L(p.city, lang).toLowerCase();
     const ql = q.toLowerCase();
-    return title.includes(ql) || tags.some((t) => t.includes(ql) || ql.includes(t));
+    return title.includes(ql) || name.includes(ql) || cityName.includes(ql) || tags.some((t) => t.includes(ql) || ql.includes(t));
   };
 
-  const results = providers.filter((p) => {
-    if (!p.active) return false;
-    if (minRating && p.rating < minRating) return false;
-    if (licensedOnly && !isLicensed(p)) return false;
-    if (city && L(p.city, lang) !== city) return false;
-    if (country && (!p.country || L(p.country, lang) !== country)) return false;
-    if (category) {
-      const catServices = services.filter((s) => s.cat === category);
-      const anyMatch = catServices.some((s) => matchesText(p, L(s.title, lang)));
-      if (!anyMatch) return false;
-    }
-    if (service && !matchesText(p, service)) return false;
-    return true;
-  });
+  // Мгновенная фильтрация без кнопки «искать». Сортировка по рейтингу.
+  const results = providers
+    .filter((p) => {
+      if (!p.active) return false;
+      if (licensedOnly && !isLicensed(p)) return false;
+      if (category) {
+        const catServices = services.filter((s) => s.cat === category);
+        const anyMatch = catServices.some((s) => matchesText(p, L(s.title, lang)));
+        if (!anyMatch) return false;
+      }
+      if (!matchesText(p, query)) return false;
+      return true;
+    })
+    .sort((a, b) => b.rating - a.rating);
 
-  const activeFilters = [service, minRating ? "r" : "", licensedOnly ? "l" : "", city, country].filter(Boolean).length;
+  const hasFilters = !!(query.trim() || category || licensedOnly);
+  const reset = () => { setQuery(""); setCategory(""); setLicensedOnly(false); };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
@@ -4957,96 +5116,58 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
         <p className="text-muted-foreground text-sm">{tr("searchSubtitle")}</p>
       </div>
 
-      <div className="border border-border rounded-sm bg-card p-5 mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
-            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFCategory")}</label>
-            <select value={category} onChange={(e) => { setCategory(e.target.value); setService(""); }} className="w-full border border-border bg-secondary rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold">
-              <option value="">{tr("searchAnyCategory")}</option>
-              {serviceCategories.map((c) => <option key={c.id} value={c.id}>{L(c.title, lang)}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFService")}</label>
-            <select value={service} onChange={(e) => setService(e.target.value)} className="w-full border border-border bg-secondary rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold">
-              <option value="">{tr("searchAnyService")}</option>
-              {serviceOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFCity")}</label>
-            <select value={city} onChange={(e) => setCity(e.target.value)} className="w-full border border-border bg-secondary rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold">
-              <option value="">{tr("searchAnyCity")}</option>
-              {cityOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFCountry")}</label>
-            <select value={country} onChange={(e) => setCountry(e.target.value)} className="w-full border border-border bg-secondary rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold">
-              <option value="">{tr("searchAnyCountry")}</option>
-              {countryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1.5">{tr("searchFRating")}</label>
-            <select value={minRating} onChange={(e) => setMinRating(Number(e.target.value))} className="w-full border border-border bg-secondary rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold">
-              <option value={0}>{tr("searchAnyRating")}</option>
-              <option value={4}>4.0+</option>
-              <option value={4.5}>4.5+</option>
-              <option value={4.8}>4.8+</option>
-            </select>
-          </div>
-          <div className="flex items-end">
-            <button
-              onClick={() => setLicensedOnly((v) => !v)}
-              className={`w-full flex items-center justify-center gap-2 rounded-sm px-3 py-2.5 text-sm font-montserrat font-semibold border transition-all ${licensedOnly ? "bg-gold/15 border-gold/50 text-gold" : "border-border bg-secondary text-muted-foreground hover:border-gold hover:text-gold"}`}
-            >
-              <Icon name={licensedOnly ? "BadgeCheck" : "Badge"} size={15} />
-              {tr("searchFLicensed")}
-            </button>
-          </div>
-        </div>
-        <div className="flex flex-col sm:flex-row items-center gap-3 mt-5 pt-5 border-t border-border">
-          <button
-            onClick={() => setSearched(true)}
-            className="w-full sm:w-auto flex-1 shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-extrabold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm flex items-center justify-center gap-2"
-          >
-            <Icon name="Search" size={16} />
-            {tr("searchBtn")}
-          </button>
-          {(activeFilters > 0 || searched) && (
-            <button onClick={reset} className="text-xs font-montserrat font-semibold text-muted-foreground hover:text-gold flex items-center gap-1.5 shrink-0"><Icon name="X" size={13} />{tr("searchReset")}</button>
-          )}
-        </div>
+      <div className="flex items-center gap-3 border-2 border-border focus-within:border-gold bg-card rounded-sm px-4 mb-4 transition-colors">
+        <Icon name="Search" size={20} className="text-gold shrink-0" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={tr("searchSimplePh")}
+          className="flex-1 bg-transparent py-4 text-base text-foreground placeholder:text-muted-foreground outline-none"
+        />
+        {query && <button onClick={() => setQuery("")} className="text-muted-foreground hover:text-foreground shrink-0"><Icon name="X" size={18} /></button>}
       </div>
 
-      {geo && geo.city && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-card border border-gold/30 rounded-sm px-3 py-2 mb-5 w-fit">
-          <Icon name="MapPin" size={13} className="text-gold" />
-          <span>{tr("geoYourLocation")}: <span className="text-foreground font-semibold">{geo.city}{geo.country ? `, ${geo.country}` : ""}</span></span>
-        </div>
-      )}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button onClick={() => setCategory("")} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors ${category === "" ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"}`}>{tr("searchAnyCategory")}</button>
+        {serviceCategories.map((c) => (
+          <button key={c.id} onClick={() => setCategory(c.id === category ? "" : c.id)} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors flex items-center gap-1.5 ${category === c.id ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"}`}>
+            <Icon name={c.icon} fallback="Shield" size={13} />{L(c.title, lang)}
+          </button>
+        ))}
+      </div>
 
-      {!searched ? (
-        <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
-          <Icon name="Search" size={40} className="text-muted-foreground/30" />
-          <span className="text-sm text-muted-foreground">{tr("searchPrompt")}</span>
-        </div>
-      ) : results.length === 0 ? (
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <button
+          onClick={() => setLicensedOnly((v) => !v)}
+          className={`flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-montserrat font-semibold border transition-all ${licensedOnly ? "bg-gold/15 border-gold/50 text-gold" : "border-border bg-card text-muted-foreground hover:border-gold hover:text-gold"}`}
+        >
+          <Icon name={licensedOnly ? "BadgeCheck" : "Badge"} size={14} />
+          {tr("searchFLicensed")}
+        </button>
+        {geo && geo.city && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground bg-card border border-gold/30 rounded-sm px-3 py-2">
+            <Icon name="MapPin" size={13} className="text-gold" />
+            <span>{geo.city}{geo.country ? `, ${geo.country}` : ""}</span>
+          </div>
+        )}
+        {hasFilters && (
+          <button onClick={reset} className="text-xs font-montserrat font-semibold text-muted-foreground hover:text-gold flex items-center gap-1.5"><Icon name="X" size={13} />{tr("searchReset")}</button>
+        )}
+        <span className="text-xs text-muted-foreground ms-auto">{tr("searchFound")}: <span className="text-gold font-bold">{results.length}</span></span>
+      </div>
+
+      {results.length === 0 ? (
         <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
           <Icon name="SearchX" size={40} className="text-muted-foreground/30" />
           <span className="text-sm text-muted-foreground">{tr("filterNoResults")}</span>
-          <button onClick={reset} className="text-xs font-montserrat font-semibold text-gold hover:underline">{tr("searchReset")}</button>
+          {hasFilters && <button onClick={reset} className="text-xs font-montserrat font-semibold text-gold hover:underline">{tr("searchReset")}</button>}
         </div>
       ) : (
-        <>
-          <div className="text-xs text-muted-foreground mb-4">{tr("searchFound")}: <span className="text-gold font-bold">{results.length}</span></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
-            {results.map((p) => (
-              <ProviderResultCard key={p.slug} p={p} onOpen={() => (openSpecialist ? openSpecialist(p) : setActive("profile"))} />
-            ))}
-          </div>
-        </>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+          {results.map((p) => (
+            <ProviderResultCard key={p.slug} p={p} onOpen={() => (openSpecialist ? openSpecialist(p) : setActive("profile"))} />
+          ))}
+        </div>
       )}
     </div>
   );
@@ -5389,7 +5510,7 @@ function DirectChatSection({ target, chatInput, setChatInput, onBack }: { target
             {target.avatar ? <img src={target.avatar} alt="" className="w-full h-full object-cover" /> : <span className="font-montserrat font-bold text-sm text-[hsl(220,20%,6%)]">{initial}</span>}
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-montserrat font-semibold text-foreground truncate">{target.name}</div>
+            <div className="text-sm font-montserrat font-semibold text-foreground truncate">{shortName(target.name)}</div>
             <div className="text-[11px] text-muted-foreground truncate">{target.title}</div>
           </div>
           <div className="flex items-center gap-1 ms-auto">

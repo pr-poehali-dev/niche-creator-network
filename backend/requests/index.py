@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import psycopg2
 import auth_utils
 import notify_utils
@@ -97,7 +98,7 @@ def handler(event: dict, context) -> dict:
             # default: client view — только свои заявки
             client_id = auth_utils.client_id(user)
             cur.execute(
-                f"SELECT id, category, service, description, budget, city, status, chosen_provider, created_at "
+                f"SELECT id, category, service, description, budget, city, status, chosen_provider, created_at, needed_date, needed_time "
                 f"FROM {SCHEMA}.client_requests WHERE client_id=%s ORDER BY created_at DESC LIMIT 100",
                 (client_id,),
             )
@@ -129,6 +130,8 @@ def handler(event: dict, context) -> dict:
                     'id': r[0], 'category': r[1], 'service': r[2], 'description': r[3],
                     'budget': r[4], 'city': r[5], 'status': r[6], 'chosenProvider': r[7],
                     'createdAt': r[8].isoformat() if r[8] else None,
+                    'neededDate': r[9].isoformat() if r[9] else '',
+                    'neededTime': r[10] or '',
                     'responses': responses_by_req.get(r[0], []),
                     'views': views_by_req.get(r[0], 0),
                 })
@@ -148,10 +151,15 @@ def handler(event: dict, context) -> dict:
                 description = esc(body.get('description'), 2000)
                 budget = esc(body.get('budget'), 80)
                 city = esc(body.get('city'), 120)
+                # Дата/время услуги: принимаем YYYY-MM-DD и HH:MM, иначе NULL/пусто.
+                nd = esc(body.get('neededDate'), 10)
+                needed_date = nd if re.match(r'^\d{4}-\d{2}-\d{2}$', nd) else None
+                nt = esc(body.get('neededTime'), 5)
+                needed_time = nt if re.match(r'^\d{2}:\d{2}$', nt) else ''
                 cur.execute(
-                    f"INSERT INTO {SCHEMA}.client_requests (client_id, client_name, category, service, description, budget, city) "
-                    f"VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
-                    (client_id, client_name, category, service, description, budget, city),
+                    f"INSERT INTO {SCHEMA}.client_requests (client_id, client_name, category, service, description, budget, city, needed_date, needed_time) "
+                    f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                    (client_id, client_name, category, service, description, budget, city, needed_date, needed_time),
                 )
                 new_id = cur.fetchone()[0]
 
@@ -238,6 +246,23 @@ def handler(event: dict, context) -> dict:
                     'Клиент выбрал вас',
                     f'Клиент выбрал вас по задаче «{svc}». Свяжитесь с ним, чтобы обсудить детали.',
                     'dashboard',
+                )
+                conn.commit()
+                return _resp(200, {'success': True})
+
+            if action == 'complete':
+                # Клиент завершает свою задачу.
+                try:
+                    request_id = int(body.get('requestId') or 0)
+                except (TypeError, ValueError):
+                    request_id = 0
+                client_id = auth_utils.client_id(user)
+                if not request_id:
+                    return _resp(400, {'error': 'requestId required'})
+                cur.execute(
+                    f"UPDATE {SCHEMA}.client_requests SET status='completed' "
+                    f"WHERE id=%s AND client_id=%s",
+                    (request_id, client_id),
                 )
                 conn.commit()
                 return _resp(200, {'success': True})
