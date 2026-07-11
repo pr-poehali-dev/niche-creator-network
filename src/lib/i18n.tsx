@@ -661,6 +661,7 @@ export const t: Dict = {
   heroClientDesc: { ru: "Все специалисты по безопасности — в одном месте. Не нужно искать по разным площадкам: выберите услугу, сравните проверенных исполнителей по рейтингу и кейсам и свяжитесь напрямую. Для клиентов — бесплатно.", en: "Every security specialist in one place. No need to search across different sites: choose a service, compare verified providers by rating and cases, and contact them directly. Free for clients." },
   heroClientCta1: { ru: "Подобрать услугу", en: "Browse services" },
   heroClientCta2: { ru: "Смотреть специалистов", en: "View specialists" },
+  heroClientCta3: { ru: "Поставить задачу", en: "Post a task" },
   freeForClients: { ru: "Бесплатно для клиентов", en: "Free for clients" },
   noFees: { ru: "Без комиссий и подписок", en: "No fees or subscriptions" },
 
@@ -825,8 +826,9 @@ export const t: Dict = {
   reqCity: { ru: "Город", en: "City" },
   reqCityPh: { ru: "Москва", en: "Moscow" },
   reqPublish: { ru: "Опубликовать заявку", en: "Publish request" },
-  reqEmpty: { ru: "У вас пока нет заявок. Создайте первую.", en: "You have no requests yet. Create your first one." },
-  reqResponses: { ru: "Отклики исполнителей", en: "Provider responses" },
+  reqEmpty: { ru: "У вас пока нет задач. Создайте первую.", en: "You have no tasks yet. Create your first one." },
+  reqViews: { ru: "Просмотры", en: "Views" },
+  reqResponses: { ru: "Отклики", en: "Responses" },
   reqNoResponses: { ru: "Пока никто не откликнулся. Ожидайте.", en: "No responses yet. Please wait." },
   reqChoose: { ru: "Выбрать", en: "Choose" },
   reqChosen: { ru: "Выбран", en: "Chosen" },
@@ -978,7 +980,7 @@ export const t: Dict = {
 
   // Client dashboard tabs
   cdTab1: { ru: "Профиль и рейтинг", en: "Profile & rating" },
-  cdTab2: { ru: "Мои заявки", en: "My requests" },
+  cdTab2: { ru: "Мои задачи", en: "My tasks" },
   cdTab3: { ru: "Избранное", en: "Favorites" },
   cdTab4: { ru: "Настройки", en: "Settings" },
   // Client profile
@@ -989,7 +991,7 @@ export const t: Dict = {
   cdReviewsCount: { ru: "Отзывов", en: "Reviews" },
   cdResponseRate: { ru: "Скорость ответа", en: "Response rate" },
   // Client requests
-  cdReqTitle: { ru: "История заявок", en: "Request history" },
+  cdReqTitle: { ru: "Мои задачи", en: "My tasks" },
   cdStatusActive: { ru: "В работе", en: "In progress" },
   cdStatusDone: { ru: "Завершено", en: "Completed" },
   cdStatusNew: { ru: "Новая", en: "New" },

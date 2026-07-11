@@ -2131,10 +2131,16 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 <Icon name="ArrowRight" size={18} />
               </button>
               <button
-                onClick={() => setActive(isClient ? "specialists" : "dashboard")}
-                className="border border-border text-foreground px-7 py-4 font-montserrat font-semibold text-sm tracking-wide hover:border-gold hover:text-gold transition-all rounded-sm flex items-center gap-2"
+                onClick={() => {
+                  if (isClient) {
+                    try { sessionStorage.setItem("open_new_task", "1"); } catch { /* noop */ }
+                  }
+                  setActive("dashboard");
+                }}
+                className="border border-gold/60 text-foreground px-7 py-4 font-montserrat font-semibold text-sm tracking-wide hover:border-gold hover:text-gold transition-all rounded-sm flex items-center gap-2"
               >
-                {tr(isClient ? "heroClientCta2" : "heroProviderCta2")}
+                <Icon name={isClient ? "ClipboardPlus" : "ArrowRight"} size={18} className="text-gold" />
+                {tr(isClient ? "heroClientCta3" : "heroProviderCta2")}
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-4">
@@ -2483,7 +2489,11 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const { logout, user } = useAuth();
   const clientId = user ? `client-${user.id}` : "demo-client";
   const handleLogout = async () => { await logout(); setActive("home"); window.scrollTo({ top: 0 }); };
-  const [tab, setTab] = useState<"profile" | "requests" | "favorites" | "settings">("profile");
+  // Намерение «поставить задачу» с главной: открываем сразу вкладку «Мои задачи».
+  const wantNewTask = (() => {
+    try { return sessionStorage.getItem("open_new_task") === "1"; } catch { return false; }
+  })();
+  const [tab, setTab] = useState<"profile" | "requests" | "favorites" | "settings">(wantNewTask ? "requests" : "profile");
 
   const tabs = [
     { id: "profile" as const, key: "cdTab1" as const, icon: "User" },
@@ -2523,11 +2533,18 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   };
 
   type ReqResponse = { providerSlug: string; providerName: string; message: string; price: string; status: string };
-  type ClientReq = { id: number; category: string; service: string; description: string; budget: string; city: string; status: string; chosenProvider: string; createdAt: string | null; responses: ReqResponse[] };
+  type ClientReq = { id: number; category: string; service: string; description: string; budget: string; city: string; status: string; chosenProvider: string; createdAt: string | null; responses: ReqResponse[]; views?: number };
   const [myReqs, setMyReqs] = useState<ClientReq[]>([]);
-  const [reqFormOpen, setReqFormOpen] = useState(false);
+  const [reqFormOpen, setReqFormOpen] = useState(wantNewTask);
   const [newReq, setNewReq] = useState({ category: "", service: "", description: "", budget: "", city: "" });
   const [reqBusy, setReqBusy] = useState(false);
+
+  // Одноразовое намерение «поставить задачу» — очищаем флаг после применения.
+  useEffect(() => {
+    if (wantNewTask) {
+      try { sessionStorage.removeItem("open_new_task"); } catch { /* noop */ }
+    }
+  }, [wantNewTask]);
 
   const loadReqs = useCallback(() => {
     fetch(func2url["requests"], { headers: authHeaders() })
@@ -2714,6 +2731,24 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
                         <span className={`tag-security shrink-0 ${assigned ? "text-green-400 border-green-500/40" : "text-gold border-gold/40"}`}>{tr(assigned ? "reqStatusAssigned" : "reqStatusOpen")}</span>
                       </div>
                       {r.description && <p className="text-xs text-muted-foreground mb-3">{r.description}</p>}
+
+                      {/* Статистика по задаче: просмотры специалистами и отклики */}
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-secondary/50 border border-border rounded-sm px-2.5 py-1">
+                          <Icon name="Eye" size={13} className="text-gold" />
+                          {tr("reqViews")}: <span className="text-foreground font-semibold">{r.views ?? 0}</span>
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-secondary/50 border border-border rounded-sm px-2.5 py-1">
+                          <Icon name="MessageSquareReply" size={13} className="text-gold" />
+                          {tr("reqResponses")}: <span className="text-foreground font-semibold">{r.responses.length}</span>
+                        </span>
+                        {r.createdAt && (
+                          <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-secondary/50 border border-border rounded-sm px-2.5 py-1">
+                            <Icon name="Clock" size={13} className="text-gold" />
+                            {new Date(r.createdAt).toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US")}
+                          </span>
+                        )}
+                      </div>
 
                       <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">{tr("reqResponses")} ({r.responses.length})</div>
                       {r.responses.length === 0 ? (

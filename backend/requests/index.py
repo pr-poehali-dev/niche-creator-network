@@ -82,6 +82,16 @@ def handler(event: dict, context) -> dict:
                         'createdAt': x[7].isoformat() if x[7] else None,
                         'myResponse': None if x[8] is None else {'message': x[9], 'price': x[10], 'status': x[11]},
                     })
+                # Фиксируем факт просмотра задач этим специалистом (уникально на задачу).
+                shown_ids = [x[0] for x in rows]
+                if shown_ids:
+                    args = [(rid, slug) for rid in shown_ids]
+                    cur.executemany(
+                        f"INSERT INTO {SCHEMA}.request_views (request_id, provider_slug) "
+                        f"VALUES (%s, %s) ON CONFLICT (request_id, provider_slug) DO NOTHING",
+                        args,
+                    )
+                    conn.commit()
                 return _resp(200, {'requests': items})
 
             # default: client view — только свои заявки
@@ -94,6 +104,7 @@ def handler(event: dict, context) -> dict:
             reqs = cur.fetchall()
             req_ids = [r[0] for r in reqs]
             responses_by_req = {}
+            views_by_req = {}
             if req_ids:
                 cur.execute(
                     f"SELECT request_id, provider_slug, provider_name, message, price, status "
@@ -104,6 +115,14 @@ def handler(event: dict, context) -> dict:
                     responses_by_req.setdefault(rr[0], []).append({
                         'providerSlug': rr[1], 'providerName': rr[2], 'message': rr[3], 'price': rr[4], 'status': rr[5],
                     })
+                # Число уникальных специалистов, просмотревших каждую задачу.
+                cur.execute(
+                    f"SELECT request_id, COUNT(*) FROM {SCHEMA}.request_views "
+                    f"WHERE request_id = ANY(%s) GROUP BY request_id",
+                    (req_ids,),
+                )
+                for vr in cur.fetchall():
+                    views_by_req[vr[0]] = int(vr[1])
             items = []
             for r in reqs:
                 items.append({
@@ -111,6 +130,7 @@ def handler(event: dict, context) -> dict:
                     'budget': r[4], 'city': r[5], 'status': r[6], 'chosenProvider': r[7],
                     'createdAt': r[8].isoformat() if r[8] else None,
                     'responses': responses_by_req.get(r[0], []),
+                    'views': views_by_req.get(r[0], 0),
                 })
             return _resp(200, {'requests': items})
 
