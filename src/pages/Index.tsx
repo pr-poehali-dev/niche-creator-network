@@ -3,13 +3,14 @@ import Icon from "@/components/ui/icon";
 import { useLang, t, LANGS, type Lang } from "@/lib/i18n";
 import { dataExtra } from "@/lib/i18n-extra";
 import { downloadReceipt } from "@/lib/receipt";
-import { useGeo, haversineKm } from "@/lib/geo";
+import { useGeo } from "@/lib/geo";
 import { cleanText } from "@/lib/moderation";
 import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, type Provider } from "@/lib/providers";
 import { useAuth, type AuthRole } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
 import { trackGoal, GOALS } from "@/lib/analytics";
 import { BLOG_POSTS, type BlogPost } from "@/lib/blog";
+import { CLIENT_REVIEWS } from "@/lib/clientReviews";
 import { useAutoTranslate } from "@/lib/autotranslate";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Reveal from "@/components/Reveal";
@@ -1187,6 +1188,30 @@ export default function Index() {
   const isProvider = isAuthed && role === "provider" && !user?.isAdmin;
   const isLocked = isProvider && subActive === false;
 
+  // Выбранный специалист для просмотра его профиля клиентом (не демо-профиль).
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+  // Завершил ли клиент регистрацию (заполнен профиль: имя + телефон).
+  const [clientProfileComplete, setClientProfileComplete] = useState(false);
+  // Модалка-подсказка «завершите регистрацию».
+  const [regGateOpen, setRegGateOpen] = useState(false);
+
+  const isClientRole = isAuthed && role === "client";
+
+  // Подгружаем профиль клиента, чтобы знать, завершена ли регистрация.
+  useEffect(() => {
+    if (!isClientRole) { setClientProfileComplete(false); return; }
+    let alive = true;
+    fetch(func2url["clients"], { headers: authHeaders() })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive) return;
+        const c = d.client || {};
+        setClientProfileComplete(!!(c.fullName && String(c.fullName).trim() && c.phone && String(c.phone).trim()));
+      })
+      .catch(() => { if (alive) setClientProfileComplete(false); });
+    return () => { alive = false; };
+  }, [isClientRole, user?.id]);
+
   // Разделы, закрытые для исполнителя без оплаченного тарифа
   const LOCKED_SECTIONS: Section[] = ["chat", "forum", "courses", "services", "cases", "guards"];
 
@@ -1232,6 +1257,17 @@ export default function Index() {
     go("chat");
   };
 
+  // Открытие профиля конкретного специалиста клиентом.
+  // Гейт: клиент без завершённой регистрации (имя + телефон) не видит профили.
+  const openSpecialist = (p: Provider) => {
+    if (isClientRole && !clientProfileComplete) {
+      setRegGateOpen(true);
+      return;
+    }
+    setSelectedProvider(p);
+    go("profile");
+  };
+
   const openCabinet = () => {
     setMobileMenuOpen(false);
     if (isAuthed) go("dashboard");
@@ -1260,10 +1296,14 @@ export default function Index() {
     }
     switch (active) {
       case "home": return <HomeSection setActive={go} role={role} openChat={openChat} />;
-      case "profile": return <ProfileSection setActive={go} openChat={openChat} />;
-      case "specialists": return <SpecialistsListSection setActive={go} />;
+      case "profile": return role === "client"
+        ? (selectedProvider
+            ? <SpecialistProfileSection provider={selectedProvider} onBack={() => go("home")} openChat={openChat} />
+            : <SpecialistsListSection setActive={go} openSpecialist={openSpecialist} />)
+        : <ProfileSection setActive={go} openChat={openChat} />;
+      case "specialists": return <SpecialistsListSection setActive={go} openSpecialist={openSpecialist} />;
       case "cases": return <CasesSection />;
-      case "services": return role === "client" ? <ClientServices setActive={go} /> : <ServicesSection />;
+      case "services": return role === "client" ? <ClientServices setActive={go} openSpecialist={openSpecialist} /> : <ServicesSection />;
       case "courses": return <CoursesSection />;
       case "guards": return <GuardsSection />;
       case "chat": return chatTarget
@@ -1502,6 +1542,26 @@ export default function Index() {
       </footer>
 
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onOpenDoc={(s) => { setAuthOpen(false); go(s); }} />}
+
+      {regGateOpen && (
+        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setRegGateOpen(false)}>
+          <div className="bg-card border border-gold/40 rounded-sm max-w-md w-full p-8 text-center security-glow" onClick={(e) => e.stopPropagation()}>
+            <div className="w-14 h-14 gold-gradient rounded-sm flex items-center justify-center mx-auto mb-5 glow-gold-sm">
+              <Icon name="UserCheck" size={26} className="text-[hsl(220,20%,6%)]" />
+            </div>
+            <h3 className="font-montserrat font-bold text-lg text-foreground mb-2">{tr("regRequiredTitle")}</h3>
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{tr("regRequiredText")}</p>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => { setRegGateOpen(false); go("dashboard"); }} className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+                {tr("regRequiredBtn")}
+              </button>
+              <button onClick={() => setRegGateOpen(false)} className="text-xs text-muted-foreground hover:text-foreground font-montserrat py-2">
+                {tr("regRequiredCancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {paywallOpen && (
         <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPaywallOpen(false)}>
@@ -1891,7 +1951,57 @@ function LandingFinalCta({ onCabinet }: { onCabinet: () => void }) {
 
 const MOBILE_APP_BANNER_KEY = "shchit_mobileapp_banner_dismissed";
 
-function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) => void; role: Role; openChat?: (t: { name: string; title: string; avatar?: string | null }) => void }) {
+// Блок отзывов КЛИЕНТОВ о специалистах платформы (на клиентской главной).
+// Тексты двуязычные, для fr/de/ja/ar/he — автоперевод (правило «всё на 7 языков»).
+function ClientReviewsSection() {
+  const { tr, lang } = useLang();
+  const enStrings = CLIENT_REVIEWS.flatMap((r) => [r.text.en, r.name.en, r.city.en, r.service.en]);
+  const { resolve } = useAutoTranslate(enStrings);
+  const loc = (v: { ru: string; en: string }) => {
+    if (lang === "ru") return v.ru;
+    if (lang === "en") return v.en;
+    return resolve(v.en);
+  };
+
+  return (
+    <section className="border-y border-border bg-card py-28 relative overflow-hidden">
+      <div className="absolute inset-0 grid-line-bg opacity-50" />
+      <div className="max-w-7xl mx-auto px-4 relative z-10">
+        <Reveal className="text-center mb-14">
+          <div className="tag-security mb-3 inline-block">{tr("clientReviewsTag")}</div>
+          <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">{tr("clientReviewsTitle")}</h2>
+          <p className="text-muted-foreground text-sm max-w-2xl mx-auto">{tr("clientReviewsSub")}</p>
+        </Reveal>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
+          {CLIENT_REVIEWS.map((r) => (
+            <div key={r.id} className="p-6 border border-border rounded-sm bg-background card-hover flex flex-col">
+              <div className="flex items-center gap-1 mb-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Icon key={i} name="Star" size={14} className={i < r.rating ? "text-gold" : "text-muted-foreground/30"} />
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-5 flex-1">«{loc(r.text)}»</p>
+              <div className="flex items-center gap-3 border-t border-border pt-4">
+                <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center shrink-0">
+                  <span className="font-montserrat font-bold text-sm text-[hsl(220,20%,6%)]">{loc(r.name).trim().charAt(0)}</span>
+                </div>
+                <div className="min-w-0">
+                  <div className="font-montserrat font-bold text-sm text-foreground flex items-center gap-1.5">
+                    {loc(r.name)}
+                    <Icon name="BadgeCheck" size={13} className="text-gold shrink-0" />
+                  </div>
+                  <div className="text-[11px] text-muted-foreground truncate">{loc(r.city)} · {loc(r.service)}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HomeSection({ setActive, role }: { setActive: (s: Section) => void; role: Role; openChat?: (t: { name: string; title: string; avatar?: string | null }) => void }) {
   const { lang, tr } = useLang();
   const [appBannerOpen, setAppBannerOpen] = useState(false);
 
@@ -1908,30 +2018,9 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
     try { localStorage.setItem(MOBILE_APP_BANNER_KEY, "1"); } catch { /* noop */ }
   };
   const isClient = role === "client";
-  const { geo } = useGeo();
   const { providers } = useProviders();
   // Живое соц-доказательство на реальных данных: число активных специалистов.
   const liveCount = providers.filter((p) => p.active !== false).length;
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
-
-  const hasVerifiedDocs = (s: Provider) =>
-    !!s.verification && (!!s.verification.license || !!s.verification.registry || !!s.verification.fullName);
-
-  const base = providers.length ? providers : [];
-  const filtered = verifiedOnly ? base.filter(hasVerifiedDocs) : base;
-  const sortedSpecialists = (() => {
-    if (!geo || geo.lat == null || geo.lon == null) {
-      return filtered.map((s) => ({ ...s, distance: null as number | null }));
-    }
-    return filtered
-      .map((s) => ({
-        ...s,
-        distance: s.lat != null && s.lon != null
-          ? haversineKm(geo.lat as number, geo.lon as number, s.lat, s.lon)
-          : null,
-      }))
-      .sort((a, b) => (a.distance ?? 1e9) - (b.distance ?? 1e9));
-  })();
 
   return (
     <div>
@@ -1961,8 +2050,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
             {isClient ? (
               <h1 className="font-montserrat font-extrabold text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-foreground leading-[0.95] sm:leading-[0.9] mb-6 tracking-tight">
                 {tr("heroClientTitle1")}<br />
-                <span className="gold-text-gradient">{tr("heroClientTitle2")}</span><br />
-                {tr("heroClientTitle3")}
+                <span className="gold-text-gradient">{tr("heroClientTitle2")}</span>
               </h1>
             ) : (
               <h1 className="font-montserrat font-extrabold text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-foreground leading-[0.95] sm:leading-[0.9] mb-6 tracking-tight">
@@ -2141,138 +2229,6 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
       )}
 
       {isClient && (
-      <section className="max-w-7xl mx-auto px-4 py-28">
-        <div className="flex items-end justify-between mb-4">
-          <div>
-            <div className="tag-security mb-3 inline-block">{tr("specialists")}</div>
-            <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("topExperts")}</h2>
-          </div>
-          <button onClick={() => setActive("specialists")} className="text-sm text-gold hover:gap-2 font-montserrat hidden md:flex items-center gap-1 transition-all">
-            {tr("allSpecialists")} <Icon name="ArrowRight" size={14} />
-          </button>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 mb-8">
-          {geo && geo.city && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-card border border-gold/30 rounded-sm px-3 py-2">
-              <Icon name="MapPin" size={13} className="text-gold" />
-              <span>{tr("geoYourLocation")}: <span className="text-foreground font-semibold">{geo.city}{geo.country ? `, ${geo.country}` : ""}</span></span>
-              <span className="text-muted-foreground/60">·</span>
-              <span className="text-gold">{tr("geoSortNearby")}</span>
-            </div>
-          )}
-          <button
-            onClick={() => setVerifiedOnly((v) => !v)}
-            className={`flex items-center gap-2 text-xs font-montserrat font-semibold rounded-sm px-3 py-2 border transition-all ${verifiedOnly ? "bg-green-500/15 border-green-500/40 text-green-400" : "bg-card border-border text-muted-foreground hover:border-gold hover:text-foreground"}`}
-          >
-            <Icon name={verifiedOnly ? "ShieldCheck" : "Shield"} size={14} />
-            {tr("filterVerifiedOnly")}
-          </button>
-        </div>
-        {sortedSpecialists.length === 0 ? (
-          <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
-            <Icon name="SearchX" size={40} className="text-muted-foreground/30" />
-            <span className="text-sm text-muted-foreground">{tr("filterNoResults")}</span>
-          </div>
-        ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 stagger">
-          {sortedSpecialists.map((s) => {
-            const tags = lang === "ru" ? s.tags.ru : s.tags.en;
-            return s.active ? (
-            <div key={s.slug} onClick={() => setActive("profile")} className={`card-hover shine-on-hover rounded-sm overflow-hidden cursor-pointer group flex flex-col relative ${isPremium(s) ? "border-2 border-gold security-glow ambient-gold bg-card" : "border border-border bg-card"}`}>
-              {isPremium(s) && (
-                <div className="absolute top-0 inset-x-0 z-20 gold-gradient text-[hsl(220,20%,6%)] text-[10px] font-montserrat font-extrabold tracking-widest uppercase text-center py-1 flex items-center justify-center gap-1">
-                  <Icon name="Crown" size={11} />{tr("premiumBadge")}
-                </div>
-              )}
-              <div className={`h-48 overflow-hidden relative ${isPremium(s) ? "mt-6" : ""}`}>
-                <img src={resolveAvatar(s.img, s.gender)} alt={L(s.name, lang)} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
-                {s.isPseudonym && (
-                  <div className="absolute top-3 start-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border px-2 py-1 rounded-sm">
-                    <Icon name="VenetianMask" size={11} className="text-muted-foreground" />
-                    <span className="text-[10px] font-montserrat font-semibold text-muted-foreground">{tr("aliasBadge")}</span>
-                  </div>
-                )}
-                {isLicensed(s) && (
-                  <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
-                    <Icon name="BadgeCheck" size={12} className="text-gold" />
-                    <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licenseBadge")}</span>
-                  </div>
-                )}
-                {s.distance != null && s.distance <= 100 && (
-                  <div className={`absolute start-3 flex items-center gap-1 bg-gold/90 backdrop-blur-sm px-2 py-1 rounded-sm ${s.isPseudonym ? "top-12" : "top-3"}`}>
-                    <Icon name="Navigation" size={11} className="text-[hsl(220,20%,6%)]" />
-                    <span className="text-[10px] font-montserrat font-bold text-[hsl(220,20%,6%)]">{tr("geoNearYou")}</span>
-                  </div>
-                )}
-                <div className="absolute bottom-3 start-4 end-4">
-                  <div className="font-montserrat font-bold text-base text-foreground">{L(s.name, lang)}</div>
-                  <div className="text-xs text-gold font-montserrat font-medium flex items-center gap-2 flex-wrap">
-                    {L(s.title, lang)}
-                    <span className="text-muted-foreground">· {s.experience} {tr("yearsShort")}</span>
-                    {s.age != null && <span className="text-muted-foreground">· {s.age} {tr("yearsOld")}</span>}
-                  </div>
-                </div>
-              </div>
-              <div className="p-5 flex flex-col flex-1">
-                <div className="flex items-center gap-3 mb-4">
-                  <StarRating rating={s.rating} />
-                  <span className="text-xs text-muted-foreground">{s.rating} ({s.reviews})</span>
-                  <span className="text-xs text-muted-foreground ms-auto flex items-center gap-1">
-                    <Icon name="MapPin" size={11} />{L(s.city, lang)}
-                    {s.distance != null && <span className="text-gold font-semibold">· {s.distance} {tr("geoKm")}</span>}
-                  </span>
-                </div>
-                {s.verification && ((s.verification.licenses && s.verification.licenses.length > 0) || (s.verification.documents && s.verification.documents.length > 0)) && (
-                  <div className="inline-flex items-center gap-1.5 mb-4 px-2.5 py-1.5 rounded-sm bg-green-500/10 border border-green-500/30 w-fit">
-                    <Icon name="ShieldCheck" size={13} className="text-green-400" />
-                    <span className="text-[11px] font-montserrat font-bold text-green-400">{tr("verifyDocsConfirmed")}</span>
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {tags.map((tg) => (
-                    <span key={tg} className="tag-security">{tg}</span>
-                  ))}
-                </div>
-                <div className="divider-gold mb-4" />
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("cost")}</div>
-                    <div className="font-montserrat font-bold text-sm text-gold">{L(s.price, lang)}</div>
-                  </div>
-                </div>
-                <AvailabilityNote p={s} />
-                <div className="mt-auto">
-                  <ContactButtons p={s} onChat={() => openChat?.({ name: L(s.name, lang), title: L(s.title, lang), avatar: s.img })} compact />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div key={s.slug} className="border border-dashed border-border rounded-sm bg-card/50 overflow-hidden flex flex-col">
-              <div className="h-48 overflow-hidden relative bg-secondary flex items-center justify-center">
-                <Icon name="EyeOff" size={44} className="text-muted-foreground/30" />
-                <div className="absolute top-3 end-3 flex items-center gap-1 bg-secondary border border-border px-2 py-1 rounded-sm">
-                  <Icon name="Lock" size={11} className="text-muted-foreground" />
-                  <span className="text-[10px] font-montserrat font-semibold text-muted-foreground">{tr("subInactiveBadge")}</span>
-                </div>
-              </div>
-              <div className="p-5 flex flex-col flex-1">
-                <div className="font-montserrat font-bold text-base text-muted-foreground mb-1">{tr("subInactiveTitle")}</div>
-                <div className="text-xs text-gold font-montserrat font-medium mb-3">{L(s.title, lang)}</div>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-4">{tr("subInactiveDesc")}</p>
-                <div className="mt-auto flex items-center gap-2 text-[11px] text-muted-foreground/70 border-t border-border pt-3">
-                  <Icon name="Info" size={12} />
-                  {tr("subRenewHint")}
-                </div>
-              </div>
-            </div>
-          );})}
-        </div>
-        )}
-      </section>
-      )}
-
-      {isClient && (
       <section className="border-t border-border bg-card py-28 relative overflow-hidden ambient-gold">
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           <Reveal className="text-center mb-14">
@@ -2281,10 +2237,10 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
           </Reveal>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 stagger">
             {[
-              { n: "01", icon: "UserPlus", title: "step1Title" as const, desc: "step1Desc" as const },
-              { n: "02", icon: "FolderOpen", title: "step2Title" as const, desc: "step2Desc" as const },
-              { n: "03", icon: "Handshake", title: "step3Title" as const, desc: "step3Desc" as const },
-              { n: "04", icon: "TrendingUp", title: "step4Title" as const, desc: "step4Desc" as const },
+              { n: "01", icon: "ListChecks", title: "cstep1Title" as const, desc: "cstep1Desc" as const },
+              { n: "02", icon: "Users", title: "cstep2Title" as const, desc: "cstep2Desc" as const },
+              { n: "03", icon: "PhoneCall", title: "cstep3Title" as const, desc: "cstep3Desc" as const },
+              { n: "04", icon: "CircleCheckBig", title: "cstep4Title" as const, desc: "cstep4Desc" as const },
             ].map((step) => (
               <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-hover">
                 <div className="font-montserrat font-extrabold text-4xl text-gold/15 absolute top-4 right-5">{step.n}</div>
@@ -2309,12 +2265,12 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {(isClient
               ? [
-                  { icon: "ShieldCheck", title: "feat1Title" as const, desc: "feat1Desc" as const },
-                  { icon: "Lock", title: "feat2Title" as const, desc: "feat2Desc" as const },
-                  { icon: "CreditCard", title: "feat3Title" as const, desc: "feat3Desc" as const },
-                  { icon: "BookOpen", title: "feat4Title" as const, desc: "feat4Desc" as const },
-                  { icon: "Users", title: "feat5Title" as const, desc: "feat5Desc" as const },
-                  { icon: "Star", title: "feat6Title" as const, desc: "feat6Desc" as const },
+                  { icon: "ShieldCheck", title: "cfeat1Title" as const, desc: "cfeat1Desc" as const },
+                  { icon: "LayoutGrid", title: "cfeat2Title" as const, desc: "cfeat2Desc" as const },
+                  { icon: "PhoneCall", title: "cfeat3Title" as const, desc: "cfeat3Desc" as const },
+                  { icon: "Star", title: "cfeat4Title" as const, desc: "cfeat4Desc" as const },
+                  { icon: "MapPin", title: "cfeat5Title" as const, desc: "cfeat5Desc" as const },
+                  { icon: "Lock", title: "cfeat6Title" as const, desc: "cfeat6Desc" as const },
                 ]
               : [
                   { icon: "Megaphone", title: "featPro1Title" as const, desc: "featPro1Desc" as const },
@@ -2337,7 +2293,10 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
         </div>
       </section>
 
-      {/* Testimonial */}
+      {/* Reviews: клиенту — отзывы клиентов о специалистах; исполнителю — отзыв специалиста о платформе */}
+      {isClient ? (
+        <ClientReviewsSection />
+      ) : (
       <section className="border-y border-border bg-card py-28 relative overflow-hidden">
         <div className="absolute inset-0 grid-line-bg opacity-50" />
         <Reveal className="max-w-4xl mx-auto px-4 relative z-10 text-center">
@@ -2359,6 +2318,7 @@ function HomeSection({ setActive, role, openChat }: { setActive: (s: Section) =>
           </div>
         </Reveal>
       </section>
+      )}
 
       {/* Security / Encryption */}
       <section className="border-t border-border py-32 relative overflow-hidden ambient-gold">
@@ -4356,6 +4316,89 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
   );
 }
 
+// Профиль КОНКРЕТНОГО специалиста (для клиента). Показывает данные выбранного
+// специалиста, а не демо-профиль. Открывается только зарегистрированным клиентам.
+function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider: Provider; onBack: () => void; openChat: (t: { name: string; title: string; avatar?: string | null }) => void }) {
+  const { lang, tr } = useLang();
+  const tags = lang === "ru" ? p.tags.ru : p.tags.en;
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-10">
+      <div className="flex items-center justify-between mb-6">
+        <div className="tag-security inline-block">{tr("profileSection")}</div>
+        <button onClick={onBack} className="text-xs text-muted-foreground hover:text-gold transition-colors font-montserrat flex items-center gap-1">
+          <Icon name="ArrowLeft" size={13} />{tr("back")}
+        </button>
+      </div>
+
+      <div className="border border-border rounded-sm bg-card overflow-hidden mb-6">
+        <div className="h-40 overflow-hidden relative">
+          <img src={resolveAvatar(p.img, p.gender)} alt={L(p.name, lang)} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
+          {isLicensed(p) && (
+            <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
+              <Icon name="BadgeCheck" size={12} className="text-gold" />
+              <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licenseBadge")}</span>
+            </div>
+          )}
+        </div>
+        <div className="p-6 -mt-12 relative">
+          <div className="w-20 h-20 rounded-sm border-2 border-gold overflow-hidden mb-3">
+            <img src={resolveAvatar(p.img, p.gender)} alt={L(p.name, lang)} className="w-full h-full object-cover" />
+          </div>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <div className="font-montserrat font-bold text-2xl text-foreground mb-1">{L(p.name, lang)}</div>
+              <div className="text-gold text-sm font-montserrat font-medium mb-1">{L(p.title, lang)} · {p.experience} {tr("yearsShort")}</div>
+              <div className="text-xs text-muted-foreground flex items-center gap-1"><Icon name="MapPin" size={12} />{L(p.city, lang)}</div>
+              <div className="flex items-center gap-2 mt-3">
+                <StarRating rating={p.rating} />
+                <span className="text-xs text-muted-foreground">{p.rating} ({p.reviews})</span>
+              </div>
+            </div>
+            <div className="border border-gold/30 rounded-sm bg-background px-5 py-3 text-center">
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("cost")}</div>
+              <div className="font-montserrat font-bold text-lg text-gold">{L(p.price, lang)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="border border-border rounded-sm bg-card p-6">
+            <h3 className="font-montserrat font-bold text-sm text-foreground mb-4 flex items-center gap-2"><Icon name="Tag" size={15} className="text-gold" />{tr("profileSpecialization")}</h3>
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tg) => (<span key={tg} className="tag-security">{tg}</span>))}
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { n: p.experience, l: "yearsShort" as const, icon: "Award" },
+              { n: p.cases, l: "profileCasesCount" as const, icon: "FolderCheck" },
+              { n: p.reviews, l: "profileReviewsCount" as const, icon: "Star" },
+            ].map((s) => (
+              <div key={s.l} className="border border-border rounded-sm bg-card p-4 text-center">
+                <Icon name={s.icon} size={18} className="text-gold mx-auto mb-2" />
+                <div className="font-montserrat font-extrabold text-xl text-foreground">{s.n}</div>
+                <div className="text-[11px] text-muted-foreground">{tr(s.l)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-5">
+          <div className="border border-gold/30 rounded-sm bg-card p-5 security-glow">
+            <AvailabilityNote p={p} />
+            <div className="mt-3">
+              <ContactButtons p={p} onChat={() => openChat({ name: L(p.name, lang), title: L(p.title, lang), avatar: p.img })} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProfileSection({ setActive, openChat }: { setActive: (s: Section) => void; openChat: (t: { name: string; title: string; avatar?: string | null }) => void }) {
   const { lang, tr } = useLang();
   const [activeTab, setActiveTab] = useState<"cases" | "services" | "reviews">("cases");
@@ -4688,7 +4731,7 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
   );
 }
 
-function SearchSection({ setActive, initialCategory = "", initialService = "" }: { setActive: (s: Section) => void; initialCategory?: string; initialService?: string }) {
+function SearchSection({ setActive, initialCategory = "", initialService = "", openSpecialist }: { setActive: (s: Section) => void; initialCategory?: string; initialService?: string; openSpecialist?: (p: Provider) => void }) {
   const { lang, tr } = useLang();
   const { providers } = useProviders();
   const { geo } = useGeo();
@@ -4825,7 +4868,7 @@ function SearchSection({ setActive, initialCategory = "", initialService = "" }:
           <div className="text-xs text-muted-foreground mb-4">{tr("searchFound")}: <span className="text-gold font-bold">{results.length}</span></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
             {results.map((p) => (
-              <ProviderResultCard key={p.slug} p={p} onOpen={() => setActive("profile")} />
+              <ProviderResultCard key={p.slug} p={p} onOpen={() => (openSpecialist ? openSpecialist(p) : setActive("profile"))} />
             ))}
           </div>
         </>
@@ -4834,7 +4877,7 @@ function SearchSection({ setActive, initialCategory = "", initialService = "" }:
   );
 }
 
-function SpecialistsListSection({ setActive }: { setActive: (s: Section) => void }) {
+function SpecialistsListSection({ setActive, openSpecialist }: { setActive: (s: Section) => void; openSpecialist?: (p: Provider) => void }) {
   const { tr } = useLang();
   const { providers } = useProviders();
   const [verifiedOnly, setVerifiedOnly] = useState(false);
@@ -4877,7 +4920,7 @@ function SpecialistsListSection({ setActive }: { setActive: (s: Section) => void
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
           {list.map((p) => (
-            <ProviderResultCard key={p.slug} p={p} onOpen={() => setActive("profile")} />
+            <ProviderResultCard key={p.slug} p={p} onOpen={() => (openSpecialist ? openSpecialist(p) : setActive("profile"))} />
           ))}
         </div>
       )}
@@ -4885,7 +4928,7 @@ function SpecialistsListSection({ setActive }: { setActive: (s: Section) => void
   );
 }
 
-function ClientServices({ setActive }: { setActive: (s: Section) => void }) {
+function ClientServices({ setActive, openSpecialist }: { setActive: (s: Section) => void; openSpecialist?: (p: Provider) => void }) {
   const [mode, setMode] = useState<"catalog" | "search">("catalog");
   const [prefillCat, setPrefillCat] = useState("");
   const { tr } = useLang();
@@ -4901,7 +4944,7 @@ function ClientServices({ setActive }: { setActive: (s: Section) => void }) {
             <Icon name="ArrowLeft" size={14} />{tr("catBackToCatalog")}
           </button>
         </div>
-        <SearchSection setActive={setActive} initialCategory={prefillCat} />
+        <SearchSection setActive={setActive} initialCategory={prefillCat} openSpecialist={openSpecialist} />
       </div>
     );
   }

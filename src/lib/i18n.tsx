@@ -284,6 +284,41 @@ export const t: Dict = {
     en: "\"In a year on the platform I fully solved the problem of finding corporate clients. A private community of professionals is a whole new level of trust and order quality.\"",
   },
 
+  // Client process (how the platform works — FOR CLIENTS)
+  cstep1Title: { ru: "Опишите задачу", en: "Describe your task" },
+  cstep1Desc: { ru: "Выберите нужную услугу или опишите ситуацию — платформа бесплатна для клиентов", en: "Choose the service you need or describe your situation — the platform is free for clients" },
+  cstep2Title: { ru: "Сравните специалистов", en: "Compare specialists" },
+  cstep2Desc: { ru: "Смотрите проверенных исполнителей: рейтинг, отзывы, кейсы, лицензии и цены", en: "Browse verified providers: rating, reviews, cases, licenses and prices" },
+  cstep3Title: { ru: "Свяжитесь напрямую", en: "Contact directly" },
+  cstep3Desc: { ru: "Пишите или звоните выбранному специалисту без посредников и комиссий", en: "Message or call your chosen specialist with no middlemen or fees" },
+  cstep4Title: { ru: "Получите результат", en: "Get the result" },
+  cstep4Desc: { ru: "Работайте по договору, оставьте отзыв и возвращайтесь за новыми задачами", en: "Work under a contract, leave a review and come back for new tasks" },
+
+  // Client features (why choose SHCHIT — FOR CLIENTS)
+  cfeat1Title: { ru: "Только проверенные специалисты", en: "Only verified specialists" },
+  cfeat1Desc: { ru: "Каждый исполнитель проходит проверку документов, лицензий и репутации — вы не нарвётесь на мошенника", en: "Every provider is screened for documents, licenses and reputation — you won't run into a scammer" },
+  cfeat2Title: { ru: "Все услуги в одном месте", en: "All services in one place" },
+  cfeat2Desc: { ru: "Детективы, охрана, полиграф, кибербезопасность и десятки других услуг — не нужно искать по разным сайтам", en: "Detectives, security, polygraph, cybersecurity and dozens of other services — no need to search different sites" },
+  cfeat3Title: { ru: "Прямой контакт без комиссий", en: "Direct contact, no fees" },
+  cfeat3Desc: { ru: "Связывайтесь с исполнителем напрямую — звонок, чат и мессенджеры. Платформа для клиентов бесплатна", en: "Reach the provider directly — call, chat and messengers. The platform is free for clients" },
+  cfeat4Title: { ru: "Честные рейтинги и отзывы", en: "Honest ratings and reviews" },
+  cfeat4Desc: { ru: "Прозрачная система оценок и реальные отзывы клиентов помогают выбрать лучшего специалиста", en: "A transparent rating system and real client reviews help you choose the best specialist" },
+  cfeat5Title: { ru: "Специалист рядом с вами", en: "A specialist near you" },
+  cfeat5Desc: { ru: "Геопоиск подбирает проверенных исполнителей в вашем городе и стране", en: "Geo-search finds verified providers in your city and country" },
+  cfeat6Title: { ru: "Безопасность и конфиденциальность", en: "Security and confidentiality" },
+  cfeat6Desc: { ru: "Шифрованные чаты и защита данных — ваши задачи и переписка остаются приватными", en: "Encrypted chats and data protection — your tasks and messages stay private" },
+
+  // Client reviews section
+  clientReviewsTag: { ru: "Отзывы клиентов", en: "Client reviews" },
+  clientReviewsTitle: { ru: "Клиенты о специалистах платформы", en: "Clients about the platform's specialists" },
+  clientReviewsSub: { ru: "Реальные истории людей и компаний, которым помогли специалисты ЩИТ", en: "Real stories from people and companies helped by SHCHIT specialists" },
+
+  // Registration gate (client must complete profile to open specialist profiles)
+  regRequiredTitle: { ru: "Завершите регистрацию", en: "Complete your registration" },
+  regRequiredText: { ru: "Чтобы открыть профиль специалиста, заполните свой профиль в личном кабинете: имя и телефон. Это защищает специалистов от спама и повышает доверие.", en: "To open a specialist's profile, fill in your profile in the dashboard: name and phone. This protects specialists from spam and builds trust." },
+  regRequiredBtn: { ru: "Заполнить профиль", en: "Fill in profile" },
+  regRequiredCancel: { ru: "Позже", en: "Later" },
+
   // CTA
   closedAccess: { ru: "Закрытый доступ", en: "Private access" },
   ctaTitle1: { ru: "Вступите в профессиональное", en: "Join the professional" },
@@ -294,6 +329,9 @@ export const t: Dict = {
 
   // Profile
   profileSection: { ru: "Профиль специалиста", en: "Specialist profile" },
+  profileSpecialization: { ru: "Специализация", en: "Specialization" },
+  profileCasesCount: { ru: "кейсов", en: "cases" },
+  profileReviewsCount: { ru: "отзывов", en: "reviews" },
   back: { ru: "Назад", en: "Back" },
   orderService: { ru: "Заказать услугу", en: "Order a service" },
   casesCount: { ru: "Кейсов", en: "Cases" },
@@ -590,9 +628,9 @@ export const t: Dict = {
   offer7Text: { ru: "Платформа вправе изменять стоимость и условия услуг. Изменения не распространяются на уже оплаченные периоды. Актуальная редакция оферты и тарифов публикуется на Платформе. Продолжение использования платных услуг означает согласие с новой редакцией.", en: "The Platform may change the cost and terms of services. Changes do not apply to periods already paid for. The current version of the offer and pricing is published on the Platform. Continued use of paid services constitutes agreement with the new version." },
 
   // Client hero
-  heroClientTitle1: { ru: "Найдите проверенного", en: "Find a verified" },
-  heroClientTitle2: { ru: "специалиста", en: "security specialist" },
-  heroClientTitle3: { ru: "по безопасности", en: "you can trust" },
+  heroClientTitle1: { ru: "Найдите проверенного специалиста", en: "Find a verified specialist" },
+  heroClientTitle2: { ru: "по безопасности", en: "in security" },
+  heroClientTitle3: { ru: "", en: "" },
   heroClientDesc: { ru: "Все специалисты по безопасности — в одном месте. Не нужно искать по разным площадкам: выберите услугу, сравните проверенных исполнителей по рейтингу и кейсам и свяжитесь напрямую. Для клиентов — бесплатно.", en: "Every security specialist in one place. No need to search across different sites: choose a service, compare verified providers by rating and cases, and contact them directly. Free for clients." },
   heroClientCta1: { ru: "Подобрать услугу", en: "Browse services" },
   heroClientCta2: { ru: "Смотреть специалистов", en: "View specialists" },
