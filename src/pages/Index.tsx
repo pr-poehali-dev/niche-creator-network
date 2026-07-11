@@ -10,6 +10,7 @@ import { useAuth, type AuthRole } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
 import { trackGoal, GOALS } from "@/lib/analytics";
 import { BLOG_POSTS, type BlogPost } from "@/lib/blog";
+import { useAutoTranslate } from "@/lib/autotranslate";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Reveal from "@/components/Reveal";
 import Brand from "@/components/Brand";
@@ -32,6 +33,7 @@ type NavItem = { id: Section; key: keyof typeof t; icon: string };
 const CLIENT_NAV: NavItem[] = [
   { id: "home", key: "navHome", icon: "Home" },
   { id: "services", key: "navSearch", icon: "Search" },
+  { id: "blog", key: "navBlog", icon: "BookOpen" },
   { id: "contacts", key: "navContacts", icon: "Mail" },
 ];
 
@@ -40,8 +42,17 @@ const PROVIDER_NAV: NavItem[] = [
   { id: "courses", key: "navCourses", icon: "GraduationCap" },
   { id: "chat", key: "navChat", icon: "MessageSquare" },
   { id: "forum", key: "navForum", icon: "MessagesSquare" },
+  { id: "blog", key: "navBlog", icon: "BookOpen" },
   { id: "dashboard", key: "navDashboard", icon: "LayoutDashboard" },
   { id: "contacts", key: "navContacts", icon: "Mail" },
+];
+
+// Меню для неавторизованных посетителей (гостей). Блог доступен всем —
+// это точки входа для бесплатного поискового трафика.
+const GUEST_NAV: NavItem[] = [
+  { id: "blog", key: "navBlog", icon: "BookOpen" },
+  { id: "pricing", key: "navPricing", icon: "Wallet" },
+  { id: "about", key: "fAbout", icon: "Info" },
 ];
 
 type LS = { ru: string; en: string };
@@ -1202,7 +1213,7 @@ export default function Index() {
     if (!isAuthed) setActive((cur) => (PUBLIC_URL_SECTIONS.includes(cur) ? cur : "home"));
   }, [isAuthed]);
 
-  const NAV_ITEMS = isAuthed ? (role === "client" ? CLIENT_NAV : PROVIDER_NAV) : [];
+  const NAV_ITEMS = isAuthed ? (role === "client" ? CLIENT_NAV : PROVIDER_NAV) : GUEST_NAV;
 
   const go = (s: Section) => {
     if (isLocked && LOCKED_SECTIONS.includes(s)) {
@@ -6037,7 +6048,21 @@ function AboutSection({ setActive }: { setActive: (s: Section) => void }) {
 
 function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (s: Section) => void; onBack: () => void }) {
   const { tr, lang } = useLang();
-  const loc = (v: { ru: string; en: string }) => (lang === "ru" ? v.ru : v.en);
+
+  // Собираем все английские строки статьи для автоперевода на fr/de/ja/ar/he.
+  // Для ru/en перевод не нужен — берём готовый текст.
+  const enStrings: string[] = [post.title.en, ...post.body.flatMap((b) =>
+    b.type === "li" ? b.items.map((it) => it.en) : [b.text.en],
+  )];
+  const { resolve } = useAutoTranslate(enStrings);
+
+  // Резолвер текста статьи: ru → русский, en → английский,
+  // остальные языки → английский, переведённый на лету.
+  const loc = (v: { ru: string; en: string }) => {
+    if (lang === "ru") return v.ru;
+    if (lang === "en") return v.en;
+    return resolve(v.en);
+  };
 
   // SEO для конкретной статьи: заголовок вкладки, meta description и разметка Article.
   // Всё возвращается к исходному состоянию при уходе со статьи.
@@ -6057,7 +6082,7 @@ function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (
       "@type": "Article",
       headline: loc(post.title),
       description: loc(post.metaDescription),
-      inLanguage: lang === "ru" ? "ru" : "en",
+      inLanguage: lang,
       datePublished: post.date,
       author: { "@type": "Organization", name: "ЩИТ" },
       publisher: { "@type": "Organization", name: "ЩИТ", url: "https://shieldpspl.ru/" },
@@ -6141,7 +6166,16 @@ function BlogSection({ setActive }: { setActive: (s: Section) => void }) {
   const [openSlug, setOpenSlug] = useState<string | null>(getInitialBlogSlug);
   const initialTab = openSlug ? (BLOG_POSTS.find((p) => p.slug === openSlug)?.audience ?? "client") : "client";
   const [tab, setTab] = useState<"client" | "provider">(initialTab);
-  const loc = (v: { ru: string; en: string }) => (lang === "ru" ? v.ru : v.en);
+
+  // Автоперевод заголовков и анонсов списка статей на fr/de/ja/ar/he.
+  // Хук вызывается до любых ранних return, чтобы не нарушать правила хуков.
+  const listStrings: string[] = BLOG_POSTS.flatMap((p) => [p.title.en, p.excerpt.en]);
+  const { resolve } = useAutoTranslate(listStrings);
+  const loc = (v: { ru: string; en: string }) => {
+    if (lang === "ru") return v.ru;
+    if (lang === "en") return v.en;
+    return resolve(v.en);
+  };
 
   useEffect(() => { trackGoal(GOALS.openBlog); }, []);
 
