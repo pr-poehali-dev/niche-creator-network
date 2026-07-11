@@ -134,6 +134,20 @@ def handler(event: dict, context) -> dict:
                     (client_id, client_name, category, service, description, budget, city),
                 )
                 new_id = cur.fetchone()[0]
+
+                # Уведомляем активных специалистов о новой задаче, чтобы они быстрее откликались.
+                cat_label = notify_utils.CATEGORY_LABELS.get(category, '')
+                cur.execute(
+                    f"SELECT slug FROM {SCHEMA}.providers WHERE subscription_active = true"
+                )
+                svc_txt = service or (cat_label or 'услуга по безопасности')
+                where = f' в {city}' if city else ''
+                title = 'Новая задача от клиента'
+                text = f'Появилась новая задача: «{svc_txt}»{where}. Бюджет: {budget or "не указан"}. Откликнитесь в кабинете.'
+                for prov in cur.fetchall():
+                    uid = notify_utils.id_from_slug(prov[0])
+                    if uid:
+                        notify_utils.push(cur, uid, 'task', title, text, 'dashboard', email=False)
                 conn.commit()
                 return _resp(200, {'success': True, 'id': new_id})
 

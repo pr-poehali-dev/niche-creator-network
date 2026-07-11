@@ -7,6 +7,14 @@ SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
 ALLOWED_TYPES = {'system', 'message', 'terms', 'price', 'task', 'community'}
 
+# Человекочитаемые названия категорий задач (для текста уведомлений).
+CATEGORY_LABELS = {
+    'physical': 'Физическая безопасность',
+    'cyber': 'Кибербезопасность',
+    'economic': 'Экономическая безопасность',
+    'crisis': 'Антикризис и спецоперации',
+}
+
 
 def _email_enabled(cur, user_id: int) -> bool:
     '''Дублировать ли уведомления на почту (по умолчанию — да).'''
@@ -69,8 +77,9 @@ def id_from_slug(slug: str):
         return None
 
 
-def push(cur, user_id, ntype: str, title: str, body: str, link=None):
+def push(cur, user_id, ntype: str, title: str, body: str, link=None, email=True):
     '''Создаёт уведомление пользователю и, если не отключено, дублирует на почту.
+    email=False — только в приложении (для массовых рассылок без потока писем).
     Не бросает исключений наружу — уведомления не должны ломать основную операцию.'''
     if not user_id:
         return
@@ -82,9 +91,9 @@ def push(cur, user_id, ntype: str, title: str, body: str, link=None):
             f"VALUES (%s, %s, %s, %s, %s)",
             (user_id, ntype, str(title)[:255], str(body), (link or None)),
         )
-        if _email_enabled(cur, user_id):
-            email = _user_email(cur, user_id)
-            if email:
-                _send_email(email, str(title), str(body))
+        if email and _email_enabled(cur, user_id):
+            addr = _user_email(cur, user_id)
+            if addr:
+                _send_email(addr, str(title), str(body))
     except Exception as e:
         print(f"[notify] push error: {type(e).__name__}: {e}")
