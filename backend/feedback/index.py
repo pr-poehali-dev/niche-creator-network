@@ -110,6 +110,7 @@ def handler(event: dict, context) -> dict:
     except smtplib.SMTPAuthenticationError:
         return _resp(500, {'error': 'SMTP auth failed', 'code': 'smtp_auth'})
     except Exception as e:
-        return _resp(500, {'error': 'Send failed', 'code': 'smtp_send', 'detail': str(e)[:200]})
+        print(f"[feedback] SMTP ERROR: {type(e).__name__}: {e}")
+        return _resp(500, {'error': 'Send failed', 'code': 'smtp_send'})
 
     return _resp(200, {'success': True, 'sent_to': to_addr, 'test': is_test})

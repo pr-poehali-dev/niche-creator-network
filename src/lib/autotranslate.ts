@@ -8,7 +8,6 @@ const TRANSLATE_URL = (func2url as Record<string, string>)["translate"];
 // Используется только чтобы НЕ дёргать API для очевидно «родных» строк.
 function looksLikeLang(text: string, lang: string): boolean {
   const hasCyr = /[а-яё]/i.test(text);
-  const hasLat = /[a-z]/i.test(text);
   const hasJa = /[぀-ヿ㐀-鿿]/.test(text);
   const hasAr = /[؀-ۿ]/.test(text);
   const hasHe = /[֐-׿]/.test(text);

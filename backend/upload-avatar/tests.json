@@ -7,18 +7,19 @@
       "expectedStatus": 200
     },
     {
-      "name": "Invalid role returns 400",
+      "name": "No auth token returns 401",
       "method": "POST",
       "path": "/",
-      "body": {"role": "bad", "id": "x", "imageBase64": "iVBORw0KGgo=", "ext": "png"},
-      "expectedStatus": 400
+      "body": {"imageBase64": "iVBORw0KGgo=", "ext": "png"},
+      "expectedStatus": 401
     },
     {
-      "name": "Missing id returns 400",
+      "name": "Invalid token returns 401",
       "method": "POST",
       "path": "/",
-      "body": {"role": "provider", "imageBase64": "iVBORw0KGgo=", "ext": "png"},
-      "expectedStatus": 400
+      "headers": {"X-Auth-Token": "invalid-token-xyz"},
+      "body": {"imageBase64": "iVBORw0KGgo=", "ext": "png"},
+      "expectedStatus": 401
     }
   ]
 }

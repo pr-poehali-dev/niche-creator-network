@@ -23,6 +23,18 @@ MAX_ATTEMPTS_PER_IP = 20
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
+# Служебный домен и префикс, зарезервированные под встроенных администраторов.
+# Обычным пользователям регистрироваться/входить с такими адресами ЗАПРЕЩЕНО —
+# иначе можно было бы получить права администратора (privilege escalation).
+RESERVED_EMAIL_DOMAIN = '@shchit.local'
+RESERVED_EMAIL_PREFIX = 'admin+'
+
+
+def _is_reserved_email(email: str) -> bool:
+    '''True, если email зарезервирован под служебные (админские) аккаунты.'''
+    e = (email or '').strip().lower()
+    return e.startswith(RESERVED_EMAIL_PREFIX) or e.endswith(RESERVED_EMAIL_DOMAIN)
+
 
 def _conn():
     return psycopg2.connect(os.environ['DATABASE_URL'])
@@ -240,6 +252,9 @@ def handler(event: dict, context) -> dict:
             consent = bool(body.get('consent'))
             if not email or not EMAIL_RE.match(email):
                 return _resp(400, {'error': 'invalid_email'})
+            if _is_reserved_email(email):
+                # Защита от повышения привилегий: служебные админ-адреса нельзя занять.
+                return _resp(400, {'error': 'invalid_email'})
             if len(password) < 8 or len(password) > 200:
                 return _resp(400, {'error': 'weak_password'})
             if not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
@@ -278,6 +293,9 @@ def handler(event: dict, context) -> dict:
             email = (body.get('email') or '').strip().lower()[:200]
             password = body.get('password') or ''
             lang = body.get('lang') if body.get('lang') in ('ru', 'en') else 'ru'
+            if _is_reserved_email(email):
+                # Служебные админ-адреса входят только через action=admin_login по ADMIN_PASSWORD.
+                return _resp(401, {'error': 'invalid_credentials'})
             identifier = f'login:{email}'
             if _too_many_attempts(cur, identifier, client_ip):
                 return _resp(429, {'error': 'too_many_attempts'})

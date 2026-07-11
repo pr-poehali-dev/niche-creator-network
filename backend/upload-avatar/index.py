@@ -4,15 +4,31 @@ import base64
 import uuid
 import boto3
 import psycopg2
+from auth_utils import get_auth_user, provider_slug, client_id
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 ALLOWED_EXT = {'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'webp': 'image/webp'}
+
+# Магические байты: проверяем, что файл реально является изображением заявленного
+# типа (защита от загрузки замаскированных исполняемых/иных файлов).
+MAGIC = {
+    'png': (b'\x89PNG\r\n\x1a\n',),
+    'jpg': (b'\xff\xd8\xff',),
+    'jpeg': (b'\xff\xd8\xff',),
+    'webp': (b'RIFF',),
+}
+
+
+def _looks_like_image(ext: str, data: bytes) -> bool:
+    return any(data.startswith(sig) for sig in MAGIC.get(ext, ()))
 
 
 def handler(event: dict, context) -> dict:
     '''
     Business: загружает аватар (фото) исполнителя или клиента в S3 и сохраняет ссылку в БД.
-    Args: event с httpMethod, body (JSON: role 'provider'|'client', id, imageBase64, ext)
+              Владелец определяется по токену сессии (X-Auth-Token) — пользователь может
+              менять только свой аватар (защита от IDOR).
+    Args: event с httpMethod, headers (X-Auth-Token), body (JSON: imageBase64, ext)
     Returns: HTTP-ответ с публичным URL аватара
     '''
     method = event.get('httpMethod', 'POST')
@@ -32,16 +48,18 @@ def handler(event: dict, context) -> dict:
     if method != 'POST':
         return {'statusCode': 405, 'headers': cors, 'body': json.dumps({'error': 'Method not allowed'})}
 
+    # Авторизация: только владелец аккаунта может менять свой аватар.
+    user = get_auth_user(event)
+    if not user:
+        return {'statusCode': 401, 'headers': cors, 'body': json.dumps({'error': 'unauthorized'})}
+
     body = json.loads(event.get('body') or '{}')
-    role = (body.get('role') or '').strip()
-    rec_id = (body.get('id') or '').strip()
+    role = user['role'] if user['role'] in ('provider', 'client') else 'client'
+    # ID записи берём НЕ из тела запроса, а из токена — исключает подмену чужого профиля.
+    rec_id = provider_slug(user) if role == 'provider' else client_id(user)
     image_b64 = body.get('imageBase64') or ''
     ext = (body.get('ext') or 'jpg').lower().replace('.', '')
 
-    if role not in ('provider', 'client'):
-        return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'invalid role'})}
-    if not rec_id:
-        return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'id required'})}
     if ext not in ALLOWED_EXT:
         return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'invalid ext'})}
     if ',' in image_b64:
@@ -52,6 +70,8 @@ def handler(event: dict, context) -> dict:
         return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'invalid image'})}
     if len(data) > 5 * 1024 * 1024:
         return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'file too large'})}
+    if not _looks_like_image(ext, data):
+        return {'statusCode': 400, 'headers': cors, 'body': json.dumps({'error': 'invalid image'})}
 
     print(f"[upload-avatar] start role={role} id={rec_id} ext={ext} bytes={len(data)}")
 
@@ -66,7 +86,7 @@ def handler(event: dict, context) -> dict:
         s3.put_object(Bucket='files', Key=key, Body=data, ContentType=ALLOWED_EXT[ext])
     except Exception as e:
         print(f"[upload-avatar] S3 ERROR: {type(e).__name__}: {e}")
-        return {'statusCode': 500, 'headers': cors, 'body': json.dumps({'error': 'storage_failed', 'detail': str(e)})}
+        return {'statusCode': 500, 'headers': cors, 'body': json.dumps({'error': 'storage_failed'})}
 
     cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{key}"
     print(f"[upload-avatar] uploaded to S3 key={key}")
@@ -88,7 +108,7 @@ def handler(event: dict, context) -> dict:
         conn.close()
     except Exception as e:
         print(f"[upload-avatar] DB ERROR: {type(e).__name__}: {e}")
-        return {'statusCode': 500, 'headers': cors, 'body': json.dumps({'error': 'db_failed', 'detail': str(e)})}
+        return {'statusCode': 500, 'headers': cors, 'body': json.dumps({'error': 'db_failed'})}
 
     print(f"[upload-avatar] done rows={rows} url={cdn_url}")
     return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'success': True, 'url': cdn_url})}

@@ -7,18 +7,19 @@
       "expectedStatus": 200
     },
     {
-      "name": "Invalid ext returns 400",
+      "name": "No auth token returns 401",
       "method": "POST",
       "path": "/",
-      "body": {"slug": "morozov", "fileBase64": "iVBORw0KGgo=", "ext": "exe"},
-      "expectedStatus": 400
+      "body": {"fileBase64": "JVBERi0=", "ext": "pdf"},
+      "expectedStatus": 401
     },
     {
-      "name": "Empty file returns 400",
+      "name": "Invalid token returns 401",
       "method": "POST",
       "path": "/",
-      "body": {"slug": "morozov", "fileBase64": "", "ext": "pdf"},
-      "expectedStatus": 400
+      "headers": {"X-Auth-Token": "invalid-token-xyz"},
+      "body": {"fileBase64": "JVBERi0=", "ext": "pdf"},
+      "expectedStatus": 401
     }
   ]
 }

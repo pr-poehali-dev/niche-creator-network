@@ -5,7 +5,7 @@ import { dataExtra } from "@/lib/i18n-extra";
 import { downloadReceipt } from "@/lib/receipt";
 import { useGeo, haversineKm } from "@/lib/geo";
 import { cleanText } from "@/lib/moderation";
-import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, type Provider, type LS } from "@/lib/providers";
+import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, type Provider } from "@/lib/providers";
 import { useAuth, type AuthRole } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -615,9 +615,14 @@ function VerificationBlock({ v }: { v: NonNullable<Provider["verification"]> }) 
               <div>
                 <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("verifyLicense")}</div>
                 <div className="space-y-1 mt-0.5">
-                  {licenses.map((lic, i) => (
-                    <div key={i} className="text-xs text-foreground font-montserrat font-medium">{lic}</div>
-                  ))}
+                  {licenses.map((lic, i) => {
+                    const licText = typeof lic === "string"
+                      ? lic
+                      : [lic.number, lic.date, lic.authority].filter(Boolean).join(" · ");
+                    return (
+                      <div key={i} className="text-xs text-foreground font-montserrat font-medium">{licText}</div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -811,6 +816,7 @@ const guardServices = [
 const SECTION_CRUMB: Record<Section, keyof typeof t> = {
   home: "crumbHome",
   profile: "crumbProfile",
+  specialists: "specialists",
   cases: "crumbCases",
   services: "crumbServices",
   courses: "crumbCourses",
@@ -825,7 +831,10 @@ const SECTION_CRUMB: Record<Section, keyof typeof t> = {
   terms: "fTerms",
   agreement: "fAgreement",
   offer: "fOffer",
+  consent: "fConsent",
   admin: "adminPanelTitle",
+  about: "aboutPageTitle",
+  mobileapp: "maTitle",
 };
 
 const cases = [
@@ -919,38 +928,7 @@ const services = [
   { cat: "crisis", icon: "TriangleAlert", title: { ru: "Аудитор уязвимости критической инфраструктуры", en: "Vulnerability assessment specialist" }, price: { ru: "от 50 000 ₽", en: "from $550" }, time: { ru: "1–3 недели", en: "1–3 weeks" }, desc: { ru: "Эксперт по техногенным авариям: аудит ТЭЦ, заводов и объектов критической инфраструктуры", en: "Critical-infrastructure and industrial-hazard vulnerability audits" } },
 ];
 
-const courses = [
-  {
-    title: { ru: "Основы полиграфологии", en: "Polygraph fundamentals" },
-    instructor: { ru: "А. Морозов", en: "A. Morozov" },
-    level: { ru: "Начинающий", en: "Beginner" },
-    duration: { ru: "32 часа", en: "32 hours" },
-    price: { ru: "24 900 ₽", en: "$280" },
-    students: 312,
-    rating: 4.8,
-    img: POLYGRAPH_IMAGE,
-  },
-  {
-    title: { ru: "TSCM: технический поиск средств наблюдения", en: "TSCM: technical surveillance counter-measures" },
-    instructor: { ru: "И. Семёнов", en: "I. Semenov" },
-    level: { ru: "Продвинутый", en: "Advanced" },
-    duration: { ru: "48 часов", en: "48 hours" },
-    price: { ru: "49 900 ₽", en: "$560" },
-    students: 187,
-    rating: 4.9,
-    img: HERO_IMAGE,
-  },
-  {
-    title: { ru: "Частная детективная деятельность: с нуля до лицензии", en: "Private investigation: from zero to license" },
-    instructor: { ru: "Е. Власова", en: "E. Vlasova" },
-    level: { ru: "С нуля", en: "From scratch" },
-    duration: { ru: "60 часов", en: "60 hours" },
-    price: { ru: "39 900 ₽", en: "$450" },
-    students: 248,
-    rating: 4.7,
-    img: DETECTIVE_IMAGE,
-  },
-];
+
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -2860,6 +2838,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   };
 
   const [vf, setVf] = useState({
+    fullName: "", registry: "",
     legalStatus: "ip",
     showLegalStatus: true, showLicense: true,
     pseudonym: "", usePseudonym: false,
@@ -2918,6 +2897,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
           setMyServices(v.services.map((s: unknown) => typeof s === "string" ? { key: s, price: "" } : { key: (s as { key: string }).key, price: (s as { price?: string }).price || "" }));
         }
         setVf({
+          fullName: v.fullName || "", registry: v.registry || "",
           legalStatus: v.legalStatus || "ip",
           showLegalStatus: !!v.showLegalStatus, showLicense: !!v.showLicense,
           pseudonym: v.pseudonym || "", usePseudonym: !!v.usePseudonym,
@@ -3276,7 +3256,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                                 amount: amountStr,
                                 payer: vf.fullName || "",
                                 method: tr("payCard"),
-                                lang,
+                                lang: (lang === "ru" ? "ru" : "en") as "ru" | "en",
                               })}
                               className="inline-flex items-center gap-1 text-muted-foreground hover:text-gold transition-colors font-montserrat font-semibold"
                             >
@@ -3871,7 +3851,7 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
     amount: amountStr,
     payer: (to || email) || "",
     method: tr(method === "card" ? "payCard" : "paySbp"),
-    lang,
+    lang: (lang === "ru" ? "ru" : "en") as "ru" | "en",
   });
 
   const sendTo = async (to: string) => {
@@ -5598,7 +5578,7 @@ const INSTALL_DISMISS_KEY = "shchit_install_dismissed";
 function InstallPromptBanner({ setActive }: { setActive: (s: Section) => void }) {
   const { tr } = useLang();
   const [visible, setVisible] = useState(false);
-  const [platform, setPlatform] = useState<MobilePlatform>("desktop");
+  const [, setPlatform] = useState<MobilePlatform>("desktop");
   const [installEvt, setInstallEvt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {

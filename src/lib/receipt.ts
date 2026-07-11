@@ -44,13 +44,32 @@ const TEXT = {
   },
 };
 
+/** Экранирование пользовательских данных перед вставкой в HTML чека (защита от XSS). */
+function esc(v: string): string {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function downloadReceipt(data: ReceiptData) {
   const t = TEXT[data.lang];
+  const d = {
+    receiptNo: esc(data.receiptNo),
+    date: esc(data.date),
+    plan: esc(data.plan),
+    period: esc(data.period),
+    amount: esc(data.amount),
+    payer: esc(data.payer),
+    method: esc(data.method),
+  };
   const html = `<!DOCTYPE html>
 <html lang="${data.lang}">
 <head>
 <meta charset="utf-8" />
-<title>${t.receiptNo}${data.receiptNo}</title>
+<title>${t.receiptNo}${d.receiptNo}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #1a1d24; background: #f4f5f7; padding: 32px; }
@@ -83,17 +102,17 @@ export function downloadReceipt(data: ReceiptData) {
       </div>
       <div class="title">
         <h1>${t.title}</h1>
-        <div class="no">${t.receiptNo}${data.receiptNo}</div>
+        <div class="no">${t.receiptNo}${d.receiptNo}</div>
       </div>
     </div>
     <div class="body">
-      <div class="row"><span class="k">${t.date}</span><span class="v">${data.date}</span></div>
-      <div class="row"><span class="k">${t.payer}</span><span class="v">${data.payer}</span></div>
+      <div class="row"><span class="k">${t.date}</span><span class="v">${d.date}</span></div>
+      <div class="row"><span class="k">${t.payer}</span><span class="v">${d.payer}</span></div>
       <div class="row"><span class="k">${t.service}</span><span class="v">${t.serviceVal}</span></div>
-      <div class="row"><span class="k">${t.plan}</span><span class="v">${data.plan}</span></div>
-      <div class="row"><span class="k">${t.period}</span><span class="v">${data.period}</span></div>
-      <div class="row"><span class="k">${t.method}</span><span class="v">${data.method}</span></div>
-      <div class="total"><span class="k">${t.total}</span><span class="v">${data.amount}</span></div>
+      <div class="row"><span class="k">${t.plan}</span><span class="v">${d.plan}</span></div>
+      <div class="row"><span class="k">${t.period}</span><span class="v">${d.period}</span></div>
+      <div class="row"><span class="k">${t.method}</span><span class="v">${d.method}</span></div>
+      <div class="total"><span class="k">${t.total}</span><span class="v">${d.amount}</span></div>
       <div class="note">${t.note}</div>
       <button class="btn" onclick="window.print()">${t.print}</button>
     </div>

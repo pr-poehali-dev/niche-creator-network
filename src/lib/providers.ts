@@ -12,8 +12,10 @@ export type ProviderContacts = {
 };
 
 export type ProviderVerification = {
+  fullName?: string;
   legalStatus?: string;
   license?: string;
+  registry?: string;
   licenses?: (string | { number?: string; date?: string; authority?: string })[];
   documents?: { title: string; url?: string }[];
   bio?: string;
