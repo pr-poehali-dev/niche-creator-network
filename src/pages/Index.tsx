@@ -17,6 +17,7 @@ import Reveal from "@/components/Reveal";
 import Brand from "@/components/Brand";
 import ShareButtons from "@/components/ShareButtons";
 import UrgencyBanner from "@/components/UrgencyBanner";
+import NotificationBell from "@/components/NotificationBell";
 import func2url from "../../backend/func2url.json";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/92040949-913f-4126-80f9-fa681d96ea82.jpg";
@@ -1381,6 +1382,7 @@ export default function Index() {
             <LangSwitcher lang={lang} setLang={setLang} />
             {isAuthed ? (
               <>
+                <NotificationBell />
                 {user?.isAdmin && (
                   <button onClick={() => go("admin")} className={`hidden sm:flex items-center gap-1.5 px-2.5 py-2 text-sm font-montserrat font-bold rounded-sm transition-all border shrink-0 whitespace-nowrap ${active === "admin" ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`} aria-label={tr("adminPanelTitle")}>
                     <Icon name="ShieldCheck" size={15} />
@@ -1954,7 +1956,7 @@ const MOBILE_APP_BANNER_KEY = "shchit_mobileapp_banner_dismissed";
 // Блок отзывов КЛИЕНТОВ о специалистах платформы (на клиентской главной).
 // Тексты двуязычные, для fr/de/ja/ar/he — автоперевод (правило «всё на 7 языков»).
 function ClientReviewsSection() {
-  const { tr, lang } = useLang();
+  const { tr, lang, rtl } = useLang();
   const enStrings = CLIENT_REVIEWS.flatMap((r) => [r.text.en, r.name.en, r.city.en, r.service.en]);
   const { resolve } = useAutoTranslate(enStrings);
   const loc = (v: { ru: string; en: string }) => {
@@ -1962,6 +1964,33 @@ function ClientReviewsSection() {
     if (lang === "en") return v.en;
     return resolve(v.en);
   };
+
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const [paused, setPaused] = useState(false);
+
+  // Прокрутка карусели на одну карточку в указанную сторону.
+  const scrollByCard = (dir: 1 | -1) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>("[data-review-card]");
+    const step = card ? card.offsetWidth + 20 : el.clientWidth * 0.8;
+    el.scrollBy({ left: dir * step * (rtl ? -1 : 1), behavior: "smooth" });
+  };
+
+  // Автопрокрутка карусели; на паузе при наведении/касании и в конце — цикл сначала.
+  useEffect(() => {
+    if (paused) return;
+    const el = trackRef.current;
+    if (!el) return;
+    const timer = setInterval(() => {
+      const card = el.querySelector<HTMLElement>("[data-review-card]");
+      const step = card ? card.offsetWidth + 20 : el.clientWidth * 0.8;
+      const atEnd = Math.abs(el.scrollLeft) + el.clientWidth >= el.scrollWidth - 8;
+      if (atEnd) el.scrollTo({ left: 0, behavior: "smooth" });
+      else el.scrollBy({ left: step * (rtl ? -1 : 1), behavior: "smooth" });
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [paused, rtl]);
 
   return (
     <section className="border-y border-border bg-card py-28 relative overflow-hidden">
@@ -1972,29 +2001,59 @@ function ClientReviewsSection() {
           <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">{tr("clientReviewsTitle")}</h2>
           <p className="text-muted-foreground text-sm max-w-2xl mx-auto">{tr("clientReviewsSub")}</p>
         </Reveal>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
-          {CLIENT_REVIEWS.map((r) => (
-            <div key={r.id} className="p-6 border border-border rounded-sm bg-background card-hover flex flex-col">
-              <div className="flex items-center gap-1 mb-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Icon key={i} name="Star" size={14} className={i < r.rating ? "text-gold" : "text-muted-foreground/30"} />
-                ))}
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-5 flex-1">«{loc(r.text)}»</p>
-              <div className="flex items-center gap-3 border-t border-border pt-4">
-                <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center shrink-0">
-                  <span className="font-montserrat font-bold text-sm text-[hsl(220,20%,6%)]">{loc(r.name).trim().charAt(0)}</span>
+
+        <div className="relative">
+          {/* Стрелки навигации */}
+          <button
+            onClick={() => scrollByCard(-1)}
+            aria-label="prev"
+            className="hidden md:flex absolute -start-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-background border border-border items-center justify-center text-muted-foreground hover:text-gold hover:border-gold transition-colors"
+          >
+            <Icon name={rtl ? "ChevronRight" : "ChevronLeft"} size={18} />
+          </button>
+          <button
+            onClick={() => scrollByCard(1)}
+            aria-label="next"
+            className="hidden md:flex absolute -end-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-background border border-border items-center justify-center text-muted-foreground hover:text-gold hover:border-gold transition-colors"
+          >
+            <Icon name={rtl ? "ChevronLeft" : "ChevronRight"} size={18} />
+          </button>
+
+          {/* Лента карусели — все отзывы в одну строку */}
+          <div
+            ref={trackRef}
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onTouchStart={() => setPaused(true)}
+            className="flex gap-5 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 no-scrollbar"
+          >
+            {CLIENT_REVIEWS.map((r) => (
+              <div
+                key={r.id}
+                data-review-card
+                className="snap-start shrink-0 w-[300px] sm:w-[340px] p-6 border border-border rounded-sm bg-background flex flex-col"
+              >
+                <div className="flex items-center gap-1 mb-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Icon key={i} name="Star" size={14} className={i < r.rating ? "text-gold" : "text-muted-foreground/30"} />
+                  ))}
                 </div>
-                <div className="min-w-0">
-                  <div className="font-montserrat font-bold text-sm text-foreground flex items-center gap-1.5">
-                    {loc(r.name)}
-                    <Icon name="BadgeCheck" size={13} className="text-gold shrink-0" />
+                <p className="text-sm text-muted-foreground leading-relaxed mb-5 flex-1">«{loc(r.text)}»</p>
+                <div className="flex items-center gap-3 border-t border-border pt-4">
+                  <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center shrink-0">
+                    <span className="font-montserrat font-bold text-sm text-[hsl(220,20%,6%)]">{loc(r.name).trim().charAt(0)}</span>
                   </div>
-                  <div className="text-[11px] text-muted-foreground truncate">{loc(r.city)} · {loc(r.service)}</div>
+                  <div className="min-w-0">
+                    <div className="font-montserrat font-bold text-sm text-foreground flex items-center gap-1.5">
+                      {loc(r.name)}
+                      <Icon name="BadgeCheck" size={13} className="text-gold shrink-0" />
+                    </div>
+                    <div className="text-[11px] text-muted-foreground truncate">{loc(r.city)} · {loc(r.service)}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -1,0 +1,30 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET without token returns 401",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 401
+    },
+    {
+      "name": "POST without token returns 401",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "mark_all_read"},
+      "expectedStatus": 401
+    },
+    {
+      "name": "Invalid token returns 401",
+      "method": "GET",
+      "path": "/",
+      "headers": {"X-Auth-Token": "invalid-token-xyz"},
+      "expectedStatus": 401
+    }
+  ]
+}
