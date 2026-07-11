@@ -6120,6 +6120,7 @@ function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (
 function BlogSection({ setActive }: { setActive: (s: Section) => void }) {
   const { tr, lang } = useLang();
   const [openSlug, setOpenSlug] = useState<string | null>(null);
+  const [tab, setTab] = useState<"client" | "provider">("client");
   const loc = (v: { ru: string; en: string }) => (lang === "ru" ? v.ru : v.en);
 
   useEffect(() => { trackGoal(GOALS.openBlog); }, []);
@@ -6129,6 +6130,8 @@ function BlogSection({ setActive }: { setActive: (s: Section) => void }) {
   if (openPost) {
     return <BlogArticle post={openPost} setActive={setActive} onBack={() => { setOpenSlug(null); window.scrollTo({ top: 0 }); }} />;
   }
+
+  const visiblePosts = BLOG_POSTS.filter((p) => p.audience === tab);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
@@ -6147,9 +6150,22 @@ function BlogSection({ setActive }: { setActive: (s: Section) => void }) {
         </div>
       </div>
 
+      {/* Audience tabs */}
+      <div className="flex items-center gap-2 mb-6">
+        {([["client", "blogTabClients"], ["provider", "blogTabProviders"]] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`px-4 py-2 text-xs font-montserrat font-bold rounded-sm border transition-all ${tab === key ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
+          >
+            {tr(label)}
+          </button>
+        ))}
+      </div>
+
       {/* Articles grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {BLOG_POSTS.map((post) => (
+        {visiblePosts.map((post) => (
           <button
             key={post.slug}
             onClick={() => { setOpenSlug(post.slug); window.scrollTo({ top: 0 }); }}

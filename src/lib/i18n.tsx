@@ -1042,6 +1042,8 @@ export const t: Dict = {
   blogTag: { ru: "Полезные материалы", en: "Useful materials" },
   blogIntro: { ru: "Статьи и гайды о безопасности: как выбрать специалиста, сколько стоят услуги и на что обращать внимание.", en: "Articles and guides on security: how to choose a specialist, how much services cost and what to look out for." },
   blogReadMore: { ru: "Читать", en: "Read" },
+  blogTabClients: { ru: "Для клиентов", en: "For clients" },
+  blogTabProviders: { ru: "Для специалистов", en: "For specialists" },
   blogBack: { ru: "Ко всем статьям", en: "Back to all articles" },
   blogMinRead: { ru: "мин чтения", en: "min read" },
   blogCtaTitle: { ru: "Нужен проверенный специалист?", en: "Need a verified specialist?" },
