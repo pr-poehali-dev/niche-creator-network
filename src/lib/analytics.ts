@@ -36,4 +36,5 @@ export const GOALS = {
   createRequest: "create_request",
   contactProvider: "contact_provider",
   openContacts: "open_contacts",
+  openBlog: "open_blog",
 } as const;

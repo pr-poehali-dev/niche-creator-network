@@ -1038,6 +1038,16 @@ export const t: Dict = {
 
   // Footer
   footerDesc: { ru: "Международное закрытое сообщество для специалистов в сфере безопасности", en: "International private community for security professionals" },
+  blogTitle: { ru: "Блог / Полезное", en: "Blog / Useful" },
+  blogTag: { ru: "Полезные материалы", en: "Useful materials" },
+  blogIntro: { ru: "Статьи и гайды о безопасности: как выбрать специалиста, сколько стоят услуги и на что обращать внимание.", en: "Articles and guides on security: how to choose a specialist, how much services cost and what to look out for." },
+  blogReadMore: { ru: "Читать", en: "Read" },
+  blogBack: { ru: "Ко всем статьям", en: "Back to all articles" },
+  blogMinRead: { ru: "мин чтения", en: "min read" },
+  blogCtaTitle: { ru: "Нужен проверенный специалист?", en: "Need a verified specialist?" },
+  blogCtaText: { ru: "Найдите проверенного специалиста по безопасности в каталоге ЩИТ — с подтверждёнными документами и отзывами.", en: "Find a verified security specialist in the SHCHIT catalog — with confirmed documents and reviews." },
+  blogCtaBtn: { ru: "Открыть каталог", en: "Open the catalog" },
+  navBlog: { ru: "Блог", en: "Blog" },
   shareTitle: { ru: "Поделиться платформой", en: "Share the platform" },
   shareCopied: { ru: "Ссылка скопирована", en: "Link copied" },
   shareText: { ru: "ЩИТ — международная платформа проверенных специалистов по безопасности", en: "SHCHIT — international platform of verified security specialists" },

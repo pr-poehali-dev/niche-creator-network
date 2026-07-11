@@ -9,6 +9,7 @@ import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, typ
 import { useAuth, type AuthRole } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
 import { trackGoal, GOALS } from "@/lib/analytics";
+import { BLOG_POSTS, type BlogPost } from "@/lib/blog";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Reveal from "@/components/Reveal";
 import Brand from "@/components/Brand";
@@ -23,7 +24,7 @@ const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-2
 const SPY_AVATAR_M = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/61fc9ccd-a5ee-4375-8640-5c890da0df33.jpg";
 const SPY_AVATAR_F = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b40d29de-2a29-448c-82c8-a2baa711ee57.jpg";
 
-type Section = "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "consent" | "admin" | "mobileapp" | "about";
+type Section = "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "consent" | "admin" | "mobileapp" | "about" | "blog";
 type Role = "client" | "provider";
 
 type NavItem = { id: Section; key: keyof typeof t; icon: string };
@@ -845,6 +846,7 @@ const SECTION_CRUMB: Record<Section, keyof typeof t> = {
   admin: "adminPanelTitle",
   about: "aboutPageTitle",
   mobileapp: "maTitle",
+  blog: "blogTitle",
 };
 
 const cases = [
@@ -1140,10 +1142,25 @@ function AdminPanel() {
   );
 }
 
+// Публичные разделы, которые можно открыть напрямую по ссылке ?section=xxx.
+// Это делает ссылки на блог/о нас/тарифы «рабочими» для SEO и шаринга.
+const PUBLIC_URL_SECTIONS: Section[] = ["blog", "about", "pricing", "mobileapp", "policy"];
+
+function getInitialSection(): Section {
+  if (typeof window === "undefined") return "home";
+  try {
+    const s = new URLSearchParams(window.location.search).get("section") as Section | null;
+    if (s && PUBLIC_URL_SECTIONS.includes(s)) return s;
+  } catch {
+    // URLSearchParams недоступен — открываем главную.
+  }
+  return "home";
+}
+
 export default function Index() {
   const { lang, setLang, tr, applyGeoLang } = useLang();
   const { user, isAuthed, logout } = useAuth();
-  const [active, setActive] = useState<Section>("home");
+  const [active, setActive] = useState<Section>(getInitialSection);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatTarget, setChatTarget] = useState<{ name: string; title: string; avatar?: string | null } | null>(null);
@@ -1180,7 +1197,9 @@ export default function Index() {
   }, [geo?.countryCode]);
 
   useEffect(() => {
-    if (!isAuthed) setActive("home");
+    // Гостю доступны публичные разделы (блог, о нас, тарифы и т.п.) — их не сбрасываем,
+    // чтобы работали прямые ссылки для SEO и шаринга. Остальное возвращаем на главную.
+    if (!isAuthed) setActive((cur) => (PUBLIC_URL_SECTIONS.includes(cur) ? cur : "home"));
   }, [isAuthed]);
 
   const NAV_ITEMS = isAuthed ? (role === "client" ? CLIENT_NAV : PROVIDER_NAV) : [];
@@ -1222,6 +1241,7 @@ export default function Index() {
       if (active === "pricing") return <PricingSection setActive={go} />;
       if (active === "mobileapp") return <MobileAppSection setActive={go} />;
       if (active === "about") return <AboutSection setActive={go} />;
+      if (active === "blog") return <BlogSection setActive={go} />;
       return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} />;
     }
     if (isLocked && LOCKED_SECTIONS.includes(active)) {
@@ -1243,6 +1263,7 @@ export default function Index() {
       case "policy": return <SecurityPolicySection setActive={go} />;
       case "mobileapp": return <MobileAppSection setActive={go} />;
       case "about": return <AboutSection setActive={go} />;
+      case "blog": return <BlogSection setActive={go} />;
       case "pricing": return <PricingSection setActive={go} />;
       case "privacy": case "terms": case "agreement": case "offer": case "consent": return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
       case "dashboard": return role === "client" ? <ClientDashboard setActive={go} /> : <ProviderDashboard setActive={go} />;
@@ -1442,6 +1463,7 @@ export default function Index() {
               <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">{tr("footerAboutShchit")}</div>
               {([
                 ["fAbout", "about"],
+                ["navBlog", "blog"],
                 ["navMobileApp", "mobileapp"],
                 ["navPolicy", "policy"],
               ] as const).map(([l, sec]) => (
@@ -6008,6 +6030,144 @@ function AboutSection({ setActive }: { setActive: (s: Section) => void }) {
         >
           {tr("aboutCtaBtn")}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (s: Section) => void; onBack: () => void }) {
+  const { tr, lang } = useLang();
+  const loc = (v: { ru: string; en: string }) => (lang === "ru" ? v.ru : v.en);
+
+  // SEO для конкретной статьи: заголовок вкладки, meta description и разметка Article.
+  // Всё возвращается к исходному состоянию при уходе со статьи.
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = loc(post.metaTitle);
+
+    const metaDesc = document.querySelector('meta[name="description"]');
+    const prevDesc = metaDesc?.getAttribute("content") || "";
+    if (metaDesc) metaDesc.setAttribute("content", loc(post.metaDescription));
+
+    const ld = document.createElement("script");
+    ld.type = "application/ld+json";
+    ld.setAttribute("data-blog-article", "1");
+    ld.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: loc(post.title),
+      description: loc(post.metaDescription),
+      inLanguage: lang === "ru" ? "ru" : "en",
+      datePublished: post.date,
+      author: { "@type": "Organization", name: "ЩИТ" },
+      publisher: { "@type": "Organization", name: "ЩИТ", url: "https://shieldpspl.ru/" },
+      mainEntityOfPage: "https://shieldpspl.ru/?section=blog",
+    });
+    document.head.appendChild(ld);
+
+    return () => {
+      document.title = prevTitle;
+      if (metaDesc) metaDesc.setAttribute("content", prevDesc);
+      ld.remove();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post.slug, lang]);
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-10">
+      <button onClick={onBack} className="inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-muted-foreground hover:text-gold transition-colors mb-6">
+        <Icon name="ArrowLeft" size={14} />{tr("blogBack")}
+      </button>
+
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-11 h-11 gold-gradient rounded-sm flex items-center justify-center shrink-0 glow-gold-sm">
+          <Icon name={post.icon} fallback="FileText" size={20} className="text-[hsl(220,20%,6%)]" />
+        </div>
+        <div className="text-[11px] text-muted-foreground font-montserrat">{post.date} · {post.readMin} {tr("blogMinRead")}</div>
+      </div>
+
+      <h1 className="font-montserrat font-extrabold text-2xl md:text-3xl text-foreground mb-6 leading-tight">{loc(post.title)}</h1>
+
+      <article className="space-y-4">
+        {post.body.map((b, i) => {
+          if (b.type === "h") return <h2 key={i} className="font-montserrat font-bold text-lg text-foreground mt-6">{loc(b.text)}</h2>;
+          if (b.type === "li") return (
+            <ul key={i} className="space-y-2">
+              {b.items.map((it, j) => (
+                <li key={j} className="flex items-start gap-2 text-sm text-muted-foreground leading-relaxed">
+                  <Icon name="Check" size={15} className="text-gold shrink-0 mt-0.5" />
+                  <span>{loc(it)}</span>
+                </li>
+              ))}
+            </ul>
+          );
+          return <p key={i} className="text-sm text-muted-foreground leading-relaxed">{loc(b.text)}</p>;
+        })}
+      </article>
+
+      {/* CTA to catalog */}
+      <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mt-10 text-center security-glow">
+        <h2 className="font-montserrat font-bold text-lg text-foreground mb-2">{tr("blogCtaTitle")}</h2>
+        <p className="text-sm text-muted-foreground mb-5 max-w-xl mx-auto">{tr("blogCtaText")}</p>
+        <button onClick={() => setActive("specialists")} className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2">
+          <Icon name="Search" size={16} />{tr("blogCtaBtn")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BlogSection({ setActive }: { setActive: (s: Section) => void }) {
+  const { tr, lang } = useLang();
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
+  const loc = (v: { ru: string; en: string }) => (lang === "ru" ? v.ru : v.en);
+
+  useEffect(() => { trackGoal(GOALS.openBlog); }, []);
+
+  const openPost = BLOG_POSTS.find((p) => p.slug === openSlug) || null;
+
+  if (openPost) {
+    return <BlogArticle post={openPost} setActive={setActive} onBack={() => { setOpenSlug(null); window.scrollTo({ top: 0 }); }} />;
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-10">
+      {/* Header */}
+      <div className="border border-gold/30 rounded-sm glass-card p-8 md:p-10 mb-8 relative overflow-hidden security-glow ambient-gold">
+        <div className="absolute inset-0 grid-line-bg opacity-30" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
+          <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
+            <Icon name="BookOpen" size={30} className="text-[hsl(220,20%,6%)]" />
+          </div>
+          <div>
+            <div className="tag-security mb-3 inline-block">{tr("blogTag")}</div>
+            <h1 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-2">{tr("blogTitle")}</h1>
+            <p className="text-sm text-muted-foreground max-w-2xl">{tr("blogIntro")}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Articles grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {BLOG_POSTS.map((post) => (
+          <button
+            key={post.slug}
+            onClick={() => { setOpenSlug(post.slug); window.scrollTo({ top: 0 }); }}
+            className="group text-left border border-border rounded-sm bg-card p-6 hover:border-gold/50 transition-all card-hover"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-11 h-11 gold-gradient rounded-sm flex items-center justify-center shrink-0">
+                <Icon name={post.icon} fallback="FileText" size={20} className="icon-hover text-[hsl(220,20%,6%)]" />
+              </div>
+              <div className="text-[11px] text-muted-foreground font-montserrat">{post.readMin} {tr("blogMinRead")}</div>
+            </div>
+            <h2 className="font-montserrat font-bold text-base text-foreground mb-2 leading-snug">{loc(post.title)}</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-4">{loc(post.excerpt)}</p>
+            <span className="inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-gold">
+              {tr("blogReadMore")}<Icon name="ArrowRight" size={13} className="group-hover:translate-x-0.5 transition-transform" />
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
