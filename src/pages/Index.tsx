@@ -9,7 +9,7 @@ import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, typ
 import { useAuth, type AuthRole } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
 import { trackGoal, GOALS } from "@/lib/analytics";
-import { BLOG_POSTS, type BlogPost } from "@/lib/blog";
+import { type BlogPost } from "@/lib/blog";
 import { CLIENT_REVIEWS } from "@/lib/clientReviews";
 import { useAutoTranslate } from "@/lib/autotranslate";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -1210,7 +1210,7 @@ function AdminPanel() {
 
 // Публичные разделы, которые можно открыть напрямую по ссылке ?section=xxx.
 // Это делает ссылки на блог/о нас/тарифы «рабочими» для SEO и шаринга.
-const PUBLIC_URL_SECTIONS: Section[] = ["blog", "about", "pricing", "mobileapp", "policy"];
+const PUBLIC_URL_SECTIONS: Section[] = ["blog", "about", "pricing", "mobileapp", "policy", "privacy", "terms", "agreement", "offer", "consent", "contacts"];
 
 function getInitialSection(): Section {
   if (typeof window === "undefined") return "home";
@@ -1221,6 +1221,38 @@ function getInitialSection(): Section {
     // URLSearchParams недоступен — открываем главную.
   }
   return "home";
+}
+
+const COOKIE_CONSENT_KEY = "shchit_cookie_consent";
+// Баннер согласия на cookie (152-ФЗ / GDPR). Появляется один раз до выбора.
+function CookieBanner({ go }: { go: (s: Section) => void }) {
+  const { tr } = useLang();
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    try { if (!localStorage.getItem(COOKIE_CONSENT_KEY)) setVisible(true); } catch { setVisible(true); }
+  }, []);
+  const decide = (value: "accepted" | "essential") => {
+    try { localStorage.setItem(COOKIE_CONSENT_KEY, value); } catch { /* noop */ }
+    setVisible(false);
+  };
+  if (!visible) return null;
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-[90] p-3 sm:p-4">
+      <div className="max-w-5xl mx-auto bg-card border border-gold/40 rounded-sm shadow-2xl security-glow p-4 sm:p-5 flex flex-col md:flex-row md:items-center gap-4">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <Icon name="Cookie" size={20} className="text-gold shrink-0 mt-0.5" />
+          <p className="text-xs sm:text-[13px] text-muted-foreground leading-relaxed">
+            {tr("cookieText")}{" "}
+            <button onClick={() => go("privacy")} className="text-gold hover:underline font-semibold whitespace-nowrap">{tr("cookieMore")}</button>
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={() => decide("essential")} className="border border-border text-muted-foreground hover:text-foreground hover:border-gold/50 text-xs font-montserrat font-semibold px-4 py-2.5 rounded-sm transition-all">{tr("cookieDecline")}</button>
+          <button onClick={() => decide("accepted")} className="gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold px-5 py-2.5 rounded-sm hover:opacity-90 transition-opacity">{tr("cookieAccept")}</button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function Index() {
@@ -1595,6 +1627,8 @@ export default function Index() {
           </div>
         </div>
       </footer>
+
+      <CookieBanner go={go} />
 
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onOpenDoc={(s) => { setAuthOpen(false); go(s); }} />}
 
@@ -6493,7 +6527,8 @@ function getInitialBlogSlug(): string | null {
   if (typeof window === "undefined") return null;
   try {
     const slug = new URLSearchParams(window.location.search).get("post");
-    if (slug && BLOG_POSTS.some((p) => p.slug === slug)) return slug;
+    // Лёгкая проверка формата slug — без загрузки тяжёлого массива статей.
+    if (slug && /^[a-z0-9-]{3,80}$/.test(slug)) return slug;
   } catch {
     // URLSearchParams недоступен — открываем список статей.
   }
@@ -6503,12 +6538,28 @@ function getInitialBlogSlug(): string | null {
 function BlogSection({ setActive }: { setActive: (s: Section) => void }) {
   const { tr, lang } = useLang();
   const [openSlug, setOpenSlug] = useState<string | null>(getInitialBlogSlug);
-  const initialTab = openSlug ? (BLOG_POSTS.find((p) => p.slug === openSlug)?.audience ?? "client") : "client";
-  const [tab, setTab] = useState<"client" | "provider">(initialTab);
+  const [tab, setTab] = useState<"client" | "provider">("client");
+  // Статьи блога (~97 КБ) грузятся отдельным чанком только при открытии раздела.
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    import("@/lib/blog").then((m) => {
+      if (!alive) return;
+      setPosts(m.BLOG_POSTS);
+      // Если открыта конкретная статья — подставляем её вкладку аудитории.
+      const cur = new URLSearchParams(window.location.search).get("post");
+      const found = cur ? m.BLOG_POSTS.find((p) => p.slug === cur) : null;
+      if (found) setTab(found.audience);
+      setLoadingPosts(false);
+    }).catch(() => { if (alive) setLoadingPosts(false); });
+    return () => { alive = false; };
+  }, []);
 
   // Автоперевод заголовков и анонсов списка статей на fr/de/ja/ar/he.
   // Хук вызывается до любых ранних return, чтобы не нарушать правила хуков.
-  const listStrings: string[] = BLOG_POSTS.flatMap((p) => [p.title.en, p.excerpt.en]);
+  const listStrings: string[] = posts.flatMap((p) => [p.title.en, p.excerpt.en]);
   const { resolve } = useAutoTranslate(listStrings);
   const loc = (v: { ru: string; en: string }) => {
     if (lang === "ru") return v.ru;
@@ -6518,13 +6569,22 @@ function BlogSection({ setActive }: { setActive: (s: Section) => void }) {
 
   useEffect(() => { trackGoal(GOALS.openBlog); }, []);
 
-  const openPost = BLOG_POSTS.find((p) => p.slug === openSlug) || null;
+  if (loadingPosts) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-24 flex flex-col items-center gap-3 text-muted-foreground">
+        <Icon name="Loader" size={28} className="animate-spin text-gold" />
+        <span className="text-sm">{tr("loading")}</span>
+      </div>
+    );
+  }
+
+  const openPost = posts.find((p) => p.slug === openSlug) || null;
 
   if (openPost) {
     return <BlogArticle post={openPost} setActive={setActive} onBack={() => { setOpenSlug(null); window.scrollTo({ top: 0 }); }} />;
   }
 
-  const visiblePosts = BLOG_POSTS.filter((p) => p.audience === tab);
+  const visiblePosts = posts.filter((p) => p.audience === tab);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
