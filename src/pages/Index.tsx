@@ -1370,7 +1370,7 @@ export default function Index() {
   const renderSection = () => {
     if (!isAuthed) {
       if (active === "policy") return <SecurityPolicySection setActive={go} />;
-      if (active === "privacy" || active === "terms" || active === "agreement" || active === "offer" || active === "consent") return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
+      if (active === "privacy" || active === "terms" || active === "agreement" || active === "offer" || active === "consent") return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} showFaq={active === "privacy"} />;
       if (active === "pricing") return <PricingSection setActive={go} />;
       if (active === "mobileapp") return <MobileAppSection setActive={go} />;
       if (active === "about") return <AboutSection setActive={go} />;
@@ -1402,7 +1402,7 @@ export default function Index() {
       case "about": return <AboutSection setActive={go} />;
       case "blog": return <BlogSection setActive={go} />;
       case "pricing": return <PricingSection setActive={go} />;
-      case "privacy": case "terms": case "agreement": case "offer": case "consent": return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} />;
+      case "privacy": case "terms": case "agreement": case "offer": case "consent": return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} showFaq={active === "privacy"} />;
       case "dashboard": return role === "client" ? <ClientDashboard setActive={go} /> : <ProviderDashboard setActive={go} />;
       case "admin": return user?.isAdmin ? <AdminPanel /> : <HomeSection setActive={go} role={role} openChat={openChat} />;
       default: return <HomeSection setActive={go} role={role} openChat={openChat} />;
@@ -1776,6 +1776,42 @@ function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; onPolicy:
       <LandingFaq />
       <LandingFinalCta onCabinet={onCabinet} />
     </>
+  );
+}
+
+// Переиспользуемый аккордеон FAQ для внутренних страниц (Контакты, Политика и т.п.).
+// В отличие от LandingFaq (жёстко зашит список для главной), принимает набор пар ключей i18n.
+function FaqAccordion({ tag, title, items }: { tag: string; title: string; items: { q: keyof typeof t; a: keyof typeof t }[] }) {
+  const { tr } = useLang();
+  const [open, setOpen] = useState<number | null>(null);
+  return (
+    <div className="mt-10">
+      <div className="mb-5">
+        <div className="tag-security inline-block mb-3">{tag}</div>
+        <h2 className="font-montserrat font-extrabold text-2xl text-foreground">{title}</h2>
+      </div>
+      <div className="space-y-3">
+        {items.map((f, i) => {
+          const isOpen = open === i;
+          return (
+            <div key={f.q} className={`border rounded-sm bg-card overflow-hidden transition-all ${isOpen ? "border-gold/40" : "border-border"}`}>
+              <button
+                onClick={() => setOpen(isOpen ? null : i)}
+                className="w-full flex items-center justify-between gap-4 px-5 py-4 text-start"
+              >
+                <span className="font-montserrat font-semibold text-sm text-foreground">{tr(f.q)}</span>
+                <Icon name={isOpen ? "Minus" : "Plus"} size={17} className={`shrink-0 transition-colors ${isOpen ? "text-gold" : "text-muted-foreground"}`} />
+              </button>
+              {isOpen && (
+                <div className="px-5 pb-4 -mt-1 animate-fade-in">
+                  <p className="text-sm text-muted-foreground leading-relaxed">{tr(f.a)}</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -5981,6 +6017,18 @@ function ContactsSection() {
           </div>
         </div>
       </div>
+
+      <FaqAccordion
+        tag={tr("contactFaqTag")}
+        title={tr("contactFaqTitle")}
+        items={[
+          { q: "contactFaq1Q", a: "contactFaq1A" },
+          { q: "contactFaq2Q", a: "contactFaq2A" },
+          { q: "contactFaq3Q", a: "contactFaq3A" },
+          { q: "contactFaq4Q", a: "contactFaq4A" },
+          { q: "contactFaq5Q", a: "contactFaq5A" },
+        ]}
+      />
     </div>
   );
 }
@@ -6832,7 +6880,7 @@ const LEGAL_DOCS: Record<"privacy" | "consent" | "terms" | "agreement" | "offer"
   },
 };
 
-function LegalDocSection({ doc, setActive }: { doc: LegalDoc; setActive: (s: Section) => void }) {
+function LegalDocSection({ doc, setActive, showFaq }: { doc: LegalDoc; setActive: (s: Section) => void; showFaq?: boolean }) {
   const { tr } = useLang();
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
@@ -6886,6 +6934,20 @@ function LegalDocSection({ doc, setActive }: { doc: LegalDoc; setActive: (s: Sec
               </div>
             ))}
           </div>
+
+          {showFaq && (
+            <FaqAccordion
+              tag={tr("privFaqTag")}
+              title={tr("privFaqTitle")}
+              items={[
+                { q: "privFaq1Q", a: "privFaq1A" },
+                { q: "privFaq2Q", a: "privFaq2A" },
+                { q: "privFaq3Q", a: "privFaq3A" },
+                { q: "privFaq4Q", a: "privFaq4A" },
+                { q: "privFaq5Q", a: "privFaq5A" },
+              ]}
+            />
+          )}
 
           <div className="mt-8 border border-gold/30 rounded-sm bg-card p-6">
             <div className="flex items-center gap-2 mb-3">
