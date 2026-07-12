@@ -751,6 +751,15 @@ html[lang="he"] .font-ibm {
     left: 0;
   }
 }
+/* На мобильных полям ввода нужен шрифт от 16px — иначе Safari/iOS
+   автоматически зумит страницу при фокусе на поле, что ломает UX форм. */
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
 /* Место под кнопку закрытия у тостов */
 [dir="rtl"] .pr-8 {
   padding-right: 1.5rem;

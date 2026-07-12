@@ -518,7 +518,7 @@ function DocFileButton({ slug, url, onUploaded }: { slug: string; url: string; o
       </label>
       {url && isImageUrl(url) && (
         <a href={url} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-sm overflow-hidden border border-border hover:border-gold transition-colors shrink-0">
-          <img src={url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+          <img src={url} alt="Загруженный документ" loading="lazy" decoding="async" className="w-full h-full object-cover" />
         </a>
       )}
       {url && <a href={url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-green-400 inline-flex items-center gap-1"><Icon name="Check" size={11} />{tr("pdVfDocAttached")}</a>}
@@ -2282,7 +2282,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               <div className="flex -space-x-3">
                 {[DETECTIVE_IMAGE, HERO_IMAGE, POLYGRAPH_IMAGE].map((img, i) => (
                   <div key={i} className="w-9 h-9 rounded-full border-2 border-background overflow-hidden">
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={img} alt="Специалист платформы" loading="lazy" className="w-full h-full object-cover" />
                   </div>
                 ))}
                 {liveCount > 3 && (
@@ -3357,7 +3357,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
       {/* Header card */}
       <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mb-6 flex flex-col sm:flex-row sm:items-center gap-5 security-glow">
         <div className="w-16 h-16 rounded-sm overflow-hidden border-2 border-gold shrink-0">
-          <img src={resolveAvatar(avatarUrl, vf.gender)} alt="avatar" className="w-full h-full object-cover" />
+          <img src={resolveAvatar(avatarUrl, vf.gender)} alt="avatar" loading="lazy" decoding="async" className="w-full h-full object-cover" />
         </div>
         <div className="flex-1">
           <div className="text-xs text-muted-foreground font-montserrat mb-1">{tr("dashWelcome")},</div>
@@ -4424,6 +4424,113 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
   );
 }
 
+// Парсит цену из строки перевода вида "4 900 ₽" / "$49" в число.
+const parsePrice = (s: string): number => parseFloat(s.replace(/[^\d.,]/g, "").replace(/\s/g, "").replace(",", ".")) || 0;
+
+type PricingPlan = { name: keyof typeof t; price: keyof typeof t; enterprise: boolean };
+
+// Калькулятор окупаемости подписки: клиент вводит средний чек заказа и
+// сколько заказов ожидает в месяц — калькулятор считает точку окупаемости и прибыль.
+function PricingCalculator({ plans, promoActive }: { plans: PricingPlan[]; promoActive: boolean }) {
+  const { tr } = useLang();
+  const payPlans = plans.filter((p) => !p.enterprise);
+  const [planIdx, setPlanIdx] = useState(1); // по умолчанию — второй тариф (обычно самый популярный)
+  const [avgCheck, setAvgCheck] = useState(15000);
+  const [ordersMonth, setOrdersMonth] = useState(3);
+
+  const plan = payPlans[Math.min(planIdx, payPlans.length - 1)];
+  const rawPrice = parsePrice(tr(plan.price));
+  const price = promoActive ? Math.round(rawPrice * 0.7) : rawPrice;
+
+  const breakEvenOrders = avgCheck > 0 ? Math.ceil(price / avgCheck) : 0;
+  const monthlyRevenue = avgCheck * ordersMonth;
+  const monthlyProfit = monthlyRevenue - price;
+  const isProfitable = monthlyProfit >= 0;
+
+  const fmt = (n: number) => n.toLocaleString("ru-RU");
+
+  return (
+    <div className="mt-10 border border-gold/30 rounded-sm bg-card p-6 md:p-8">
+      <div className="flex items-center gap-2 mb-1">
+        <Icon name="Calculator" size={18} className="text-gold" />
+        <h2 className="font-montserrat font-bold text-lg text-foreground">{tr("calcTitle")}</h2>
+      </div>
+      <p className="text-xs text-muted-foreground mb-6">{tr("calcSubtitle")}</p>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="space-y-5">
+          <div>
+            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-2">{tr("calcPlan")}</label>
+            <div className="flex flex-wrap gap-2">
+              {payPlans.map((p, i) => (
+                <button
+                  key={p.name}
+                  onClick={() => setPlanIdx(i)}
+                  className={`px-3 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-all ${planIdx === i ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
+                >
+                  {tr(p.name)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-2">
+              {tr("calcAvgCheck")}: <span className="text-gold">{fmt(avgCheck)} ₽</span>
+            </label>
+            <input
+              type="range" min={2000} max={100000} step={1000}
+              value={avgCheck}
+              onChange={(e) => setAvgCheck(Number(e.target.value))}
+              className="w-full accent-gold"
+            />
+          </div>
+
+          <div>
+            <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-2">
+              {tr("calcOrdersMonth")}: <span className="text-gold">{ordersMonth}</span>
+            </label>
+            <input
+              type="range" min={0} max={30} step={1}
+              value={ordersMonth}
+              onChange={(e) => setOrdersMonth(Number(e.target.value))}
+              className="w-full accent-gold"
+            />
+          </div>
+        </div>
+
+        <div className="border border-border rounded-sm bg-secondary/30 p-5 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">{tr("calcSubCost")}</span>
+            <span className="font-montserrat font-bold text-sm text-foreground">{fmt(price)} ₽/{tr("perMonthShort")}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">{tr("calcBreakEven")}</span>
+            <span className="font-montserrat font-bold text-sm text-gold">{breakEvenOrders} {tr("calcOrdersUnit")}</span>
+          </div>
+          <div className="divider-gold" />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">{tr("calcMonthlyRevenue")}</span>
+            <span className="font-montserrat font-semibold text-sm text-foreground">{fmt(monthlyRevenue)} ₽</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-montserrat font-semibold text-foreground">{tr("calcNetProfit")}</span>
+            <span className={`font-montserrat font-extrabold text-xl ${isProfitable ? "text-green-400" : "text-destructive"}`}>
+              {isProfitable ? "+" : ""}{fmt(monthlyProfit)} ₽
+            </span>
+          </div>
+          <div className={`flex items-start gap-2 rounded-sm px-3 py-2.5 ${isProfitable ? "bg-green-500/10 border border-green-500/30" : "bg-destructive/10 border border-destructive/30"}`}>
+            <Icon name={isProfitable ? "TrendingUp" : "Info"} size={14} className={`shrink-0 mt-0.5 ${isProfitable ? "text-green-400" : "text-destructive"}`} />
+            <span className="text-[11px] text-foreground leading-relaxed">
+              {isProfitable ? tr("calcProfitableNote") : tr("calcNeedMoreNote")}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
   const { tr } = useLang();
   const { user } = useAuth();
@@ -4613,6 +4720,8 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
         <Icon name="Lock" size={13} className="text-green-400 shrink-0" />
         <span>{tr("planGuarantee")}</span>
       </div>
+
+      <PricingCalculator plans={plans} promoActive={promoActive} />
 
       {payPlan && (
         <ErrorBoundary fallback={null} onReset={() => setPayPlan(null)}>
@@ -4819,12 +4928,12 @@ function ProfileSection({ setActive, openChat }: { setActive: (s: Section) => vo
         <div className="lg:col-span-1 space-y-5">
           <div className="border border-border rounded-sm bg-card overflow-hidden">
             <div className="h-36 overflow-hidden relative">
-              <img src={DETECTIVE_IMAGE} alt="Профиль" className="w-full h-full object-cover" />
+              <img src={DETECTIVE_IMAGE} alt="Профиль" loading="lazy" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
             </div>
             <div className="p-5 -mt-8 relative">
               <div className="w-16 h-16 rounded-sm border-2 border-gold overflow-hidden mb-3">
-                <img src={DETECTIVE_IMAGE} alt="Аватар" className="w-full h-full object-cover" />
+                <img src={DETECTIVE_IMAGE} alt="Аватар" loading="lazy" className="w-full h-full object-cover" />
               </div>
               <div className="flex items-center gap-2 mb-1">
                 <div className="font-montserrat font-bold text-lg text-foreground">{L(specialists[0].name, lang)}</div>
@@ -5092,7 +5201,7 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
         <Icon name="Heart" size={15} className={fav ? "fill-current" : ""} />
       </button>
       <div className={`h-48 overflow-hidden relative ${premium ? "mt-6" : ""}`}>
-        <img src={resolveAvatar(p.img, p.gender)} alt={L(p.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+        <img src={resolveAvatar(p.img, p.gender)} alt={L(p.name, lang)} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
         {p.isPseudonym && (
           <div className="absolute top-3 start-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border px-2 py-1 rounded-sm">
@@ -5497,7 +5606,7 @@ function GuardsSection() {
         {guards.map((g) => (
           <div key={g.name.en} className="card-hover shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group">
             <div className="h-48 overflow-hidden relative">
-              <img src={g.img} alt={L(g.name, lang)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <img src={g.img} alt={L(g.name, lang)} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
               <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
                 <Icon name="BadgeCheck" size={12} className="text-gold" />
@@ -5577,7 +5686,7 @@ function DirectChatSection({ target, chatInput, setChatInput, onBack }: { target
       <div className="border border-border rounded-sm bg-card overflow-hidden flex flex-col" style={{ height: "600px" }}>
         <div className="p-4 border-b border-border flex items-center gap-3">
           <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
-            {target.avatar ? <img src={target.avatar} alt="" className="w-full h-full object-cover" /> : <span className="font-montserrat font-bold text-sm text-[hsl(220,20%,6%)]">{initial}</span>}
+            {target.avatar ? <img src={target.avatar} alt={shortName(target.name)} loading="lazy" className="w-full h-full object-cover" /> : <span className="font-montserrat font-bold text-sm text-[hsl(220,20%,6%)]">{initial}</span>}
           </div>
           <div className="min-w-0">
             <div className="text-sm font-montserrat font-semibold text-foreground truncate">{shortName(target.name)}</div>
