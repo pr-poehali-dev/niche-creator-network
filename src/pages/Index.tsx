@@ -2302,12 +2302,12 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               )}
             </div>
             {isClient ? (
-              <h1 className="font-montserrat font-extrabold text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-foreground leading-[0.95] sm:leading-[0.9] mb-6 tracking-tight">
+              <h1 className="font-montserrat font-extrabold text-[clamp(1.5rem,7vw,2.25rem)] sm:text-6xl md:text-7xl lg:text-8xl text-foreground leading-[1.15] sm:leading-[0.9] mb-6 tracking-tight">
                 {tr("heroClientTitle1")}<br />
                 <span className="gold-text-gradient">{tr("heroClientTitle2")}</span>
               </h1>
             ) : (
-              <h1 className="font-montserrat font-extrabold text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-foreground leading-[0.95] sm:leading-[0.9] mb-6 tracking-tight">
+              <h1 className="font-montserrat font-extrabold text-[clamp(1.5rem,7vw,2.25rem)] sm:text-6xl md:text-7xl lg:text-8xl text-foreground leading-[1.15] sm:leading-[0.9] mb-6 tracking-tight">
                 <span className="lg:whitespace-nowrap">{tr("heroProviderTitle1")}</span><br />
                 <span className="gold-text-gradient">{tr("heroProviderTitle2")}</span>
               </h1>

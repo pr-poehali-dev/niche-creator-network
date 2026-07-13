@@ -18,6 +18,9 @@ export default {
 			}
 		},
 		extend: {
+			screens: {
+				xs: '400px',
+			},
 			fontFamily: {
 				montserrat: ['Montserrat', 'sans-serif'],
 				ibm: ['IBM Plex Sans', 'sans-serif'],
