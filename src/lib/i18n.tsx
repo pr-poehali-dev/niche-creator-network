@@ -121,6 +121,7 @@ export const t: Dict = {
   authTabRegister: { ru: "Регистрация", en: "Register" },
   authEmail: { ru: "Электронная почта", en: "Email" },
   authPassword: { ru: "Пароль", en: "Password" },
+  authPasswordHint: { ru: "Минимум 8 символов, буквы и цифры", en: "At least 8 characters, letters and digits" },
   authName: { ru: "Имя", en: "Name" },
   authNamePh: { ru: "Как к вам обращаться", en: "How should we call you" },
   authRoleQuestion: { ru: "Кто вы?", en: "Who are you?" },
