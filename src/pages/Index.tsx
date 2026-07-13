@@ -2288,7 +2288,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
         <div className="absolute top-1/4 -left-40 w-[500px] h-[500px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.1) 0%, transparent 70%)" }} />
         <div className="aurora-bg z-0" />
         <div className="relative z-20 max-w-7xl mx-auto px-4 py-28 md:py-36">
-          <div className="max-w-3xl stagger">
+          <div className="max-w-4xl stagger">
             <div className="flex items-center gap-3 mb-6 flex-wrap">
               <div className="tag-security inline-flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse-gold" />
@@ -2301,19 +2301,19 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 </div>
               )}
             </div>
-            {/* Размер шрифта ограничен clamp() без "прыжков" по брейкпоинтам: при
-                text-8xl (96px) длинные фразы («Найдите проверенного специалиста»,
-                а в de/fr переводах ещё длиннее) не помещались даже по одному слову
-                в строку и разваливались на 5 строк. Теперь шрифт растёт плавно,
-                но никогда не превышает величину, при которой текст перестаёт
-                читаться в 2 логические строки на разумной ширине колонки. */}
+            {/* Размер шрифта рассчитан математически под длину русской фразы:
+                при ширине колонки ~860px и жирном Montserrat, 32 символа
+                («Найдите проверенного специалиста») умещаются в одну строку
+                только при размере шрифта не более ~44px. Раньше шрифт доходил
+                до 96px — тогда даже одно слово «проверенного» не помещалось
+                в строку и фраза разваливалась на 5 строк. */}
             {isClient ? (
-              <h1 className="font-montserrat font-extrabold text-[clamp(1.75rem,4.5vw,3.75rem)] text-foreground leading-[1.15] mb-6 tracking-tight">
+              <h1 className="font-montserrat font-extrabold text-[clamp(1.75rem,4vw,2.75rem)] text-foreground leading-[1.2] mb-6 tracking-tight">
                 {tr("heroClientTitle1")}<br />
                 <span className="gold-text-gradient">{tr("heroClientTitle2")}</span>
               </h1>
             ) : (
-              <h1 className="font-montserrat font-extrabold text-[clamp(1.75rem,4.5vw,3.75rem)] text-foreground leading-[1.15] mb-6 tracking-tight">
+              <h1 className="font-montserrat font-extrabold text-[clamp(1.75rem,4vw,2.75rem)] text-foreground leading-[1.2] mb-6 tracking-tight">
                 <span>{tr("heroProviderTitle1")}</span><br />
                 <span className="gold-text-gradient">{tr("heroProviderTitle2")}</span>
               </h1>
