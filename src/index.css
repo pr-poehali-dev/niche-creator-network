@@ -332,6 +332,38 @@
       0 0 40px hsl(43, 80%, 52%, 0.12);
   }
 
+  /* Гипертех-акцент для бейджей проверки/лицензии: тонкий сканирующий блик,
+     который постоянно пробегает по бейджу — визуально подчёркивает
+     "активную верификацию системой безопасности". */
+  .badge-scan {
+    position: relative;
+    overflow: hidden;
+  }
+  .badge-scan::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 20%,
+      hsl(43, 80%, 52%, 0.35) 50%,
+      transparent 80%
+    );
+    background-size: 200% 100%;
+    animation: badge-scan-sweep 3.2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes badge-scan-sweep {
+    0% { background-position: 150% 0; }
+    55%, 100% { background-position: -50% 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .badge-scan::after {
+      animation: none;
+      display: none;
+    }
+  }
+
   .pulse-ring {
     position: relative;
   }
@@ -426,6 +458,33 @@
     }
   }
 
+  /* Бесшовный переход между разделами: лёгкое затухание + масштаб + блюр
+     вместо резкой мгновенной смены контента при переключении страниц. */
+  .section-transition {
+    opacity: 0;
+    animation: section-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes section-fade {
+    from {
+      opacity: 0;
+      transform: scale(0.99) translateY(10px);
+      filter: blur(4px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      filter: blur(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .section-transition {
+      animation-duration: 0.001ms !important;
+      filter: none !important;
+    }
+  }
+
   .stagger > * {
     opacity: 0;
     animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -462,8 +521,9 @@
   }
 
   .stat-number {
-    font-family: "Montserrat", sans-serif;
-    font-weight: 800;
+    font-family: "Space Grotesk", "Montserrat", sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
     color: hsl(var(--gold));
     line-height: 1;
   }
@@ -791,6 +851,38 @@ p {
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* ===== Органическая форма (blob) — декоративный акцент =====
+   Асимметричная плавная клякса вместо строгого круга/прямоугольника —
+   смягчает строгую геометрию дизайн-системы точечными акцентами. */
+.organic-blob {
+  position: absolute;
+  border-radius: 42% 58% 65% 35% / 45% 40% 60% 55%;
+  filter: blur(60px);
+  opacity: 0.22;
+  pointer-events: none;
+  will-change: transform, border-radius;
+  animation: organic-blob-morph 14s ease-in-out infinite alternate;
+}
+@keyframes organic-blob-morph {
+  0% {
+    border-radius: 42% 58% 65% 35% / 45% 40% 60% 55%;
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    border-radius: 58% 42% 38% 62% / 55% 62% 38% 45%;
+    transform: rotate(8deg) scale(1.06);
+  }
+  100% {
+    border-radius: 65% 35% 45% 55% / 40% 55% 45% 60%;
+    transform: rotate(-6deg) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .organic-blob {
+    animation: none;
+  }
 }
 
 /* ===== Доступность: полное уважение prefers-reduced-motion =====

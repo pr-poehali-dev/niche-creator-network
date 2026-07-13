@@ -96,6 +96,37 @@ function readFavorites(): string[] {
     return [];
   }
 }
+// Лёгкий 3D-наклон карточки при движении мыши (премиальный hover-эффект).
+// Работает через прямую манипуляцию DOM (без ре-рендеров React) для плавности,
+// и отключается на touch-устройствах и при prefers-reduced-motion.
+function useTilt3D<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(hover: none)").matches) return; // touch-устройства без hover
+    const handleMove = (e: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      // Наклон + лёгкий подъём — совмещает 3D-эффект с существующим hover-подъёмом карточки.
+      el.style.transform = `perspective(900px) rotateY(${x * 6}deg) rotateX(${-y * 6}deg) translateY(-4px) translateZ(0)`;
+    };
+    const handleLeave = () => {
+      // Возвращаем управление transform CSS-классу .card-hover (снимаем inline-стиль).
+      el.style.transform = "";
+    };
+    el.addEventListener("mousemove", handleMove);
+    el.addEventListener("mouseleave", handleLeave);
+    return () => {
+      el.removeEventListener("mousemove", handleMove);
+      el.removeEventListener("mouseleave", handleLeave);
+    };
+  }, []);
+  return ref;
+}
+
 function useFavorites() {
   const [favorites, setFavorites] = useState<string[]>(readFavorites);
   useEffect(() => {
@@ -1266,6 +1297,15 @@ export default function Index() {
   const [authOpen, setAuthOpen] = useState(false);
   const { geo } = useGeo();
 
+  // Компактная mobile-app-like шапка: сжимается при скролле вниз (как в нативных приложениях).
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const role: Role = user?.role === "provider" ? "provider" : "client";
 
   const [subActive, setSubActive] = useState<boolean | null>(null);
@@ -1410,9 +1450,10 @@ export default function Index() {
   };
 
   const secBarH = secBannerOpen ? 36 : 0;
+  const headerH = scrolled ? 52 : 64;
 
   return (
-    <div className="min-h-screen bg-background font-ibm" style={{ ["--header-h" as string]: `${64 + secBarH}px` }}>
+    <div className="min-h-screen bg-background font-ibm" style={{ ["--header-h" as string]: `${headerH + secBarH}px` }}>
       {/* Fixed security strip at the very top */}
       {secBannerOpen && (
         <div className="fixed top-0 left-0 right-0 z-[55] h-9 bg-gradient-to-r from-[hsl(220,20%,9%)] via-[hsl(220,18%,12%)] to-[hsl(220,20%,9%)] border-b border-gold/30">
@@ -1438,16 +1479,20 @@ export default function Index() {
         </div>
       )}
 
-      <header className="fixed left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm transition-[top]" style={{ top: secBarH }}>
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+      <header className="fixed left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm transition-[top,height] duration-300 ease-out" style={{ top: secBarH, height: headerH }}>
+        <div className={`max-w-7xl mx-auto px-4 h-full flex items-center justify-between gap-3 transition-[padding] duration-300`}>
           <div className="flex items-center gap-3 shrink-0">
-            <div className="w-8 h-8 gold-gradient rounded flex items-center justify-center shrink-0">
-              <Icon name="Shield" size={16} className="text-[hsl(220,20%,6%)]" />
+            <div className={`gold-gradient rounded flex items-center justify-center shrink-0 transition-all duration-300 ${scrolled ? "w-6 h-6" : "w-8 h-8"}`}>
+              <Icon name="Shield" size={scrolled ? 13 : 16} className="text-[hsl(220,20%,6%)]" />
             </div>
             <div>
-              <Brand className="font-montserrat font-bold text-lg tracking-[0.2em] text-foreground" />
-              <div className="hidden md:block lg:hidden xl:block text-[8px] text-muted-foreground font-montserrat tracking-wide uppercase leading-tight whitespace-nowrap">{tr("brandSub1")}</div>
-              <div className="hidden md:block lg:hidden xl:block text-[8px] text-muted-foreground font-montserrat tracking-wide uppercase leading-tight whitespace-nowrap">{tr("brandSub2")}</div>
+              <Brand className={`font-montserrat font-bold tracking-[0.2em] text-foreground transition-all duration-300 ${scrolled ? "text-base" : "text-lg"}`} />
+              {!scrolled && (
+                <>
+                  <div className="hidden md:block lg:hidden xl:block text-[8px] text-muted-foreground font-montserrat tracking-wide uppercase leading-tight whitespace-nowrap">{tr("brandSub1")}</div>
+                  <div className="hidden md:block lg:hidden xl:block text-[8px] text-muted-foreground font-montserrat tracking-wide uppercase leading-tight whitespace-nowrap">{tr("brandSub2")}</div>
+                </>
+              )}
             </div>
           </div>
 
@@ -1551,7 +1596,7 @@ export default function Index() {
       )}
 
       <main style={active === "home" ? { paddingTop: 64 + secBarH } : undefined}>
-        <div key={active} className="animate-rise">
+        <div key={active} className="section-transition">
           {renderSection()}
         </div>
       </main>
@@ -4450,14 +4495,15 @@ function PricingCalculator({ plans, promoActive }: { plans: PricingPlan[]; promo
   const fmt = (n: number) => n.toLocaleString("ru-RU");
 
   return (
-    <div className="mt-10 border border-gold/30 rounded-sm bg-card p-6 md:p-8">
-      <div className="flex items-center gap-2 mb-1">
+    <div className="mt-10 border border-gold/30 rounded-sm bg-card p-6 md:p-8 relative overflow-hidden">
+      <div className="organic-blob w-64 h-64 -bottom-20 -start-20 bg-gold" />
+      <div className="relative z-10 flex items-center gap-2 mb-1">
         <Icon name="Calculator" size={18} className="text-gold" />
         <h2 className="font-montserrat font-bold text-lg text-foreground">{tr("calcTitle")}</h2>
       </div>
-      <p className="text-xs text-muted-foreground mb-6">{tr("calcSubtitle")}</p>
+      <p className="relative z-10 text-xs text-muted-foreground mb-6">{tr("calcSubtitle")}</p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-5">
           <div>
             <label className="text-[11px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-2">{tr("calcPlan")}</label>
@@ -4658,14 +4704,14 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
                     <span className="text-sm text-muted-foreground line-through me-2">{ps}</span>
                     <span className="inline-flex items-center text-[10px] font-montserrat font-bold text-green-400 bg-green-500/15 rounded-sm px-1.5 py-0.5 align-middle">−30%</span>
                     <div>
-                      <span className={`font-montserrat font-extrabold text-gold ${p.premium ? "text-4xl" : "text-3xl"}`}>{discStr}</span>
+                      <span className={`font-grotesk font-bold text-gold tracking-tight ${p.premium ? "text-4xl" : "text-3xl"}`}>{discStr}</span>
                       <span className="text-xs text-muted-foreground ms-1">{tr("perMonth")}</span>
                     </div>
                   </div>
                 );
               })() : (
                 <div>
-                  <span className={`font-montserrat font-extrabold text-gold ${p.premium ? "text-4xl" : "text-3xl"}`}>{tr(p.price)}</span>
+                  <span className={`font-grotesk font-bold text-gold tracking-tight ${p.premium ? "text-4xl" : "text-3xl"}`}>{tr(p.price)}</span>
                   {!p.enterprise && <span className="text-xs text-muted-foreground ms-1">{tr("perMonth")}</span>}
                 </div>
               )}
@@ -4809,9 +4855,9 @@ function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider:
                 </span>
               )}
               {licensed && (
-                <span className="flex items-center gap-1 bg-gold/10 border border-gold/40 px-2 py-0.5 rounded-sm">
-                  <Icon name="BadgeCheck" size={13} className="text-gold" />
-                  <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licenseBadge")}</span>
+                <span className="badge-scan flex items-center gap-1 bg-gold/10 border border-gold/40 px-2 py-0.5 rounded-sm">
+                  <Icon name="BadgeCheck" size={13} className="text-gold relative z-10" />
+                  <span className="text-[10px] font-montserrat font-semibold text-gold relative z-10">{tr("licenseBadge")}</span>
                 </span>
               )}
             </div>
@@ -5183,8 +5229,10 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
   const fav = isFavorite(p.slug);
   const tags = lang === "ru" ? p.tags.ru : p.tags.en;
   const premium = isPremium(p);
+  const tiltRef = useTilt3D<HTMLDivElement>();
   return (
     <div
+      ref={tiltRef}
       onClick={onOpen}
       className={`card-hover shine-on-hover rounded-sm overflow-hidden cursor-pointer group flex flex-col relative ${premium ? "border-2 border-gold security-glow ambient-gold bg-card" : "border border-border bg-card"}`}
     >
@@ -5210,9 +5258,9 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
           </div>
         )}
         {isLicensed(p) && (
-          <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
-            <Icon name="BadgeCheck" size={12} className="text-gold" />
-            <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licenseBadge")}</span>
+          <div className="badge-scan absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
+            <Icon name="BadgeCheck" size={12} className="text-gold relative z-10" />
+            <span className="text-[10px] font-montserrat font-semibold text-gold relative z-10">{tr("licenseBadge")}</span>
           </div>
         )}
         <div className="absolute bottom-3 start-4 end-4">
@@ -5306,14 +5354,35 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
         {query && <button onClick={() => setQuery("")} className="text-muted-foreground hover:text-foreground shrink-0"><Icon name="X" size={18} /></button>}
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        <button onClick={() => setCategory("")} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors ${category === "" ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"}`}>{tr("searchAnyCategory")}</button>
-        {serviceCategories.map((c) => (
-          <button key={c.id} onClick={() => setCategory(c.id === category ? "" : c.id)} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors flex items-center gap-1.5 ${category === c.id ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"}`}>
-            <Icon name={c.icon} fallback="Shield" size={13} />{L(c.title, lang)}
+      {category === "" ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5 stagger">
+          {serviceCategories.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setCategory(c.id)}
+              className="group relative h-28 sm:h-32 overflow-hidden rounded-sm border border-border hover:border-gold/60 card-hover text-start"
+            >
+              <img src={c.cover} alt={L(c.title, lang)} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 group-hover:scale-105 transition-all duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[hsl(220,20%,6%)] via-[hsl(220,20%,6%)]/70 to-[hsl(220,20%,6%)]/20" />
+              <div className="relative h-full flex flex-col justify-end p-3 sm:p-4">
+                <Icon name={c.icon} fallback="Shield" size={20} className="text-gold mb-1.5" />
+                <span className="font-montserrat font-bold text-xs sm:text-sm text-foreground leading-tight">{L(c.title, lang)}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button onClick={() => setCategory("")} className="px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border border-gold/50 text-gold hover:bg-gold/10 transition-colors flex items-center gap-1.5">
+            <Icon name="ArrowLeft" size={13} />{tr("searchAnyCategory")}
           </button>
-        ))}
-      </div>
+          {serviceCategories.map((c) => (
+            <button key={c.id} onClick={() => setCategory(c.id === category ? "" : c.id)} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors flex items-center gap-1.5 ${category === c.id ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"}`}>
+              <Icon name={c.icon} fallback="Shield" size={13} />{L(c.title, lang)}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <button
@@ -6470,6 +6539,7 @@ function AboutSection({ setActive }: { setActive: (s: Section) => void }) {
       {/* Header */}
       <div className="border border-gold/30 rounded-sm glass-card p-8 md:p-10 mb-8 relative overflow-hidden security-glow ambient-gold">
         <div className="absolute inset-0 grid-line-bg opacity-30" />
+        <div className="organic-blob w-72 h-72 -top-16 -end-16 bg-gold" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
           <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
             <Icon name="Shield" size={30} className="text-[hsl(220,20%,6%)]" />

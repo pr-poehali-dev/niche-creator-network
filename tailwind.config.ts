@@ -21,6 +21,7 @@ export default {
 			fontFamily: {
 				montserrat: ['Montserrat', 'sans-serif'],
 				ibm: ['IBM Plex Sans', 'sans-serif'],
+				grotesk: ['Space Grotesk', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
