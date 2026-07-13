@@ -60,6 +60,13 @@
   html {
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--border)) transparent;
+    /* Запрещаем мобильным браузерам самостоятельно увеличивать размер текста
+       после отрисовки страницы ("font boosting") — именно это вызывало
+       "прыжок" заголовка hero на телефонах: секунду показывался заданный
+       размер, затем браузер увеличивал шрифт и текст переносился на больше строк. */
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {

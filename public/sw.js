@@ -1,6 +1,6 @@
 // Service Worker для ЩИТ — обеспечивает установку PWA и офлайн-доступ.
 // Версию кэша меняем при обновлениях, чтобы старый кэш очищался.
-const CACHE = 'shchit-v2';
+const CACHE = 'shchit-v3';
 const OFFLINE_URLS = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg'];
 
 // Установка: предварительно кэшируем базовую оболочку приложения.
