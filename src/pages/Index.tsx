@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Icon from "@/components/ui/icon";
 import { useLang, t, LANGS, type Lang } from "@/lib/i18n";
 import { dataExtra } from "@/lib/i18n-extra";
@@ -96,6 +96,25 @@ function readFavorites(): string[] {
     return [];
   }
 }
+// Имитация «живого» счётчика людей на сайте: число плавно колеблется вокруг
+// базового значения (например, реального числа специалистов), создавая
+// ощущение активности в реальном времени — без реального трекинга онлайн-сессий.
+function useLiveCounter(base: number, min = 8) {
+  const [count, setCount] = useState(() => Math.max(min, base));
+  useEffect(() => {
+    setCount(Math.max(min, base));
+    const tick = () => {
+      setCount((c) => {
+        const delta = Math.floor(Math.random() * 5) - 2; // -2..+2
+        return Math.max(min, c + delta);
+      });
+    };
+    const timer = setInterval(tick, 4000 + Math.random() * 3000);
+    return () => clearInterval(timer);
+  }, [base, min]);
+  return count;
+}
+
 // Лёгкий 3D-наклон карточки при движении мыши (премиальный hover-эффект).
 // Работает через прямую манипуляцию DOM (без ре-рендеров React) для плавности,
 // и отключается на touch-устройствах и при prefers-reduced-motion.
@@ -1324,8 +1343,10 @@ export default function Index() {
   const isClientRole = isAuthed && role === "client";
 
   // Подгружаем профиль клиента, чтобы знать, завершена ли регистрация.
+  // Админ считается полностью верифицированным всегда (полный доступ в редакторе).
   useEffect(() => {
     if (!isClientRole) { setClientProfileComplete(false); return; }
+    if (user?.isAdmin) { setClientProfileComplete(true); return; }
     let alive = true;
     fetch(func2url["clients"], { headers: authHeaders() })
       .then((r) => r.json())
@@ -1336,7 +1357,7 @@ export default function Index() {
       })
       .catch(() => { if (alive) setClientProfileComplete(false); });
     return () => { alive = false; };
-  }, [isClientRole, user?.id]);
+  }, [isClientRole, user?.id, user?.isAdmin]);
 
   // Разделы, закрытые для исполнителя без оплаченного тарифа
   const LOCKED_SECTIONS: Section[] = ["chat", "forum", "courses", "services", "cases", "guards"];
@@ -1385,8 +1406,9 @@ export default function Index() {
 
   // Открытие профиля конкретного специалиста клиентом.
   // Гейт: клиент без завершённой регистрации (имя + телефон) не видит профили.
+  // Админ в редакторе всегда имеет полный доступ — как будто прошёл всю верификацию.
   const openSpecialist = (p: Provider) => {
-    if (isClientRole && !clientProfileComplete) {
+    if (isClientRole && !clientProfileComplete && !user?.isAdmin) {
       setRegGateOpen(true);
       return;
     }
@@ -2125,7 +2147,9 @@ const MOBILE_APP_BANNER_KEY = "shchit_mobileapp_banner_dismissed";
 // Тексты двуязычные, для fr/de/ja/ar/he — автоперевод (правило «всё на 7 языков»).
 function ClientReviewsSection() {
   const { tr, lang, rtl } = useLang();
-  const enStrings = CLIENT_REVIEWS.flatMap((r) => [r.text.en, r.name.en, r.city.en, r.service.en]);
+  // Мемоизируем массив строк — без этого он пересоздавался бы на каждый рендер
+  // и вызывал бесконечный цикл ре-рендеров внутри useAutoTranslate (Maximum update depth exceeded).
+  const enStrings = useMemo(() => CLIENT_REVIEWS.flatMap((r) => [r.text.en, r.name.en, r.city.en, r.service.en]), []);
   const { resolve } = useAutoTranslate(enStrings);
   const loc = (v: { ru: string; en: string }) => {
     if (lang === "ru") return v.ru;
@@ -2246,8 +2270,10 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
   };
   const isClient = role === "client";
   const { providers } = useProviders();
-  // Живое соц-доказательство на реальных данных: число активных специалистов.
-  const liveCount = providers.filter((p) => p.active !== false).length;
+  const activeProvidersCount = providers.filter((p) => p.active !== false).length;
+  // Клиенту показываем «живой» счётчик специалистов на платформе, специалисту — клиентов.
+  // Число плавно колеблется во времени, имитируя присутствие людей на сайте в реальном времени.
+  const liveCount = useLiveCounter(isClient ? activeProvidersCount : 24, isClient ? 4 : 6);
 
   return (
     <div>
@@ -2257,7 +2283,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/40 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
         <div className="absolute inset-0">
-          <img src={isClient ? HERO_IMAGE : GUARDS_IMAGE} alt="Security" fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-25" />
+          <img src={isClient ? HERO_IMAGE : GUARDS_IMAGE} alt="Security" decoding="async" className="w-full h-full object-cover opacity-25" />
         </div>
         <div className="absolute top-1/4 -left-40 w-[500px] h-[500px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.1) 0%, transparent 70%)" }} />
         <div className="aurora-bg z-0" />
@@ -2350,9 +2376,9 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
                 </span>
                 <span className="text-foreground font-bold">{liveCount}</span>
-                <span className="text-muted-foreground">{tr("liveOnline")}</span>
+                <span className="text-muted-foreground">{tr(isClient ? "liveOnline" : "liveOnlineClients")}</span>
                 <span className="text-muted-foreground/50">·</span>
-                <span className="text-muted-foreground">{tr("liveVerified")}</span>
+                <span className="text-muted-foreground">{tr(isClient ? "liveVerified" : "liveActiveNow")}</span>
               </div>
             )}
 
@@ -2627,27 +2653,29 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 py-28">
-        <div className="border border-gold/30 rounded-sm glass-card p-10 md:p-16 text-center relative overflow-hidden grid-line-bg glow-gold ambient-gold">
-          <Reveal className="relative z-10">
-            <div className="tag-security mb-4 inline-block">{tr(isClient ? "closedAccess" : "proAccessTag")}</div>
-            <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-4">
-              {tr(isClient ? "ctaTitle1" : "proCtaTitle1")}<br /><span className="gold-text-gradient">{tr(isClient ? "ctaTitle2" : "proCtaTitle2")}</span>
-            </h2>
-            <p className="text-muted-foreground text-sm mb-8 max-w-xl mx-auto">
-              {tr(isClient ? "ctaDesc" : "proCtaDesc")}
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <button onClick={() => setActive(isClient ? "services" : "forum")} className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm">
-                {tr(isClient ? "heroClientCta1" : "proOpenCommunity")}
-              </button>
-              <button onClick={() => setActive("contacts")} className="border border-border text-foreground px-8 py-4 font-montserrat font-semibold text-sm hover:border-gold hover:text-gold transition-all rounded-sm">
-                {tr("contactUs")}
-              </button>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      {!isClient && (
+        <section className="max-w-7xl mx-auto px-4 py-28">
+          <div className="border border-gold/30 rounded-sm glass-card p-10 md:p-16 text-center relative overflow-hidden grid-line-bg glow-gold ambient-gold">
+            <Reveal className="relative z-10">
+              <div className="tag-security mb-4 inline-block">{tr("proAccessTag")}</div>
+              <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-4">
+                {tr("proCtaTitle1")}<br /><span className="gold-text-gradient">{tr("proCtaTitle2")}</span>
+              </h2>
+              <p className="text-muted-foreground text-sm mb-8 max-w-xl mx-auto">
+                {tr("proCtaDesc")}
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button onClick={() => setActive("forum")} className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm">
+                  {tr("proOpenCommunity")}
+                </button>
+                <button onClick={() => setActive("contacts")} className="border border-border text-foreground px-8 py-4 font-montserrat font-semibold text-sm hover:border-gold hover:text-gold transition-all rounded-sm">
+                  {tr("contactUs")}
+                </button>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -3233,7 +3261,8 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [svcPickerOpen, setSvcPickerOpen] = useState(false);
   const [svcSaveState, setSvcSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
-  const locked = sub !== null && !sub.active;
+  // Админ в редакторе имеет полный доступ — как будто оплатил тариф и прошёл верификацию.
+  const locked = sub !== null && !sub.active && !user?.isAdmin;
   const ALLOWED_WHEN_LOCKED = ["verify", "plan"];
 
   useEffect(() => {
@@ -6651,9 +6680,10 @@ function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (
 
   // Собираем все английские строки статьи для автоперевода на fr/de/ja/ar/he.
   // Для ru/en перевод не нужен — берём готовый текст.
-  const enStrings: string[] = [post.title.en, ...post.body.flatMap((b) =>
+  // Мемоизация предотвращает пересоздание массива на каждый рендер (иначе — бесконечный цикл в useAutoTranslate).
+  const enStrings: string[] = useMemo(() => [post.title.en, ...post.body.flatMap((b) =>
     b.type === "li" ? b.items.map((it) => it.en) : [b.text.en],
-  )];
+  )], [post]);
   const { resolve } = useAutoTranslate(enStrings);
 
   // Резолвер текста статьи: ru → русский, en → английский,
@@ -6786,7 +6816,8 @@ function BlogSection({ setActive }: { setActive: (s: Section) => void }) {
 
   // Автоперевод заголовков и анонсов списка статей на fr/de/ja/ar/he.
   // Хук вызывается до любых ранних return, чтобы не нарушать правила хуков.
-  const listStrings: string[] = posts.flatMap((p) => [p.title.en, p.excerpt.en]);
+  // Мемоизация предотвращает пересоздание массива на каждый рендер (иначе — бесконечный цикл в useAutoTranslate).
+  const listStrings: string[] = useMemo(() => posts.flatMap((p) => [p.title.en, p.excerpt.en]), [posts]);
   const { resolve } = useAutoTranslate(listStrings);
   const loc = (v: { ru: string; en: string }) => {
     if (lang === "ru") return v.ru;
