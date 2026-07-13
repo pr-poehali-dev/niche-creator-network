@@ -20,8 +20,13 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Перехватываем ошибку рендера, чтобы пользователь не увидел белый экран,
-    // и логируем её для диагностики.
-    console.error("[ErrorBoundary]", error?.message, error?.stack, info?.componentStack);
+    // и логируем расширенный контекст (страница, устройство, время) —
+    // это ускоряет диагностику сбоя без необходимости просить пользователя
+    // вручную описывать шаги воспроизведения.
+    const ctx = typeof window !== "undefined"
+      ? { url: window.location.href, ua: navigator.userAgent, time: new Date().toISOString() }
+      : {};
+    console.error("[ErrorBoundary]", error?.message, error?.stack, info?.componentStack, ctx);
   }
 
   handleReload = () => {
