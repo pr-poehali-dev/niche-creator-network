@@ -92,7 +92,7 @@ def _create_yookassa(amount_rub, plan, email, return_url, slug, period):
         return None, 'yookassa_not_configured'
 
     # Контакт покупателя для чека (54-ФЗ). Если email не передан — используем почту магазина.
-    receipt_email = (email or '').strip() or os.environ.get('SMTP_USER', '') or 'noreply@shieldpspl.ru'
+    receipt_email = (email or '').strip() or os.environ.get('SMTP_USER', '') or 'shieldpspl@yandex.ru'
     period_ru = 'год' if period == 'year' else 'месяц'
     # vat_code=1 — «Без НДС» (для ИП на УСН). payment_subject=service — услуга.
     receipt = {

@@ -7021,7 +7021,7 @@ function ContactsSection() {
 
         <div className="space-y-5">
           {[
-            { icon: "Mail", title: tr("emailSupport"), val: "kackad.rf@yandex.ru", desc: tr("emailSupportDesc") },
+            { icon: "Mail", title: tr("emailSupport"), val: "shieldpspl@yandex.ru", desc: tr("emailSupportDesc") },
             { icon: "MapPin", title: tr("legalAddress"), val: "Московская обл., г. Электросталь, пос. Всеволодово", desc: "ИП Давыдов Алексей Владимирович · ОГРНИП 320222500068242 · ИНН 222111361597" },
           ].map((c) => (
             <div key={c.title} className="border border-border rounded-sm bg-card p-5 flex gap-4 card-hover">

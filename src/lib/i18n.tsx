@@ -1431,7 +1431,7 @@ export const t: Dict = {
   reqOgrnip: { ru: "ОГРНИП: 320222500068242", en: "OGRNIP: 320222500068242" },
   reqInn: { ru: "ИНН: 222111361597", en: "INN: 222111361597" },
   reqAddress: { ru: "Московская обл., г. Электросталь, пос. Всеволодово", en: "Vsevolodovo, Elektrostal, Moscow Region, Russia" },
-  reqTaxOffice: { ru: "kackad.rf@yandex.ru", en: "kackad.rf@yandex.ru" },
+  reqTaxOffice: { ru: "shieldpspl@yandex.ru", en: "shieldpspl@yandex.ru" },
   cookieText: { ru: "Мы используем cookie и обрабатываем данные для работы сайта, аналитики и удобства. Оставаясь на сайте, вы соглашаетесь с этим.", en: "We use cookies and process data to run the site, for analytics and convenience. By staying on the site you agree to this." },
   cookieAccept: { ru: "Принять", en: "Accept" },
   cookieDecline: { ru: "Только необходимые", en: "Essential only" },
