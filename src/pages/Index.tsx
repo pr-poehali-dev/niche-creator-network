@@ -1088,6 +1088,37 @@ function AdminPanel() {
   const [complaintsError, setComplaintsError] = useState(false);
   const [resolvingId, setResolvingId] = useState<number | null>(null);
 
+  // Просмотр темы форума прямо из карточки жалобы — без ухода со страницы модерации.
+  const [previewTopicId, setPreviewTopicId] = useState<number | null>(null);
+  const [previewTopic, setPreviewTopic] = useState<{ title: string; author: string; posts: { author: string; text: string; createdAt: string | null }[] } | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  const toggleTopicPreview = (topicId: number) => {
+    if (previewTopicId === topicId) {
+      setPreviewTopicId(null);
+      setPreviewTopic(null);
+      return;
+    }
+    setPreviewTopicId(topicId);
+    setPreviewLoading(true);
+    setPreviewTopic(null);
+    fetch(`${func2url["messages"]}?kind=forum_topic&topicId=${topicId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.topic) setPreviewTopic({ title: d.topic.title, author: d.topic.author, posts: Array.isArray(d.posts) ? d.posts : [] });
+      })
+      .catch(() => {})
+      .finally(() => setPreviewLoading(false));
+  };
+
+  // Переход к исполнителю из жалобы: переключаемся на вкладку «Исполнители»
+  // и подставляем его slug в поиск — карточка сразу видна.
+  const openProviderFromComplaint = (slug: string) => {
+    setAdminTab("providers");
+    setQuery(slug);
+    setOpenSlug(slug);
+  };
+
   const token = () => localStorage.getItem("shchit_auth_token") || "";
 
   const load = useCallback(() => {
@@ -1334,22 +1365,73 @@ function AdminPanel() {
                     <span className="text-[10px] text-muted-foreground ms-auto">{c.createdAt ? new Date(c.createdAt).toLocaleString(lang, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</span>
                   </div>
                   {c.details && <p className="text-xs text-muted-foreground mb-2 leading-relaxed">{c.details}</p>}
-                  {c.status === "new" && (
-                    <div className="flex items-center gap-2">
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {c.targetType === "provider" && (
                       <button
-                        onClick={() => resolveComplaint(c.id, "resolved")}
-                        disabled={resolvingId === c.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border border-green-500/40 text-green-400 hover:bg-green-500/10 transition-all disabled:opacity-50"
+                        onClick={() => openProviderFromComplaint(c.targetId)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border border-gold/40 text-gold hover:bg-gold/10 transition-all"
                       >
-                        <Icon name="Check" size={13} />{tr("adminComplaintResolve")}
+                        <Icon name="ExternalLink" size={13} />{tr("adminGoToProvider")}
                       </button>
+                    )}
+                    {c.targetType === "forum_topic" && (
                       <button
-                        onClick={() => resolveComplaint(c.id, "dismissed")}
-                        disabled={resolvingId === c.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition-all disabled:opacity-50"
+                        onClick={() => toggleTopicPreview(Number(c.targetId))}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border border-gold/40 text-gold hover:bg-gold/10 transition-all"
                       >
-                        <Icon name="X" size={13} />{tr("adminComplaintDismiss")}
+                        <Icon name={previewTopicId === Number(c.targetId) ? "ChevronUp" : "MessagesSquare"} size={13} />
+                        {previewTopicId === Number(c.targetId) ? tr("adminHideTopic") : tr("adminViewTopic")}
                       </button>
+                    )}
+                    {(c.targetType === "client" || c.targetType === "message") && (
+                      <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground italic">
+                        <Icon name="Lock" size={12} />
+                        {c.targetType === "client" ? tr("adminNoClientProfile") : tr("adminMessageEncrypted")}
+                      </span>
+                    )}
+                    {c.status === "new" && (
+                      <>
+                        <button
+                          onClick={() => resolveComplaint(c.id, "resolved")}
+                          disabled={resolvingId === c.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border border-green-500/40 text-green-400 hover:bg-green-500/10 transition-all disabled:opacity-50"
+                        >
+                          <Icon name="Check" size={13} />{tr("adminComplaintResolve")}
+                        </button>
+                        <button
+                          onClick={() => resolveComplaint(c.id, "dismissed")}
+                          disabled={resolvingId === c.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition-all disabled:opacity-50"
+                        >
+                          <Icon name="X" size={13} />{tr("adminComplaintDismiss")}
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {previewTopicId === Number(c.targetId) && c.targetType === "forum_topic" && (
+                    <div className="mt-3 border border-border rounded-sm bg-secondary/40 p-3">
+                      {previewLoading ? (
+                        <div className="flex justify-center py-4"><Icon name="Loader" size={18} className="text-gold animate-spin" /></div>
+                      ) : previewTopic ? (
+                        <>
+                          <div className="text-sm font-montserrat font-bold text-foreground mb-1">{previewTopic.title}</div>
+                          <div className="text-[11px] text-muted-foreground mb-2">{previewTopic.author}</div>
+                          <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {previewTopic.posts.length === 0 ? (
+                              <div className="text-xs text-muted-foreground italic">{tr("forumNoPosts")}</div>
+                            ) : previewTopic.posts.map((p, i) => (
+                              <div key={i} className="border border-border rounded-sm bg-card p-2.5">
+                                <div className="text-[11px] font-montserrat font-semibold text-foreground mb-0.5">{p.author}</div>
+                                <div className="text-xs text-muted-foreground whitespace-pre-line">{p.text}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-xs text-destructive">{tr("adminError")}</div>
+                      )}
                     </div>
                   )}
                 </div>
