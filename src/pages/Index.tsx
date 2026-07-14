@@ -3168,7 +3168,9 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const { logout, user } = useAuth();
   const slug = user ? `provider-${user.id}` : "morozov";
   const handleLogout = async () => { await logout(); setActive("home"); window.scrollTo({ top: 0 }); };
-  const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts" | "verify">("requests");
+  // Вкладка "verify" объединена со "stats" в единый раздел "Профиль и статистика" —
+  // верификация, документы и метрики теперь показываются вместе, без переключения.
+  const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts">("requests");
 
   type DashCase = { title: LS; category: LS; views: number; published: boolean };
   const [myCases, setMyCases] = useState<DashCase[]>([]);
@@ -3224,7 +3226,6 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     { id: "plan" as const, key: "pdTab2" as const, icon: "Wallet" },
     { id: "cases" as const, key: "pdTab3" as const, icon: "FolderOpen" },
     { id: "requests" as const, key: "pdTab4" as const, icon: "Inbox" },
-    { id: "verify" as const, key: "pdTabVerify" as const, icon: "BadgeCheck" },
     { id: "contacts" as const, key: "pdTabContacts" as const, icon: "Contact" },
   ];
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -3266,13 +3267,16 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [myServices, setMyServices] = useState<{ key: string; price: string }[]>([]);
   const [svcPickerOpen, setSvcPickerOpen] = useState(false);
   const [svcSaveState, setSvcSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  // Данные верификации блокируются от правок после первого сохранения ФИО и реквизитов —
+  // дальше изменить их можно только через поддержку (та же логика, что у клиента).
+  const [vfLocked, setVfLocked] = useState(false);
 
   // Админ в редакторе имеет полный доступ — как будто оплатил тариф и прошёл верификацию.
   const locked = sub !== null && !sub.active && !user?.isAdmin;
-  const ALLOWED_WHEN_LOCKED = ["verify", "plan"];
+  const ALLOWED_WHEN_LOCKED = ["stats", "plan"];
 
   useEffect(() => {
-    if (locked && !ALLOWED_WHEN_LOCKED.includes(tab)) setTab("verify");
+    if (locked && !ALLOWED_WHEN_LOCKED.includes(tab)) setTab("stats");
   }, [locked]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTab = (id: typeof tab) => {
@@ -3306,6 +3310,9 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
         if (Array.isArray(v.services)) {
           setMyServices(v.services.map((s: unknown) => typeof s === "string" ? { key: s, price: "" } : { key: (s as { key: string }).key, price: (s as { price?: string }).price || "" }));
         }
+        // Форма верификации уже была заполнена и сохранена ранее (флаг из БД) —
+        // блокируем юр.статус, лицензии и документы от дальнейших правок (только поддержка).
+        if (v.submitted) setVfLocked(true);
         setVf({
           fullName: v.fullName || "", registry: v.registry || "",
           legalStatus: v.legalStatus || "ip",
@@ -3876,12 +3883,22 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
             </div>
           )}
 
-          {tab === "verify" && (
+          {tab === "stats" && (
             <div className="border border-border rounded-sm bg-card p-6 space-y-5">
               <div>
                 <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("pdVerifyTitle")}</div>
                 <p className="text-xs text-muted-foreground leading-relaxed">{tr("pdVerifyHint")}</p>
               </div>
+
+              {vfLocked && (
+                <div className="flex items-start gap-2.5 border border-gold/30 rounded-sm bg-gold/5 px-3 py-2.5">
+                  <Icon name="Lock" size={15} className="text-gold shrink-0 mt-0.5" />
+                  <div className="text-[11px] text-muted-foreground leading-relaxed">
+                    {tr("cdProfileLocked")}{" "}
+                    <a href="https://poehali.dev/help" target="_blank" rel="noreferrer" className="text-gold hover:underline font-semibold">{tr("cdContactSupport")}</a>
+                  </div>
+                </div>
+              )}
 
               {/* Avatar upload */}
               <AvatarUploader current={avatarUrl} gender={vf.gender} role="provider" recordId={slug} onUploaded={setAvatarUrl} />
@@ -3951,8 +3968,9 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                   ]).map((s) => (
                     <button
                       key={s.v}
+                      disabled={vfLocked}
                       onClick={() => { setVf({ ...vf, legalStatus: s.v }); setVfState("idle"); }}
-                      className={`py-2.5 text-xs font-montserrat font-semibold rounded-sm border transition-all ${vf.legalStatus === s.v ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:text-foreground"}`}
+                      className={`py-2.5 text-xs font-montserrat font-semibold rounded-sm border transition-all disabled:opacity-60 disabled:cursor-not-allowed ${vf.legalStatus === s.v ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:text-foreground"}`}
                     >
                       {tr(s.k)}
                     </button>
@@ -3975,28 +3993,30 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 <div className="space-y-3">
                   {vf.licenses.map((lic, i) => (
                     <div key={i} className="border border-border rounded-sm p-3 bg-secondary/40 space-y-2 relative">
-                      {vf.licenses.length > 1 && (
+                      {vf.licenses.length > 1 && !vfLocked && (
                         <button onClick={() => { setVf({ ...vf, licenses: vf.licenses.filter((_, idx) => idx !== i) }); setVfState("idle"); }} className="absolute top-2 end-2 px-2 py-1 border border-border rounded-sm text-muted-foreground hover:border-destructive hover:text-destructive transition-colors bg-card" aria-label={tr("remove")}>
                           <Icon name="Trash2" size={13} />
                         </button>
                       )}
-                      <input value={lic.number} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], number: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr("pdVfLicensePh")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                      <input value={lic.number} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], number: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr("pdVfLicensePh")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                           <label className="text-[10px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1">{tr("pdVfLicenseDate")}</label>
-                          <input type="date" value={lic.date} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], date: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+                          <input type="date" value={lic.date} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], date: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
                         </div>
                         <div>
                           <label className="text-[10px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1">{tr("pdVfLicenseAuthority")}</label>
-                          <input value={lic.authority} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], authority: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr("pdVfLicenseAuthorityPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                          <input value={lic.authority} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], authority: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr("pdVfLicenseAuthorityPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <button onClick={() => { setVf({ ...vf, licenses: [...vf.licenses, { number: "", date: "", authority: "" }] }); setVfState("idle"); }} className="mt-2 inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-gold hover:underline">
-                  <Icon name="Plus" size={13} />{tr("pdVfAddLicense")}
-                </button>
+                {!vfLocked && (
+                  <button onClick={() => { setVf({ ...vf, licenses: [...vf.licenses, { number: "", date: "", authority: "" }] }); setVfState("idle"); }} className="mt-2 inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-gold hover:underline">
+                    <Icon name="Plus" size={13} />{tr("pdVfAddLicense")}
+                  </button>
+                )}
               </div>
 
               {/* Documents — diplomas, certificates */}
@@ -4015,18 +4035,22 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                   {vf.documents.map((doc, i) => (
                     <div key={i} className="border border-border rounded-sm bg-secondary/30 p-3">
                       <div className="flex gap-2">
-                        <input value={doc.title} onChange={(e) => { const arr = [...vf.documents]; arr[i] = { ...arr[i], title: e.target.value }; setVf({ ...vf, documents: arr }); setVfState("idle"); }} placeholder={tr("pdVfDocTitlePh")} className="flex-1 min-w-0 bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
-                        <button onClick={() => { setVf({ ...vf, documents: vf.documents.filter((_, idx) => idx !== i) }); setVfState("idle"); }} className="shrink-0 px-3 border border-border rounded-sm text-muted-foreground hover:border-destructive hover:text-destructive transition-colors" aria-label={tr("remove")}>
-                          <Icon name="Trash2" size={14} />
-                        </button>
+                        <input value={doc.title} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.documents]; arr[i] = { ...arr[i], title: e.target.value }; setVf({ ...vf, documents: arr }); setVfState("idle"); }} placeholder={tr("pdVfDocTitlePh")} className="flex-1 min-w-0 bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
+                        {!vfLocked && (
+                          <button onClick={() => { setVf({ ...vf, documents: vf.documents.filter((_, idx) => idx !== i) }); setVfState("idle"); }} className="shrink-0 px-3 border border-border rounded-sm text-muted-foreground hover:border-destructive hover:text-destructive transition-colors" aria-label={tr("remove")}>
+                            <Icon name="Trash2" size={14} />
+                          </button>
+                        )}
                       </div>
-                      <DocFileButton slug="morozov" url={doc.url || ""} onUploaded={(u) => { const arr = [...vf.documents]; arr[i] = { ...arr[i], url: u }; setVf({ ...vf, documents: arr }); setVfState("idle"); }} />
+                      {!vfLocked && <DocFileButton slug="morozov" url={doc.url || ""} onUploaded={(u) => { const arr = [...vf.documents]; arr[i] = { ...arr[i], url: u }; setVf({ ...vf, documents: arr }); setVfState("idle"); }} />}
                     </div>
                   ))}
                 </div>
-                <button onClick={() => { setVf({ ...vf, documents: [...vf.documents, { title: "", url: "" }] }); setVfState("idle"); }} className="mt-2 inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-gold hover:underline">
-                  <Icon name="Plus" size={13} />{tr("pdVfAddDocument")}
-                </button>
+                {!vfLocked && (
+                  <button onClick={() => { setVf({ ...vf, documents: [...vf.documents, { title: "", url: "" }] }); setVfState("idle"); }} className="mt-2 inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-gold hover:underline">
+                    <Icon name="Plus" size={13} />{tr("pdVfAddDocument")}
+                  </button>
+                )}
               </div>
 
               {/* Bio */}

@@ -78,7 +78,7 @@ def handler(event: dict, context) -> dict:
             f"show_bio, show_age, show_documents, gender, avatar_url, "
             f"timezone, always_available, quiet_start, quiet_end, license_verified, "
             f"plan, subscription_active, subscription_until, services, birth_date, "
-            f"phone, email, whatsapp, telegram, website "
+            f"phone, email, whatsapp, telegram, website, verification_submitted "
             f"FROM {SCHEMA}.providers WHERE slug=%s",
             (slug,),
         )
@@ -124,6 +124,7 @@ def handler(event: dict, context) -> dict:
                 'telegram': decrypt_field(row[33] or ''),
                 'website': row[34] or '',
             },
+            'submitted': bool(row[35]),
         }
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'verification': data})}
 
@@ -214,6 +215,11 @@ def handler(event: dict, context) -> dict:
         sel_services = sel_services[:50]
     services_json = json.dumps(sel_services, ensure_ascii=False)
 
+    # Как только исполнитель первый раз прислал значимые данные верификации
+    # (юр.статус, лицензию или документы), ставим флаг submitted навсегда —
+    # дальше форма блокируется на фронтенде, менять можно только через поддержку.
+    has_meaningful_data = bool(legal_status or licenses or documents)
+
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     cur.execute(
@@ -223,7 +229,8 @@ def handler(event: dict, context) -> dict:
         f"pseudonym=%s, use_pseudonym=%s, gender=%s, "
         f"licenses=%s::jsonb, documents=%s::jsonb, bio=%s, age=%s, "
         f"show_bio=%s, show_age=%s, show_documents=%s, timezone=%s, always_available=%s, "
-        f"quiet_start=%s, quiet_end=%s, services=%s::jsonb "
+        f"quiet_start=%s, quiet_end=%s, services=%s::jsonb, "
+        f"verification_submitted = verification_submitted OR %s "
         f"WHERE slug=%s",
         (
             legal_status, license_info,
@@ -232,6 +239,7 @@ def handler(event: dict, context) -> dict:
             licenses_json, documents_json, bio, age,
             show_bio, show_age, show_documents, timezone, always_available,
             quiet_start, quiet_end, services_json,
+            has_meaningful_data,
             slug,
         ),
     )
