@@ -1073,13 +1073,20 @@ function StarRating({ rating }: { rating: number }) {
 
 type AdminProvider = { slug: string; name: { ru: string; en: string }; legalStatus: string; verified: boolean; licenseVerified: boolean; licenses: (string | { number?: string; date?: string; authority?: string })[]; active: boolean; documents: { title: string; url: string }[]; fullName: string; registry: string };
 
+type AdminComplaint = { id: number; reporterUserId: number; reporterRole: string; targetType: string; targetId: string; reason: string; details: string; status: string; createdAt: string | null };
+
 function AdminPanel() {
   const { lang, tr } = useLang();
+  const [adminTab, setAdminTab] = useState<"providers" | "complaints">("providers");
   const [items, setItems] = useState<AdminProvider[] | null>(null);
   const [error, setError] = useState(false);
   const [savingSlug, setSavingSlug] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [openSlug, setOpenSlug] = useState<string | null>(null);
+
+  const [complaints, setComplaints] = useState<AdminComplaint[] | null>(null);
+  const [complaintsError, setComplaintsError] = useState(false);
+  const [resolvingId, setResolvingId] = useState<number | null>(null);
 
   const token = () => localStorage.getItem("shchit_auth_token") || "";
 
@@ -1091,7 +1098,33 @@ function AdminPanel() {
       .catch(() => { setError(true); setItems([]); });
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  const loadComplaints = useCallback(() => {
+    setComplaintsError(false);
+    fetch(func2url["complaints"], { headers: { "X-Auth-Token": token() } })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => setComplaints(Array.isArray(d.complaints) ? d.complaints : []))
+      .catch(() => { setComplaintsError(true); setComplaints([]); });
+  }, []);
+
+  useEffect(() => { load(); loadComplaints(); }, [load, loadComplaints]);
+
+  const newComplaintsCount = (complaints || []).filter((c) => c.status === "new").length;
+
+  const resolveComplaint = async (id: number, status: "resolved" | "dismissed") => {
+    setResolvingId(id);
+    try {
+      const res = await fetch(func2url["complaints"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Auth-Token": token() },
+        body: JSON.stringify({ action: "resolve", complaintId: id, status }),
+      });
+      if (res.ok) {
+        setComplaints((prev) => (prev || []).map((c) => (c.id === id ? { ...c, status } : c)));
+      }
+    } finally {
+      setResolvingId(null);
+    }
+  };
 
   const toggle = async (p: AdminProvider, field: "licenseVerified" | "verified") => {
     setSavingSlug(p.slug + field);
@@ -1144,6 +1177,26 @@ function AdminPanel() {
         </div>
       </div>
 
+      <div className="flex items-center gap-2 mb-5 border-b border-border">
+        <button
+          onClick={() => setAdminTab("providers")}
+          className={`px-4 py-2.5 text-sm font-montserrat font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${adminTab === "providers" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+        >
+          <Icon name="Users" size={14} />{tr("adminTabProviders")}
+        </button>
+        <button
+          onClick={() => setAdminTab("complaints")}
+          className={`px-4 py-2.5 text-sm font-montserrat font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${adminTab === "complaints" ? "border-gold text-gold" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+        >
+          <Icon name="Flag" size={14} />{tr("adminTabComplaints")}
+          {newComplaintsCount > 0 && (
+            <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center">{newComplaintsCount}</span>
+          )}
+        </button>
+      </div>
+
+      {adminTab === "providers" && (
+      <>
       <div className="flex items-center gap-3 mb-5">
         <div className="flex-1 flex items-center gap-2 border border-border bg-card rounded-sm px-4">
           <Icon name="Search" size={15} className="text-muted-foreground" />
@@ -1255,6 +1308,56 @@ function AdminPanel() {
           )}
         </div>
       )}
+      </>
+      )}
+
+      {adminTab === "complaints" && (
+        <div className="border border-border rounded-sm bg-card overflow-hidden">
+          {complaints === null ? (
+            <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex justify-center"><Icon name="Loader" size={28} className="text-gold animate-spin" /></div>
+          ) : complaintsError ? (
+            <div className="border border-destructive/30 rounded-sm bg-destructive/10 p-4 text-sm text-destructive flex items-center gap-2"><Icon name="CircleAlert" size={16} />{tr("adminError")}</div>
+          ) : complaints.length === 0 ? (
+            <div className="py-12 text-center text-sm text-muted-foreground">{tr("adminComplaintsEmpty")}</div>
+          ) : (
+            complaints.map((c) => {
+              const targetLabel = ({ provider: tr("reportTargetProvider"), client: tr("reportTargetClient"), message: tr("reportTargetMessage"), forum_topic: tr("reportTargetForum") } as Record<string, string>)[c.targetType] || c.targetType;
+              const reasonLabel = tr(`reportReason_${c.reason}` as keyof typeof t);
+              return (
+                <div key={c.id} className="border-b border-border last:border-0 px-4 py-3.5">
+                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                    <span className={`text-[10px] font-montserrat font-bold px-2 py-0.5 rounded-sm ${c.status === "new" ? "bg-destructive/15 text-destructive" : c.status === "resolved" ? "bg-green-500/15 text-green-400" : "bg-secondary text-muted-foreground"}`}>
+                      {c.status === "new" ? tr("adminComplaintNew") : c.status === "resolved" ? tr("adminComplaintResolved") : tr("adminComplaintDismissed")}
+                    </span>
+                    <span className="text-xs font-montserrat font-semibold text-foreground">{reasonLabel}</span>
+                    <span className="text-[10px] text-muted-foreground">· {targetLabel}: {c.targetId}</span>
+                    <span className="text-[10px] text-muted-foreground ms-auto">{c.createdAt ? new Date(c.createdAt).toLocaleString(lang, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                  </div>
+                  {c.details && <p className="text-xs text-muted-foreground mb-2 leading-relaxed">{c.details}</p>}
+                  {c.status === "new" && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => resolveComplaint(c.id, "resolved")}
+                        disabled={resolvingId === c.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border border-green-500/40 text-green-400 hover:bg-green-500/10 transition-all disabled:opacity-50"
+                      >
+                        <Icon name="Check" size={13} />{tr("adminComplaintResolve")}
+                      </button>
+                      <button
+                        onClick={() => resolveComplaint(c.id, "dismissed")}
+                        disabled={resolvingId === c.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition-all disabled:opacity-50"
+                      >
+                        <Icon name="X" size={13} />{tr("adminComplaintDismiss")}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1312,6 +1415,22 @@ export default function Index() {
   const [active, setActive] = useState<Section>(getInitialSection);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
+
+  // Счётчик новых жалоб для администратора — показывается бейджем на кнопке
+  // «Админ-панель» в шапке, чтобы жалобы не оставались незамеченными.
+  const [newComplaintsBadge, setNewComplaintsBadge] = useState(0);
+  useEffect(() => {
+    if (!user?.isAdmin) return;
+    const loadBadge = () => {
+      fetch(func2url["complaints"], { headers: authHeaders() })
+        .then((r) => r.json())
+        .then((d) => { if (Array.isArray(d.complaints)) setNewComplaintsBadge(d.complaints.filter((c: { status: string }) => c.status === "new").length); })
+        .catch(() => {});
+    };
+    loadBadge();
+    const iv = setInterval(loadBadge, 60000);
+    return () => clearInterval(iv);
+  }, [user?.isAdmin]);
   const [chatTarget, setChatTarget] = useState<{ name: string; title: string; avatar?: string | null; pairKey?: string } | null>(null);
   const [secBannerOpen, setSecBannerOpen] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
@@ -1567,9 +1686,12 @@ export default function Index() {
               <>
                 <NotificationBell />
                 {user?.isAdmin && (
-                  <button onClick={() => go("admin")} className={`hidden sm:flex items-center gap-1.5 px-2.5 py-2 text-sm font-montserrat font-bold rounded-sm transition-all border shrink-0 whitespace-nowrap ${active === "admin" ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`} aria-label={tr("adminPanelTitle")}>
+                  <button onClick={() => go("admin")} className={`hidden sm:flex items-center gap-1.5 px-2.5 py-2 text-sm font-montserrat font-bold rounded-sm transition-all border shrink-0 whitespace-nowrap relative ${active === "admin" ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`} aria-label={tr("adminPanelTitle")}>
                     <Icon name="ShieldCheck" size={15} />
                     <span className="hidden xl:inline">{tr("adminPanelTitle")}</span>
+                    {newComplaintsBadge > 0 && (
+                      <span className="absolute -top-1.5 -end-1.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center">{newComplaintsBadge}</span>
+                    )}
                   </button>
                 )}
                 <button onClick={() => go("dashboard")} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] px-3 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity shrink-0 whitespace-nowrap">
@@ -1611,6 +1733,9 @@ export default function Index() {
                     <button onClick={() => go("admin")} className="w-full border border-gold text-gold py-3 text-sm font-montserrat font-bold rounded-sm hover:bg-gold/10 transition-all flex items-center justify-center gap-2">
                       <Icon name="ShieldCheck" size={16} />
                       {tr("adminPanelTitle")}
+                      {newComplaintsBadge > 0 && (
+                        <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center">{newComplaintsBadge}</span>
+                      )}
                     </button>
                   )}
                   <button onClick={() => go("dashboard")} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
