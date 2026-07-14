@@ -78,7 +78,7 @@ def handler(event: dict, context) -> dict:
             f"show_bio, show_age, show_documents, gender, avatar_url, "
             f"timezone, always_available, quiet_start, quiet_end, license_verified, "
             f"plan, subscription_active, subscription_until, services, birth_date, "
-            f"phone, email, whatsapp, telegram, website, verification_submitted "
+            f"phone, email, whatsapp, telegram, website, verification_submitted, verification_country_code "
             f"FROM {SCHEMA}.providers WHERE slug=%s",
             (slug,),
         )
@@ -125,6 +125,7 @@ def handler(event: dict, context) -> dict:
                 'website': row[34] or '',
             },
             'submitted': bool(row[35]),
+            'verificationCountry': {'RU': 'RU', 'US': 'US', 'EU': 'EU', 'OT': 'OTHER'}.get(row[36] or 'RU', 'RU'),
         }
         return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'verification': data})}
 
@@ -222,6 +223,11 @@ def handler(event: dict, context) -> dict:
 
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
+    # Страна верификации: RU/US/EU — стандартные формы документа,
+    # OTHER (на фронтенде) сохраняется как 'OT' — свободный ввод + ссылка в поддержку.
+    vc_raw = str(body.get('verificationCountry') or '').strip().upper()
+    verification_country = {'RU': 'RU', 'US': 'US', 'EU': 'EU', 'OTHER': 'OT'}.get(vc_raw, 'RU')
+
     cur.execute(
         f"UPDATE {SCHEMA}.providers SET "
         f"legal_status=%s, license_info=%s, "
@@ -229,7 +235,7 @@ def handler(event: dict, context) -> dict:
         f"pseudonym=%s, use_pseudonym=%s, gender=%s, "
         f"licenses=%s::jsonb, documents=%s::jsonb, bio=%s, age=%s, "
         f"show_bio=%s, show_age=%s, show_documents=%s, timezone=%s, always_available=%s, "
-        f"quiet_start=%s, quiet_end=%s, services=%s::jsonb, "
+        f"quiet_start=%s, quiet_end=%s, services=%s::jsonb, verification_country_code=%s, "
         f"verification_submitted = verification_submitted OR %s "
         f"WHERE slug=%s",
         (
@@ -238,7 +244,7 @@ def handler(event: dict, context) -> dict:
             pseudonym, use_pseudonym, gender,
             licenses_json, documents_json, bio, age,
             show_bio, show_age, show_documents, timezone, always_available,
-            quiet_start, quiet_end, services_json,
+            quiet_start, quiet_end, services_json, verification_country,
             has_meaningful_data,
             slug,
         ),

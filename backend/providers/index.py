@@ -56,7 +56,7 @@ def handler(event: dict, context) -> dict:
         f'license_verified, timezone, always_available, quiet_start, quiet_end, '
         f'plan, country_ru, country_en, services '
         f"FROM {SCHEMA}.providers ORDER BY pin_priority DESC, subscription_active DESC, "
-        f"(CASE WHEN plan='premium' THEN 0 WHEN plan='pro' THEN 1 ELSE 2 END), rating DESC, reviews DESC"
+        f"(CASE WHEN plan='chop' THEN 0 WHEN plan='premium' THEN 1 WHEN plan='pro' THEN 2 ELSE 3 END), rating DESC, reviews DESC"
     )
     rows = cur.fetchall()
     cur.close()

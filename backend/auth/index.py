@@ -369,7 +369,7 @@ def handler(event: dict, context) -> dict:
             if not token:
                 return _resp(401, {'error': 'no_token'})
             cur.execute(
-                f"SELECT u.id, u.email, u.role, u.name, s.expires_at, u.is_admin "
+                f"SELECT u.id, u.email, u.role, u.name, s.expires_at, u.is_admin, u.public_id "
                 f"FROM {SCHEMA}.sessions s JOIN {SCHEMA}.users u ON u.id = s.user_id "
                 f"WHERE s.token = %s",
                 (token,),
@@ -377,7 +377,7 @@ def handler(event: dict, context) -> dict:
             row = cur.fetchone()
             if not row or row[4] < datetime.utcnow():
                 return _resp(401, {'error': 'invalid_session'})
-            return _resp(200, {'user': {'id': row[0], 'email': row[1], 'role': row[2], 'name': row[3], 'isAdmin': bool(row[5])}})
+            return _resp(200, {'user': {'id': row[0], 'email': row[1], 'role': row[2], 'name': row[3], 'isAdmin': bool(row[5]), 'publicId': row[6]}})
 
         if action == 'logout':
             if token:

@@ -28,6 +28,7 @@ PLAN_PRICES_RUB = {
     'start': 1990,
     'pro': 4490,
     'premium': 7990,
+    'chop': 12990,
 }
 
 # Валюта по коду страны (ISO 3166-1 alpha-2)

@@ -22,7 +22,7 @@ CORS = {
 # За сколько дней до окончания напоминаем
 REMIND_DAYS = 3
 
-PLAN_TITLES = {'start': 'Старт', 'pro': 'Профи', 'premium': 'Премиум', 'enterprise': 'Enterprise'}
+PLAN_TITLES = {'start': 'Старт', 'pro': 'Профи', 'premium': 'Премиум', 'chop': 'Для ЧОП', 'enterprise': 'Enterprise'}
 
 
 def _resp(status, body):

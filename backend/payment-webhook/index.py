@@ -20,10 +20,10 @@ CORS = {
     'X-Frame-Options': 'DENY',
 }
 
-VALID_PLANS = ('start', 'pro', 'premium')
+VALID_PLANS = ('start', 'pro', 'premium', 'chop')
 
 # Минимальные ожидаемые суммы в рублях (со скидкой 70% от полной цены — с запасом на промо и валютную конвертацию)
-PLAN_PRICES_RUB = {'start': 1990, 'pro': 4490, 'premium': 7990}
+PLAN_PRICES_RUB = {'start': 1990, 'pro': 4490, 'premium': 7990, 'chop': 12990}
 MIN_ACCEPTABLE_FACTOR = 0.5  # не даём активировать тариф, если оплачено меньше половины минимальной цены
 
 # URL функции отправки чека на почту (send-receipt). Берётся из переменной
@@ -33,7 +33,7 @@ RECEIPT_URL = os.environ.get(
     'RECEIPT_FUNCTION_URL',
     'https://functions.poehali.dev/4a87b00b-70a2-4af4-846b-156ef2a08b97',
 )
-PLAN_TITLES = {'start': 'Старт', 'pro': 'Профи', 'premium': 'Премиум'}
+PLAN_TITLES = {'start': 'Старт', 'pro': 'Профи', 'premium': 'Премиум', 'chop': 'Для ЧОП'}
 
 
 def _send_receipt(email, plan, period, amount, currency, payment_id):

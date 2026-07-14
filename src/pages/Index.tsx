@@ -1312,7 +1312,7 @@ export default function Index() {
   const [active, setActive] = useState<Section>(getInitialSection);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
-  const [chatTarget, setChatTarget] = useState<{ name: string; title: string; avatar?: string | null } | null>(null);
+  const [chatTarget, setChatTarget] = useState<{ name: string; title: string; avatar?: string | null; pairKey?: string } | null>(null);
   const [secBannerOpen, setSecBannerOpen] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
   const { geo } = useGeo();
@@ -1429,7 +1429,7 @@ export default function Index() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  const openChat = (target: { name: string; title: string; avatar?: string | null }) => {
+  const openChat = (target: { name: string; title: string; avatar?: string | null; pairKey?: string }) => {
     trackGoal(GOALS.contactProvider);
     setChatTarget(target);
     go("chat");
@@ -1470,7 +1470,7 @@ export default function Index() {
       return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} />;
     }
     if (isLocked && LOCKED_SECTIONS.includes(active)) {
-      return <ProviderDashboard setActive={go} />;
+      return <ProviderDashboard setActive={go} openChat={openChat} />;
     }
     switch (active) {
       case "home": return <HomeSection setActive={go} role={role} openChat={openChat} />;
@@ -1496,7 +1496,7 @@ export default function Index() {
       case "blog": return <BlogSection setActive={go} />;
       case "pricing": return <PricingSection setActive={go} />;
       case "privacy": case "terms": case "agreement": case "offer": case "consent": return <LegalDocSection doc={LEGAL_DOCS[active]} setActive={go} showFaq={active === "privacy"} />;
-      case "dashboard": return role === "client" ? <ClientDashboard setActive={go} /> : <ProviderDashboard setActive={go} />;
+      case "dashboard": return role === "client" ? <ClientDashboard setActive={go} /> : <ProviderDashboard setActive={go} openChat={openChat} />;
       case "admin": return user?.isAdmin ? <AdminPanel /> : <HomeSection setActive={go} role={role} openChat={openChat} />;
       default: return <HomeSection setActive={go} role={role} openChat={openChat} />;
     }
@@ -3278,14 +3278,14 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
 
 type LicenseEntry = { number: string; date: string; authority: string };
 
-function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
+function ProviderDashboard({ setActive, openChat }: { setActive: (s: Section) => void; openChat?: (t: { name: string; title: string; avatar?: string | null; pairKey?: string }) => void }) {
   const { lang, tr } = useLang();
   const { logout, user } = useAuth();
   const slug = user ? `provider-${user.id}` : "morozov";
   const handleLogout = async () => { await logout(); setActive("home"); window.scrollTo({ top: 0 }); };
   // Вкладка "verify" объединена со "stats" в единый раздел "Профиль и статистика" —
   // верификация, документы и метрики теперь показываются вместе, без переключения.
-  const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts">("requests");
+  const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts" | "friends">("requests");
 
   type DashCase = { title: LS; category: LS; views: number; published: boolean };
   const [myCases, setMyCases] = useState<DashCase[]>([]);
@@ -3341,6 +3341,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     { id: "plan" as const, key: "pdTab2" as const, icon: "Wallet" },
     { id: "cases" as const, key: "pdTab3" as const, icon: "FolderOpen" },
     { id: "requests" as const, key: "pdTab4" as const, icon: "Inbox" },
+    { id: "friends" as const, key: "pdTabFriends" as const, icon: "Users" },
     { id: "contacts" as const, key: "pdTabContacts" as const, icon: "Contact" },
   ];
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -3365,6 +3366,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const [vf, setVf] = useState({
     fullName: "", registry: "",
     legalStatus: "ip",
+    verificationCountry: "RU",
     showLegalStatus: true, showLicense: true,
     pseudonym: "", usePseudonym: false,
     gender: "m" as "m" | "f", age: "" as string,
@@ -3431,6 +3433,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
         setVf({
           fullName: v.fullName || "", registry: v.registry || "",
           legalStatus: v.legalStatus || "ip",
+          verificationCountry: v.verificationCountry || "RU",
           showLegalStatus: !!v.showLegalStatus, showLicense: !!v.showLicense,
           pseudonym: v.pseudonym || "", usePseudonym: !!v.usePseudonym,
           gender: v.gender === "f" ? "f" : "m", age: v.age != null ? String(v.age) : "",
@@ -3577,6 +3580,67 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   };
 
   const visibleIncoming = incoming.filter((r) => myCatIds.length === 0 || myCatIds.includes(r.category) || !r.category);
+
+  // Система «друзей»: поиск специалиста по его уникальному публичному ID,
+  // отправка/приём заявок в друзья, список друзей — используется для личных чатов.
+  type FriendItem = { friendshipId: number; userId: number; pairKey: string; provider: { slug: string; name: { ru: string; en: string }; title: { ru: string; en: string }; avatar: string | null; rating: number; verified: boolean } | null };
+  type FriendReq = { requestId: number; userId: number; provider: FriendItem["provider"]; createdAt: string | null };
+  const [friendsList, setFriendsList] = useState<FriendItem[]>([]);
+  const [friendRequests, setFriendRequests] = useState<FriendReq[]>([]);
+  const [searchPublicId, setSearchPublicId] = useState("");
+  const [searchResult, setSearchResult] = useState<{ userId: number; publicId: number; role: string; name: string; provider: FriendItem["provider"]; friendStatus: string } | null | "not_found">(null);
+  const [friendBusy, setFriendBusy] = useState(false);
+
+  const loadFriends = useCallback(() => {
+    fetch(func2url["friends"], { headers: authHeaders() })
+      .then((r) => r.json())
+      .then((d) => { if (Array.isArray(d.friends)) setFriendsList(d.friends); })
+      .catch(() => {});
+    fetch(`${func2url["friends"]}?action=requests`, { headers: authHeaders() })
+      .then((r) => r.json())
+      .then((d) => { if (Array.isArray(d.requests)) setFriendRequests(d.requests); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => { loadFriends(); }, [loadFriends]);
+
+  const searchFriendById = async () => {
+    const idNum = searchPublicId.trim();
+    if (!idNum) return;
+    setFriendBusy(true);
+    try {
+      const res = await fetch(`${func2url["friends"]}?action=search&publicId=${encodeURIComponent(idNum)}`, { headers: authHeaders() });
+      if (res.status === 404) { setSearchResult("not_found"); return; }
+      const d = await res.json();
+      setSearchResult(d);
+    } finally {
+      setFriendBusy(false);
+    }
+  };
+
+  const sendFriendRequest = async (targetUserId: number) => {
+    setFriendBusy(true);
+    try {
+      await fetch(func2url["friends"], {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ action: "request", targetUserId }),
+      });
+      setSearchResult(null);
+      setSearchPublicId("");
+    } finally {
+      setFriendBusy(false);
+    }
+  };
+
+  const respondFriendRequest = async (requestId: number, accept: boolean) => {
+    await fetch(func2url["friends"], {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action: accept ? "accept" : "decline", requestId }),
+    });
+    loadFriends();
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
@@ -4122,6 +4186,39 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 </button>
               </div>
 
+              {/* Страна верификации — определяет, какой документ ожидается ниже
+                  (лицензия ЧОП для РФ, State license для США, номер лицензии ЕС,
+                  для остальных стран — свободный ввод + ссылка в поддержку). */}
+              <div>
+                <label className="text-xs font-montserrat font-semibold text-foreground block mb-2">{tr("pdVfCountry")}</label>
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                  {([
+                    { v: "RU", k: "pdVfCountryRU" as const },
+                    { v: "US", k: "pdVfCountryUS" as const },
+                    { v: "EU", k: "pdVfCountryEU" as const },
+                    { v: "OTHER", k: "pdVfCountryOther" as const },
+                  ]).map((c) => (
+                    <button
+                      key={c.v}
+                      disabled={vfLocked}
+                      onClick={() => { setVf({ ...vf, verificationCountry: c.v }); setVfState("idle"); }}
+                      className={`py-2.5 text-xs font-montserrat font-semibold rounded-sm border transition-all disabled:opacity-60 disabled:cursor-not-allowed ${vf.verificationCountry === c.v ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:text-foreground"}`}
+                    >
+                      {tr(c.k)}
+                    </button>
+                  ))}
+                </div>
+                {vf.verificationCountry === "OTHER" && (
+                  <div className="flex items-start gap-2 text-[11px] text-muted-foreground bg-secondary/50 border border-border rounded-sm px-3 py-2">
+                    <Icon name="Info" size={13} className="shrink-0 mt-0.5" />
+                    <span>
+                      {tr("pdVfCountryOtherHint")}{" "}
+                      <a href="https://poehali.dev/help" target="_blank" rel="noreferrer" className="text-gold hover:underline font-semibold">{tr("cdContactSupport")}</a>
+                    </span>
+                  </div>
+                )}
+              </div>
+
               {/* Legal status (with visibility toggle) */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -4172,7 +4269,7 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                           <Icon name="Trash2" size={13} />
                         </button>
                       )}
-                      <input value={lic.number} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], number: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr("pdVfLicensePh")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
+                      <input value={lic.number} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], number: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr(vf.verificationCountry === "US" ? "pdVfLicensePhUS" : vf.verificationCountry === "EU" ? "pdVfLicensePhEU" : vf.verificationCountry === "OTHER" ? "pdVfLicensePhOther" : "pdVfLicensePh")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                           <label className="text-[10px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1">{tr("pdVfLicenseDate")}</label>
@@ -4289,6 +4386,108 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
             </div>
           )}
 
+          {tab === "friends" && (
+            <div className="space-y-6">
+              <div className="border border-gold/30 rounded-sm glass-card p-6">
+                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("pdMyIdTitle")}</div>
+                <p className="text-[11px] text-muted-foreground mb-3">{tr("pdMyIdHint")}</p>
+                <div className="inline-flex items-center gap-2 border border-gold/40 rounded-sm bg-background px-4 py-2.5">
+                  <Icon name="IdCard" size={16} className="text-gold" />
+                  <span className="font-montserrat font-bold text-lg text-gold">{user?.publicId ?? "—"}</span>
+                </div>
+              </div>
+
+              <div className="border border-border rounded-sm bg-card p-6">
+                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("pdFindFriendTitle")}</div>
+                <p className="text-[11px] text-muted-foreground mb-4">{tr("pdFindFriendHint")}</p>
+                <div className="flex gap-2 mb-4">
+                  <input
+                    value={searchPublicId}
+                    onChange={(e) => setSearchPublicId(e.target.value.replace(/\D/g, ""))}
+                    placeholder={tr("pdFindFriendPh")}
+                    className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+                  />
+                  <button onClick={searchFriendById} disabled={friendBusy || !searchPublicId.trim()} className="gold-gradient text-[hsl(220,20%,6%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50 flex items-center gap-1.5">
+                    <Icon name="Search" size={14} />{tr("pdFindFriendBtn")}
+                  </button>
+                </div>
+
+                {searchResult === "not_found" && (
+                  <div className="text-xs text-muted-foreground italic">{tr("pdFriendNotFound")}</div>
+                )}
+                {searchResult && searchResult !== "not_found" && (
+                  <div className="flex items-center gap-3 p-3 border border-border rounded-sm">
+                    <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
+                      {searchResult.provider?.avatar ? <img src={searchResult.provider.avatar} alt="" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(220,20%,6%)]" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-montserrat font-semibold text-foreground truncate">{searchResult.provider ? L(searchResult.provider.name, lang) : searchResult.name}</div>
+                      {searchResult.provider && <div className="text-[11px] text-muted-foreground truncate">{L(searchResult.provider.title, lang)}</div>}
+                    </div>
+                    {searchResult.friendStatus === "accepted" ? (
+                      <span className="tag-security shrink-0 text-green-400 border-green-500/40">{tr("pdAlreadyFriends")}</span>
+                    ) : searchResult.friendStatus === "pending" ? (
+                      <span className="tag-security shrink-0 text-gold border-gold/40">{tr("pdRequestPending")}</span>
+                    ) : (
+                      <button onClick={() => sendFriendRequest(searchResult.userId)} disabled={friendBusy} className="gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90 disabled:opacity-50">
+                        {tr("pdAddFriend")}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {friendRequests.length > 0 && (
+                <div className="border border-border rounded-sm bg-card p-6">
+                  <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("pdIncomingRequests")}</div>
+                  <div className="space-y-3">
+                    {friendRequests.map((r) => (
+                      <div key={r.requestId} className="flex items-center gap-3 p-3 border border-border rounded-sm">
+                        <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
+                          {r.provider?.avatar ? <img src={r.provider.avatar} alt="" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(220,20%,6%)]" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-montserrat font-semibold text-foreground truncate">{r.provider ? L(r.provider.name, lang) : `#${r.userId}`}</div>
+                        </div>
+                        <button onClick={() => respondFriendRequest(r.requestId, true)} className="gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90">{tr("pdAccept")}</button>
+                        <button onClick={() => respondFriendRequest(r.requestId, false)} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-3 py-1.5 rounded-sm shrink-0">{tr("pdDecline")}</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="border border-border rounded-sm bg-card p-6">
+                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("pdMyFriends")}</div>
+                {friendsList.length === 0 ? (
+                  <div className="text-xs text-muted-foreground py-6 text-center border border-dashed border-border rounded-sm">{tr("pdNoFriends")}</div>
+                ) : (
+                  <div className="space-y-3">
+                    {friendsList.map((f) => (
+                      <div key={f.friendshipId} className="flex items-center gap-3 p-3 border border-border rounded-sm">
+                        <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
+                          {f.provider?.avatar ? <img src={f.provider.avatar} alt="" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(220,20%,6%)]" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-montserrat font-semibold text-foreground truncate">{f.provider ? L(f.provider.name, lang) : `#${f.userId}`}</div>
+                          {f.provider && <div className="text-[11px] text-muted-foreground truncate">{L(f.provider.title, lang)}</div>}
+                        </div>
+                        {openChat && (
+                          <button
+                            onClick={() => openChat({ name: f.provider ? L(f.provider.name, lang) : `#${f.userId}`, title: f.provider ? L(f.provider.title, lang) : "", avatar: f.provider?.avatar || null, pairKey: f.pairKey })}
+                            className="border border-gold/40 text-gold text-xs font-montserrat font-semibold px-3 py-1.5 rounded-sm shrink-0 hover:bg-gold/10 flex items-center gap-1.5"
+                          >
+                            <Icon name="MessageSquare" size={13} />{tr("pdMessage")}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {tab === "contacts" && (
             <div className="border border-border rounded-sm bg-card p-6 space-y-5">
               <div>
@@ -4390,6 +4589,7 @@ const PLAN_KEY_MAP: Record<string, string> = {
   planStartName: "start",
   planProName: "pro",
   planPremiumName: "premium",
+  planChopName: "chop",
 };
 
 function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: PayPlan; onClose: () => void; defaultEmail?: string; slug?: string }) {
@@ -4849,6 +5049,17 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
       muted: [] as const,
     },
     {
+      name: "planChopName" as const,
+      price: "planChopPrice" as const,
+      for: "planChopFor" as const,
+      featured: false,
+      premium: false,
+      enterprise: false,
+      chop: true,
+      features: ["featProfile", "featUnlimCases", "featChat", "featCourses", "featPriority", "featTopPlacement", "featBadge", "featPremiumCard", "featPremiumTop", "featChopVerified", "featChopTeam"] as const,
+      muted: [] as const,
+    },
+    {
       name: "planEntName" as const,
       price: "planEntPrice" as const,
       for: "planEntFor" as const,
@@ -4897,15 +5108,20 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 stagger">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 stagger">
         {plans.map((p) => (
           <div
             key={p.name}
-            className={`relative flex flex-col rounded-sm p-6 card-hover ${p.premium ? "border-2 border-gold security-glow ambient-gold bg-gradient-to-b from-gold/[0.07] to-card glow-gold-sm md:-mt-2 md:mb-2" : p.featured ? "border border-gold security-glow bg-card" : "border border-border bg-card"}`}
+            className={`relative flex flex-col rounded-sm p-6 card-hover ${p.premium ? "border-2 border-gold security-glow ambient-gold bg-gradient-to-b from-gold/[0.07] to-card glow-gold-sm md:-mt-2 md:mb-2" : ("chop" in p && p.chop) ? "border-2 border-blue-500/60 security-glow bg-gradient-to-b from-blue-500/[0.06] to-card" : p.featured ? "border border-gold security-glow bg-card" : "border border-border bg-card"}`}
           >
             {p.premium && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 gold-gradient text-[hsl(220,20%,6%)] text-[10px] font-montserrat font-extrabold tracking-widest uppercase px-3 py-1 rounded-sm whitespace-nowrap flex items-center gap-1 shadow-lg">
                 <Icon name="Crown" size={11} />{tr("bestChoice")}
+              </div>
+            )}
+            {("chop" in p && p.chop) && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-[10px] font-montserrat font-extrabold tracking-widest uppercase px-3 py-1 rounded-sm whitespace-nowrap flex items-center gap-1 shadow-lg">
+                <Icon name="ShieldCheck" size={11} />{tr("planChopBadge")}
               </div>
             )}
             {p.featured && !p.premium && (
@@ -5057,6 +5273,85 @@ function ReviewsList({ targetType, targetId }: { targetType: "provider" | "clien
   );
 }
 
+// Модалка жалобы: переиспользуется в профиле специалиста и личных сообщениях.
+// Отправляет жалобу в backend complaints, модерация — у администратора.
+const REPORT_REASONS = ["spam", "scam", "illegal", "harassment", "fake_profile", "other"] as const;
+function ReportModal({ targetType, targetId, onClose }: { targetType: "provider" | "client" | "message" | "forum_topic"; targetId: string; onClose: () => void }) {
+  const { tr } = useLang();
+  const [reason, setReason] = useState<typeof REPORT_REASONS[number]>("other");
+  const [details, setDetails] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch(func2url["complaints"], {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ action: "create", targetType, targetId, reason, details }),
+      });
+      if (res.ok) setDone(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-card border border-destructive/40 rounded-sm max-w-md w-full p-8 security-glow" onClick={(e) => e.stopPropagation()}>
+        {done ? (
+          <div className="text-center">
+            <div className="w-14 h-14 bg-green-500/10 border border-green-500/40 rounded-sm flex items-center justify-center mx-auto mb-5">
+              <Icon name="CheckCircle2" size={26} className="text-green-400" />
+            </div>
+            <h3 className="font-montserrat font-bold text-lg text-foreground mb-2">{tr("reportSentTitle")}</h3>
+            <p className="text-sm text-muted-foreground mb-6">{tr("reportSentText")}</p>
+            <button onClick={onClose} className="w-full border border-border text-foreground py-3 text-sm font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">
+              {tr("close")}
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="w-14 h-14 bg-destructive/10 border border-destructive/40 rounded-sm flex items-center justify-center mx-auto mb-5">
+              <Icon name="Flag" size={26} className="text-destructive" />
+            </div>
+            <h3 className="font-montserrat font-bold text-lg text-foreground mb-2 text-center">{tr("reportModalTitle")}</h3>
+            <p className="text-sm text-muted-foreground mb-5 text-center">{tr("reportModalHint")}</p>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {REPORT_REASONS.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setReason(r)}
+                  className={`px-3 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors ${reason === r ? "border-destructive text-destructive bg-destructive/10" : "border-border text-muted-foreground hover:text-foreground"}`}
+                >
+                  {tr(`reportReason_${r}` as keyof typeof t)}
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={details}
+              onChange={(e) => setDetails(e.target.value)}
+              rows={3}
+              placeholder={tr("reportModalPh")}
+              className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none mb-4"
+            />
+            <div className="flex gap-2">
+              <button onClick={onClose} className="flex-1 border border-border text-muted-foreground py-3 text-sm font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">
+                {tr("cancel")}
+              </button>
+              <button onClick={submit} disabled={busy} className="flex-1 bg-destructive text-white py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+                {busy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Send" size={16} />}
+                {tr("reportModalSubmit")}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Профиль КОНКРЕТНОГО специалиста (для клиента). Показывает данные выбранного
 // специалиста, а не демо-профиль. Открывается только зарегистрированным клиентам.
 function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider: Provider; onBack: () => void; openChat: (t: { name: string; title: string; avatar?: string | null }) => void }) {
@@ -5065,6 +5360,7 @@ function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider:
   const licensed = isLicensed(p);
   const v = p.verification;
   const bio = v?.bio ? v.bio : "";
+  const [reportOpen, setReportOpen] = useState(false);
   const licenseNo = v?.license || (Array.isArray(v?.licenses) && v?.licenses.length
     ? (typeof v.licenses[0] === "string" ? v.licenses[0] : v.licenses[0]?.number)
     : "");
@@ -5091,10 +5387,17 @@ function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider:
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="flex items-center justify-between mb-6">
         <div className="tag-security inline-block">{tr("profileSection")}</div>
-        <button onClick={onBack} className="text-xs text-muted-foreground hover:text-gold transition-colors font-montserrat flex items-center gap-1">
-          <Icon name="ArrowLeft" size={13} />{tr("back")}
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setReportOpen(true)} className="text-xs text-muted-foreground hover:text-destructive transition-colors font-montserrat flex items-center gap-1">
+            <Icon name="Flag" size={13} />{tr("reportBtn")}
+          </button>
+          <button onClick={onBack} className="text-xs text-muted-foreground hover:text-gold transition-colors font-montserrat flex items-center gap-1">
+            <Icon name="ArrowLeft" size={13} />{tr("back")}
+          </button>
+        </div>
       </div>
+
+      {reportOpen && <ReportModal targetType="provider" targetId={p.slug} onClose={() => setReportOpen(false)} />}
 
       {/* Шапка: одно фото среднего размера + основные данные */}
       <div className="border border-border rounded-sm bg-card p-6 mb-6">
@@ -6028,14 +6331,48 @@ function GuardsSection() {
   );
 }
 
-function DirectChatSection({ target, chatInput, setChatInput, onBack }: { target: { name: string; title: string; avatar?: string | null }; chatInput: string; setChatInput: (v: string) => void; onBack: () => void }) {
+function DirectChatSection({ target, chatInput, setChatInput, onBack }: { target: { name: string; title: string; avatar?: string | null; pairKey?: string }; chatInput: string; setChatInput: (v: string) => void; onBack: () => void }) {
   const { lang, tr } = useLang();
+  const { user } = useAuth();
   const [msgs, setMsgs] = useState<{ me: boolean; text: string; time: string }[]>([]);
+  const [reportOpen, setReportOpen] = useState(false);
   const initial = (target.name || "?").trim()[0] || "?";
+  const myDmId = user ? `u${user.id}` : "";
 
-  const send = () => {
+  // Если есть pairKey (переписка с другом) — используем реальный backend DM,
+  // иначе оставляем локальную демо-переписку (совместимость со старым поведением).
+  const loadDm = useCallback(() => {
+    if (!target.pairKey) return;
+    fetch(`${func2url["messages"]}?kind=dm&pair=${encodeURIComponent(target.pairKey)}`, { headers: authHeaders() })
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d.messages)) {
+          setMsgs(d.messages.map((m: { fromId: string; text: string; createdAt: string | null }) => ({
+            me: m.fromId === myDmId,
+            text: m.text,
+            time: m.createdAt ? new Date(m.createdAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" }) : "",
+          })));
+        }
+      })
+      .catch(() => {});
+  }, [target.pairKey, myDmId, lang]);
+
+  useEffect(() => { loadDm(); }, [loadDm]);
+
+  const send = async () => {
     const text = cleanText(chatInput.trim());
     if (!text) return;
+    if (target.pairKey) {
+      const toId = target.pairKey.split(":").find((p) => p !== myDmId) || "";
+      await fetch(func2url["messages"], {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ action: "dm_send", pair: target.pairKey, fromName: user?.name || "", toId, text }),
+      }).catch(() => {});
+      setChatInput("");
+      loadDm();
+      return;
+    }
     const time = new Date().toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
     setMsgs((m) => [...m, { me: true, text, time }]);
     setChatInput("");
@@ -6055,11 +6392,18 @@ function DirectChatSection({ target, chatInput, setChatInput, onBack }: { target
             <div className="text-sm font-montserrat font-semibold text-foreground truncate">{shortName(target.name)}</div>
             <div className="text-[11px] text-muted-foreground truncate">{target.title}</div>
           </div>
-          <div className="flex items-center gap-1 ms-auto">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            <span className="text-xs text-muted-foreground">{tr("online")}</span>
+          <div className="flex items-center gap-3 ms-auto">
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              <span className="text-xs text-muted-foreground">{tr("online")}</span>
+            </div>
+            <button onClick={() => setReportOpen(true)} className="text-muted-foreground hover:text-destructive transition-colors" title={tr("reportBtn")}>
+              <Icon name="Flag" size={15} />
+            </button>
           </div>
         </div>
+
+        {reportOpen && <ReportModal targetType="message" targetId={target.name} onClose={() => setReportOpen(false)} />}
 
         <div className="flex-1 overflow-y-auto p-5 space-y-3 scrollbar-thin">
           {msgs.length === 0 && (

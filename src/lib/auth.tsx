@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import func2url from "../../backend/func2url.json";
 
 export type AuthRole = "client" | "provider";
-export type AuthUser = { id: number; email: string; role: AuthRole; name: string; isAdmin?: boolean };
+export type AuthUser = { id: number; email: string; role: AuthRole; name: string; isAdmin?: boolean; publicId?: number };
 
 type AuthResult = { ok: boolean; error?: string; need2fa?: boolean; challengeId?: string; emailHint?: string; sent?: boolean };
 

@@ -1,0 +1,23 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET list without token returns 401",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 401
+    },
+    {
+      "name": "POST request without token returns 401",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "request", "targetUserId": 1},
+      "expectedStatus": 401
+    }
+  ]
+}
