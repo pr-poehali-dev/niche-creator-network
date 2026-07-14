@@ -1,0 +1,23 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET without token returns 401",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 401
+    },
+    {
+      "name": "POST create without token returns 401",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "create", "targetType": "provider", "targetId": "provider-1", "reason": "spam", "details": "test"},
+      "expectedStatus": 401
+    }
+  ]
+}

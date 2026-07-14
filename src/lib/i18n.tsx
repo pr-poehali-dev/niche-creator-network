@@ -889,6 +889,8 @@ export const t: Dict = {
   searchTitle: { ru: "Найдите проверенного исполнителя", en: "Find a verified provider" },
   searchSubtitle: { ru: "Введите, что нужно, или выберите категорию — специалисты подберутся сразу.", en: "Type what you need or pick a category — specialists appear instantly." },
   searchSimplePh: { ru: "Что вам нужно? Например: полиграф, охрана, детектив, город…", en: "What do you need? E.g. polygraph, security, detective, city…" },
+  searchCityPh: { ru: "Город, где ищете специалиста", en: "City where you need a specialist" },
+  searchCountryPh: { ru: "Страна", en: "Country" },
   searchFService: { ru: "Услуга", en: "Service" },
   searchFCity: { ru: "Город", en: "City" },
   searchFCountry: { ru: "Страна", en: "Country" },

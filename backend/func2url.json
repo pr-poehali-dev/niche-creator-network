@@ -1,4 +1,6 @@
 {
+  "complaints": "https://functions.poehali.dev/ba5c3042-b3e9-4c3a-8fb4-18f263e82de4",
+  "reviews": "https://functions.poehali.dev/455bd90e-efad-45a8-aa9e-f15986f89d6b",
   "notifications": "https://functions.poehali.dev/bef25eeb-47c5-4c8b-a464-1e41efc732f4",
   "provider-cases": "https://functions.poehali.dev/d96c9802-ca50-4372-8f00-e54f30f9b318",
   "subscription-reminder": "https://functions.poehali.dev/c749eee1-9610-441f-a02d-077fa25520e2",

@@ -1315,6 +1315,7 @@ export default function Index() {
   const [secBannerOpen, setSecBannerOpen] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
   const { geo } = useGeo();
+  const historyRef = useRef<{ section: Section; provider: Provider | null }[]>([{ section: active, provider: null }]);
 
   // Компактная mobile-app-like шапка: сжимается при скролле вниз (как в нативных приложениях).
   const [scrolled, setScrolled] = useState(false);
@@ -1387,16 +1388,45 @@ export default function Index() {
 
   const NAV_ITEMS = isAuthed ? (role === "client" ? CLIENT_NAV : PROVIDER_NAV) : GUEST_NAV;
 
-  const go = (s: Section) => {
+  const go = (s: Section, opts?: { provider?: Provider | null; replace?: boolean }) => {
     if (isLocked && LOCKED_SECTIONS.includes(s)) {
       setPaywallOpen(true);
       setMobileMenuOpen(false);
       return;
     }
+    const provider = opts?.provider ?? null;
+    if (opts?.replace) {
+      historyRef.current[historyRef.current.length - 1] = { section: s, provider };
+      try { window.history.replaceState({ navIndex: historyRef.current.length - 1 }, "", window.location.pathname + window.location.search); } catch { /* noop */ }
+    } else {
+      historyRef.current.push({ section: s, provider });
+      try { window.history.pushState({ navIndex: historyRef.current.length - 1 }, "", window.location.pathname + window.location.search); } catch { /* noop */ }
+    }
     setActive(s);
+    if (provider) setSelectedProvider(provider);
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const goBack = () => {
+    if (historyRef.current.length > 1) {
+      window.history.back();
+    }
+  };
+
+  useEffect(() => {
+    const onPopState = () => {
+      if (historyRef.current.length > 1) {
+        historyRef.current.pop();
+      }
+      const prev = historyRef.current[historyRef.current.length - 1];
+      setActive(prev.section);
+      setSelectedProvider(prev.provider);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   const openChat = (target: { name: string; title: string; avatar?: string | null }) => {
     trackGoal(GOALS.contactProvider);
@@ -1412,8 +1442,7 @@ export default function Index() {
       setRegGateOpen(true);
       return;
     }
-    setSelectedProvider(p);
-    go("profile");
+    go("profile", { provider: p });
   };
 
   const openCabinet = () => {
@@ -1446,7 +1475,7 @@ export default function Index() {
       case "home": return <HomeSection setActive={go} role={role} openChat={openChat} />;
       case "profile": return role === "client"
         ? (selectedProvider
-            ? <SpecialistProfileSection provider={selectedProvider} onBack={() => go("home")} openChat={openChat} />
+            ? <SpecialistProfileSection provider={selectedProvider} onBack={goBack} openChat={openChat} />
             : <SpecialistsListSection setActive={go} openSpecialist={openSpecialist} />)
         : <ProfileSection setActive={go} openChat={openChat} />;
       case "specialists": return <SpecialistsListSection setActive={go} openSpecialist={openSpecialist} />;
@@ -1455,7 +1484,7 @@ export default function Index() {
       case "courses": return <CoursesSection />;
       case "guards": return <GuardsSection />;
       case "chat": return chatTarget
-        ? <DirectChatSection target={chatTarget} chatInput={chatInput} setChatInput={setChatInput} onBack={() => setChatTarget(null)} />
+        ? <DirectChatSection target={chatTarget} chatInput={chatInput} setChatInput={setChatInput} onBack={goBack} />
         : (role === "client" ? <HomeSection setActive={go} role={role} openChat={openChat} /> : <ChatSection chatInput={chatInput} setChatInput={setChatInput} />);
       case "forum": return role === "client" ? <HomeSection setActive={go} role={role} openChat={openChat} /> : <ForumSection />;
       case "contacts": return <ContactsSection />;
@@ -5360,11 +5389,11 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
 function SearchSection({ setActive, initialCategory = "", initialService = "", openSpecialist }: { setActive: (s: Section) => void; initialCategory?: string; initialService?: string; openSpecialist?: (p: Provider) => void }) {
   const { lang, tr } = useLang();
   const { providers } = useProviders();
-  const { geo } = useGeo();
-  // Простой поиск: одна строка запроса + чипы категорий + тумблер «проверенные».
   const [query, setQuery] = useState(initialService);
   const [category, setCategory] = useState(initialCategory);
   const [licensedOnly, setLicensedOnly] = useState(false);
+  const [cityInput, setCityInput] = useState("");
+  const [countryInput, setCountryInput] = useState("");
 
   const matchesText = (p: Provider, q: string) => {
     if (!q.trim()) return true;
@@ -5376,11 +5405,20 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
     return title.includes(ql) || name.includes(ql) || cityName.includes(ql) || tags.some((t) => t.includes(ql) || ql.includes(t));
   };
 
+  const matchesLocation = (p: Provider) => {
+    const city = cityInput.trim().toLowerCase();
+    const country = countryInput.trim().toLowerCase();
+    if (city && !L(p.city, lang).toLowerCase().includes(city)) return false;
+    if (country && !L(p.country || { ru: "", en: "" }, lang).toLowerCase().includes(country)) return false;
+    return true;
+  };
+
   // Мгновенная фильтрация без кнопки «искать». Сортировка по рейтингу.
   const results = providers
     .filter((p) => {
       if (!p.active) return false;
       if (licensedOnly && !isLicensed(p)) return false;
+      if (!matchesLocation(p)) return false;
       if (category) {
         const catServices = services.filter((s) => s.cat === category);
         const anyMatch = catServices.some((s) => matchesText(p, L(s.title, lang)));
@@ -5391,8 +5429,8 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
     })
     .sort((a, b) => b.rating - a.rating);
 
-  const hasFilters = !!(query.trim() || category || licensedOnly);
-  const reset = () => { setQuery(""); setCategory(""); setLicensedOnly(false); };
+  const hasFilters = !!(query.trim() || category || licensedOnly || cityInput.trim() || countryInput.trim());
+  const reset = () => { setQuery(""); setCategory(""); setLicensedOnly(false); setCityInput(""); setCountryInput(""); };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
@@ -5411,6 +5449,27 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
           className="flex-1 bg-transparent py-4 text-base text-foreground placeholder:text-muted-foreground outline-none"
         />
         {query && <button onClick={() => setQuery("")} className="text-muted-foreground hover:text-foreground shrink-0"><Icon name="X" size={18} /></button>}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+        <div className="flex items-center gap-2 border border-border focus-within:border-gold bg-card rounded-sm px-3 transition-colors">
+          <Icon name="MapPin" size={15} className="text-gold shrink-0" />
+          <input
+            value={cityInput}
+            onChange={(e) => setCityInput(e.target.value)}
+            placeholder={tr("searchCityPh")}
+            className="flex-1 bg-transparent py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none min-w-0"
+          />
+        </div>
+        <div className="flex items-center gap-2 border border-border focus-within:border-gold bg-card rounded-sm px-3 transition-colors">
+          <Icon name="Globe" size={15} className="text-gold shrink-0" />
+          <input
+            value={countryInput}
+            onChange={(e) => setCountryInput(e.target.value)}
+            placeholder={tr("searchCountryPh")}
+            className="flex-1 bg-transparent py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none min-w-0"
+          />
+        </div>
       </div>
 
       {category === "" ? (
@@ -5451,12 +5510,6 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
           <Icon name={licensedOnly ? "BadgeCheck" : "Badge"} size={14} />
           {tr("searchFLicensed")}
         </button>
-        {geo && geo.city && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground bg-card border border-gold/30 rounded-sm px-3 py-2">
-            <Icon name="MapPin" size={13} className="text-gold" />
-            <span>{geo.city}{geo.country ? `, ${geo.country}` : ""}</span>
-          </div>
-        )}
         {hasFilters && (
           <button onClick={reset} className="text-xs font-montserrat font-semibold text-muted-foreground hover:text-gold flex items-center gap-1.5"><Icon name="X" size={13} />{tr("searchReset")}</button>
         )}
