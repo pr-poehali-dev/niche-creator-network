@@ -30,7 +30,7 @@ const SPY_AVATAR_F = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-2
 const CLIENT_AVATAR_M = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/486ba939-2480-4918-8a33-e0c4db578f26.jpg";
 const CLIENT_AVATAR_F = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/600d0761-1767-4e8d-a2ac-7fc9ffb9877a.jpg";
 
-type Section = "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "consent" | "admin" | "mobileapp" | "about" | "blog";
+type Section = "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards" | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy" | "terms" | "agreement" | "offer" | "consent" | "admin" | "mobileapp" | "about" | "blog" | "howitworks";
 type Role = "client" | "provider";
 
 type NavItem = { id: Section; key: keyof typeof t; icon: string };
@@ -963,6 +963,7 @@ const SECTION_CRUMB: Record<Section, keyof typeof t> = {
   about: "aboutPageTitle",
   mobileapp: "maTitle",
   blog: "blogTitle",
+  howitworks: "hiwTitle",
 };
 
 const cases = [
@@ -1490,6 +1491,7 @@ export default function Index() {
       case "contacts": return <ContactsSection />;
       case "policy": return <SecurityPolicySection setActive={go} />;
       case "mobileapp": return <MobileAppSection setActive={go} />;
+      case "howitworks": return <HowItWorksSection setActive={go} />;
       case "about": return <AboutSection setActive={go} />;
       case "blog": return <BlogSection setActive={go} />;
       case "pricing": return <PricingSection setActive={go} />;
@@ -2224,21 +2226,24 @@ function ClientReviewsSection() {
         </Reveal>
 
         <div className="relative">
-          {/* Стрелки навигации */}
-          <button
-            onClick={() => scrollByCard(-1)}
-            aria-label="prev"
-            className="hidden md:flex absolute -start-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-background border border-border items-center justify-center text-muted-foreground hover:text-gold hover:border-gold transition-colors"
-          >
-            <Icon name={rtl ? "ChevronRight" : "ChevronLeft"} size={18} />
-          </button>
-          <button
-            onClick={() => scrollByCard(1)}
-            aria-label="next"
-            className="hidden md:flex absolute -end-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-background border border-border items-center justify-center text-muted-foreground hover:text-gold hover:border-gold transition-colors"
-          >
-            <Icon name={rtl ? "ChevronLeft" : "ChevronRight"} size={18} />
-          </button>
+          <div className="hidden md:flex absolute inset-y-0 -start-5 z-20 items-center">
+            <button
+              onClick={() => scrollByCard(-1)}
+              aria-label="prev"
+              className="flex w-12 h-12 rounded-full bg-background border border-border items-center justify-center text-muted-foreground hover:text-gold hover:border-gold transition-colors shadow-md"
+            >
+              <Icon name={rtl ? "ChevronRight" : "ChevronLeft"} size={20} />
+            </button>
+          </div>
+          <div className="hidden md:flex absolute inset-y-0 -end-5 z-20 items-center">
+            <button
+              onClick={() => scrollByCard(1)}
+              aria-label="next"
+              className="flex w-12 h-12 rounded-full bg-background border border-border items-center justify-center text-muted-foreground hover:text-gold hover:border-gold transition-colors shadow-md"
+            >
+              <Icon name={rtl ? "ChevronLeft" : "ChevronRight"} size={20} />
+            </button>
+          </div>
 
           {/* Лента карусели — все отзывы в одну строку */}
           <div
@@ -2363,12 +2368,14 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 onClick={() => {
                   if (isClient) {
                     try { sessionStorage.setItem("open_new_task", "1"); } catch { /* noop */ }
+                    setActive("dashboard");
+                  } else {
+                    setActive("howitworks");
                   }
-                  setActive("dashboard");
                 }}
                 className="border border-gold/60 text-foreground px-7 py-4 font-montserrat font-semibold text-sm tracking-wide hover:border-gold hover:text-gold transition-all rounded-sm flex items-center gap-2"
               >
-                <Icon name={isClient ? "ClipboardPlus" : "ArrowRight"} size={18} className="text-gold" />
+                <Icon name={isClient ? "ClipboardPlus" : "Compass"} size={18} className="text-gold" />
                 {tr(isClient ? "heroClientCta3" : "heroProviderCta2")}
               </button>
             </div>
@@ -2807,8 +2814,12 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   };
 
   type ReqResponse = { providerSlug: string; providerName: string; message: string; price: string; status: string };
-  type ClientReq = { id: number; category: string; service: string; description: string; budget: string; city: string; status: string; chosenProvider: string; createdAt: string | null; responses: ReqResponse[]; views?: number; neededDate?: string; neededTime?: string };
+  type ClientReq = { id: number; category: string; service: string; description: string; budget: string; city: string; status: string; chosenProvider: string; createdAt: string | null; responses: ReqResponse[]; views?: number; neededDate?: string; neededTime?: string; providerMarkedDone?: boolean; canReview?: boolean };
   const [myReqs, setMyReqs] = useState<ClientReq[]>([]);
+  const [reviewModal, setReviewModal] = useState<{ requestId: number; providerSlug: string } | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewBusy, setReviewBusy] = useState(false);
   const [reqFormOpen, setReqFormOpen] = useState(wantNewTask);
   const [newReq, setNewReq] = useState({ category: "", service: "", description: "", budget: "", city: "", neededDate: "", neededTime: "" });
   const [reqBusy, setReqBusy] = useState(false);
@@ -2863,6 +2874,34 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
       body: JSON.stringify({ action: "complete", requestId }),
     }).catch(() => {});
     loadReqs();
+  };
+
+  const submitReview = async () => {
+    if (!reviewModal) return;
+    setReviewBusy(true);
+    try {
+      const res = await fetch(func2url["reviews"], {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          action: "create",
+          requestId: reviewModal.requestId,
+          targetType: "provider",
+          targetId: reviewModal.providerSlug,
+          rating: reviewRating,
+          text: reviewText,
+          authorName: clientData.fullName || user?.name || "",
+        }),
+      });
+      if (res.ok) {
+        setReviewModal(null);
+        setReviewRating(5);
+        setReviewText("");
+        loadReqs();
+      }
+    } finally {
+      setReviewBusy(false);
+    }
   };
 
   const displayName = clientData.fullName || user?.name || tr("dashWelcome");
@@ -3061,10 +3100,20 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
                       </div>
 
                       {!completed && (
-                        <div className="flex justify-end mb-3">
+                        <div className="flex justify-end gap-2 mb-3">
+                          {r.canReview && r.chosenProvider && (
+                            <button onClick={() => setReviewModal({ requestId: r.id, providerSlug: r.chosenProvider })} className="inline-flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] text-[11px] font-montserrat font-bold px-3 py-1.5 rounded-sm hover:opacity-90 transition-opacity">
+                              <Icon name="Star" size={13} />{tr("reqLeaveReview")}
+                            </button>
+                          )}
                           <button onClick={() => completeReq(r.id)} className="inline-flex items-center gap-1.5 border border-border text-muted-foreground text-[11px] font-montserrat font-semibold px-3 py-1.5 rounded-sm hover:border-green-500/50 hover:text-green-400 transition-all">
                             <Icon name="CircleCheckBig" size={13} />{tr("reqComplete")}
                           </button>
+                        </div>
+                      )}
+                      {r.providerMarkedDone && !r.canReview && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-green-400 mb-3">
+                          <Icon name="CheckCircle2" size={13} />{tr("reqReviewSent")}
                         </div>
                       )}
 
@@ -3186,6 +3235,43 @@ function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
           )}
         </div>
       </div>
+
+      {reviewModal && (
+        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setReviewModal(null)}>
+          <div className="bg-card border border-gold/40 rounded-sm max-w-md w-full p-8 security-glow" onClick={(e) => e.stopPropagation()}>
+            <div className="w-14 h-14 gold-gradient rounded-sm flex items-center justify-center mx-auto mb-5 glow-gold-sm">
+              <Icon name="Star" size={26} className="text-[hsl(220,20%,6%)]" />
+            </div>
+            <h3 className="font-montserrat font-bold text-lg text-foreground mb-2 text-center">{tr("reviewModalTitle")}</h3>
+            <p className="text-sm text-muted-foreground mb-5 text-center">{tr("reviewModalHint")}</p>
+            <div className="flex items-center justify-center gap-1.5 mb-5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <button key={i} onClick={() => setReviewRating(i)} className="p-1">
+                  <svg className={`w-8 h-8 transition-colors ${i <= reviewRating ? "text-gold fill-current" : "text-muted-foreground"}`} viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              rows={3}
+              placeholder={tr("reviewModalPh")}
+              className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none mb-4"
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setReviewModal(null)} className="flex-1 border border-border text-muted-foreground py-3 text-sm font-montserrat font-semibold rounded-sm hover:border-destructive hover:text-destructive transition-all">
+                {tr("cancel")}
+              </button>
+              <button onClick={submitReview} disabled={reviewBusy} className="flex-1 gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+                {reviewBusy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Send" size={16} />}
+                {tr("reviewModalSubmit")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -3439,9 +3525,12 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
   };
 
   type ProvReq = { id: number; clientName: string; category: string; service: string; description: string; budget: string; city: string; createdAt: string | null; myResponse: { message: string; price: string; status: string } | null };
+  type MyTask = { id: number; clientName: string; category: string; service: string; description: string; budget: string; city: string; status: string; createdAt: string | null; providerMarkedDone: boolean };
   const [incoming, setIncoming] = useState<ProvReq[]>([]);
+  const [myTasks, setMyTasks] = useState<MyTask[]>([]);
   const [respDraft, setRespDraft] = useState<Record<number, { message: string; price: string }>>({});
   const [respOpen, setRespOpen] = useState<number | null>(null);
+  const [markingDone, setMarkingDone] = useState<number | null>(null);
 
   const myCatIds = Array.from(new Set(myServices.map((ms) => services.find((s) => s.title.en === ms.key)?.cat).filter(Boolean)));
 
@@ -3452,7 +3541,14 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
       .catch(() => {});
   }, []);
 
-  useEffect(() => { loadIncoming(); }, [loadIncoming]);
+  const loadMyTasks = useCallback(() => {
+    fetch(`${func2url["requests"]}?view=mine`, { headers: authHeaders() })
+      .then((r) => r.json())
+      .then((d) => { if (Array.isArray(d.requests)) setMyTasks(d.requests); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => { loadIncoming(); loadMyTasks(); }, [loadIncoming, loadMyTasks]);
 
   const sendResponse = async (requestId: number) => {
     const draft = respDraft[requestId] || { message: "", price: "" };
@@ -3464,6 +3560,20 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
     trackGoal(GOALS.respondRequest);
     setRespOpen(null);
     loadIncoming();
+  };
+
+  const markTaskDone = async (requestId: number) => {
+    setMarkingDone(requestId);
+    try {
+      await fetch(func2url["requests"], {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ action: "provider_done", requestId }),
+      });
+      loadMyTasks();
+    } finally {
+      setMarkingDone(null);
+    }
   };
 
   const visibleIncoming = incoming.filter((r) => myCatIds.length === 0 || myCatIds.includes(r.category) || !r.category);
@@ -3850,6 +3960,41 @@ function ProviderDashboard({ setActive }: { setActive: (s: Section) => void }) {
                 )}
               </div>
             </>
+          )}
+
+          {tab === "requests" && myTasks.filter((t) => t.status === "assigned" || t.status === "completed").length > 0 && (
+            <div className="border border-border rounded-sm bg-card p-6">
+              <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("pdMyTasksTitle")}</div>
+              <p className="text-[11px] text-muted-foreground mb-4">{tr("pdMyTasksHint")}</p>
+              <div className="space-y-3">
+                {myTasks.filter((t) => t.status === "assigned" || t.status === "completed").map((t) => (
+                  <div key={t.id} className="p-4 border border-border rounded-sm">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="min-w-0">
+                        <div className="font-montserrat font-bold text-sm text-foreground">{shortName(t.clientName) || tr("pdReqClient")}</div>
+                        <div className="text-xs text-muted-foreground">{t.service || "—"}</div>
+                      </div>
+                      {t.providerMarkedDone ? (
+                        <span className="tag-security shrink-0 text-green-400 border-green-500/40">{tr("pdTaskDoneBadge")}</span>
+                      ) : (
+                        <span className="tag-security shrink-0 text-gold border-gold/40">{tr("reqChosen")}</span>
+                      )}
+                    </div>
+                    {t.budget && <div className="text-xs text-muted-foreground mb-3">{tr("pdReqBudget")}: <span className="text-gold font-semibold">{t.budget}</span></div>}
+                    {!t.providerMarkedDone && (
+                      <button
+                        onClick={() => markTaskDone(t.id)}
+                        disabled={markingDone === t.id}
+                        className="w-full gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-1.5"
+                      >
+                        {markingDone === t.id ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="CheckCircle2" size={14} />}
+                        {tr("pdMarkDone")}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
           {tab === "requests" && (
@@ -4297,8 +4442,8 @@ function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: P
   const yearlyDiscounted = Math.round(yearlyFull * 0.83);
   const yearlySaving = Math.round(yearlyFull - yearlyDiscounted);
 
-  // Промо-скидка 30% до 1 августа 2026 (источник истины — бэкенд quote.promo)
-  const promoActive = quote ? !!quote.promo : (new Date() < new Date("2026-08-01T00:00:00Z"));
+  // Промо-скидка 30% до 1 сентября 2026 (источник истины — бэкенд quote.promo)
+  const promoActive = quote ? !!quote.promo : (new Date() < new Date("2026-09-01T00:00:00Z"));
   const promoPct = quote && quote.promoDiscount ? quote.promoDiscount : 30;
   const promoFactor = (100 - promoPct) / 100;
 
@@ -4669,7 +4814,7 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
   const { tr } = useLang();
   const { user } = useAuth();
   const [payPlan, setPayPlan] = useState<PayPlan | null>(null);
-  const promoActive = new Date() < new Date("2026-08-01T00:00:00Z");
+  const promoActive = new Date() < new Date("2026-09-01T00:00:00Z");
 
   useEffect(() => { trackGoal(GOALS.openPricing); }, []);
   const plans = [
@@ -4880,6 +5025,38 @@ function PricingSection({ setActive }: { setActive: (s: Section) => void }) {
   );
 }
 
+function ReviewsList({ targetType, targetId }: { targetType: "provider" | "client"; targetId: string }) {
+  const { tr } = useLang();
+  const [reviews, setReviews] = useState<{ authorName: string; rating: number; text: string; createdAt: string | null }[] | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`${func2url["reviews"]}?targetType=${targetType}&targetId=${encodeURIComponent(targetId)}`)
+      .then((r) => r.json())
+      .then((d) => { if (alive && Array.isArray(d.reviews)) setReviews(d.reviews); })
+      .catch(() => { if (alive) setReviews([]); });
+    return () => { alive = false; };
+  }, [targetType, targetId]);
+
+  if (reviews === null) return null;
+  if (reviews.length === 0) {
+    return <div className="text-xs text-muted-foreground italic py-4 text-center">{tr("profileNoReviews")}</div>;
+  }
+  return (
+    <div className="space-y-3">
+      {reviews.map((r, i) => (
+        <div key={i} className="border border-border rounded-sm bg-card p-4">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="font-montserrat font-semibold text-sm text-foreground">{r.authorName || tr("profileAnonymous")}</span>
+            <StarRating rating={r.rating} />
+          </div>
+          {r.text && <p className="text-xs text-muted-foreground leading-relaxed">{r.text}</p>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Профиль КОНКРЕТНОГО специалиста (для клиента). Показывает данные выбранного
 // специалиста, а не демо-профиль. Открывается только зарегистрированным клиентам.
 function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider: Provider; onBack: () => void; openChat: (t: { name: string; title: string; avatar?: string | null }) => void }) {
@@ -5016,6 +5193,11 @@ function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider:
                 <div className="text-[11px] text-muted-foreground">{tr(s.l)}</div>
               </div>
             ))}
+          </div>
+
+          <div className="border border-border rounded-sm bg-card p-6">
+            <h3 className="font-montserrat font-bold text-sm text-foreground mb-4 flex items-center gap-2"><Icon name="MessageSquareText" size={15} className="text-gold" />{tr("profileReviewsTitle")}</h3>
+            <ReviewsList targetType="provider" targetId={p.slug} />
           </div>
         </div>
 
@@ -6623,6 +6805,60 @@ function MobileAppSection({ setActive }: { setActive: (s: Section) => void }) {
           className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
         >
           {tr("maHelpBtn")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HowItWorksSection({ setActive }: { setActive: (s: Section) => void }) {
+  const { tr } = useLang();
+  const steps: { icon: string; title: keyof typeof t; text: keyof typeof t }[] = [
+    { icon: "UserCheck", title: "hiwStep1Title", text: "hiwStep1Text" },
+    { icon: "Search", title: "hiwStep2Title", text: "hiwStep2Text" },
+    { icon: "Inbox", title: "hiwStep3Title", text: "hiwStep3Text" },
+    { icon: "HandCoins", title: "hiwStep4Title", text: "hiwStep4Text" },
+    { icon: "Star", title: "hiwStep5Title", text: "hiwStep5Text" },
+  ];
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-10">
+      <div className="border border-gold/30 rounded-sm glass-card p-8 md:p-10 mb-8 relative overflow-hidden security-glow ambient-gold">
+        <div className="absolute inset-0 grid-line-bg opacity-30" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
+          <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
+            <Icon name="Compass" size={30} className="text-[hsl(220,20%,6%)]" />
+          </div>
+          <div>
+            <div className="tag-security mb-3 inline-block">{tr("providerActiveTag")}</div>
+            <h1 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-2">{tr("hiwTitle")}</h1>
+            <p className="text-sm text-muted-foreground max-w-2xl">{tr("hiwSubtitle")}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4 mb-8 stagger">
+        {steps.map((s) => (
+          <div key={s.title} className="flex items-start gap-4 border border-border rounded-sm bg-card p-5 hover:border-gold/40 transition-colors">
+            <div className="w-11 h-11 gold-gradient rounded-sm flex items-center justify-center shrink-0 glow-gold-sm">
+              <Icon name={s.icon} size={20} className="text-[hsl(220,20%,6%)]" />
+            </div>
+            <div>
+              <h2 className="font-montserrat font-bold text-base text-foreground mb-1.5">{tr(s.title)}</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">{tr(s.text)}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="border border-gold/30 rounded-sm glass-card p-8 text-center security-glow">
+        <Icon name="Rocket" size={32} className="text-gold mx-auto mb-4" />
+        <h2 className="font-montserrat font-bold text-xl text-foreground mb-2">{tr("hiwCtaTitle")}</h2>
+        <button
+          onClick={() => setActive("dashboard")}
+          className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+        >
+          {tr("hiwCtaBtn")}
         </button>
       </div>
     </div>

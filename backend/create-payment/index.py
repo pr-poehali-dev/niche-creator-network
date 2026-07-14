@@ -6,9 +6,9 @@ from datetime import datetime, timezone
 import urllib.request
 import urllib.error
 
-# Промо-скидка 30% действует до 1 августа 2026 года (включительно по 31 июля)
+# Промо-скидка 30% действует до 1 сентября 2026 года (включительно по 31 августа)
 PROMO_DISCOUNT = 0.30
-PROMO_UNTIL = datetime(2026, 8, 1, tzinfo=timezone.utc)
+PROMO_UNTIL = datetime(2026, 9, 1, tzinfo=timezone.utc)
 
 
 def _promo_active():

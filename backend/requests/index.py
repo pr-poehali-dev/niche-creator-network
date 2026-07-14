@@ -95,10 +95,28 @@ def handler(event: dict, context) -> dict:
                     conn.commit()
                 return _resp(200, {'requests': items})
 
+            if view == 'mine':
+                # Заявки, по которым клиент выбрал именно этого исполнителя —
+                # тут он видит статус и может отметить работу выполненной.
+                slug = auth_utils.provider_slug(user)
+                cur.execute(
+                    f"SELECT id, client_name, category, service, description, budget, city, status, "
+                    f"created_at, provider_marked_done "
+                    f"FROM {SCHEMA}.client_requests WHERE chosen_provider=%s ORDER BY created_at DESC LIMIT 100",
+                    (slug,),
+                )
+                items = [{
+                    'id': x[0], 'clientName': x[1], 'category': x[2], 'service': x[3],
+                    'description': x[4], 'budget': x[5], 'city': x[6], 'status': x[7],
+                    'createdAt': x[8].isoformat() if x[8] else None,
+                    'providerMarkedDone': bool(x[9]),
+                } for x in cur.fetchall()]
+                return _resp(200, {'requests': items})
+
             # default: client view — только свои заявки
             client_id = auth_utils.client_id(user)
             cur.execute(
-                f"SELECT id, category, service, description, budget, city, status, chosen_provider, created_at, needed_date, needed_time "
+                f"SELECT id, category, service, description, budget, city, status, chosen_provider, created_at, needed_date, needed_time, provider_marked_done "
                 f"FROM {SCHEMA}.client_requests WHERE client_id=%s ORDER BY created_at DESC LIMIT 100",
                 (client_id,),
             )
@@ -106,6 +124,7 @@ def handler(event: dict, context) -> dict:
             req_ids = [r[0] for r in reqs]
             responses_by_req = {}
             views_by_req = {}
+            reviewed_req_ids = set()
             if req_ids:
                 cur.execute(
                     f"SELECT request_id, provider_slug, provider_name, message, price, status "
@@ -124,6 +143,12 @@ def handler(event: dict, context) -> dict:
                 )
                 for vr in cur.fetchall():
                     views_by_req[vr[0]] = int(vr[1])
+                # Заявки, по которым клиент уже оставил отзыв — не показываем кнопку повторно.
+                cur.execute(
+                    f"SELECT request_id FROM {SCHEMA}.reviews WHERE request_id = ANY(%s) AND author_id=%s",
+                    (req_ids, client_id),
+                )
+                reviewed_req_ids = {rr[0] for rr in cur.fetchall()}
             items = []
             for r in reqs:
                 items.append({
@@ -134,6 +159,8 @@ def handler(event: dict, context) -> dict:
                     'neededTime': r[10] or '',
                     'responses': responses_by_req.get(r[0], []),
                     'views': views_by_req.get(r[0], 0),
+                    'providerMarkedDone': bool(r[11]),
+                    'canReview': bool(r[11]) and r[0] not in reviewed_req_ids and bool(r[7]),
                 })
             return _resp(200, {'requests': items})
 
@@ -264,6 +291,38 @@ def handler(event: dict, context) -> dict:
                     f"WHERE id=%s AND client_id=%s",
                     (request_id, client_id),
                 )
+                conn.commit()
+                return _resp(200, {'success': True})
+
+            if action == 'provider_done':
+                # Исполнитель, выбранный по заявке, отмечает работу выполненной —
+                # это открывает клиенту возможность оставить отзыв.
+                try:
+                    request_id = int(body.get('requestId') or 0)
+                except (TypeError, ValueError):
+                    request_id = 0
+                slug = auth_utils.provider_slug(user)
+                if not request_id:
+                    return _resp(400, {'error': 'requestId required'})
+                cur.execute(
+                    f"UPDATE {SCHEMA}.client_requests SET provider_marked_done=true, provider_marked_done_at=now() "
+                    f"WHERE id=%s AND chosen_provider=%s",
+                    (request_id, slug),
+                )
+                if cur.rowcount == 0:
+                    conn.rollback()
+                    return _resp(403, {'error': 'not your request'})
+                cur.execute(f"SELECT client_id, service FROM {SCHEMA}.client_requests WHERE id=%s", (request_id,))
+                rq = cur.fetchone()
+                if rq:
+                    client_uid = notify_utils.id_from_slug(rq[0])
+                    svc = rq[1] or ''
+                    notify_utils.push(
+                        cur, client_uid, 'task',
+                        'Задача выполнена',
+                        f'Специалист отметил задачу «{svc}» как выполненную. Оставьте отзыв в личном кабинете.',
+                        'dashboard',
+                    )
                 conn.commit()
                 return _resp(200, {'success': True})
 
