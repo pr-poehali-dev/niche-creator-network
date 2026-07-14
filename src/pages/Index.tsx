@@ -6555,6 +6555,7 @@ function ForumSection() {
   const [openTopic, setOpenTopic] = useState<ForumTopic | null>(null);
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [reply, setReply] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
 
   const loadTopics = useCallback((c: string) => {
     fetch(`${func2url["messages"]}?kind=forum${c ? `&category=${c}` : ""}`)
@@ -6614,9 +6615,15 @@ function ForumSection() {
   if (openTopic) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-10">
-        <button onClick={() => { setOpenTopic(null); setPosts([]); }} className="text-xs text-muted-foreground hover:text-gold transition-colors font-montserrat flex items-center gap-1 mb-4">
-          <Icon name="ArrowLeft" size={13} />{tr("forumBackToList")}
-        </button>
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={() => { setOpenTopic(null); setPosts([]); }} className="text-xs text-muted-foreground hover:text-gold transition-colors font-montserrat flex items-center gap-1">
+            <Icon name="ArrowLeft" size={13} />{tr("forumBackToList")}
+          </button>
+          <button onClick={() => setReportOpen(true)} className="text-xs text-muted-foreground hover:text-destructive transition-colors font-montserrat flex items-center gap-1">
+            <Icon name="Flag" size={13} />{tr("reportBtn")}
+          </button>
+        </div>
+        {reportOpen && <ReportModal targetType="forum_topic" targetId={String(openTopic.id)} onClose={() => setReportOpen(false)} />}
         <div className="mb-2"><span className="tag-security">{catTitle(openTopic.category)}</span></div>
         <h2 className="font-montserrat font-bold text-2xl text-foreground mb-1">{openTopic.title}</h2>
         <div className="text-xs text-muted-foreground mb-6">{openTopic.author} · {fmtDate(openTopic.createdAt)}</div>
