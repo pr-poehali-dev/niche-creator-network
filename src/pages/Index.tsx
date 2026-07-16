@@ -6166,6 +6166,7 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
           placeholder={tr("searchCityPh")}
           icon="MapPin"
           lang={lang}
+          field="city"
         />
         <LocationAutocomplete
           value={countryInput}
@@ -6174,6 +6175,7 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
           placeholder={tr("searchCountryPh")}
           icon="Globe"
           lang={lang}
+          field="country"
         />
       </div>
 

@@ -18,13 +18,21 @@ type Props = {
   onSelect?: (s: LocationSuggestion) => void;
   placeholder: string;
   icon: string;
-  lang: "ru" | "en" | string;
+  lang: string;
+  // "city" — подсказки городов и областей/штатов/провинций (регион нужен, если
+  // специалист зарегистрирован не в самом городе, а в области рядом).
+  // "country" — подсказки только стран, без городов и регионов.
+  field: "city" | "country";
 };
+
+const SUPPORTED_GEO_LANGS = new Set(["ru", "en", "fr", "de", "ja", "ar", "he"]);
 
 // Подсказки городов, областей/штатов/провинций и стран по мере ввода —
 // клиент по-прежнему вводит локацию вручную, но получает готовые варианты
 // (в том числе соседние с крупными городами), чтобы не ошибиться в написании.
-export default function LocationAutocomplete({ value, onChange, onSelect, placeholder, icon, lang }: Props) {
+// Результаты переводятся на язык интерфейса пользователя независимо от того,
+// на каком языке набран запрос (например, поиск города в Германии из японского интерфейса).
+export default function LocationAutocomplete({ value, onChange, onSelect, placeholder, icon, lang, field }: Props) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<LocationSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -48,8 +56,8 @@ export default function LocationAutocomplete({ value, onChange, onSelect, placeh
     }
     setLoading(true);
     debounceRef.current = setTimeout(() => {
-      const geoLang = lang === "ru" ? "ru" : "en";
-      fetch(`${func2url["geocode-search"]}?q=${encodeURIComponent(q.trim())}&lang=${geoLang}`)
+      const geoLang = SUPPORTED_GEO_LANGS.has(lang) ? lang : "en";
+      fetch(`${func2url["geocode-search"]}?q=${encodeURIComponent(q.trim())}&lang=${geoLang}&field=${field}`)
         .then((r) => r.json())
         .then((d) => { if (Array.isArray(d.items)) setItems(d.items); })
         .catch(() => setItems([]))
