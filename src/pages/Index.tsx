@@ -18,6 +18,7 @@ import Brand from "@/components/Brand";
 import ShareButtons from "@/components/ShareButtons";
 import UrgencyBanner from "@/components/UrgencyBanner";
 import NotificationBell from "@/components/NotificationBell";
+import LocationAutocomplete, { type LocationSuggestion } from "@/components/LocationAutocomplete";
 import func2url from "../../backend/func2url.json";
 
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/92040949-913f-4126-80f9-fa681d96ea82.jpg";
@@ -6086,6 +6087,9 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
   const [licensedOnly, setLicensedOnly] = useState(false);
   const [cityInput, setCityInput] = useState("");
   const [countryInput, setCountryInput] = useState("");
+  // Запоминаем выбранную подсказку города, чтобы знать её страну для fallback-поиска
+  // «в этом городе никого нет — покажем специалистов по всей стране».
+  const [citySuggestion, setCitySuggestion] = useState<LocationSuggestion | null>(null);
 
   const matchesText = (p: Provider, q: string) => {
     if (!q.trim()) return true;
@@ -6097,32 +6101,53 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
     return title.includes(ql) || name.includes(ql) || cityName.includes(ql) || tags.some((t) => t.includes(ql) || ql.includes(t));
   };
 
-  const matchesLocation = (p: Provider) => {
-    const city = cityInput.trim().toLowerCase();
-    const country = countryInput.trim().toLowerCase();
-    if (city && !L(p.city, lang).toLowerCase().includes(city)) return false;
-    if (country && !L(p.country || { ru: "", en: "" }, lang).toLowerCase().includes(country)) return false;
+  const matchesCategory = (p: Provider) => {
+    if (!category) return true;
+    const catServices = services.filter((s) => s.cat === category);
+    return catServices.some((s) => matchesText(p, L(s.title, lang)));
+  };
+
+  const baseFilter = (p: Provider) => {
+    if (!p.active) return false;
+    if (licensedOnly && !isLicensed(p)) return false;
+    if (!matchesCategory(p)) return false;
+    if (!matchesText(p, query)) return false;
     return true;
   };
 
-  // Мгновенная фильтрация без кнопки «искать». Сортировка по рейтингу.
-  const results = providers
+  const city = cityInput.trim().toLowerCase();
+  const country = countryInput.trim().toLowerCase();
+
+  // Строгие результаты — с учётом города и страны, как ввёл клиент.
+  const strictResults = providers
     .filter((p) => {
-      if (!p.active) return false;
-      if (licensedOnly && !isLicensed(p)) return false;
-      if (!matchesLocation(p)) return false;
-      if (category) {
-        const catServices = services.filter((s) => s.cat === category);
-        const anyMatch = catServices.some((s) => matchesText(p, L(s.title, lang)));
-        if (!anyMatch) return false;
-      }
-      if (!matchesText(p, query)) return false;
+      if (!baseFilter(p)) return false;
+      if (city && !L(p.city, lang).toLowerCase().includes(city)) return false;
+      if (country && !L(p.country || { ru: "", en: "" }, lang).toLowerCase().includes(country)) return false;
       return true;
     })
     .sort((a, b) => b.rating - a.rating);
 
+  // Fallback: если в выбранном городе никого нет, но известна страна
+  // (из явного поля «Страна» или из подсказки выбранного города) —
+  // показываем проверенных специалистов по всей стране.
+  const fallbackCountry = country || (citySuggestion?.country || "").toLowerCase();
+  const showFallback = city && strictResults.length === 0 && !!fallbackCountry;
+  const fallbackResults = showFallback
+    ? providers
+        .filter((p) => {
+          if (!baseFilter(p)) return false;
+          const pCountry = L(p.country || { ru: "", en: "" }, lang).toLowerCase();
+          if (!pCountry) return false;
+          return pCountry.includes(fallbackCountry) || fallbackCountry.includes(pCountry);
+        })
+        .sort((a, b) => b.rating - a.rating)
+    : [];
+
+  const results = showFallback ? fallbackResults : strictResults;
+
   const hasFilters = !!(query.trim() || category || licensedOnly || cityInput.trim() || countryInput.trim());
-  const reset = () => { setQuery(""); setCategory(""); setLicensedOnly(false); setCityInput(""); setCountryInput(""); };
+  const reset = () => { setQuery(""); setCategory(""); setLicensedOnly(false); setCityInput(""); setCountryInput(""); setCitySuggestion(null); };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
@@ -6132,27 +6157,32 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
         <p className="text-muted-foreground text-sm">{tr("searchSubtitle")}</p>
       </div>
 
-      {/* Город и страна — клиент вводит вручную, без автоматического определения местоположения. */}
+      {/* Город и страна — клиент вводит вручную, с подсказками городов, областей/штатов и стран. */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-        <div className="flex items-center gap-2 border border-border focus-within:border-gold bg-card rounded-sm px-3 transition-colors">
-          <Icon name="MapPin" size={15} className="text-gold shrink-0" />
-          <input
-            value={cityInput}
-            onChange={(e) => setCityInput(e.target.value)}
-            placeholder={tr("searchCityPh")}
-            className="flex-1 bg-transparent py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none min-w-0"
-          />
-        </div>
-        <div className="flex items-center gap-2 border border-border focus-within:border-gold bg-card rounded-sm px-3 transition-colors">
-          <Icon name="Globe" size={15} className="text-gold shrink-0" />
-          <input
-            value={countryInput}
-            onChange={(e) => setCountryInput(e.target.value)}
-            placeholder={tr("searchCountryPh")}
-            className="flex-1 bg-transparent py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none min-w-0"
-          />
-        </div>
+        <LocationAutocomplete
+          value={cityInput}
+          onChange={(v) => { setCityInput(v); setCitySuggestion(null); }}
+          onSelect={(s) => { setCityInput(s.name); setCitySuggestion(s); }}
+          placeholder={tr("searchCityPh")}
+          icon="MapPin"
+          lang={lang}
+        />
+        <LocationAutocomplete
+          value={countryInput}
+          onChange={setCountryInput}
+          onSelect={(s) => setCountryInput(s.name)}
+          placeholder={tr("searchCountryPh")}
+          icon="Globe"
+          lang={lang}
+        />
       </div>
+
+      {showFallback && (
+        <div className="flex items-start gap-2 mb-4 border border-gold/30 bg-gold/5 rounded-sm px-3 py-2.5 text-xs text-muted-foreground">
+          <Icon name="Info" size={14} className="text-gold shrink-0 mt-0.5" />
+          <span>{tr("searchFallbackCountry")}</span>
+        </div>
+      )}
 
       <div className="flex items-center gap-3 border-2 border-border focus-within:border-gold bg-card rounded-sm px-4 mb-5 transition-colors">
         <Icon name="Search" size={20} className="text-gold shrink-0" />

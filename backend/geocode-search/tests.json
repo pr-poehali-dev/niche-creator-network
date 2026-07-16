@@ -1,0 +1,7 @@
+{
+  "tests": [
+    { "name": "CORS preflight", "method": "OPTIONS", "path": "/", "expectedStatus": 200 },
+    { "name": "Short query returns empty", "method": "GET", "path": "/?q=a", "expectedStatus": 200, "expectedBody": { "items": [] }, "bodyMatcher": "partial" },
+    { "name": "Valid query returns 200", "method": "GET", "path": "/?q=Moscow&lang=en", "expectedStatus": 200 }
+  ]
+}

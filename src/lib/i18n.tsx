@@ -951,6 +951,7 @@ export const t: Dict = {
   searchSimplePh: { ru: "Что вам нужно? Например: полиграф, охрана, детектив, город…", en: "What do you need? E.g. polygraph, security, detective, city…" },
   searchCityPh: { ru: "Город, где ищете специалиста", en: "City where you need a specialist" },
   searchCountryPh: { ru: "Страна", en: "Country" },
+  searchFallbackCountry: { ru: "В этом городе пока нет специалистов — показываем проверенных исполнителей из этой страны", en: "No specialists in this city yet — showing verified providers from this country" },
   searchFService: { ru: "Услуга", en: "Service" },
   searchFCity: { ru: "Город", en: "City" },
   searchFCountry: { ru: "Страна", en: "Country" },
