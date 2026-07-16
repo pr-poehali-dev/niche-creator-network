@@ -6132,18 +6132,8 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
         <p className="text-muted-foreground text-sm">{tr("searchSubtitle")}</p>
       </div>
 
-      <div className="flex items-center gap-3 border-2 border-border focus-within:border-gold bg-card rounded-sm px-4 mb-4 transition-colors">
-        <Icon name="Search" size={20} className="text-gold shrink-0" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={tr("searchSimplePh")}
-          className="flex-1 bg-transparent py-4 text-base text-foreground placeholder:text-muted-foreground outline-none"
-        />
-        {query && <button onClick={() => setQuery("")} className="text-muted-foreground hover:text-foreground shrink-0"><Icon name="X" size={18} /></button>}
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+      {/* Город и страна — клиент вводит вручную, без автоматического определения местоположения. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         <div className="flex items-center gap-2 border border-border focus-within:border-gold bg-card rounded-sm px-3 transition-colors">
           <Icon name="MapPin" size={15} className="text-gold shrink-0" />
           <input
@@ -6164,35 +6154,27 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
         </div>
       </div>
 
-      {category === "" ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5 stagger">
-          {serviceCategories.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setCategory(c.id)}
-              className="group relative h-28 sm:h-32 overflow-hidden rounded-sm border border-border hover:border-gold/60 card-hover text-start"
-            >
-              <img src={c.cover} alt={L(c.title, lang)} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 group-hover:scale-105 transition-all duration-500" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[hsl(220,20%,6%)] via-[hsl(220,20%,6%)]/70 to-[hsl(220,20%,6%)]/20" />
-              <div className="relative h-full flex flex-col justify-end p-3 sm:p-4">
-                <Icon name={c.icon} fallback="Shield" size={20} className="text-gold mb-1.5" />
-                <span className="font-montserrat font-bold text-xs sm:text-sm text-foreground leading-tight">{L(c.title, lang)}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-wrap gap-2 mb-4">
-          <button onClick={() => setCategory("")} className="px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border border-gold/50 text-gold hover:bg-gold/10 transition-colors flex items-center gap-1.5">
-            <Icon name="ArrowLeft" size={13} />{tr("searchAnyCategory")}
+      <div className="flex items-center gap-3 border-2 border-border focus-within:border-gold bg-card rounded-sm px-4 mb-5 transition-colors">
+        <Icon name="Search" size={20} className="text-gold shrink-0" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={tr("searchSimplePh")}
+          className="flex-1 bg-transparent py-4 text-base text-foreground placeholder:text-muted-foreground outline-none"
+        />
+        {query && <button onClick={() => setQuery("")} className="text-muted-foreground hover:text-foreground shrink-0"><Icon name="X" size={18} /></button>}
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button onClick={() => setCategory("")} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors flex items-center gap-1.5 ${category === "" ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-gold/50 text-gold hover:bg-gold/10"}`}>
+            {tr("searchAnyCategory")}
+        </button>
+        {serviceCategories.map((c) => (
+          <button key={c.id} onClick={() => setCategory(c.id === category ? "" : c.id)} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors flex items-center gap-1.5 ${category === c.id ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"}`}>
+            <Icon name={c.icon} fallback="Shield" size={13} />{L(c.title, lang)}
           </button>
-          {serviceCategories.map((c) => (
-            <button key={c.id} onClick={() => setCategory(c.id === category ? "" : c.id)} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors flex items-center gap-1.5 ${category === c.id ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"}`}>
-              <Icon name={c.icon} fallback="Shield" size={13} />{L(c.title, lang)}
-            </button>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <button
@@ -6308,27 +6290,31 @@ function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTi
   const { lang, tr } = useLang();
   const { servicePrices } = useProviders();
   const [query, setQuery] = useState("");
-  const [activeCat, setActiveCat] = useState("");
+  const [openCat, setOpenCat] = useState("");
+  const [openService, setOpenService] = useState<string | null>(null);
   const priceFor = (s: { title: { en: string }; price: { ru: string; en: string } }) =>
     servicePrices[s.title.en] ? `${tr("priceFrom")} ${servicePrices[s.title.en]}` : L(s.price, lang);
 
   const q = query.trim().toLowerCase();
   const filtered = services.filter((s) => {
-    if (activeCat && s.cat !== activeCat) return false;
     if (q && !L(s.title, lang).toLowerCase().includes(q) && !L(s.desc, lang).toLowerCase().includes(q)) return false;
     return true;
   });
   const shownCats = serviceCategories.filter((c) => filtered.some((s) => s.cat === c.id));
 
+  // При поиске текстом сразу разворачиваем категории, где есть совпадения.
+  const catIsOpen = (catId: string) => (q ? filtered.some((s) => s.cat === catId) : openCat === catId);
+  const toggleCat = (catId: string) => { setOpenCat((cur) => (cur === catId ? "" : catId)); setOpenService(null); };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
+    <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="mb-8">
         <div className="tag-security mb-3 inline-block">{tr("catalog")}</div>
         <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">{tr("servicesTitle")}</h2>
         <p className="text-muted-foreground text-sm">{tr("servicesDesc")}</p>
       </div>
 
-      <div className="flex gap-3 mb-6">
+      <div className="flex gap-3 mb-8">
         <div className="flex-1 flex items-center gap-3 border border-border bg-card rounded-sm px-4">
           <Icon name="Search" size={16} className="text-muted-foreground" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr("searchServices")} className="flex-1 bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
@@ -6336,79 +6322,73 @@ function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTi
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-10">
-        <button onClick={() => setActiveCat("")} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors ${activeCat === "" ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"}`}>{tr("searchAnyCategory")}</button>
-        {serviceCategories.map((c) => (
-          <button key={c.id} onClick={() => setActiveCat(c.id === activeCat ? "" : c.id)} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors flex items-center gap-1.5 ${activeCat === c.id ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"}`}>
-            <Icon name={c.icon} fallback="Shield" size={13} />{L(c.title, lang)}
-          </button>
-        ))}
-      </div>
-
       {shownCats.length === 0 && (
         <div className="text-center text-muted-foreground text-sm py-16 border border-dashed border-border rounded-sm">{tr("searchNoResults")}</div>
       )}
 
-      {shownCats.map((cat) => {
-        const catCount = filtered.filter((s) => s.cat === cat.id).length;
-        return (
-        <div key={cat.id} className="mb-12">
-          <div className="relative overflow-hidden rounded-sm border border-border mb-6 h-36 sm:h-40 group">
-            <img src={cat.cover} alt={L(cat.title, lang)} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[hsl(220,20%,6%)] via-[hsl(220,20%,6%)]/85 to-transparent" />
-            <div className="relative h-full flex items-center gap-4 px-5 sm:px-7">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 gold-gradient rounded flex items-center justify-center shrink-0 glow-gold-sm">
-                <Icon name={cat.icon} fallback="Shield" size={24} className="text-[hsl(220,20%,6%)]" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-montserrat font-extrabold text-lg sm:text-2xl text-foreground leading-tight">{L(cat.title, lang)}</h3>
-                <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-montserrat font-semibold text-gold bg-gold/10 border border-gold/30 rounded-sm px-2 py-0.5">
-                  <Icon name="LayoutGrid" size={12} />
-                  {catCount} {tr("catSpecialties")}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.filter((s) => s.cat === cat.id).map((s) => (
-              <div
-                key={s.title.en}
-                onClick={onOrder ? () => onOrder(s.cat, s.title.en) : undefined}
-                className={`group border border-border rounded-sm bg-card p-6 card-hover shine-on-hover ${onOrder ? "cursor-pointer" : ""}`}
+      {/* Вертикальный список категорий-глав: клик раскрывает специальности внутри. */}
+      <div className="space-y-3">
+        {shownCats.map((cat) => {
+          const catServices = filtered.filter((s) => s.cat === cat.id);
+          const isOpen = catIsOpen(cat.id);
+          return (
+            <div key={cat.id} className="border border-border rounded-sm bg-card overflow-hidden">
+              <button
+                onClick={() => toggleCat(cat.id)}
+                className="w-full flex items-center gap-4 p-4 sm:p-5 text-start hover:bg-secondary/40 transition-colors"
               >
-                <div className="flex items-start justify-between mb-5">
-                  <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                    <Icon name={s.icon} fallback="ShieldCheck" size={20} className="text-[hsl(220,20%,6%)]" />
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Icon name="Star" size={11} className="text-gold fill-current" />
-                    4.9
-                  </div>
+                <div className="w-11 h-11 sm:w-12 sm:h-12 gold-gradient rounded flex items-center justify-center shrink-0">
+                  <Icon name={cat.icon} fallback="Shield" size={22} className="text-[hsl(220,20%,6%)]" />
                 </div>
-                <h3 className="font-montserrat font-bold text-sm text-foreground mb-2">{L(s.title, lang)}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-5">{L(s.desc, lang)}</p>
-                <div className="divider-gold mb-4" />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-montserrat font-extrabold text-base text-gold">{priceFor(s)}</div>
-                    <div className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      <Icon name="Clock" size={10} />{L(s.time, lang)}
-                    </div>
-                  </div>
-                  <button
-                    onClick={onOrder ? (e) => { e.stopPropagation(); onOrder(s.cat, s.title.en); } : undefined}
-                    className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm inline-flex items-center gap-1.5"
-                  >
-                    {onOrder ? tr("catFindSpecialist") : tr("order")}
-                    {onOrder && <Icon name="ArrowRight" size={13} />}
-                  </button>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-montserrat font-bold text-sm sm:text-base text-foreground leading-tight">{L(cat.title, lang)}</h3>
+                  <div className="mt-1 text-[11px] sm:text-xs text-muted-foreground">{catServices.length} {tr("catSpecialties")}</div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        );
-      })}
+                <Icon name={isOpen ? "ChevronUp" : "ChevronDown"} size={18} className="text-muted-foreground shrink-0" />
+              </button>
+
+              {isOpen && (
+                <div className="border-t border-border divide-y divide-border animate-fade-in">
+                  {catServices.map((s) => {
+                    const serviceOpen = openService === s.title.en;
+                    return (
+                      <div key={s.title.en}>
+                        <button
+                          onClick={() => setOpenService((cur) => (cur === s.title.en ? null : s.title.en))}
+                          className="w-full flex items-center gap-3 px-4 sm:px-5 py-3.5 text-start hover:bg-secondary/30 transition-colors"
+                        >
+                          <Icon name={s.icon} fallback="ShieldCheck" size={17} className="text-gold shrink-0" />
+                          <span className="flex-1 min-w-0 text-xs sm:text-sm font-montserrat font-semibold text-foreground">{L(s.title, lang)}</span>
+                          <span className="text-xs font-montserrat font-bold text-gold shrink-0">{priceFor(s)}</span>
+                          <Icon name={serviceOpen ? "ChevronUp" : "ChevronRight"} size={15} className="text-muted-foreground shrink-0" />
+                        </button>
+                        {serviceOpen && (
+                          <div className="px-4 sm:px-5 pb-4 pt-1 bg-secondary/20 animate-fade-in">
+                            <p className="text-xs text-muted-foreground leading-relaxed mb-3">{L(s.desc, lang)}</p>
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                <Icon name="Clock" size={11} />{L(s.time, lang)}
+                              </div>
+                              {onOrder && (
+                                <button
+                                  onClick={() => onOrder(s.cat, s.title.en)}
+                                  className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm inline-flex items-center gap-1.5 shrink-0"
+                                >
+                                  {tr("catFindSpecialist")}<Icon name="ArrowRight" size={13} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
       <div className="mt-10 border border-gold/30 rounded-sm bg-card p-6 flex flex-col md:flex-row items-start md:items-center gap-4">
         <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">

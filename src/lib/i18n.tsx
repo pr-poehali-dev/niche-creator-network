@@ -304,8 +304,8 @@ export const t: Dict = {
   cfeat3Desc: { ru: "Связывайтесь с исполнителем напрямую — звонок, чат и мессенджеры. Платформа для клиентов бесплатна", en: "Reach the provider directly — call, chat and messengers. The platform is free for clients" },
   cfeat4Title: { ru: "Честные рейтинги и отзывы", en: "Honest ratings and reviews" },
   cfeat4Desc: { ru: "Прозрачная система оценок и реальные отзывы клиентов помогают выбрать лучшего специалиста", en: "A transparent rating system and real client reviews help you choose the best specialist" },
-  cfeat5Title: { ru: "Специалист рядом с вами", en: "A specialist near you" },
-  cfeat5Desc: { ru: "Геопоиск подбирает проверенных исполнителей в вашем городе и стране", en: "Geo-search finds verified providers in your city and country" },
+  cfeat5Title: { ru: "Поиск по городу и стране", en: "Search by city and country" },
+  cfeat5Desc: { ru: "Укажите город и страну, где нужен специалист — покажем проверенных исполнителей именно там", en: "Enter the city and country where you need a specialist — we'll show verified providers there" },
   cfeat6Title: { ru: "Безопасность и конфиденциальность", en: "Security and confidentiality" },
   cfeat6Desc: { ru: "Шифрованные чаты и защита данных — ваши задачи и переписка остаются приватными", en: "Encrypted chats and data protection — your tasks and messages stay private" },
 
