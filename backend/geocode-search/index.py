@@ -18,12 +18,12 @@ USER_AGENT = (
 )
 
 # Типы объектов, которые нас интересуют: города, посёлки, регионы/области/штаты, страны.
-ALLOWED_CLASSES = {'place', 'boundary'}
-ALLOWED_TYPES = {
-    'city', 'town', 'village', 'hamlet', 'municipality', 'county',
-    'state', 'region', 'province', 'district', 'administrative',
-    'country',
-}
+# Nominatim (jsonv2) отдаёт тип объекта в поле "addresstype" — это надёжнее,
+# чем комбинация "class"/"type" (в jsonv2 класс лежит в "category").
+CITY_TYPES = {'city', 'town', 'village', 'hamlet', 'municipality'}
+REGION_TYPES = {'state', 'region', 'province', 'county', 'state_district'}
+COUNTRY_TYPES = {'country'}
+ALLOWED_TYPES = CITY_TYPES | REGION_TYPES | COUNTRY_TYPES
 
 
 def _resp(status, payload):
@@ -68,9 +68,8 @@ def handler(event: dict, context) -> dict:
         with urllib.request.urlopen(req, timeout=8) as r:
             data = json.loads(r.read().decode('utf-8'))
         for row in data:
-            osm_class = row.get('class') or ''
-            osm_type = row.get('type') or ''
-            if osm_class not in ALLOWED_CLASSES or osm_type not in ALLOWED_TYPES:
+            addr_type = row.get('addresstype') or row.get('type') or ''
+            if addr_type not in ALLOWED_TYPES:
                 continue
             addr = row.get('address') or {}
             name = (
@@ -82,6 +81,12 @@ def handler(event: dict, context) -> dict:
             country = addr.get('country') or ''
             if not name:
                 continue
+            if addr_type in COUNTRY_TYPES:
+                item_type = 'country'
+            elif addr_type in REGION_TYPES:
+                item_type = 'region'
+            else:
+                item_type = 'city'
             items.append({
                 'name': name,
                 'region': region if region != name else '',
@@ -89,7 +94,7 @@ def handler(event: dict, context) -> dict:
                 'countryCode': (addr.get('country_code') or '').upper(),
                 'lat': float(row['lat']) if row.get('lat') else None,
                 'lon': float(row['lon']) if row.get('lon') else None,
-                'type': 'country' if osm_type == 'country' else ('region' if osm_type in ('state', 'region', 'province') else 'city'),
+                'type': item_type,
             })
     except (urllib.error.URLError, ValueError, TimeoutError, OSError, KeyError) as e:
         # Геокодер — вспомогательный сервис: при сбое просто возвращаем пустой список,
