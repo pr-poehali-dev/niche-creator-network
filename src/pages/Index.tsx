@@ -997,10 +997,10 @@ const cases = [
 ];
 
 const serviceCategories = [
-  { id: "physical", icon: "ShieldCheck", cover: "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/4abecc8c-8973-4f64-9041-7b9c295dac3d.jpg", title: { ru: "Физическая безопасность и личная охрана", en: "Physical security & close protection" } },
-  { id: "cyber", icon: "Lock", cover: "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/3e2ad14f-b4f9-4f8f-84aa-3ebc69cdfda0.jpg", title: { ru: "Информационная и кибербезопасность", en: "Information & cybersecurity" } },
-  { id: "economic", icon: "Briefcase", cover: "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/b43df6f7-0042-48ef-a8b1-46caf5e0eeac.jpg", title: { ru: "Экономическая безопасность, комплаенс и расследования", en: "Economic security, compliance & investigations" } },
-  { id: "crisis", icon: "Siren", cover: "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/d8c5a74f-afd1-467c-8d29-90583c23cb03.jpg", title: { ru: "Антикризисное управление и спецоперации", en: "Crisis management & special operations" } },
+  { id: "physical", icon: "ShieldCheck", title: { ru: "Физическая безопасность и личная охрана", en: "Physical security & close protection" } },
+  { id: "cyber", icon: "Lock", title: { ru: "Информационная и кибербезопасность", en: "Information & cybersecurity" } },
+  { id: "economic", icon: "Briefcase", title: { ru: "Экономическая безопасность, комплаенс и расследования", en: "Economic security, compliance & investigations" } },
+  { id: "crisis", icon: "Siren", title: { ru: "Антикризисное управление и спецоперации", en: "Crisis management & special operations" } },
 ] as const;
 
 const services = [
