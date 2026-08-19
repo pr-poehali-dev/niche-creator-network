@@ -218,7 +218,7 @@ def _allowed_origin(event: dict) -> str:
     return PRIMARY_ORIGIN
 
 
-def _resp(status: int, body: dict, event: dict | None = None) -> dict:
+def _resp(status: int, body: dict, event=None) -> dict:
     return {
         'statusCode': status,
         'headers': {
