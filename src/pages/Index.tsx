@@ -1329,7 +1329,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 { n: "03", icon: "Wallet", title: "bp3Title" as const, desc: "bp3Desc" as const },
                 { n: "04", icon: "TrendingUp", title: "bp4Title" as const, desc: "bp4Desc" as const },
               ].map((step) => (
-                <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-hover">
+                <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-hover card-tilt">
                   <div className="font-montserrat font-extrabold text-4xl text-gold/15 absolute top-4 right-5">{step.n}</div>
                   <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
                     <Icon name={step.icon} fallback="Check" size={19} className="text-[hsl(220,20%,6%)]" />
@@ -1363,7 +1363,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               { n: "03", icon: "PhoneCall", title: "cstep3Title" as const, desc: "cstep3Desc" as const },
               { n: "04", icon: "CircleCheckBig", title: "cstep4Title" as const, desc: "cstep4Desc" as const },
             ].map((step) => (
-              <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-hover">
+              <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-hover card-tilt">
                 <div className="font-montserrat font-extrabold text-4xl text-gold/15 absolute top-4 right-5">{step.n}</div>
                 <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
                   <Icon name={step.icon} size={19} className="text-[hsl(220,20%,6%)]" />
@@ -1402,7 +1402,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                   { icon: "GraduationCap", title: "featPro6Title" as const, desc: "featPro6Desc" as const },
                 ]
             ).map((f) => (
-              <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-hover cursor-default">
+              <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-hover card-tilt cursor-default">
                 <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center mb-4">
                   <Icon name={f.icon} size={18} className="icon-hover text-[hsl(220,20%,6%)]" />
                 </div>
@@ -1466,7 +1466,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               { icon: "FileLock2", title: "sec5Title" as const, desc: "sec5Desc" as const },
               { icon: "BadgeCheck", title: "sec6Title" as const, desc: "sec6Desc" as const },
             ].map((f) => (
-              <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-hover shine-on-hover cursor-default">
+              <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-hover card-tilt shine-on-hover cursor-default">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shrink-0">
                     <Icon name={f.icon} fallback="Lock" size={18} className="text-[hsl(220,20%,6%)]" />
@@ -1760,9 +1760,9 @@ function ProfileSection({ setActive, openChat }: { setActive: (s: Section) => vo
               </div>
               <div className="divider-gold mb-4" />
               <div className="grid grid-cols-3 text-center gap-2 mb-4">
-                <div><div className="stat-number text-xl">312</div><div className="text-[10px] text-muted-foreground">{tr("casesCount")}</div></div>
-                <div><div className="stat-number text-xl">134</div><div className="text-[10px] text-muted-foreground">{tr("reviewsCount")}</div></div>
-                <div><div className="stat-number text-xl">98%</div><div className="text-[10px] text-muted-foreground">{tr("success")}</div></div>
+                <div><div className="stat-number stat-appear text-xl" data-reveal-delay={0}>312</div><div className="text-[10px] text-muted-foreground">{tr("casesCount")}</div></div>
+                <div><div className="stat-number stat-appear text-xl" data-reveal-delay={90}>134</div><div className="text-[10px] text-muted-foreground">{tr("reviewsCount")}</div></div>
+                <div><div className="stat-number stat-appear text-xl" data-reveal-delay={180}>98%</div><div className="text-[10px] text-muted-foreground">{tr("success")}</div></div>
               </div>
               <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-montserrat font-semibold mb-2">{tr("contactTitle")}</div>
               {provider && <AvailabilityNote p={provider} />}
@@ -1933,7 +1933,7 @@ function CasesSection() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-4 stagger">
           {cases.map((c) => (
-            <div key={c.title.en} className="border border-border rounded-sm bg-card p-6 card-hover shine-on-hover cursor-pointer">
+            <div key={c.title.en} className="border border-border rounded-sm bg-card p-6 card-hover card-tilt shine-on-hover cursor-pointer">
               <div className="flex items-start gap-3 mb-3">
                 <span className="tag-security">{L(c.category, lang)}</span>
                 <span className="text-[10px] text-muted-foreground ml-auto">{L(c.date, lang)}</span>
@@ -2470,7 +2470,7 @@ function GuardsSection() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
         {guards.map((g) => (
-          <div key={g.name.en} className="card-hover shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group">
+          <div key={g.name.en} className="card-hover card-tilt shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group">
             <div className="h-48 overflow-hidden relative">
               <img src={g.img} alt={L(g.name, lang)} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
@@ -2517,7 +2517,7 @@ function GuardsSection() {
         <h3 className="font-montserrat font-bold text-2xl text-foreground mb-6">{tr("guardServices")}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {guardServices.map((x) => (
-            <div key={x.title.en} className="group border border-border rounded-sm bg-card p-6 card-hover shine-on-hover cursor-default">
+            <div key={x.title.en} className="group border border-border rounded-sm bg-card p-6 card-hover card-tilt shine-on-hover cursor-default">
               <div className="w-11 h-11 gold-gradient rounded-full flex items-center justify-center mb-4 glow-gold-sm transition-transform duration-300 group-hover:scale-110">
                 <Icon name={x.icon} size={19} className="text-[hsl(220,20%,6%)]" />
               </div>

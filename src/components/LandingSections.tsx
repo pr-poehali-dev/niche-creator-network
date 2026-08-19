@@ -17,7 +17,7 @@ export function TrustBadges() {
             ["Globe", "aboutTrust3"],
             ["Lock", "aboutTrust4"],
           ] as const).map(([icon, key]) => (
-            <div key={key} className="group border border-border rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2 card-hover">
+            <div key={key} className="group border border-border rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2 card-hover card-tilt">
               <Icon name={icon} size={22} className="icon-hover text-gold" />
               <span className="text-xs font-montserrat font-semibold text-foreground leading-snug">{tr(key)}</span>
             </div>
@@ -206,7 +206,7 @@ export function LandingWhyUs() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger">
         {cards.map((c) => (
-          <div key={c.title} className="group rounded-sm p-6 border border-border bg-card transition-all card-hover">
+          <div key={c.title} className="group rounded-sm p-6 border border-border bg-card transition-all card-hover card-tilt">
             <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
               <Icon name={c.icon} fallback="ShieldCheck" size={22} className="icon-hover text-[hsl(220,20%,6%)]" />
             </div>
@@ -261,7 +261,7 @@ export function LandingHowItWorks() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5 stagger">
         {steps.map((s, i) => (
-          <div key={s.title} className="group relative border border-border rounded-sm bg-card p-6 card-hover">
+          <div key={s.title} className="group relative border border-border rounded-sm bg-card p-6 card-hover card-tilt">
             <div className="absolute top-4 end-4 font-montserrat font-extrabold text-3xl text-gold/15">{i + 1}</div>
             <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center mb-4 glow-gold-sm">
               <Icon name={s.icon} fallback="Check" size={21} className="icon-hover text-[hsl(220,20%,6%)]" />

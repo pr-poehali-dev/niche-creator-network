@@ -423,9 +423,9 @@ export function AboutSection({ setActive }: { setActive: (s: Section) => void })
       {/* Stats */}
       <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mb-8 security-glow">
         <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
-          {stats.map((s) => (
+          {stats.map((s, i) => (
             <div key={s.n} className="text-center px-2">
-              <div className="stat-number text-2xl md:text-3xl mb-1">{s.n}</div>
+              <div className="stat-number stat-appear text-2xl md:text-3xl mb-1" data-reveal-delay={i * 90}>{s.n}</div>
               <div className="text-xs text-muted-foreground">{tr(s.l)}</div>
             </div>
           ))}
@@ -442,7 +442,7 @@ export function AboutSection({ setActive }: { setActive: (s: Section) => void })
             ["Globe", "aboutTrust3"],
             ["Lock", "aboutTrust4"],
           ] as const).map(([icon, key]) => (
-            <div key={key} className="group border border-border rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2 card-hover">
+            <div key={key} className="group border border-border rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2 card-hover card-tilt">
               <Icon name={icon} size={22} className="icon-hover text-gold" />
               <span className="text-xs font-montserrat font-semibold text-foreground leading-snug">{tr(key)}</span>
             </div>
@@ -455,7 +455,7 @@ export function AboutSection({ setActive }: { setActive: (s: Section) => void })
         <h2 className="font-montserrat font-bold text-lg text-foreground mb-4">{tr("aboutValuesTitle")}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 stagger">
           {values.map((v) => (
-            <div key={v.title} className="border border-border rounded-sm bg-card p-6 card-hover">
+            <div key={v.title} className="border border-border rounded-sm bg-card p-6 card-hover card-tilt">
               <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-4 glow-gold-sm">
                 <Icon name={v.icon} fallback="Check" size={19} className="text-[hsl(220,20%,6%)]" />
               </div>
@@ -701,7 +701,7 @@ export function BlogSection({ setActive }: { setActive: (s: Section) => void }) 
           <button
             key={post.slug}
             onClick={() => { setOpenSlug(post.slug); window.scrollTo({ top: 0 }); }}
-            className="group text-left border border-border rounded-sm bg-card p-6 hover:border-gold/50 transition-all card-hover"
+            className="group text-left border border-border rounded-sm bg-card p-6 hover:border-gold/50 transition-all card-hover card-tilt"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-11 h-11 gold-gradient rounded-sm flex items-center justify-center shrink-0">
