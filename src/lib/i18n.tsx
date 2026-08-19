@@ -1050,6 +1050,9 @@ export const t: Dict = {
   dashSave: { ru: "Сохранить", en: "Save" },
   dashLogout: { ru: "Выйти", en: "Log out" },
   dashLogoutAll: { ru: "Выйти везде", en: "Log out everywhere" },
+  contactsLockedTitle: { ru: "Контакты доступны после входа", en: "Contacts available after sign-in" },
+  contactsLockedNote: { ru: "Мы скрываем телефоны и почту специалистов от посторонних, чтобы их не собирали автоматические программы.", en: "We hide specialists' phone numbers and emails from outsiders so automated tools cannot harvest them." },
+  contactsLockedBtn: { ru: "Войти и увидеть контакты", en: "Sign in to see contacts" },
   dashLogoutAllConfirm: { ru: "Завершить сеансы на всех устройствах? Везде потребуется войти заново — используйте это, если есть подозрение, что доступом к аккаунту завладел кто-то ещё.", en: "End sessions on all devices? You will need to sign in again everywhere — use this if you suspect someone else has access to your account." },
   dashSince: { ru: "На платформе с", en: "Member since" },
 

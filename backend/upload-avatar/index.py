@@ -18,9 +18,25 @@ MAGIC = {
     'webp': (b'RIFF',),
 }
 
+# Признаки активного содержимого. Картинка их содержать не должна: это либо
+# полиглот-файл (одновременно картинка и скрипт), либо подменённый формат.
+DANGEROUS_MARKERS = (
+    b'<script', b'<?php', b'<%', b'<svg', b'javascript:',
+    b'#!/bin/', b'MZ\x90', b'\x7fELF',
+)
+
 
 def _looks_like_image(ext: str, data: bytes) -> bool:
-    return any(data.startswith(sig) for sig in MAGIC.get(ext, ()))
+    if not any(data.startswith(sig) for sig in MAGIC.get(ext, ())):
+        return False
+    # WebP: после "RIFF" + 4 байта размера обязателен маркер "WEBP".
+    # Без этой проверки любой RIFF-файл (например, AVI) прошёл бы как картинка.
+    if ext == 'webp' and data[8:12] != b'WEBP':
+        return False
+    # Полиглоты: ищем исполняемые вставки в начале и конце файла —
+    # именно туда их обычно дописывают, не ломая картинку.
+    head_tail = data[:4096].lower() + data[-4096:].lower()
+    return not any(m.lower() in head_tail for m in DANGEROUS_MARKERS)
 
 
 def handler(event: dict, context) -> dict:

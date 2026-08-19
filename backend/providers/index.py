@@ -3,6 +3,8 @@ import os
 import re
 import psycopg2
 from crypto_utils import decrypt_field
+from auth_utils import get_auth_user
+from rate_limit import check_and_count
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -32,7 +34,7 @@ def handler(event: dict, context) -> dict:
     cors = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
         'Content-Type': 'application/json',
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
@@ -40,6 +42,23 @@ def handler(event: dict, context) -> dict:
 
     if method == 'OPTIONS':
         return {'statusCode': 200, 'headers': cors, 'body': ''}
+
+    # Личные контакты специалистов (телефон, email, мессенджеры) отдаём ТОЛЬКО
+    # авторизованным пользователям. Иначе конкурент или бот-парсер выгружает всю
+    # базу контактов одним запросом. Гостю карточка видна целиком, но вместо
+    # контактов он получает признак contactsLocked и предложение войти.
+    viewer = get_auth_user(event)
+    contacts_allowed = viewer is not None
+
+    # Защита от массового выкачивания каталога. Обычный посетитель загружает
+    # список считанные разы за сессию; парсеру нужны сотни обращений подряд.
+    # Лимит намеренно щедрый, чтобы не мешать живым пользователям.
+    if not check_and_count(event, 'providers', limit=60, window_sec=60):
+        return {
+            'statusCode': 429,
+            'headers': {**cors, 'Retry-After': '60'},
+            'body': json.dumps({'error': 'too_many_requests'}),
+        }
 
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
@@ -98,13 +117,20 @@ def handler(event: dict, context) -> dict:
                 item['name'] = {'ru': r[1], 'en': r[2]}
                 item['isPseudonym'] = False
             item['img'] = (r[35] or '').strip() or r[15]
-            item['contacts'] = {
-                'phone': decrypt_field(r[18]),
-                'email': decrypt_field(r[19]),
-                'whatsapp': decrypt_field(r[20]),
-                'telegram': decrypt_field(r[21]),
-                'website': r[22],
-            }
+            if contacts_allowed:
+                item['contacts'] = {
+                    'phone': decrypt_field(r[18]),
+                    'email': decrypt_field(r[19]),
+                    'whatsapp': decrypt_field(r[20]),
+                    'telegram': decrypt_field(r[21]),
+                    'website': r[22],
+                }
+                item['contactsLocked'] = False
+            else:
+                # Гость: сайт остаётся полезным (профиль, рейтинг, услуги видны),
+                # но личные данные специалиста не утекают к парсерам.
+                item['contacts'] = None
+                item['contactsLocked'] = True
             # Публичная верификация: только поля с включённой видимостью.
             # Номер паспорта не отдаётся никогда.
             licenses_raw = r[37] if isinstance(r[37], list) else (json.loads(r[37]) if r[37] else [])

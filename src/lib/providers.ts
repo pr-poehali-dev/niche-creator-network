@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { authHeaders, getAuthToken } from "@/lib/authToken";
 import func2url from "../../backend/func2url.json";
 
 export type LS = { ru: string; en: string };
@@ -41,6 +42,9 @@ export type Provider = {
   verified: boolean;
   active: boolean;
   contacts: ProviderContacts | null;
+  // true — контакты скрыты, потому что посетитель не авторизован.
+  // Отличается от contacts: null у неактивных профилей.
+  contactsLocked?: boolean;
   verification: ProviderVerification | null;
   gender?: "m" | "f";
   isPseudonym?: boolean;
@@ -110,10 +114,13 @@ export function useProviders() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [servicePrices, setServicePrices] = useState<ServicePrices>({});
   const [loading, setLoading] = useState(true);
+  const token = getAuthToken();
 
   useEffect(() => {
     let alive = true;
-    fetch(func2url["providers"])
+    // Токен передаём, чтобы авторизованный пользователь получил контакты
+    // специалистов. Гостю сервер их не отдаёт — защита от парсинга базы.
+    fetch(func2url["providers"], { headers: authHeaders() })
       .then((r) => r.json())
       .then((d) => {
         if (!alive) return;
@@ -125,7 +132,9 @@ export function useProviders() {
     return () => {
       alive = false;
     };
-  }, []);
+    // Перезагружаем каталог при входе/выходе: у авторизованного появляются
+    // контакты специалистов, у вышедшего — снова скрываются.
+  }, [token]);
 
   return { providers, servicePrices, loading };
 }

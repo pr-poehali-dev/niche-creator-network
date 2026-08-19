@@ -11,6 +11,12 @@
       "method": "GET",
       "path": "/",
       "expectedStatus": 200
+    },
+    {
+      "name": "Guest request still works without token",
+      "method": "GET",
+      "path": "/?guest=1",
+      "expectedStatus": 200
     }
   ]
 }

@@ -1,16 +1,108 @@
+# Поисковые системы — разрешены полностью: это бесплатный трафик клиентов.
 User-agent: Googlebot
 Allow: /
 
 User-agent: Bingbot
 Allow: /
 
+User-agent: YandexBot
+Allow: /
+
+# Соцсети — нужны для корректных превью при отправке ссылок.
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
 Allow: /
 
+User-agent: TelegramBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+# Ниже — боты для массового сбора данных (SEO-разведка конкурентов,
+# парсеры контактов, обучение ИИ). Пользы сайту не приносят, создают
+# нагрузку и выкачивают содержимое каталога. Закрыты полностью.
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: serpstatbot
+Disallow: /
+
+User-agent: ZoominfoBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: Scrapy
+Disallow: /
+
+User-agent: python-requests
+Disallow: /
+
+User-agent: curl
+Disallow: /
+
+User-agent: wget
+Disallow: /
+
+User-agent: HTTrack
+Disallow: /
+
+User-agent: SiteSucker
+Disallow: /
+
+User-agent: WebCopier
+Disallow: /
+
+User-agent: Xenu
+Disallow: /
+
+User-agent: Screaming Frog SEO Spider
+Disallow: /
+
+# Остальные боты: доступ есть, но с паузой между запросами —
+# это гасит нагрузку от массового обхода, не мешая обычным посетителям.
 User-agent: *
 Allow: /
+Crawl-delay: 10
 
 Sitemap: https://shieldpspl.ru/sitemap.xml

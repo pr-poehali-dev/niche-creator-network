@@ -87,9 +87,27 @@ function AvailabilityNote({ p }: { p: Provider }) {
   );
 }
 
-function ContactButtons({ p, onChat, compact }: { p: Provider; onChat: () => void; compact?: boolean }) {
+function ContactButtons({ p, onChat, compact, onRequireAuth }: { p: Provider; onChat: () => void; compact?: boolean; onRequireAuth?: () => void }) {
   const { tr } = useLang();
   const c = p.contacts;
+  // Гость: контакты скрыты сервером. Показываем понятное объяснение и вход,
+  // чтобы человек не решил, что специалист без связи.
+  if (!c && p.contactsLocked) {
+    return (
+      <div className="border border-gold/30 bg-gold/5 rounded-sm p-3 text-center" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-center gap-1.5 text-xs font-montserrat font-semibold text-gold mb-1">
+          <Icon name="Lock" size={13} />{tr("contactsLockedTitle")}
+        </div>
+        {!compact && <p className="text-[11px] text-muted-foreground mb-2 leading-snug">{tr("contactsLockedNote")}</p>}
+        <button
+          onClick={() => (onRequireAuth ? onRequireAuth() : window.dispatchEvent(new Event("shchit:require-auth")))}
+          className="w-full gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold px-3 py-2 rounded-sm hover:opacity-90 transition-all"
+        >
+          {tr("contactsLockedBtn")}
+        </button>
+      </div>
+    );
+  }
   if (!c) return null;
   const size = compact ? 14 : 16;
   const btn = "flex items-center justify-center gap-1.5 rounded-sm font-montserrat font-semibold transition-all";
@@ -499,6 +517,13 @@ export default function Index() {
   const [chatTarget, setChatTarget] = useState<{ name: string; title: string; avatar?: string | null; pairKey?: string } | null>(null);
   const [secBannerOpen, setSecBannerOpen] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
+  // Открытие окна входа из любой карточки специалиста (кнопка «Войти и увидеть
+  // контакты»). Событие вместо передачи колбэка через всю цепочку компонентов.
+  useEffect(() => {
+    const openAuth = () => setAuthOpen(true);
+    window.addEventListener("shchit:require-auth", openAuth);
+    return () => window.removeEventListener("shchit:require-auth", openAuth);
+  }, []);
   const { geo } = useGeo();
   const historyRef = useRef<{ section: Section; provider: Provider | null }[]>([{ section: active, provider: null }]);
 

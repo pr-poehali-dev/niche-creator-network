@@ -6,6 +6,8 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from rate_limit import check_and_count
+
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
 CORS = {
@@ -37,6 +39,11 @@ def handler(event: dict, context) -> dict:
         return {'statusCode': 200, 'headers': CORS, 'body': ''}
     if method != 'POST':
         return _resp(405, {'error': 'Method not allowed'})
+
+    # Защита от спам-ботов: с одного адреса не больше 5 обращений за 10 минут.
+    # Живому человеку этого с запасом хватает, автоматической рассылке — нет.
+    if not check_and_count(event, 'feedback', limit=5, window_sec=600):
+        return _resp(429, {'error': 'too_many_requests'})
 
     body = json.loads(event.get('body') or '{}')
 

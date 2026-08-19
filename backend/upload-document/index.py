@@ -23,8 +23,31 @@ MAGIC = {
 }
 
 
+# Признаки активного содержимого в файлах-картинках: полиглоты и подмена формата.
+DANGEROUS_MARKERS = (
+    b'<script', b'<?php', b'<%', b'<svg', b'javascript:',
+    b'#!/bin/', b'MZ\x90', b'\x7fELF',
+)
+
+# Опасные конструкции внутри PDF: автозапуск и внедрённые файлы.
+# Скан диплома или сертификата их содержать не должен.
+PDF_DANGEROUS = (
+    b'/JavaScript', b'/JS', b'/Launch', b'/OpenAction',
+    b'/AA', b'/EmbeddedFile', b'/RichMedia',
+)
+
+
 def _magic_ok(ext: str, data: bytes) -> bool:
-    return any(data.startswith(sig) for sig in MAGIC.get(ext, ()))
+    if not any(data.startswith(sig) for sig in MAGIC.get(ext, ())):
+        return False
+    if ext == 'webp' and data[8:12] != b'WEBP':
+        return False
+    if ext == 'pdf':
+        # PDF со скриптом или автозапуском отклоняем целиком: у документа
+        # об образовании нет причин исполнять код при открытии.
+        return not any(m in data for m in PDF_DANGEROUS)
+    head_tail = data[:4096].lower() + data[-4096:].lower()
+    return not any(m.lower() in head_tail for m in DANGEROUS_MARKERS)
 
 
 def handler(event: dict, context) -> dict:
