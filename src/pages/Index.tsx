@@ -6,6 +6,7 @@ import { useProviders, isLicensed, isQuietNow, isPremium, providerLocalTime, typ
 import { useAuth } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
 import { trackGoal, GOALS } from "@/lib/analytics";
+import { useRevealOnScroll } from "@/hooks/useRevealOnScroll";
 import { CLIENT_REVIEWS } from "@/lib/clientReviews";
 import { useAutoTranslate } from "@/lib/autotranslate";
 import Reveal from "@/components/Reveal";
@@ -517,6 +518,8 @@ export default function Index() {
   const [chatTarget, setChatTarget] = useState<{ name: string; title: string; avatar?: string | null; pairKey?: string } | null>(null);
   const [secBannerOpen, setSecBannerOpen] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
+  // Мягкое появление цифр статистики при прокрутке (чистый CSS + наблюдатель).
+  useRevealOnScroll();
   // Открытие окна входа из любой карточки специалиста (кнопка «Войти и увидеть
   // контакты»). Событие вместо передачи колбэка через всю цепочку компонентов.
   useEffect(() => {
@@ -744,7 +747,7 @@ export default function Index() {
       <header className="fixed left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm transition-[top,height] duration-300 ease-out" style={{ top: secBarH, height: headerH }}>
         <div className={`max-w-7xl mx-auto px-4 h-full flex items-center justify-between gap-3 transition-[padding] duration-300`}>
           <div className="flex items-center gap-3 shrink-0">
-            <div className={`gold-gradient rounded flex items-center justify-center shrink-0 transition-all duration-300 ${scrolled ? "w-6 h-6" : "w-8 h-8"}`}>
+            <div className={`logo-sheen gold-gradient rounded flex items-center justify-center shrink-0 transition-all duration-300 ${scrolled ? "w-6 h-6" : "w-8 h-8"}`}>
               <Icon name="Shield" size={scrolled ? 13 : 16} className="text-[hsl(220,20%,6%)]" />
             </div>
             <div>
@@ -1269,9 +1272,9 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                     { n: "700+", l: "statProvSearches" as const },
                     { n: "98%", l: "statClients" as const },
                   ]
-              ).map((s) => (
+              ).map((s, i) => (
                 <div key={s.n} className="py-5 px-6 text-center">
-                  <div className="stat-number text-2xl mb-1">{s.n}</div>
+                  <div className="stat-number stat-appear text-2xl mb-1" data-reveal-delay={i * 90}>{s.n}</div>
                   <div className="text-xs text-muted-foreground">{tr(s.l)}</div>
                 </div>
               ))}
@@ -1490,9 +1493,9 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 { n: "256-bit", l: "secStat1" as const },
                 { n: "0", l: "secStat2" as const },
                 { n: "24/7", l: "secStat3" as const },
-              ].map((s) => (
+              ].map((s, i) => (
                 <div key={s.n} className="py-4 sm:py-0 px-6 text-center">
-                  <div className="stat-number text-3xl mb-1">{s.n}</div>
+                  <div className="stat-number stat-appear text-3xl mb-1" data-reveal-delay={i * 90}>{s.n}</div>
                   <div className="text-xs text-muted-foreground">{tr(s.l)}</div>
                 </div>
               ))}
@@ -1993,7 +1996,7 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
     <div
       ref={tiltRef}
       onClick={onOpen}
-      className={`card-hover shine-on-hover rounded-sm overflow-hidden cursor-pointer group flex flex-col relative ${premium ? "border-2 border-gold security-glow ambient-gold bg-card" : "border border-border bg-card"}`}
+      className={`card-hover card-tilt shine-on-hover rounded-sm overflow-hidden cursor-pointer group flex flex-col relative ${premium ? "border-2 border-gold security-glow ambient-gold bg-card" : "border border-border bg-card"}`}
     >
       {premium && (
         <div className="absolute top-0 inset-x-0 z-20 gold-gradient text-[hsl(220,20%,6%)] text-[10px] font-montserrat font-extrabold tracking-widest uppercase text-center py-1 flex items-center justify-center gap-1">
