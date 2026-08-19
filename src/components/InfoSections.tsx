@@ -339,6 +339,34 @@ export function HowItWorksSection({ setActive }: { setActive: (s: Section) => vo
         </div>
       </div>
 
+      {/* Ранний доступ: честно объясняет, почему каталог пока небольшой,
+          и превращает это в аргумент для специалистов. */}
+      <div className="border border-gold/40 rounded-sm bg-gold/5 p-6 md:p-7 mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <Icon name="Rocket" size={18} className="text-gold" />
+          <h2 className="font-montserrat font-extrabold text-lg text-foreground">{tr("earlyTitle")}</h2>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-4">{tr("earlyText")}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+          {[
+            { icon: "BadgeCheck", t: tr("earlyB1") },
+            { icon: "Percent", t: tr("earlyB2") },
+            { icon: "Crown", t: tr("earlyB3") },
+          ].map((b) => (
+            <div key={b.t} className="flex items-start gap-2 border border-border rounded-sm bg-card p-3">
+              <Icon name={b.icon} fallback="Check" size={15} className="text-gold shrink-0 mt-0.5" />
+              <span className="text-xs text-foreground leading-snug">{b.t}</span>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => setActive("dashboard")}
+          className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity"
+        >
+          {tr("earlyBtn")}
+        </button>
+      </div>
+
       <div className="space-y-4 mb-8 stagger">
         {steps.map((s) => (
           <div key={s.title} className="flex items-start gap-4 border border-border rounded-sm bg-card p-5 hover:border-gold/40 transition-colors">

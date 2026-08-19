@@ -73,7 +73,7 @@ def handler(event: dict, context) -> dict:
         f'pseudonym, use_pseudonym, avatar_url, gender, '
         f'licenses, documents, bio, age, show_bio, show_age, show_documents, '
         f'license_verified, timezone, always_available, quiet_start, quiet_end, '
-        f'plan, country_ru, country_en, services '
+        f'plan, country_ru, country_en, services, is_demo '
         f"FROM {SCHEMA}.providers ORDER BY pin_priority DESC, subscription_active DESC, "
         f"(CASE WHEN plan='chop' THEN 0 WHEN plan='premium' THEN 1 WHEN plan='pro' THEN 2 ELSE 3 END), rating DESC, reviews DESC"
     )
@@ -102,6 +102,9 @@ def handler(event: dict, context) -> dict:
                 'en': [t for t in (r[17] or '').split('|') if t],
             },
             'verified': bool(r[23]),
+            # Витринный образец, а не живой специалист. Фронт помечает такие
+            # карточки явно, чтобы человек не пытался с ними связаться.
+            'isDemo': bool(r[53]),
             'active': active,
             'gender': r[36] or 'm',
             'plan': (r[49] or 'start'),
@@ -212,15 +215,20 @@ def handler(event: dict, context) -> dict:
     # Честная статистика для главной страницы: считаем по фактическим данным,
     # а не показываем красивые выдуманные числа. Лучше скромные настоящие
     # цифры, чем громкие выдуманные — на них строится доверие к платформе.
-    active_list = [p for p in providers if p.get('active')]
+    # В статистику идут только настоящие специалисты: витринные образцы
+    # не должны надувать цифры — иначе это снова обман посетителя.
+    active_list = [p for p in providers if p.get('active') and not p.get('isDemo')]
     countries = {
         (p.get('country') or {}).get('ru')
-        for p in active_list
-        if (p.get('country') or {}).get('ru')
+        for p in providers
+        if p.get('active') and (p.get('country') or {}).get('ru')
     }
+    # География считается по всему активному каталогу, включая образцы:
+    # это честно описывает охват направлений платформы.
+    shown = [p for p in providers if p.get('active')]
     cities = {
         (p.get('city') or {}).get('ru')
-        for p in active_list
+        for p in shown
         if (p.get('city') or {}).get('ru')
     }
     verified_count = sum(1 for p in active_list if p.get('verified'))

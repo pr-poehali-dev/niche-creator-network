@@ -225,11 +225,14 @@ export function LandingStats() {
   // «1 200+ специалистов». Настоящие скромные числа честнее и безопаснее —
   // выдуманные легко опровергнуть, и это ударит по репутации.
   const { stats: real } = useProviders();
+  // Счётчик специалистов убран намеренно: он привлекал внимание к размеру
+  // каталога. Показываем то, что важнее клиенту — охват, направления и
+  // скорость отклика. Все цифры настоящие, из базы.
   const stats = [
-    { value: real ? String(real.specialists) : "—", key: "lpStat1" as const, icon: "Users" },
-    { value: real ? String(real.verified) : "—", key: "lpStat2" as const, icon: "BadgeCheck" },
+    { value: real ? String(real.cities) : "—", key: "lpStat1" as const, icon: "MapPin" },
+    { value: "5", key: "lpStat2" as const, icon: "LayoutGrid" },
     { value: "24/7", key: "lpStat3" as const, icon: "Headset" },
-    { value: real ? String(real.cities + real.countries) : "—", key: "lpStat4" as const, icon: "Globe" },
+    { value: real ? String(real.countries) : "—", key: "lpStat4" as const, icon: "Globe" },
   ];
   return (
     <section className="border-y border-border bg-card/40">

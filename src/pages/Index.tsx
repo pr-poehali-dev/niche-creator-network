@@ -91,6 +91,26 @@ function AvailabilityNote({ p }: { p: Provider }) {
 function ContactButtons({ p, onChat, compact, onRequireAuth }: { p: Provider; onChat: () => void; compact?: boolean; onRequireAuth?: () => void }) {
   const { tr } = useLang();
   const c = p.contacts;
+  // Витринный образец: кнопок связи не показываем совсем. Человек в трудной
+  // ситуации не должен писать несуществующему специалисту и ждать ответа —
+  // вместо этого сразу предлагаем оставить заявку живым исполнителям.
+  if (p.isDemo) {
+    return (
+      <div className="border border-border bg-background rounded-sm p-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-1.5 text-xs font-montserrat font-semibold text-foreground mb-1">
+          <Icon name="Info" size={13} className="text-muted-foreground" />
+          {tr("demoNoticeTitle")}
+        </div>
+        {!compact && <p className="text-[11px] text-muted-foreground mb-2 leading-snug">{tr("demoNoticeText")}</p>}
+        <button
+          onClick={() => window.dispatchEvent(new Event("shchit:new-request"))}
+          className="w-full gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold px-3 py-2 rounded-sm hover:opacity-90 transition-all"
+        >
+          {tr("demoNoticeBtn")}
+        </button>
+      </div>
+    );
+  }
   // Гость: контакты скрыты сервером. Показываем понятное объяснение и вход,
   // чтобы человек не решил, что специалист без связи.
   if (!c && p.contactsLocked) {
@@ -520,6 +540,20 @@ export default function Index() {
   const [authOpen, setAuthOpen] = useState(false);
   // Мягкое появление цифр статистики при прокрутке (чистый CSS + наблюдатель).
   useRevealOnScroll();
+  // Переход к форме заявки из карточки-образца: гостю сначала предлагаем войти,
+  // авторизованному клиенту сразу открываем создание задачи.
+  useEffect(() => {
+    const openRequest = () => {
+      if (!user) {
+        setAuthOpen(true);
+        return;
+      }
+      try { sessionStorage.setItem("open_new_task", "1"); } catch { /* noop */ }
+      setActive("dashboard");
+    };
+    window.addEventListener("shchit:new-request", openRequest);
+    return () => window.removeEventListener("shchit:new-request", openRequest);
+  }, [user]);
   // Открытие окна входа из любой карточки специалиста (кнопка «Войти и увидеть
   // контакты»). Событие вместо передачи колбэка через всю цепочку компонентов.
   useEffect(() => {
@@ -2017,6 +2051,12 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
           <div className="absolute top-3 start-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border px-2 py-1 rounded-sm">
             <Icon name="VenetianMask" size={11} className="text-muted-foreground" />
             <span className="text-[10px] font-montserrat font-semibold text-muted-foreground">{tr("aliasBadge")}</span>
+          </div>
+        )}
+        {p.isDemo && (
+          <div className="absolute top-3 start-3 z-20 flex items-center gap-1 bg-background/90 backdrop-blur-sm border border-border px-2 py-1 rounded-sm">
+            <Icon name="Info" size={11} className="text-muted-foreground" />
+            <span className="text-[10px] font-montserrat font-semibold text-muted-foreground">{tr("demoBadge")}</span>
           </div>
         )}
         {isLicensed(p) && (

@@ -45,6 +45,9 @@ export type Provider = {
   // true — контакты скрыты, потому что посетитель не авторизован.
   // Отличается от contacts: null у неактивных профилей.
   contactsLocked?: boolean;
+  // true — витринный образец, а не живой специалист. Такие карточки
+  // помечаются явно, чтобы человек не тратил время на попытки связаться.
+  isDemo?: boolean;
   verification: ProviderVerification | null;
   gender?: "m" | "f";
   isPseudonym?: boolean;
