@@ -69,8 +69,8 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
   const yearlyDiscounted = Math.round(yearlyFull * 0.83);
   const yearlySaving = Math.round(yearlyFull - yearlyDiscounted);
 
-  // Промо-скидка 30% до 1 сентября 2026 (источник истины — бэкенд quote.promo)
-  const promoActive = quote ? !!quote.promo : (new Date() < new Date("2026-09-01T00:00:00Z"));
+  // Промо-скидка 30% до 1 декабря 2026 (источник истины — бэкенд quote.promo)
+  const promoActive = quote ? !!quote.promo : (new Date() < new Date("2026-12-01T00:00:00Z"));
   const promoPct = quote && quote.promoDiscount ? quote.promoDiscount : 30;
   const promoFactor = (100 - promoPct) / 100;
 
@@ -445,7 +445,7 @@ export function PricingSection({ setActive }: { setActive: (s: Section) => void 
   const { tr } = useLang();
   const { user } = useAuth();
   const [payPlan, setPayPlan] = useState<PayPlan | null>(null);
-  const promoActive = new Date() < new Date("2026-09-01T00:00:00Z");
+  const promoActive = new Date() < new Date("2026-12-01T00:00:00Z");
 
   useEffect(() => { trackGoal(GOALS.openPricing); }, []);
   const plans = [

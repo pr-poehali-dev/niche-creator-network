@@ -9,9 +9,9 @@ import urllib.error
 from auth_utils import get_auth_user, provider_slug
 from rate_limit import check_and_count
 
-# Промо-скидка 30% действует до 1 сентября 2026 года (включительно по 31 августа)
+# Промо-скидка 30% действует до 1 декабря 2026 года (включительно по 30 ноября)
 PROMO_DISCOUNT = 0.30
-PROMO_UNTIL = datetime(2026, 9, 1, tzinfo=timezone.utc)
+PROMO_UNTIL = datetime(2026, 12, 1, tzinfo=timezone.utc)
 
 
 def _promo_active():

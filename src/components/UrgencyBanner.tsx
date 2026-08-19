@@ -3,7 +3,7 @@ import Icon from "@/components/ui/icon";
 import { useLang } from "@/lib/i18n";
 
 // Дата окончания акции −30% (совпадает с текстами promoUntil).
-const PROMO_END = new Date("2026-09-01T00:00:00Z").getTime();
+const PROMO_END = new Date("2026-12-01T00:00:00Z").getTime();
 
 function getRemaining() {
   const diff = PROMO_END - Date.now();
