@@ -21,7 +21,37 @@ function looksLikeLang(text: string, lang: string): boolean {
   }
 }
 
-const cache = new Map<string, string>();
+// Кэш переводов переживает перезагрузку страницы: иначе одни и те же сообщения
+// переводятся заново при каждом заходе, что впустую тратит вызовы функции.
+const CACHE_KEY = "autoTranslateCache";
+const CACHE_LIMIT = 800;
+
+const cache = new Map<string, string>(loadCache());
+
+function loadCache(): [string, string][] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) ? parsed.slice(-CACHE_LIMIT) : [];
+  } catch {
+    return [];
+  }
+}
+
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+function persistCache() {
+  if (typeof window === "undefined") return;
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      const entries = Array.from(cache.entries()).slice(-CACHE_LIMIT);
+      window.localStorage.setItem(CACHE_KEY, JSON.stringify(entries));
+    } catch {
+      // хранилище переполнено — кэш не критичен, работаем без него
+    }
+  }, 1000);
+}
 
 async function translateBatch(texts: string[], target: string): Promise<{ items: string[]; translated: boolean }> {
   if (!TRANSLATE_URL) return { items: texts, translated: false };
@@ -94,6 +124,7 @@ export function useAutoTranslate(texts: string[]) {
         pending.current.delete(key);
         next[t] = items[i];
       });
+      persistCache();
       setMap((m) => ({ ...m, ...next }));
       if (translated && items.some((v, i) => v !== need[i])) setDidTranslate(true);
     });

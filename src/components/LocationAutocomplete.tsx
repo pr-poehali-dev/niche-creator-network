@@ -27,6 +27,20 @@ type Props = {
 
 const SUPPORTED_GEO_LANGS = new Set(["ru", "en", "fr", "de", "ja", "ar", "he"]);
 
+// Кэш подсказок на время сессии: пользователь часто стирает и дописывает
+// название города, а также возвращается к прежнему запросу — повторно
+// дёргать функцию за тем же ответом незачем.
+const suggestCache = new Map<string, LocationSuggestion[]>();
+const SUGGEST_CACHE_LIMIT = 200;
+
+function cacheSuggestions(key: string, items: LocationSuggestion[]) {
+  if (suggestCache.size >= SUGGEST_CACHE_LIMIT) {
+    const oldest = suggestCache.keys().next().value;
+    if (oldest !== undefined) suggestCache.delete(oldest);
+  }
+  suggestCache.set(key, items);
+}
+
 // Подсказки городов, областей/штатов/провинций и стран по мере ввода —
 // клиент по-прежнему вводит локацию вручную, но получает готовые варианты
 // (в том числе соседние с крупными городами), чтобы не ошибиться в написании.
@@ -38,31 +52,56 @@ export default function LocationAutocomplete({ value, onChange, onSelect, placeh
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      // Не отправляем запрос, если поле уже закрыто/убрано с экрана.
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, []);
 
   const fetchSuggestions = (q: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (q.trim().length < 2) {
+    const term = q.trim();
+    if (term.length < 2) {
       setItems([]);
       setLoading(false);
       return;
     }
+
+    const geoLang = SUPPORTED_GEO_LANGS.has(lang) ? lang : "en";
+    const key = `${field}::${geoLang}::${term.toLowerCase()}`;
+
+    // Уже спрашивали это раньше — отвечаем из кэша, без обращения к серверу.
+    const cached = suggestCache.get(key);
+    if (cached) {
+      setItems(cached);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
+    // Пауза побольше: запрос уходит, когда человек закончил печатать,
+    // а не после каждой буквы.
     debounceRef.current = setTimeout(() => {
-      const geoLang = SUPPORTED_GEO_LANGS.has(lang) ? lang : "en";
-      fetch(`${func2url["geocode-search"]}?q=${encodeURIComponent(q.trim())}&lang=${geoLang}&field=${field}`)
+      const reqId = ++requestIdRef.current;
+      fetch(`${func2url["geocode-search"]}?q=${encodeURIComponent(term)}&lang=${geoLang}&field=${field}`)
         .then((r) => r.json())
-        .then((d) => { if (Array.isArray(d.items)) setItems(d.items); })
-        .catch(() => setItems([]))
-        .finally(() => setLoading(false));
-    }, 350);
+        .then((d) => {
+          const list: LocationSuggestion[] = Array.isArray(d.items) ? d.items : [];
+          cacheSuggestions(key, list);
+          // Игнорируем ответ, если пользователь уже набрал что-то другое.
+          if (reqId === requestIdRef.current) setItems(list);
+        })
+        .catch(() => { if (reqId === requestIdRef.current) setItems([]); })
+        .finally(() => { if (reqId === requestIdRef.current) setLoading(false); });
+    }, 600);
   };
 
   return (
