@@ -1049,6 +1049,8 @@ export const t: Dict = {
   dashEdit: { ru: "Редактировать", en: "Edit" },
   dashSave: { ru: "Сохранить", en: "Save" },
   dashLogout: { ru: "Выйти", en: "Log out" },
+  dashLogoutAll: { ru: "Выйти везде", en: "Log out everywhere" },
+  dashLogoutAllConfirm: { ru: "Завершить сеансы на всех устройствах? Везде потребуется войти заново — используйте это, если есть подозрение, что доступом к аккаунту завладел кто-то ещё.", en: "End sessions on all devices? You will need to sign in again everywhere — use this if you suspect someone else has access to your account." },
   dashSince: { ru: "На платформе с", en: "Member since" },
 
   // Client dashboard tabs

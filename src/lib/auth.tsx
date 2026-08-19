@@ -16,6 +16,7 @@ type AuthContextValue = {
   register: (email: string, password: string, role: AuthRole, name: string) => Promise<AuthResult>;
   adminLogin: (password: string, role: AuthRole) => Promise<AuthResult>;
   logout: () => Promise<void>;
+  logoutAll: () => Promise<void>;
 };
 
 const TOKEN_KEY = "shchit_auth_token";
@@ -116,8 +117,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (token) await callAuth({ action: "logout" }, token).catch(() => {});
   }, []);
 
+  // Выход на всех устройствах: гасит все сессии пользователя на сервере.
+  // Нужен, если есть подозрение, что доступом завладел кто-то ещё.
+  const logoutAll = useCallback(async () => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    setUser(null);
+    if (token) await callAuth({ action: "logout_all" }, token).catch(() => {});
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthed: !!user, login, verify2fa, resend2fa, register, adminLogin, logout }}>
+    <AuthContext.Provider value={{ user, loading, isAuthed: !!user, login, verify2fa, resend2fa, register, adminLogin, logout, logoutAll }}>
       {children}
     </AuthContext.Provider>
   );

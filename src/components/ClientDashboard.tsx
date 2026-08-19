@@ -13,11 +13,19 @@ import func2url from "../../backend/func2url.json";
 
 export default function ClientDashboard({ setActive }: { setActive: (s: Section) => void }) {
   const { lang, tr } = useLang();
-  const { logout, user } = useAuth();
+  const { logout, logoutAll, user } = useAuth();
   const { providers } = useProviders();
   const { favorites, removeFavorite } = useFavorites();
   const clientId = user ? `client-${user.id}` : "demo-client";
   const handleLogout = async () => { await logout(); setActive("home"); window.scrollTo({ top: 0 }); };
+  // Завершение сеансов на всех устройствах — с подтверждением, так как
+  // действие затрагивает и другие устройства пользователя.
+  const handleLogoutAll = async () => {
+    if (!window.confirm(tr("dashLogoutAllConfirm"))) return;
+    await logoutAll();
+    setActive("home");
+    window.scrollTo({ top: 0 });
+  };
   // Намерение «поставить задачу» с главной: открываем сразу вкладку «Мои задачи».
   const wantNewTask = (() => {
     try { return sessionStorage.getItem("open_new_task") === "1"; } catch { return false; }
@@ -212,10 +220,16 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
             <span className="text-xs text-muted-foreground">{user?.email || ""}</span>
           </div>
         </div>
-        <button onClick={handleLogout} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5">
-          <Icon name="LogOut" size={13} />
-          {tr("dashLogout")}
-        </button>
+        <div className="shrink-0 flex items-center gap-2">
+          <button onClick={handleLogoutAll} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-3 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5" title={tr("dashLogoutAll")}>
+            <Icon name="ShieldOff" size={13} />
+            {tr("dashLogoutAll")}
+          </button>
+          <button onClick={handleLogout} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5">
+            <Icon name="LogOut" size={13} />
+            {tr("dashLogout")}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

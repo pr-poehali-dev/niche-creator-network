@@ -1,30 +1,86 @@
 import os
-from datetime import datetime
+import hashlib
+import hmac
+from datetime import datetime, timedelta
 import psycopg2
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
+# Должно совпадать с настройками в backend/auth: сессия живёт не дольше
+# SESSION_DAYS и умирает после SESSION_IDLE_DAYS простоя.
+SESSION_DAYS = 7
+SESSION_IDLE_DAYS = 2
+
+
+def _client_ip(event: dict) -> str:
+    try:
+        ip = (event.get('requestContext', {}).get('identity', {}).get('sourceIp') or '')
+    except (AttributeError, TypeError):
+        ip = ''
+    if not ip:
+        headers = event.get('headers') or {}
+        fwd = headers.get('X-Forwarded-For') or headers.get('x-forwarded-for') or ''
+        ip = fwd.split(',')[0].strip()
+    return str(ip)[:64]
+
+
+def _fingerprint(event: dict) -> str:
+    '''Отпечаток клиента: браузер + подсеть IP (см. backend/auth/index.py).'''
+    headers = event.get('headers') or {}
+    ua = (headers.get('User-Agent') or headers.get('user-agent') or '')[:200]
+    ip = _client_ip(event)
+    net = '.'.join(ip.split('.')[:2]) if '.' in ip else ip[:16]
+    return hashlib.sha256(f'{ua}|{net}'.encode()).hexdigest()
+
 
 def get_auth_user(event: dict):
+    '''
+    Возвращает данные текущего пользователя по токену сессии (заголовок X-Auth-Token),
+    либо None если токен отсутствует/невалиден/просрочен/отозван/предъявлен с чужого
+    устройства.
+    Результат: {'id': int, 'email': str, 'role': str, 'is_admin': bool} или None.
+    '''
     headers = event.get('headers') or {}
     token = headers.get('X-Auth-Token') or headers.get('x-auth-token') or ''
     if not token:
         return None
+    fingerprint = _fingerprint(event)
+    now = datetime.utcnow()
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     try:
         cur = conn.cursor()
         cur.execute(
-            f"SELECT u.id, u.email, u.role, s.expires_at, u.is_admin "
+            f"SELECT u.id, u.email, u.role, s.expires_at, u.is_admin, "
+            f"s.revoked, s.last_seen_at, s.fingerprint "
             f"FROM {SCHEMA}.sessions s JOIN {SCHEMA}.users u ON u.id = s.user_id "
             f"WHERE s.token = %s",
             (token,),
         )
         row = cur.fetchone()
+        if not row or row[5] or row[3] < now:
+            cur.close()
+            return None
+        # Долгий простой — сессия считается мёртвой.
+        if row[6] and row[6] < now - timedelta(days=SESSION_IDLE_DAYS):
+            cur.execute(f"UPDATE {SCHEMA}.sessions SET revoked = true WHERE token = %s", (token,))
+            conn.commit()
+            cur.close()
+            return None
+        # Токен пришёл с другого устройства/сети — вероятная кража, гасим сессию.
+        if row[7] and fingerprint and not hmac.compare_digest(str(row[7]), fingerprint):
+            cur.execute(f"UPDATE {SCHEMA}.sessions SET revoked = true WHERE token = %s", (token,))
+            conn.commit()
+            cur.close()
+            return None
+        # Скользящее продление, пока пользователь активен.
+        cur.execute(
+            f"UPDATE {SCHEMA}.sessions SET last_seen_at = now(), expires_at = %s WHERE token = %s",
+            (now + timedelta(days=SESSION_DAYS), token),
+        )
+        conn.commit()
         cur.close()
     finally:
         conn.close()
-    if not row or row[3] < datetime.utcnow():
-        return None
     email = str(row[1] or '')
     return {'id': int(row[0]), 'email': email, 'role': row[2], 'is_admin': bool(row[4])}
 

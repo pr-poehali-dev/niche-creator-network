@@ -3,6 +3,25 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <!-- Content-Security-Policy: второй рубеж защиты от XSS. Ограничивает, откуда
+         грузятся скрипты и куда браузеру разрешено отправлять данные. Даже если на
+         страницу попадёт чужой код, он не сможет отправить украденное на посторонний
+         сервер и не загрузится со стороннего домена.
+         connect-src — только наш backend, CDN, метрика и геокодер подсказок. -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' https://cdn.poehali.dev https://mc.yandex.ru https://mc.yandex.com https://yastatic.net;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' data: https://fonts.gstatic.com;
+      img-src 'self' data: blob: https:;
+      connect-src 'self' ws: wss: https://functions.poehali.dev https://cdn.poehali.dev https://mc.yandex.ru https://mc.yandex.com https://nominatim.openstreetmap.org;
+      frame-src https://mc.yandex.ru https://mc.yandex.com;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      frame-ancestors 'none';
+      upgrade-insecure-requests;
+    "/>
     <title>ЩИТ — Международная платформа специалистов по безопасности | SHCHIT</title>
     <meta name="description" content="Международная платформа проверенных специалистов по безопасности: частные детективы, телохранители, полиграфологи, эксперты по кибербезопасности и охранные агентства из разных стран — в одном каталоге. International platform of verified security specialists."/>
     <meta name="keywords" content="security specialists, detectives, bodyguards, polygraph, cybersecurity, безопасность, детектив, телохранитель, полиграфолог, охрана"/>

@@ -14,9 +14,17 @@ type LicenseEntry = { number: string; date: string; authority: string };
 
 export default function ProviderDashboard({ setActive, openChat }: { setActive: (s: Section) => void; openChat?: (t: { name: string; title: string; avatar?: string | null; pairKey?: string }) => void }) {
   const { lang, tr } = useLang();
-  const { logout, user } = useAuth();
+  const { logout, logoutAll, user } = useAuth();
   const slug = user ? `provider-${user.id}` : "morozov";
   const handleLogout = async () => { await logout(); setActive("home"); window.scrollTo({ top: 0 }); };
+  // Завершение сеансов на всех устройствах — с подтверждением, так как
+  // действие затрагивает и другие устройства пользователя.
+  const handleLogoutAll = async () => {
+    if (!window.confirm(tr("dashLogoutAllConfirm"))) return;
+    await logoutAll();
+    setActive("home");
+    window.scrollTo({ top: 0 });
+  };
   // Вкладка "verify" объединена со "stats" в единый раздел "Профиль и статистика" —
   // верификация, документы и метрики теперь показываются вместе, без переключения.
   const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts" | "friends">("requests");
@@ -393,10 +401,16 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
             <span className="text-xs text-muted-foreground">{user?.email || ""}</span>
           </div>
         </div>
-        <button onClick={handleLogout} className="shrink-0 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5">
-          <Icon name="LogOut" size={13} />
-          {tr("dashLogout")}
-        </button>
+        <div className="shrink-0 flex items-center gap-2">
+          <button onClick={handleLogoutAll} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-3 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5" title={tr("dashLogoutAll")}>
+            <Icon name="ShieldOff" size={13} />
+            {tr("dashLogoutAll")}
+          </button>
+          <button onClick={handleLogout} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5">
+            <Icon name="LogOut" size={13} />
+            {tr("dashLogout")}
+          </button>
+        </div>
       </div>
 
       {locked && (

@@ -12,7 +12,15 @@ from email.mime.text import MIMEText
 import psycopg2
 
 SCHEMA = 't_p50633472_niche_creator_networ'
-SESSION_DAYS = 30
+# Боевой домен сайта — источник по умолчанию для CORS.
+PRIMARY_ORIGIN = 'https://shieldpspl.ru'
+# Максимальный срок жизни сессии. Сокращён с 30 дней: чем короче окно,
+# тем меньше пользы от украденного токена. Сессия продлевается сама,
+# пока человек пользуется сайтом (скользящее окно ниже).
+SESSION_DAYS = 7
+# Если сессией не пользовались столько дней — она считается мёртвой,
+# даже если формальный срок ещё не истёк.
+SESSION_IDLE_DAYS = 2
 CODE_TTL_MIN = 10
 MAX_2FA_ATTEMPTS = 5
 
@@ -134,6 +142,20 @@ def _verify_password(password: str, stored: str) -> bool:
     return hmac.compare_digest(_hash_password(password, salt), digest)
 
 
+def _fingerprint(event: dict) -> str:
+    '''
+    Отпечаток клиента: браузер + подсеть IP. Нужен, чтобы украденный токен
+    не работал с чужого устройства. Берём /16 от IPv4 (первые два октета),
+    а не полный адрес — иначе сессия рвалась бы при обычной смене сети
+    (мобильный интернет, переход на Wi-Fi).
+    '''
+    headers = event.get('headers') or {}
+    ua = (headers.get('User-Agent') or headers.get('user-agent') or '')[:200]
+    ip = _client_ip(event)
+    net = '.'.join(ip.split('.')[:2]) if '.' in ip else ip[:16]
+    return hashlib.sha256(f'{ua}|{net}'.encode()).hexdigest()
+
+
 def _client_ip(event: dict) -> str:
     try:
         ip = (event.get('requestContext', {}).get('identity', {}).get('sourceIp') or '')
@@ -174,11 +196,34 @@ def _record_attempt(cur, identifier: str, ip: str) -> None:
     )
 
 
-def _resp(status: int, body: dict) -> dict:
+def _allowed_origin(event: dict) -> str:
+    '''
+    Возвращает Origin запроса, если он в списке доверенных, иначе боевой домен.
+    Сужение с '*' до белого списка: чужой сайт не сможет обращаться к авторизации
+    от имени пользователя. Превью-домены платформы разрешены, чтобы не ломать
+    разработку.
+    '''
+    headers = event.get('headers') or {}
+    origin = (headers.get('Origin') or headers.get('origin') or '').strip()
+    if not origin:
+        return PRIMARY_ORIGIN
+    host = origin.split('://')[-1].lower()
+    if host == 'shieldpspl.ru' or host.endswith('.shieldpspl.ru'):
+        return origin
+    # Превью и рабочие окружения платформы.
+    if host.endswith('.poehali.dev'):
+        return origin
+    if host.startswith('localhost:') or host.startswith('127.0.0.1:'):
+        return origin
+    return PRIMARY_ORIGIN
+
+
+def _resp(status: int, body: dict, event: dict | None = None) -> dict:
     return {
         'statusCode': status,
         'headers': {
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': _allowed_origin(event or {}),
+            'Vary': 'Origin',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
             'Content-Type': 'application/json',
@@ -199,11 +244,12 @@ def handler(event: dict, context) -> dict:
     '''
     method = event.get('httpMethod', 'POST')
     if method == 'OPTIONS':
-        return _resp(200, {})
+        return _resp(200, {}, event)
 
     headers = event.get('headers') or {}
     token = headers.get('X-Auth-Token') or headers.get('x-auth-token') or ''
     client_ip = _client_ip(event)
+    fingerprint = _fingerprint(event)
 
     raw_body = (event.get('body') or '').strip()
     try:
@@ -222,10 +268,10 @@ def handler(event: dict, context) -> dict:
             admin_pwd = os.environ.get('ADMIN_PASSWORD', '')
             identifier = f'admin:{client_ip}'
             if _too_many_attempts(cur, identifier, client_ip):
-                return _resp(429, {'error': 'too_many_attempts'})
+                return _resp(429, {'error': 'too_many_attempts'}, event)
             if not admin_pwd or not hmac.compare_digest(password, admin_pwd):
                 _record_attempt(cur, identifier, client_ip)
-                return _resp(401, {'error': 'invalid_credentials'})
+                return _resp(401, {'error': 'invalid_credentials'}, event)
             role = body.get('role') if body.get('role') in ('client', 'provider') else 'client'
             admin_email = f"admin+{role}@shchit.local"
             cur.execute(f"SELECT id, role, name FROM {SCHEMA}.users WHERE email = %s", (admin_email,))
@@ -241,8 +287,8 @@ def handler(event: dict, context) -> dict:
                     (admin_email, placeholder, role, 'Администратор'),
                 )
                 user_id = cur.fetchone()[0]
-            new_token = _create_session(cur, user_id)
-            return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': admin_email, 'role': role, 'name': 'Администратор', 'isAdmin': True}})
+            new_token = _create_session(cur, user_id, fingerprint)
+            return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': admin_email, 'role': role, 'name': 'Администратор', 'isAdmin': True}}, event)
 
         if action == 'register':
             email = (body.get('email') or '').strip().lower()[:200]
@@ -251,19 +297,19 @@ def handler(event: dict, context) -> dict:
             name = (body.get('name') or '').strip()[:200]
             consent = bool(body.get('consent'))
             if not email or not EMAIL_RE.match(email):
-                return _resp(400, {'error': 'invalid_email'})
+                return _resp(400, {'error': 'invalid_email'}, event)
             if _is_reserved_email(email):
                 # Защита от повышения привилегий: служебные админ-адреса нельзя занять.
-                return _resp(400, {'error': 'invalid_email'})
+                return _resp(400, {'error': 'invalid_email'}, event)
             if len(password) < 8 or len(password) > 200:
-                return _resp(400, {'error': 'weak_password'})
+                return _resp(400, {'error': 'weak_password'}, event)
             if not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
-                return _resp(400, {'error': 'weak_password'})
+                return _resp(400, {'error': 'weak_password'}, event)
             if not consent:
-                return _resp(400, {'error': 'consent'})
+                return _resp(400, {'error': 'consent'}, event)
             cur.execute(f"SELECT id FROM {SCHEMA}.users WHERE email = %s", (email,))
             if cur.fetchone():
-                return _resp(409, {'error': 'email_exists'})
+                return _resp(409, {'error': 'email_exists'}, event)
             pwd_hash = _make_hash(password)
             consent_version = (str(body.get('consentVersion') or '1.0'))[:20]
             src_ip = client_ip
@@ -286,8 +332,8 @@ def handler(event: dict, context) -> dict:
                     f"false, false, 'start') ON CONFLICT (slug) DO NOTHING",
                     (prov_slug, name or 'Специалист', name or 'Specialist'),
                 )
-            new_token = _create_session(cur, user_id)
-            return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': email, 'role': role, 'name': name}})
+            new_token = _create_session(cur, user_id, fingerprint)
+            return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': email, 'role': role, 'name': name}}, event)
 
         if action == 'login':
             email = (body.get('email') or '').strip().lower()[:200]
@@ -295,106 +341,153 @@ def handler(event: dict, context) -> dict:
             lang = body.get('lang') if body.get('lang') in ('ru', 'en') else 'ru'
             if _is_reserved_email(email):
                 # Служебные админ-адреса входят только через action=admin_login по ADMIN_PASSWORD.
-                return _resp(401, {'error': 'invalid_credentials'})
+                return _resp(401, {'error': 'invalid_credentials'}, event)
             identifier = f'login:{email}'
             if _too_many_attempts(cur, identifier, client_ip):
-                return _resp(429, {'error': 'too_many_attempts'})
+                return _resp(429, {'error': 'too_many_attempts'}, event)
             cur.execute(f"SELECT id, password_hash, role, name, twofa_enabled FROM {SCHEMA}.users WHERE email = %s", (email,))
             row = cur.fetchone()
             if not row or not _verify_password(password, row[1]):
                 _record_attempt(cur, identifier, client_ip)
-                return _resp(401, {'error': 'invalid_credentials'})
+                return _resp(401, {'error': 'invalid_credentials'}, event)
             twofa_on = bool(row[4]) if len(row) > 4 else True
             if twofa_on:
                 ch = _start_2fa(cur, row[0], email, lang)
-                return _resp(200, {'need2fa': True, 'challengeId': ch['challengeId'], 'emailHint': _mask_email(email), 'sent': ch['sent']})
-            new_token = _create_session(cur, row[0])
-            return _resp(200, {'token': new_token, 'user': {'id': row[0], 'email': email, 'role': row[2], 'name': row[3]}})
+                return _resp(200, {'need2fa': True, 'challengeId': ch['challengeId'], 'emailHint': _mask_email(email), 'sent': ch['sent']}, event)
+            new_token = _create_session(cur, row[0], fingerprint)
+            return _resp(200, {'token': new_token, 'user': {'id': row[0], 'email': email, 'role': row[2], 'name': row[3]}}, event)
 
         if action == 'verify_2fa':
             challenge = (body.get('challengeId') or '').strip()[:64]
             code = (body.get('code') or '').strip()
             if not challenge or not code.isdigit() or len(code) != 6:
-                return _resp(400, {'error': 'invalid_code'})
+                return _resp(400, {'error': 'invalid_code'}, event)
             identifier = f'2fa:{challenge}'
             if _too_many_attempts(cur, identifier, client_ip):
-                return _resp(429, {'error': 'too_many_attempts'})
+                return _resp(429, {'error': 'too_many_attempts'}, event)
             cur.execute(
                 f"SELECT id, user_id, code_hash, attempts, expires_at FROM {SCHEMA}.two_factor_codes WHERE challenge_id = %s",
                 (challenge,),
             )
             rec = cur.fetchone()
             if not rec:
-                return _resp(400, {'error': 'challenge_not_found'})
+                return _resp(400, {'error': 'challenge_not_found'}, event)
             rec_id, uid, code_hash, attempts, expires_at = rec
             if expires_at < datetime.utcnow():
                 cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE id = %s", (rec_id,))
-                return _resp(400, {'error': 'code_expired'})
+                return _resp(400, {'error': 'code_expired'}, event)
             if attempts >= MAX_2FA_ATTEMPTS:
                 cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE id = %s", (rec_id,))
-                return _resp(429, {'error': 'too_many_attempts'})
+                return _resp(429, {'error': 'too_many_attempts'}, event)
             if not hmac.compare_digest(code_hash, _hash_code(code)):
                 cur.execute(f"UPDATE {SCHEMA}.two_factor_codes SET attempts = attempts + 1 WHERE id = %s", (rec_id,))
                 _record_attempt(cur, identifier, client_ip)
-                return _resp(401, {'error': 'wrong_code'})
+                return _resp(401, {'error': 'wrong_code'}, event)
             cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE id = %s", (rec_id,))
             cur.execute(f"SELECT id, email, role, name FROM {SCHEMA}.users WHERE id = %s", (uid,))
             u = cur.fetchone()
             if not u:
-                return _resp(401, {'error': 'invalid_session'})
-            new_token = _create_session(cur, u[0])
-            return _resp(200, {'token': new_token, 'user': {'id': u[0], 'email': u[1], 'role': u[2], 'name': u[3]}})
+                return _resp(401, {'error': 'invalid_session'}, event)
+            new_token = _create_session(cur, u[0], fingerprint)
+            return _resp(200, {'token': new_token, 'user': {'id': u[0], 'email': u[1], 'role': u[2], 'name': u[3]}}, event)
 
         if action == 'resend_2fa':
             challenge = (body.get('challengeId') or '').strip()[:64]
             lang = body.get('lang') if body.get('lang') in ('ru', 'en') else 'ru'
             if not challenge:
-                return _resp(400, {'error': 'challenge_not_found'})
+                return _resp(400, {'error': 'challenge_not_found'}, event)
             identifier = f'resend:{challenge}'
             if _too_many_attempts(cur, identifier, client_ip):
-                return _resp(429, {'error': 'too_many_attempts'})
+                return _resp(429, {'error': 'too_many_attempts'}, event)
             _record_attempt(cur, identifier, client_ip)
             cur.execute(f"SELECT user_id FROM {SCHEMA}.two_factor_codes WHERE challenge_id = %s", (challenge,))
             rec = cur.fetchone()
             if not rec:
-                return _resp(400, {'error': 'challenge_not_found'})
+                return _resp(400, {'error': 'challenge_not_found'}, event)
             cur.execute(f"SELECT email FROM {SCHEMA}.users WHERE id = %s", (rec[0],))
             ur = cur.fetchone()
             if not ur:
-                return _resp(400, {'error': 'challenge_not_found'})
+                return _resp(400, {'error': 'challenge_not_found'}, event)
             ch = _start_2fa(cur, rec[0], ur[0], lang)
-            return _resp(200, {'challengeId': ch['challengeId'], 'sent': ch['sent']})
+            return _resp(200, {'challengeId': ch['challengeId'], 'sent': ch['sent']}, event)
 
         if action == 'me':
             if not token:
-                return _resp(401, {'error': 'no_token'})
+                return _resp(401, {'error': 'no_token'}, event)
             cur.execute(
-                f"SELECT u.id, u.email, u.role, u.name, s.expires_at, u.is_admin, u.public_id "
+                f"SELECT u.id, u.email, u.role, u.name, s.expires_at, u.is_admin, u.public_id, "
+                f"s.revoked, s.last_seen_at, s.fingerprint "
                 f"FROM {SCHEMA}.sessions s JOIN {SCHEMA}.users u ON u.id = s.user_id "
                 f"WHERE s.token = %s",
                 (token,),
             )
             row = cur.fetchone()
-            if not row or row[4] < datetime.utcnow():
-                return _resp(401, {'error': 'invalid_session'})
-            return _resp(200, {'user': {'id': row[0], 'email': row[1], 'role': row[2], 'name': row[3], 'isAdmin': bool(row[5]), 'publicId': row[6]}})
+            now = datetime.utcnow()
+            # Сессия недействительна, если её отозвали или вышел срок.
+            if not row or row[7] or row[4] < now:
+                return _resp(401, {'error': 'invalid_session'}, event)
+            # Долгий простой — считаем сессию мёртвой и гасим её.
+            if row[8] and row[8] < now - timedelta(days=SESSION_IDLE_DAYS):
+                cur.execute(f"UPDATE {SCHEMA}.sessions SET revoked = true WHERE token = %s", (token,))
+                return _resp(401, {'error': 'invalid_session'}, event)
+            # Токен предъявлен с другого устройства/сети — вероятная кража.
+            # Гасим сессию: настоящему владельцу достаточно войти заново.
+            if row[9] and fingerprint and not hmac.compare_digest(str(row[9]), fingerprint):
+                cur.execute(f"UPDATE {SCHEMA}.sessions SET revoked = true WHERE token = %s", (token,))
+                return _resp(401, {'error': 'invalid_session'}, event)
+            # Скользящее окно: пока человек пользуется сайтом, сессия живёт.
+            cur.execute(
+                f"UPDATE {SCHEMA}.sessions SET last_seen_at = now(), expires_at = %s WHERE token = %s",
+                (now + timedelta(days=SESSION_DAYS), token),
+            )
+            return _resp(200, {'user': {'id': row[0], 'email': row[1], 'role': row[2], 'name': row[3], 'isAdmin': bool(row[5]), 'publicId': row[6]}}, event)
 
         if action == 'logout':
             if token:
-                cur.execute(f"UPDATE {SCHEMA}.sessions SET expires_at = now() WHERE token = %s", (token,))
-            return _resp(200, {'ok': True})
+                cur.execute(
+                    f"UPDATE {SCHEMA}.sessions SET revoked = true, expires_at = now() WHERE token = %s",
+                    (token,),
+                )
+            return _resp(200, {'ok': True}, event)
 
-        return _resp(400, {'error': 'unknown_action'})
+        if action == 'logout_all':
+            # Выход на всех устройствах: гасит все сессии пользователя.
+            # Нужен, если токен мог утечь — иначе украденную сессию не отозвать.
+            if not token:
+                return _resp(401, {'error': 'no_token'}, event)
+            cur.execute(
+                f"SELECT user_id, expires_at, revoked FROM {SCHEMA}.sessions WHERE token = %s",
+                (token,),
+            )
+            srow = cur.fetchone()
+            if not srow or srow[2] or srow[1] < datetime.utcnow():
+                return _resp(401, {'error': 'invalid_session'}, event)
+            cur.execute(
+                f"UPDATE {SCHEMA}.sessions SET revoked = true, expires_at = now() WHERE user_id = %s",
+                (srow[0],),
+            )
+            return _resp(200, {'ok': True}, event)
+
+        return _resp(400, {'error': 'unknown_action'}, event)
     finally:
         conn.close()
 
 
-def _create_session(cur, user_id: int) -> str:
+def _create_session(cur, user_id: int, fingerprint: str = '') -> str:
     token = pysecrets.token_hex(32)
     expires = datetime.utcnow() + timedelta(days=SESSION_DAYS)
     cur.execute(
-        f"INSERT INTO {SCHEMA}.sessions (token, user_id, expires_at) "
-        f"VALUES (%s, %s, %s)",
-        (token, user_id, expires),
+        f"INSERT INTO {SCHEMA}.sessions (token, user_id, expires_at, fingerprint) "
+        f"VALUES (%s, %s, %s, %s)",
+        (token, user_id, expires, fingerprint or None),
+    )
+    # Гигиена: при каждом входе гасим давно неиспользуемые сессии этого
+    # пользователя, чтобы старые токены не жили в базе бесконечно.
+    idle_before = datetime.utcnow() - timedelta(days=SESSION_IDLE_DAYS)
+    cur.execute(
+        f"UPDATE {SCHEMA}.sessions SET revoked = true "
+        f"WHERE user_id = %s AND revoked = false AND token <> %s "
+        f"AND (expires_at < now() OR last_seen_at < %s)",
+        (user_id, token, idle_before),
     )
     return token
