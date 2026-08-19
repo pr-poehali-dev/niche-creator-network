@@ -110,9 +110,18 @@ export function providerLocalTime(p: Provider): string | null {
   }
 }
 
+export type PlatformStats = {
+  specialists: number;
+  verified: number;
+  countries: number;
+  cities: number;
+  services: number;
+};
+
 export function useProviders() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [servicePrices, setServicePrices] = useState<ServicePrices>({});
+  const [stats, setStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
   const token = getAuthToken();
 
@@ -126,6 +135,7 @@ export function useProviders() {
         if (!alive) return;
         if (Array.isArray(d.providers)) setProviders(d.providers);
         if (d.servicePrices && typeof d.servicePrices === "object") setServicePrices(d.servicePrices);
+        if (d.stats && typeof d.stats === "object") setStats(d.stats);
       })
       .catch(() => {})
       .finally(() => alive && setLoading(false));
@@ -136,5 +146,5 @@ export function useProviders() {
     // контакты специалистов, у вышедшего — снова скрываются.
   }, [token]);
 
-  return { providers, servicePrices, loading };
+  return { providers, servicePrices, stats, loading };
 }

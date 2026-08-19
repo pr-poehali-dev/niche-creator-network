@@ -221,11 +221,15 @@ export function LandingWhyUs() {
 
 export function LandingStats() {
   const { tr } = useLang();
+  // Цифры берём из базы: показываем реальное положение дел, а не выдуманные
+  // «1 200+ специалистов». Настоящие скромные числа честнее и безопаснее —
+  // выдуманные легко опровергнуть, и это ударит по репутации.
+  const { stats: real } = useProviders();
   const stats = [
-    { value: "1 200+", key: "lpStat1" as const, icon: "Users" },
-    { value: "98%", key: "lpStat2" as const, icon: "ThumbsUp" },
+    { value: real ? String(real.specialists) : "—", key: "lpStat1" as const, icon: "Users" },
+    { value: real ? String(real.verified) : "—", key: "lpStat2" as const, icon: "BadgeCheck" },
     { value: "24/7", key: "lpStat3" as const, icon: "Headset" },
-    { value: "15+", key: "lpStat4" as const, icon: "Globe" },
+    { value: real ? String(real.cities + real.countries) : "—", key: "lpStat4" as const, icon: "Globe" },
   ];
   return (
     <section className="border-y border-border bg-card/40">
@@ -338,36 +342,72 @@ export function LandingServices() {
 }
 
 export function LandingTestimonials() {
-  const { lang, tr } = useLang();
-  const reviews = [
-    { name: { ru: "Дмитрий О.", en: "Dmitry O." }, role: { ru: "Клиент · Москва", en: "Client · Moscow" }, text: { ru: "Нашёл полиграфолога за 10 минут. Проверенный специалист, всё прозрачно — рекомендую.", en: "Found a polygraph examiner in 10 minutes. A verified specialist, fully transparent — highly recommend." } },
-    { name: { ru: "Игорь С.", en: "Igor S." }, role: { ru: "Исполнитель · Дубай", en: "Provider · Dubai" }, text: { ru: "Платформа реально приводит клиентов. Никакой комиссии со сделок — только подписка.", en: "The platform really brings in clients. No deal commission — just a subscription." } },
-    { name: { ru: "Елена В.", en: "Elena V." }, role: { ru: "Клиент · Лондон", en: "Client · London" }, text: { ru: "Удобно сравнивать кейсы и рейтинги. Защита данных на высоте, общение в закрытом чате.", en: "Convenient to compare cases and ratings. Data protection is top-notch, communication in a private chat." } },
+  const { tr } = useLang();
+
+  // Раньше здесь показывались три выдуманных отзыва от несуществующих людей.
+  // Для платформы, которая продаёт доверие, это недопустимый риск: подделку
+  // легко распознать, и репутация страдает сильнее, чем от отсутствия отзывов.
+  // Теперь берём настоящие отзывы клиентов; пока их нет — честно показываем,
+  // на чём построена работа платформы.
+  // Настоящих отзывов в базе пока нет (таблица reviews пуста), а поле
+  // provider.reviews — это лишь счётчик, не тексты. Поэтому показываем
+  // принципы работы; когда появятся реальные отзывы, здесь появится их вывод.
+  const real: { text: string; author: string; rating: number; provider: string }[] = [];
+
+  const principles = [
+    { icon: "BadgeCheck", title: tr("lpTrust1Title"), desc: tr("lpTrust1Desc") },
+    { icon: "Lock", title: tr("lpTrust2Title"), desc: tr("lpTrust2Desc") },
+    { icon: "Scale", title: tr("lpTrust3Title"), desc: tr("lpTrust3Desc") },
   ];
+
   return (
     <section className="border-y border-border bg-card/30">
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <div className="tag-security inline-block mb-3">{tr("lpRevTag")}</div>
-          <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground">{tr("lpRevTitle")}</h2>
+          <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground">
+            {real.length > 0 ? tr("lpRevTitle") : tr("lpTrustTitle")}
+          </h2>
+          {real.length === 0 && (
+            <p className="text-sm text-muted-foreground mt-3 max-w-2xl mx-auto">{tr("lpTrustNote")}</p>
+          )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
-          {reviews.map((r) => (
-            <div key={r.name.en} className="border border-border rounded-sm bg-card p-6 card-hover">
-              <div className="flex gap-0.5 mb-3">
-                {[1, 2, 3, 4, 5].map((i) => <Icon key={i} name="Star" size={14} className="text-gold fill-current" />)}
-              </div>
-              <p className="text-sm text-foreground leading-relaxed mb-4">«{L(r.text, lang)}»</p>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full gold-gradient flex items-center justify-center text-[hsl(220,20%,6%)] font-montserrat font-bold text-xs">{L(r.name, lang).charAt(0)}</div>
-                <div>
-                  <div className="font-montserrat font-semibold text-xs text-foreground">{L(r.name, lang)}</div>
-                  <div className="text-[10px] text-muted-foreground">{L(r.role, lang)}</div>
+
+        {real.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+            {real.map((r, i) => (
+              <div key={`${r.author}-${i}`} className="border border-border rounded-sm bg-card p-6 card-hover card-tilt">
+                <div className="flex gap-0.5 mb-3">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Icon key={n} name="Star" size={14} className={n <= r.rating ? "text-gold fill-current" : "text-muted-foreground/40"} />
+                  ))}
+                </div>
+                <p className="text-sm text-foreground leading-relaxed mb-4">«{r.text}»</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full gold-gradient flex items-center justify-center text-[hsl(220,20%,6%)] font-montserrat font-bold text-xs">
+                    {(r.author || "?").charAt(0)}
+                  </div>
+                  <div>
+                    <div className="font-montserrat font-semibold text-xs text-foreground">{r.author || tr("lpRevAnon")}</div>
+                    <div className="text-[10px] text-muted-foreground">{r.provider}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+            {principles.map((p) => (
+              <div key={p.title} className="border border-border rounded-sm bg-card p-6 card-hover card-tilt">
+                <div className="w-10 h-10 gold-gradient rounded-sm flex items-center justify-center mb-3">
+                  <Icon name={p.icon} fallback="ShieldCheck" size={18} className="text-[hsl(220,20%,6%)]" />
+                </div>
+                <div className="font-montserrat font-bold text-sm text-foreground mb-2">{p.title}</div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

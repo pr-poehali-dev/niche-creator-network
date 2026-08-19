@@ -209,4 +209,31 @@ def handler(event: dict, context) -> dict:
 
     service_prices = {k: v['price'] for k, v in service_min.items()}
 
-    return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'providers': providers, 'servicePrices': service_prices})}
+    # Честная статистика для главной страницы: считаем по фактическим данным,
+    # а не показываем красивые выдуманные числа. Лучше скромные настоящие
+    # цифры, чем громкие выдуманные — на них строится доверие к платформе.
+    active_list = [p for p in providers if p.get('active')]
+    countries = {
+        (p.get('country') or {}).get('ru')
+        for p in active_list
+        if (p.get('country') or {}).get('ru')
+    }
+    cities = {
+        (p.get('city') or {}).get('ru')
+        for p in active_list
+        if (p.get('city') or {}).get('ru')
+    }
+    verified_count = sum(1 for p in active_list if p.get('verified'))
+    stats = {
+        'specialists': len(active_list),
+        'verified': verified_count,
+        'countries': len(countries),
+        'cities': len(cities),
+        'services': len(service_prices),
+    }
+
+    return {
+        'statusCode': 200,
+        'headers': cors,
+        'body': json.dumps({'providers': providers, 'servicePrices': service_prices, 'stats': stats}),
+    }

@@ -24,7 +24,22 @@ VALID_PLANS = ('start', 'pro', 'premium', 'chop')
 
 # Минимальные ожидаемые суммы в рублях (со скидкой 70% от полной цены — с запасом на промо и валютную конвертацию)
 PLAN_PRICES_RUB = {'start': 1990, 'pro': 4490, 'premium': 7990, 'chop': 12990}
-MIN_ACCEPTABLE_FACTOR = 0.5  # не даём активировать тариф, если оплачено меньше половины минимальной цены
+# Годовая подписка стоит как 10 месяцев (2 в подарок) — так же, как в create-payment.
+YEAR_MONTHS = 10
+# Максимальная законная скидка (промо). Ниже этой доли платёж считается поддельным.
+MAX_DISCOUNT = 0.30
+# Небольшой допуск на округление и курсовые копейки.
+ROUNDING_TOLERANCE = 0.02
+
+
+def _expected_min_rub(plan: str, period: str) -> float:
+    '''
+    Минимально допустимая сумма для тарифа с учётом периода и максимальной
+    скидки. Раньше принимались любые 50% от МЕСЯЧНОЙ цены, из-за чего годовую
+    подписку можно было получить, заплатив за полмесяца.
+    '''
+    base = PLAN_PRICES_RUB[plan] * (YEAR_MONTHS if period == 'year' else 1)
+    return base * (1 - MAX_DISCOUNT) * (1 - ROUNDING_TOLERANCE)
 
 # URL функции отправки чека на почту (send-receipt). Берётся из переменной
 # окружения RECEIPT_FUNCTION_URL, чтобы не хардкодить адрес в коде и менять его
@@ -253,8 +268,11 @@ def handler(event, context):
                 paid_amount = float((verified.get('amount') or {}).get('value') or 0)
             except (TypeError, ValueError):
                 paid_amount = 0
-            expected_min = PLAN_PRICES_RUB[plan] * MIN_ACCEPTABLE_FACTOR
+            if period not in ('month', 'year'):
+                period = 'month'
+            expected_min = _expected_min_rub(plan, period)
             if paid_amount < expected_min:
+                print(f'[payment-webhook] amount_mismatch plan={plan} period={period} paid={paid_amount} min={expected_min}')
                 return _resp(400, {'error': 'amount_mismatch'})
             ok = _activate(slug, plan, period)
             if ok:

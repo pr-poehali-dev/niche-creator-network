@@ -34,12 +34,22 @@
       "bodyMatcher": "partial"
     },
     {
-      "name": "Create payment RU without keys returns not configured",
+      "name": "Payment without auth is rejected (anti account takeover)",
       "method": "POST",
       "path": "/",
-      "body": {"plan": "pro", "countryCode": "RU", "email": "test@example.com"},
-      "expectedStatus": 200,
-      "expectedBody": {"provider": "yookassa"},
+      "body": {"plan": "pro", "countryCode": "RU", "email": "test@example.com", "slug": "morozov"},
+      "expectedStatus": 401,
+      "expectedBody": {"error": "unauthorized"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Payment with forged token is rejected",
+      "method": "POST",
+      "path": "/",
+      "headers": {"X-Auth-Token": "0000000000000000000000000000000000000000000000000000000000000000"},
+      "body": {"plan": "pro", "countryCode": "RU", "slug": "morozov"},
+      "expectedStatus": 401,
+      "expectedBody": {"error": "unauthorized"},
       "bodyMatcher": "partial"
     }
   ]

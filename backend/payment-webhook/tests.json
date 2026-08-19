@@ -12,43 +12,80 @@
       "path": "/",
       "body": {},
       "expectedStatus": 200,
-      "expectedBody": {"ignored": "unknown"},
+      "expectedBody": {
+        "ignored": "unknown"
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "Unknown payload ignored",
       "method": "POST",
       "path": "/",
-      "body": {"hello": "world"},
+      "body": {
+        "hello": "world"
+      },
       "expectedStatus": 200,
-      "expectedBody": {"ignored": "unknown"},
+      "expectedBody": {
+        "ignored": "unknown"
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "YooKassa non-succeeded ignored",
       "method": "POST",
       "path": "/",
-      "body": {"event": "payment.waiting_for_capture", "object": {"id": "1"}},
+      "body": {
+        "event": "payment.waiting_for_capture",
+        "object": {
+          "id": "1"
+        }
+      },
       "expectedStatus": 200,
-      "expectedBody": {"ok": true},
+      "expectedBody": {
+        "ok": true
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "YooKassa succeeded rejected without server-side verification",
       "method": "POST",
       "path": "/",
-      "body": {"event": "payment.succeeded", "object": {"id": "fake-unverifiable-test-2026-07-05-hist-b", "metadata": {"slug": "morozov", "plan": "premium", "period": "month"}}},
+      "body": {
+        "event": "payment.succeeded",
+        "object": {
+          "id": "unverifiable-9ce0c8c7706f4719b50043baea5fa95b",
+          "metadata": {
+            "slug": "morozov",
+            "plan": "premium",
+            "period": "month"
+          }
+        }
+      },
       "expectedStatus": 403,
-      "expectedBody": {"error": "verification_failed"},
+      "expectedBody": {
+        "error": "verification_failed"
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "Paddle completed rejected without valid signature",
       "method": "POST",
       "path": "/",
-      "body": {"event_type": "transaction.completed", "data": {"id": "fake-txn", "custom_data": {"slug": "semenov", "plan": "pro", "period": "month"}}},
+      "body": {
+        "event_type": "transaction.completed",
+        "data": {
+          "id": "fake-txn",
+          "custom_data": {
+            "slug": "semenov",
+            "plan": "pro",
+            "period": "month"
+          }
+        }
+      },
       "expectedStatus": 403,
-      "expectedBody": {"error": "bad_signature"},
+      "expectedBody": {
+        "error": "bad_signature"
+      },
       "bodyMatcher": "partial"
     }
   ]

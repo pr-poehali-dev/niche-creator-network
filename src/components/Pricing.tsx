@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Icon from "@/components/ui/icon";
 import { useLang, t } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
+import { authHeaders } from "@/lib/authToken";
 import { useGeo } from "@/lib/geo";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { downloadReceipt } from "@/lib/receipt";
@@ -110,7 +111,9 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
     try {
       const res = await fetch(func2url["create-payment"], {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        // Токен обязателен: сервер определяет по нему, чей профиль оплачивается.
+        // Без этого раньше можно было оформить подписку на чужой аккаунт.
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ plan: planKey, period, email, slug, countryCode: geo?.countryCode || "", returnUrl: window.location.href }),
       });
       const d = await res.json().catch(() => ({}));
@@ -119,14 +122,17 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
         window.location.assign(redirect);
         return;
       }
-      // Платёжная система ещё не настроена — показываем демо-успех
-      setStatus("success");
-      trackGoal(GOALS.paymentSuccess);
-      if (defaultEmail && defaultEmail.includes("@")) {
-        setAutoSent(true);
-        sendTo(defaultEmail);
-      }
-      if (!d.configured) setPayErr(tr("payNotConfigured"));
+      // Платёжная система не вернула ссылку на оплату. Раньше здесь
+      // показывался «успех» и отправлялась квитанция — это вводило человека
+      // в заблуждение: он видел галочку и письмо, хотя деньги не списывались,
+      // а доступ не открывался. Теперь честно сообщаем об ошибке и НЕ
+      // засчитываем несостоявшуюся оплату в статистику.
+      setStatus("form");
+      // Понятные подсказки вместо технических кодов ошибок.
+      if (res.status === 401) setPayErr(tr("payNeedLogin"));
+      else if (res.status === 403) setPayErr(tr("payProvidersOnly"));
+      else if (res.status === 429) setPayErr(tr("payTooMany"));
+      else setPayErr(tr(d.configured ? "payError" : "payNotConfigured"));
     } catch {
       setStatus("form");
       setPayErr(tr("payError"));

@@ -156,6 +156,68 @@ def _fingerprint(event: dict) -> str:
     return hashlib.sha256(f'{ua}|{net}'.encode()).hexdigest()
 
 
+def _device_label(event: dict) -> str:
+    '''
+    Понятное человеку описание устройства: «Chrome, Windows», «Safari, iPhone».
+    Показывается в журнале входов, чтобы владелец аккаунта узнал своё
+    устройство или заметил чужое.
+    '''
+    headers = event.get('headers') or {}
+    ua = (headers.get('User-Agent') or headers.get('user-agent') or '')
+    if not ua:
+        return 'Неизвестное устройство'
+    low = ua.lower()
+    # Порядок проверок важен: Edge и Yandex содержат в строке слово Chrome,
+    # поэтому их проверяем раньше.
+    if 'edg/' in low:
+        browser = 'Edge'
+    elif 'yabrowser' in low:
+        browser = 'Яндекс.Браузер'
+    elif 'opr/' in low or 'opera' in low:
+        browser = 'Opera'
+    elif 'firefox' in low:
+        browser = 'Firefox'
+    elif 'chrome' in low or 'crios' in low:
+        browser = 'Chrome'
+    elif 'safari' in low:
+        browser = 'Safari'
+    else:
+        browser = 'Браузер'
+    if 'iphone' in low:
+        device = 'iPhone'
+    elif 'ipad' in low:
+        device = 'iPad'
+    elif 'android' in low:
+        device = 'Android'
+    elif 'windows' in low:
+        device = 'Windows'
+    elif 'mac os' in low or 'macintosh' in low:
+        device = 'Mac'
+    elif 'linux' in low:
+        device = 'Linux'
+    else:
+        device = 'устройство'
+    return f'{browser}, {device}'[:120]
+
+
+def _ip_masked(event: dict) -> str:
+    '''
+    IP без последней части (192.168.1.x). Даёт понять «тот же интернет или
+    чужой», но не накапливает точный адрес — меньше персональных данных,
+    меньше вреда при утечке.
+    '''
+    ip = _client_ip(event)
+    if not ip:
+        return ''
+    if '.' in ip:
+        parts = ip.split('.')
+        if len(parts) == 4:
+            return '.'.join(parts[:3]) + '.x'
+    if ':' in ip:
+        return ':'.join(ip.split(':')[:3]) + ':…'
+    return ip[:64]
+
+
 def _client_ip(event: dict) -> str:
     try:
         ip = (event.get('requestContext', {}).get('identity', {}).get('sourceIp') or '')
@@ -250,6 +312,8 @@ def handler(event: dict, context) -> dict:
     token = headers.get('X-Auth-Token') or headers.get('x-auth-token') or ''
     client_ip = _client_ip(event)
     fingerprint = _fingerprint(event)
+    device_label = _device_label(event)
+    ip_masked = _ip_masked(event)
 
     raw_body = (event.get('body') or '').strip()
     try:
@@ -287,7 +351,7 @@ def handler(event: dict, context) -> dict:
                     (admin_email, placeholder, role, 'Администратор'),
                 )
                 user_id = cur.fetchone()[0]
-            new_token = _create_session(cur, user_id, fingerprint)
+            new_token = _create_session(cur, user_id, fingerprint, device_label, ip_masked)
             return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': admin_email, 'role': role, 'name': 'Администратор', 'isAdmin': True}}, event)
 
         if action == 'register':
@@ -332,7 +396,7 @@ def handler(event: dict, context) -> dict:
                     f"false, false, 'start') ON CONFLICT (slug) DO NOTHING",
                     (prov_slug, name or 'Специалист', name or 'Specialist'),
                 )
-            new_token = _create_session(cur, user_id, fingerprint)
+            new_token = _create_session(cur, user_id, fingerprint, device_label, ip_masked)
             return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': email, 'role': role, 'name': name}}, event)
 
         if action == 'login':
@@ -354,7 +418,7 @@ def handler(event: dict, context) -> dict:
             if twofa_on:
                 ch = _start_2fa(cur, row[0], email, lang)
                 return _resp(200, {'need2fa': True, 'challengeId': ch['challengeId'], 'emailHint': _mask_email(email), 'sent': ch['sent']}, event)
-            new_token = _create_session(cur, row[0], fingerprint)
+            new_token = _create_session(cur, row[0], fingerprint, device_label, ip_masked)
             return _resp(200, {'token': new_token, 'user': {'id': row[0], 'email': email, 'role': row[2], 'name': row[3]}}, event)
 
         if action == 'verify_2fa':
@@ -388,7 +452,7 @@ def handler(event: dict, context) -> dict:
             u = cur.fetchone()
             if not u:
                 return _resp(401, {'error': 'invalid_session'}, event)
-            new_token = _create_session(cur, u[0], fingerprint)
+            new_token = _create_session(cur, u[0], fingerprint, device_label, ip_masked)
             return _resp(200, {'token': new_token, 'user': {'id': u[0], 'email': u[1], 'role': u[2], 'name': u[3]}}, event)
 
         if action == 'resend_2fa':
@@ -450,6 +514,41 @@ def handler(event: dict, context) -> dict:
                 )
             return _resp(200, {'ok': True}, event)
 
+        if action == 'sessions':
+            # Журнал входов: список сеансов пользователя, чтобы он сам увидел
+            # чужое устройство и мог завершить все сеансы.
+            if not token:
+                return _resp(401, {'error': 'no_token'}, event)
+            cur.execute(
+                f"SELECT user_id FROM {SCHEMA}.sessions "
+                f"WHERE token = %s AND revoked = false AND expires_at > now()",
+                (token,),
+            )
+            srow = cur.fetchone()
+            if not srow:
+                return _resp(401, {'error': 'invalid_session'}, event)
+            cur.execute(
+                f"SELECT token, device_label, ip_masked, created_at, last_seen_at, revoked, expires_at "
+                f"FROM {SCHEMA}.sessions WHERE user_id = %s "
+                f"ORDER BY last_seen_at DESC LIMIT 20",
+                (srow[0],),
+            )
+            now = datetime.utcnow()
+            items = []
+            for r in cur.fetchall():
+                active = (not r[5]) and r[6] > now
+                items.append({
+                    # Сам токен наружу не отдаём никогда — только признак
+                    # «это ваш текущий сеанс».
+                    'current': r[0] == token,
+                    'device': r[1] or 'Неизвестное устройство',
+                    'ip': r[2] or '',
+                    'createdAt': r[3].isoformat() if r[3] else None,
+                    'lastSeenAt': r[4].isoformat() if r[4] else None,
+                    'active': active,
+                })
+            return _resp(200, {'sessions': items}, event)
+
         if action == 'logout_all':
             # Выход на всех устройствах: гасит все сессии пользователя.
             # Нужен, если токен мог утечь — иначе украденную сессию не отозвать.
@@ -473,13 +572,13 @@ def handler(event: dict, context) -> dict:
         conn.close()
 
 
-def _create_session(cur, user_id: int, fingerprint: str = '') -> str:
+def _create_session(cur, user_id: int, fingerprint: str = '', device: str = '', ip_masked: str = '') -> str:
     token = pysecrets.token_hex(32)
     expires = datetime.utcnow() + timedelta(days=SESSION_DAYS)
     cur.execute(
-        f"INSERT INTO {SCHEMA}.sessions (token, user_id, expires_at, fingerprint) "
-        f"VALUES (%s, %s, %s, %s)",
-        (token, user_id, expires, fingerprint or None),
+        f"INSERT INTO {SCHEMA}.sessions (token, user_id, expires_at, fingerprint, device_label, ip_masked) "
+        f"VALUES (%s, %s, %s, %s, %s, %s)",
+        (token, user_id, expires, fingerprint or None, device or None, ip_masked or None),
     )
     # Гигиена: при каждом входе гасим давно неиспользуемые сессии этого
     # пользователя, чтобы старые токены не жили в базе бесконечно.

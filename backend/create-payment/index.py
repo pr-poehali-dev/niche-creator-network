@@ -6,6 +6,9 @@ from datetime import datetime, timezone
 import urllib.request
 import urllib.error
 
+from auth_utils import get_auth_user, provider_slug
+from rate_limit import check_and_count
+
 # Промо-скидка 30% действует до 1 сентября 2026 года (включительно по 31 августа)
 PROMO_DISCOUNT = 0.30
 PROMO_UNTIL = datetime(2026, 9, 1, tzinfo=timezone.utc)
@@ -243,9 +246,26 @@ def handler(event, context):
     if action == 'quote':
         return _resp(200, quote)
 
-    email = (body.get('email') or '').strip()
+    # ЗАЩИТА ОТ ПОДМЕНЫ АККАУНТА.
+    # Раньше slug (кому включить подписку) приходил из тела запроса — любой
+    # человек без авторизации мог создать платёж на чужой профиль. Теперь
+    # аккаунт определяется ТОЛЬКО по токену сессии: оплатить можно лишь себе.
+    user = get_auth_user(event)
+    if not user:
+        return _resp(401, {'error': 'unauthorized', 'configured': False})
+    if user.get('role') != 'provider':
+        # Подписка предназначена специалистам; клиентам оплачивать нечего.
+        return _resp(403, {'error': 'providers_only', 'configured': False})
+    slug = provider_slug(user)
+
+    # Ограничение частоты: защита от перебора и наплыва платежей с одного адреса.
+    if not check_and_count(event, 'create-payment', limit=10, window_sec=600):
+        return _resp(429, {'error': 'too_many_requests', 'configured': False})
+
+    # Почту берём из аккаунта, а не из запроса: чек должен уходить владельцу
+    # профиля, а не тому, кто подставил чужой адрес.
+    email = (user.get('email') or body.get('email') or '').strip()
     return_url = (body.get('returnUrl') or '').strip()
-    slug = (body.get('slug') or '').strip()[:64]
     per = 'year' if months == 12 else 'month'
 
     # Списываем всегда в рублях через ЮКассу — независимо от страны специалиста

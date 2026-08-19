@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Icon from "@/components/ui/icon";
+import SessionsLog from "@/components/SessionsLog";
 import { useLang } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
@@ -1237,6 +1238,8 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
           )}
 
           {tab === "contacts" && (
+            <div className="space-y-5">
+              <SessionsLog />
             <div className="border border-border rounded-sm bg-card p-6 space-y-5">
               <div>
                 <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("pdContactsTitle")}</div>
@@ -1305,6 +1308,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                 {saveState === "saving" ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Save" size={16} />}
                 {tr("dashSave")}
               </button>
+            </div>
             </div>
           )}
         </div>

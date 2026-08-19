@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import Icon from "@/components/ui/icon";
+import SessionsLog from "@/components/SessionsLog";
 import { useLang } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
@@ -493,6 +494,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
 
           {tab === "settings" && (
             <div className="space-y-5">
+              <SessionsLog />
               <div className="border border-border rounded-sm bg-card p-6">
                 <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4 flex items-center gap-2"><Icon name="Bell" size={14} className="text-gold" />{tr("setNotifTitle")}</div>
                 <div className="flex items-center justify-between gap-4">
