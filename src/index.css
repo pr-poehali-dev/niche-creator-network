@@ -663,6 +663,25 @@
     opacity: 0.6;
   }
 
+  /* Тег/чип (специализация, категория темы). Раньше здесь использовался
+     класс метки раздела — и после редизайна у каждого тега появилась
+     лишняя чёрточка слева. Тегу нужен свой вид: тихая капсула, которая
+     читается как ярлык, а не как заголовок секции. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.68rem;
+    font-family: "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: hsl(var(--gold) / 0.1);
+    border: 1px solid hsl(var(--gold) / 0.22);
+    color: hsl(var(--gold) / 0.95);
+    white-space: nowrap;
+  }
+
   /* Карточка: спокойная в покое, живая при наведении. Подъём и мягкая
      тень читаются как «этот элемент можно трогать» — без резких эффектов. */
   .card-lift {

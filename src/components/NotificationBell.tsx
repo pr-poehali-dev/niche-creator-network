@@ -40,6 +40,12 @@ export default function NotificationBell() {
 
   const load = useCallback(() => {
     if (!NOTIF_URL) return;
+    // Без токена сервер всё равно ответит 401. Раньше опрос шёл каждую
+    // минуту даже у неавторизованного гостя: лишние запросы, лишний расход
+    // вызовов функции и поток ошибок в логах, скрывающий настоящие проблемы.
+    const token = (typeof window !== "undefined" && localStorage.getItem("shchit_auth_token")) || "";
+    if (!token) return;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
     fetch(NOTIF_URL, { headers: authHeaders() })
       .then((r) => r.json())
       .then((d) => {

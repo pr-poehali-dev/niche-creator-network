@@ -1339,7 +1339,13 @@ export const fullFr: Record<string, string> = {
   pdVfLicensePhUS: "Numéro de licence de sécurité d'État",
   pdVfLicensePhEU: "Numéro de licence UE",
   pdVfLicensePhOther: "Numéro de document (forme libre)",
-
+  noReviewsYet: "Aucun avis pour l'instant",
+  titleNotSet: "Spécialisation non définie",
+  priceOnRequest: "sur demande",
+  autoTranslated: "traduit",
+  showOriginal: "Afficher l'original",
+  showTranslation: "Afficher la traduction",
+  demoRatingNote: "Exemple de profil, les notes sont indicatives",
 };
 
 export const fullDe: Record<string, string> = {
@@ -2676,7 +2682,13 @@ export const fullDe: Record<string, string> = {
   pdVfLicensePhUS: "Lizenznummer der Staatssicherheit",
   pdVfLicensePhEU: "EU-Lizenznummer",
   pdVfLicensePhOther: "Dokumentennummer (Freiform)",
-
+  noReviewsYet: "Noch keine Bewertungen",
+  titleNotSet: "Spezialisierung nicht festgelegt",
+  priceOnRequest: "auf Anfrage",
+  autoTranslated: "übersetzt",
+  showOriginal: "Original anzeigen",
+  showTranslation: "Übersetzung anzeigen",
+  demoRatingNote: "Beispielprofil, Bewertungen dienen der Veranschaulichung",
 };
 export const fullJa: Record<string, string> = {
   // --- Mobile app / PWA ---
@@ -4012,7 +4024,13 @@ export const fullJa: Record<string, string> = {
   pdVfLicensePhUS: "国家安全保障ライセンス番号",
   pdVfLicensePhEU: "EUライセンス番号",
   pdVfLicensePhOther: "文書番号（自由形式）",
-
+  noReviewsYet: "まだレビューはありません",
+  titleNotSet: "専門分野が設定されていません",
+  priceOnRequest: "リクエストに応じて",
+  autoTranslated: "翻訳された",
+  showOriginal: "オリジナルを表示",
+  showTranslation: "翻訳を表示",
+  demoRatingNote: "サンプルプロフィール、評価は一例です",
 };
 export const fullAr: Record<string, string> = {
   // --- Mobile app / PWA ---
@@ -5348,7 +5366,13 @@ export const fullAr: Record<string, string> = {
   pdNoFriends: "ليس لديك أصدقاء بعد. ابحث عن الزملاء من خلال معرفهم الفريد.",
   pdMessage: "رسالة",
   pdVfCountry: "بلد التحقق",
-
+  noReviewsYet: "لا توجد تعليقات حتى الآن",
+  titleNotSet: "لم يتم تحديد التخصص",
+  priceOnRequest: "عند الطلب",
+  autoTranslated: "مترجم",
+  showOriginal: "عرض الأصلي",
+  showTranslation: "عرض الترجمة",
+  demoRatingNote: "ملف تعريف العينة، التقييمات توضيحية",
 };
 export const fullHe: Record<string, string> = {
   // --- Mobile app / PWA ---
@@ -6684,7 +6708,13 @@ export const fullHe: Record<string, string> = {
   pdNoFriends: "אין לך עדיין חברים. מצא עמיתים לפי תעודת הזהות הייחודית שלהם.",
   pdMessage: "הוֹדָעָה",
   pdVfCountry: "ארץ אימות",
-
+  noReviewsYet: "אין ביקורות עדיין",
+  titleNotSet: "התמחות לא מוגדרת",
+  priceOnRequest: "לפי בקשה",
+  autoTranslated: "מְתוּרגָם",
+  showOriginal: "הצג מקור",
+  showTranslation: "הצג תרגום",
+  demoRatingNote: "פרופיל לדוגמה, הדירוגים הם המחשה",
 };
 
 export const full: Record<ExtraLang, Record<string, string>> = {

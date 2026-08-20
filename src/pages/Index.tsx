@@ -479,7 +479,14 @@ const cases = [
 
 // Публичные разделы, которые можно открыть напрямую по ссылке ?section=xxx.
 // Это делает ссылки на блог/о нас/тарифы «рабочими» для SEO и шаринга.
-const PUBLIC_URL_SECTIONS: Section[] = ["blog", "about", "pricing", "mobileapp", "policy", "privacy", "terms", "agreement", "offer", "consent", "contacts"];
+const PUBLIC_URL_SECTIONS: Section[] = [
+  "blog", "about", "pricing", "mobileapp", "policy", "privacy", "terms",
+  "agreement", "offer", "consent", "contacts",
+  // Каталог, услуги и «как это работает» — самые ценные страницы для поиска
+  // и для ссылок из соцсетей. Без них человек по ссылке попадал на главную
+  // и должен был искать раздел заново.
+  "specialists", "services", "howitworks", "courses", "guards", "cases",
+];
 
 function getInitialSection(): Section {
   if (typeof window === "undefined") return "home";
@@ -539,6 +546,9 @@ export default function Index() {
   useEffect(() => {
     if (!user?.isAdmin) return;
     const loadBadge = () => {
+      // Не долбим сервер, когда браузер уже знает, что сети нет: иначе
+      // при обрыве связи каждую минуту копится ошибка в логах.
+      if (typeof navigator !== "undefined" && navigator.onLine === false) return;
       fetch(func2url["complaints"], { headers: authHeaders() })
         .then((r) => r.json())
         .then((d) => { if (Array.isArray(d.complaints)) setNewComplaintsBadge(d.complaints.filter((c: { status: string }) => c.status === "new").length); })
@@ -596,6 +606,27 @@ export default function Index() {
 
   // Выбранный специалист для просмотра его профиля клиентом (не демо-профиль).
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+  // Открытие профиля по прямой ссылке ?section=profile&id=slug.
+  // Каталог грузится асинхронно, поэтому ждём его и лишь затем выбираем анкету.
+  const { providers: allProviders } = useProviders();
+  const deepLinkDone = useRef(false);
+  useEffect(() => {
+    if (deepLinkDone.current || allProviders.length === 0) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("section") !== "profile") return;
+      const slug = params.get("id");
+      if (!slug) return;
+      const found = allProviders.find((pr) => pr.slug === slug && pr.active);
+      if (found) {
+        deepLinkDone.current = true;
+        setSelectedProvider(found);
+        setActive("profile");
+      }
+    } catch {
+      // URLSearchParams недоступен — просто остаёмся на текущем разделе.
+    }
+  }, [allProviders]);
   // Завершил ли клиент регистрацию (заполнен профиль: имя + телефон).
   const [clientProfileComplete, setClientProfileComplete] = useState(false);
   // Модалка-подсказка «завершите регистрацию».
@@ -655,12 +686,34 @@ export default function Index() {
       return;
     }
     const provider = opts?.provider ?? null;
+    // Адрес страницы отражает, что человек смотрит: раздел и, для профиля,
+    // конкретного специалиста. Так ссылку можно отправить клиенту, и она
+    // откроет нужную анкету, а не главную. Раньше адрес не менялся вовсе.
+    const buildUrl = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        if (s === "profile" && provider?.slug) {
+          params.set("section", "profile");
+          params.set("id", provider.slug);
+        } else if (PUBLIC_URL_SECTIONS.includes(s)) {
+          params.set("section", s);
+          params.delete("id");
+        } else {
+          params.delete("section");
+          params.delete("id");
+        }
+        const q = params.toString();
+        return window.location.pathname + (q ? `?${q}` : "");
+      } catch {
+        return window.location.pathname + window.location.search;
+      }
+    };
     if (opts?.replace) {
       historyRef.current[historyRef.current.length - 1] = { section: s, provider };
-      try { window.history.replaceState({ navIndex: historyRef.current.length - 1 }, "", window.location.pathname + window.location.search); } catch { /* noop */ }
+      try { window.history.replaceState({ navIndex: historyRef.current.length - 1 }, "", buildUrl()); } catch { /* noop */ }
     } else {
       historyRef.current.push({ section: s, provider });
-      try { window.history.pushState({ navIndex: historyRef.current.length - 1 }, "", window.location.pathname + window.location.search); } catch { /* noop */ }
+      try { window.history.pushState({ navIndex: historyRef.current.length - 1 }, "", buildUrl()); } catch { /* noop */ }
     }
     setActive(s);
     if (provider) setSelectedProvider(provider);
@@ -726,6 +779,15 @@ export default function Index() {
       if (active === "mobileapp") return <MobileAppSection setActive={go} />;
       if (active === "about") return <AboutSection setActive={go} />;
       if (active === "blog") return <BlogSection setActive={go} />;
+      // Каталог и услуги открыты гостю намеренно: это витрина, ради неё
+      // и приходят. Контакты специалистов сервер гостю всё равно не отдаёт,
+      // поэтому база защищена, а человек видит, за чем регистрироваться.
+      // Раньше по ссылке на каталог гость попадал на главную, хотя «хлебные
+      // крошки» показывали «Специалисты» — интерфейс вводил в заблуждение.
+      if (active === "specialists") return <SpecialistsListSection setActive={go} openSpecialist={openSpecialist} />;
+      if (active === "services") return <ClientServices setActive={go} openSpecialist={openSpecialist} />;
+      if (active === "howitworks") return <HowItWorksSection setActive={go} />;
+      if (active === "profile" && selectedProvider) return <SpecialistProfileSection provider={selectedProvider} onBack={goBack} openChat={openChat} />;
       return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} />;
     }
     if (isLocked && LOCKED_SECTIONS.includes(active)) {
@@ -1613,11 +1675,17 @@ function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider:
     : "");
   const hasDocs = !!v && ((Array.isArray(v.licenses) && v.licenses.length > 0) || (Array.isArray(v.documents) && v.documents.length > 0));
 
-  // Строка «да/нет» для пунктов верификации.
-  const checkRow = (ok: boolean, label: string) => (
+  // Строка статуса проверки. Формулировка меняется вместе со значком:
+  // раньше рядом с «крестиком» стояло «Личность подтверждена» — фраза
+  // утверждала обратное тому, что показывал значок, и читатель терялся.
+  const checkRow = (ok: boolean, labelOk: string, labelNo: string) => (
     <div className="flex items-center gap-2 text-sm">
-      <Icon name={ok ? "CircleCheck" : "CircleX"} size={16} className={ok ? "text-green-400 shrink-0" : "text-muted-foreground/40 shrink-0"} />
-      <span className={ok ? "text-foreground" : "text-muted-foreground"}>{label}</span>
+      <Icon
+        name={ok ? "CircleCheck" : "Circle"}
+        size={16}
+        className={ok ? "text-green-400 shrink-0" : "text-muted-foreground/40 shrink-0"}
+      />
+      <span className={ok ? "text-foreground" : "text-muted-foreground"}>{ok ? labelOk : labelNo}</span>
     </div>
   );
 
@@ -1676,10 +1744,30 @@ function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider:
                 </span>
               )}
             </div>
-            <div className="text-gold text-sm font-montserrat font-medium mb-3">{L(p.title, lang)} · {p.experience} {tr("yearsShort")}</div>
+            {/* Опыт не дублируем: он уже показан строкой ниже, рядом с городом
+                и возрастом. Раньше «12 лет» стояло дважды на одном экране. */}
+            <div className="text-gold text-sm font-montserrat font-medium mb-3">
+              {L(p.title, lang) || tr("titleNotSet")}
+            </div>
+            {/* Рейтинг — только когда он на чём-то основан. У демо-анкеты
+                честно говорим, что оценки условные. */}
             <div className="flex items-center gap-2 mb-4">
-              <StarRating rating={p.rating} />
-              <span className="text-xs text-muted-foreground">{p.rating} ({p.reviews} {tr("profileReviewsCount")})</span>
+              {p.isDemo ? (
+                <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Icon name="Info" size={13} className="text-gold/70" />
+                  {tr("demoRatingNote")}
+                </span>
+              ) : p.reviews > 0 ? (
+                <>
+                  <StarRating rating={p.rating} />
+                  <span className="text-xs text-muted-foreground">{p.rating} ({p.reviews} {tr("profileReviewsCount")})</span>
+                </>
+              ) : (
+                <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Icon name="Sparkles" size={13} className="text-gold/60" />
+                  {tr("noReviewsYet")}
+                </span>
+              )}
             </div>
             <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mb-4">
               <span className="flex items-center gap-1"><Icon name="MapPin" size={13} className="text-gold" />{p.country ? `${L(p.country, lang)}, ` : ""}{L(p.city, lang)}</span>
@@ -1726,24 +1814,30 @@ function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider:
           <div className="border border-border rounded-sm bg-card p-6">
             <h3 className="font-montserrat font-bold text-sm text-foreground mb-4 flex items-center gap-2"><Icon name="Tag" size={15} className="text-gold" />{tr("profileSpecialization")}</h3>
             <div className="flex flex-wrap gap-2">
-              {tags.map((tg) => (<span key={tg} className="tag-security">{tg}</span>))}
+              {tags.map((tg) => (<span key={tg} className="chip">{tg}</span>))}
             </div>
           </div>
 
-          {/* Счётчики */}
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { n: p.experience, l: "yearsShort" as const, icon: "Award" },
-              { n: p.cases, l: "profileCasesCount" as const, icon: "FolderCheck" },
-              { n: p.reviews, l: "profileReviewsCount" as const, icon: "Star" },
-            ].map((s) => (
-              <div key={s.l} className="border border-border rounded-sm bg-card p-4 text-center">
-                <Icon name={s.icon} size={18} className="text-gold mx-auto mb-2" />
-                <div className="font-montserrat font-extrabold text-xl text-foreground">{s.n}</div>
-                <div className="text-[11px] text-muted-foreground">{tr(s.l)}</div>
-              </div>
-            ))}
-          </div>
+          {/* Счётчики. Показываем только заполненные значения: блок из трёх
+              нулей у новой анкеты выглядел как «специалист ничего не сделал».
+              У демо-анкеты цифры условные, поэтому блок целиком скрыт. */}
+          {!p.isDemo && (p.experience > 0 || p.cases > 0 || p.reviews > 0) && (
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { n: p.experience, l: "yearsShort" as const, icon: "Award" },
+                { n: p.cases, l: "profileCasesCount" as const, icon: "FolderCheck" },
+                { n: p.reviews, l: "profileReviewsCount" as const, icon: "Star" },
+              ]
+                .filter((s) => s.n > 0)
+                .map((s) => (
+                  <div key={s.l} className="border border-border rounded-sm bg-card p-4 text-center">
+                    <Icon name={s.icon} size={18} className="text-gold mx-auto mb-2" />
+                    <div className="font-montserrat font-extrabold text-xl text-foreground">{s.n}</div>
+                    <div className="text-[11px] text-muted-foreground">{tr(s.l)}</div>
+                  </div>
+                ))}
+            </div>
+          )}
 
           <div className="border border-border rounded-sm bg-card p-6">
             <h3 className="font-montserrat font-bold text-sm text-foreground mb-4 flex items-center gap-2"><Icon name="MessageSquareText" size={15} className="text-gold" />{tr("profileReviewsTitle")}</h3>
@@ -1756,9 +1850,9 @@ function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider:
           <div className="border border-border rounded-sm bg-card p-5">
             <h3 className="font-montserrat font-bold text-sm text-foreground mb-4 flex items-center gap-2"><Icon name="ShieldCheck" size={15} className="text-gold" />{tr("profileVerification")}</h3>
             <div className="space-y-2.5">
-              {checkRow(!!p.verified, tr("profileVerifiedIdentity"))}
-              {checkRow(licensed, tr("profileLicenseChecked"))}
-              {checkRow(hasDocs, tr("profileDocsConfirmed"))}
+              {checkRow(!!p.verified, tr("profileVerifiedIdentity"), tr("profileIdentityPending"))}
+              {checkRow(licensed, tr("profileLicenseChecked"), tr("profileLicensePending"))}
+              {checkRow(hasDocs, tr("profileDocsConfirmed"), tr("profileDocsPending"))}
             </div>
           </div>
 
@@ -1993,7 +2087,7 @@ function CasesSection() {
           {cases.map((c) => (
             <div key={c.title.en} className="border border-border rounded-sm bg-card p-6 card-lift shine-on-hover cursor-pointer">
               <div className="flex items-start gap-3 mb-3">
-                <span className="tag-security">{L(c.category, lang)}</span>
+                <span className="chip">{L(c.category, lang)}</span>
                 <span className="text-[10px] text-muted-foreground ml-auto">{L(c.date, lang)}</span>
               </div>
               <h3 className="font-montserrat font-bold text-base text-foreground mb-2 leading-snug">{L(c.title, lang)}</h3>
@@ -2077,10 +2171,13 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
             <span className="text-[10px] font-montserrat font-semibold text-muted-foreground">{tr("aliasBadge")}</span>
           </div>
         )}
+        {/* Пометка образца намеренно заметная: рядом показан рейтинг «4.9 (134)»,
+            которого в базе отзывов не существует. Тихая серая плашка терялась
+            среди золотых звёзд, и карточка читалась как реальный специалист. */}
         {p.isDemo && (
-          <div className="absolute top-3 start-3 z-20 flex items-center gap-1 bg-background/90 backdrop-blur-sm border border-border px-2 py-1 rounded-sm">
-            <Icon name="Info" size={11} className="text-muted-foreground" />
-            <span className="text-[10px] font-montserrat font-semibold text-muted-foreground">{tr("demoBadge")}</span>
+          <div className="absolute top-3 start-3 z-20 flex items-center gap-1.5 bg-background/95 backdrop-blur-sm border border-gold/50 px-2.5 py-1 rounded-full">
+            <Icon name="Info" size={11} className="text-gold" />
+            <span className="text-[10px] font-montserrat font-bold text-gold uppercase tracking-wider">{tr("demoBadge")}</span>
           </div>
         )}
         {isLicensed(p) && (
@@ -2091,31 +2188,57 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
         )}
         <div className="absolute bottom-3 start-4 end-4">
           <div className="font-montserrat font-bold text-base text-foreground">{L(p.name, lang)}</div>
+          {/* «· 0 лет» у новой анкеты выглядело как отсутствие опыта вообще.
+              Пока специалист не заполнил профиль — просто не показываем. */}
           <div className="text-xs text-gold font-montserrat font-medium flex items-center gap-2 flex-wrap">
-            {L(p.title, lang)}
-            <span className="text-muted-foreground">· {p.experience} {tr("yearsShort")}</span>
+            {L(p.title, lang) || tr("titleNotSet")}
+            {p.experience > 0 && (
+              <span className="text-muted-foreground">· {p.experience} {tr("yearsShort")}</span>
+            )}
           </div>
         </div>
       </div>
       <div className="p-5 flex flex-col flex-1">
-        <div className="flex items-center gap-3 mb-4">
-          <StarRating rating={p.rating} />
-          <span className="text-xs text-muted-foreground">{p.rating} ({p.reviews})</span>
-          <span className="text-xs text-muted-foreground ms-auto flex items-center gap-1">
-            <Icon name="MapPin" size={11} />{L(p.city, lang)}
-          </span>
+        {/* Рейтинг показываем ТОЛЬКО при наличии реальных отзывов.
+            Раньше пустая анкета выглядела как «5 звёзд (0)» — пять золотых
+            звёзд у специалиста, которого никто не оценивал, вводят в
+            заблуждение и обесценивают оценки тех, у кого отзывы настоящие. */}
+        <div className="flex items-center gap-3 mb-4 min-h-[20px]">
+          {p.isDemo ? (
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Icon name="Info" size={12} className="text-gold/70" />
+              {tr("demoRatingNote")}
+            </span>
+          ) : p.reviews > 0 ? (
+            <>
+              <StarRating rating={p.rating} />
+              <span className="text-xs text-muted-foreground">{p.rating} ({p.reviews})</span>
+            </>
+          ) : (
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Icon name="Sparkles" size={12} className="text-gold/60" />
+              {tr("noReviewsYet")}
+            </span>
+          )}
+          {(p.city?.ru || p.city?.en) && (
+            <span className="text-xs text-muted-foreground ms-auto flex items-center gap-1">
+              <Icon name="MapPin" size={11} />{L(p.city, lang)}
+            </span>
+          )}
         </div>
         {p.country && (p.country.ru || p.country.en) && (
           <div className="text-[11px] text-muted-foreground mb-3 flex items-center gap-1"><Icon name="Globe" size={11} className="text-gold" />{L(p.country, lang)}</div>
         )}
         <div className="flex flex-wrap gap-1.5 mb-4">
-          {tags.slice(0, 4).map((tg) => (<span key={tg} className="tag-security">{tg}</span>))}
+          {tags.slice(0, 4).map((tg) => (<span key={tg} className="chip">{tg}</span>))}
         </div>
         <div className="divider-gold mb-4" />
-        <div className="flex items-center justify-between mt-auto">
-          <div>
+        <div className="flex items-center justify-between mt-auto gap-3">
+          <div className="min-w-0">
             <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("cost")}</div>
-            <div className="font-montserrat font-bold text-sm text-gold">{L(p.price, lang)}</div>
+            <div className="font-montserrat font-bold text-sm text-gold truncate">
+              {L(p.price, lang) || tr("priceOnRequest")}
+            </div>
           </div>
           <span className="text-xs font-montserrat font-semibold text-gold flex items-center gap-1 group-hover:gap-2 transition-all">{tr("openProfile")}<Icon name="ArrowRight" size={13} /></span>
         </div>
@@ -2570,7 +2693,7 @@ function GuardsSection() {
               </div>
               <div className="flex flex-wrap gap-1.5 mb-4">
                 {g.tags.map((tag) => (
-                  <span key={tag.en} className="tag-security">{L(tag, lang)}</span>
+                  <span key={tag.en} className="chip">{L(tag, lang)}</span>
                 ))}
               </div>
               <div className="divider-gold mb-4" />

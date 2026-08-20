@@ -578,27 +578,36 @@ export function PricingSection({ setActive }: { setActive: (s: Section) => void 
                 const ps = tr(p.price);
                 const n = parseFloat(ps.replace(/[^\d.,]/g, "").replace(/\s/g, "").replace(",", ".")) || 0;
                 const discounted = Math.round(n * 0.7).toLocaleString("ru-RU");
-                const discStr = ps.replace(/[\d\s.,]+/, discounted);
+                // Заменяем ТОЛЬКО число, не трогая пробел перед знаком валюты.
+                // Прежний шаблон [\d\s.,]+ захватывал и этот пробел, поэтому
+                // «1 990 ₽» превращалось в «1 393₽» — у разных тарифов знак
+                // рубля стоял то слитно, то раздельно.
+                const discStr = ps.replace(/[\d][\d\s.,]*[\d]|[\d]/, discounted);
                 return (
                   <div>
                     <span className="text-sm text-muted-foreground line-through me-2">{ps}</span>
                     <span className="inline-flex items-center text-[10px] font-montserrat font-bold text-green-400 bg-green-500/15 rounded-sm px-1.5 py-0.5 align-middle">−30%</span>
-                    <div>
+                    {/* Цена и период выравниваются по базовой линии: раньше
+                        крупная сумма и мелкое «/ мес» стояли как два блока и
+                        визуально слипались («5 593₽/ мес»). */}
+                    <div className="flex items-baseline gap-1.5 flex-wrap">
                       <span className={`font-grotesk font-bold text-gold tracking-tight ${p.premium ? "text-4xl" : "text-3xl"}`}>{discStr}</span>
-                      <span className="text-xs text-muted-foreground ms-1">{tr("perMonth")}</span>
+                      <span className="text-xs text-muted-foreground">{tr("perMonth")}</span>
                     </div>
                   </div>
                 );
               })() : (
-                <div>
+                <div className="flex items-baseline gap-1.5 flex-wrap">
                   <span className={`font-grotesk font-bold text-gold tracking-tight ${p.premium ? "text-4xl" : "text-3xl"}`}>{tr(p.price)}</span>
-                  {!p.enterprise && <span className="text-xs text-muted-foreground ms-1">{tr("perMonth")}</span>}
+                  {!p.enterprise && <span className="text-xs text-muted-foreground">{tr("perMonth")}</span>}
                 </div>
               )}
+              {/* Подпись в две строки налезала на разделитель карточки.
+                  Значок не сжимается, текст переносится аккуратно. */}
               {!p.enterprise && (
-                <div className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-montserrat font-semibold text-green-400">
-                  <Icon name="Check" size={11} />
-                  {tr("priceOnlySub")} · {tr("priceNoCommission")}
+                <div className="flex items-start gap-1.5 mt-2 text-[10px] font-montserrat font-semibold text-green-400 leading-snug">
+                  <Icon name="Check" size={11} className="shrink-0 mt-0.5" />
+                  <span>{tr("priceOnlySub")} · {tr("priceNoCommission")}</span>
                 </div>
               )}
             </div>

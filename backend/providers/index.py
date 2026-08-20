@@ -74,7 +74,15 @@ def handler(event: dict, context) -> dict:
         f'licenses, documents, bio, age, show_bio, show_age, show_documents, '
         f'license_verified, timezone, always_available, quiet_start, quiet_end, '
         f'plan, country_ru, country_en, services, is_demo '
-        f"FROM {SCHEMA}.providers ORDER BY pin_priority DESC, subscription_active DESC, "
+        # Сортировка каталога. Ключевое изменение: анкеты с ЗАПОЛНЕННЫМ
+        # профилем идут выше пустых, даже если у пустой оплачена подписка.
+        # Иначе витрина открывается карточками без специализации и цены —
+        # клиент видит «пустой каталог» и уходит, а платящий специалист
+        # всё равно не получает заказ. Внутри заполненных приоритет платных
+        # тарифов сохраняется полностью.
+        f"FROM {SCHEMA}.providers ORDER BY "
+        f"(CASE WHEN COALESCE(title_ru,'') <> '' AND COALESCE(price_ru,'') <> '' THEN 0 ELSE 1 END), "
+        f"pin_priority DESC, subscription_active DESC, "
         f"(CASE WHEN plan='chop' THEN 0 WHEN plan='premium' THEN 1 WHEN plan='pro' THEN 2 ELSE 3 END), rating DESC, reviews DESC"
     )
     rows = cur.fetchall()

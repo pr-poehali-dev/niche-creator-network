@@ -334,7 +334,7 @@ export function ForumSection() {
           </button>
         </div>
         {reportOpen && <ReportModal targetType="forum_topic" targetId={String(openTopic.id)} onClose={() => setReportOpen(false)} />}
-        <div className="mb-2"><span className="tag-security">{catTitle(openTopic.category)}</span></div>
+        <div className="mb-2"><span className="chip">{catTitle(openTopic.category)}</span></div>
         <h2 className="font-montserrat font-bold text-2xl text-foreground mb-1">{openTopic.title}</h2>
         <div className="text-xs text-muted-foreground mb-6">{openTopic.author} · {fmtDate(openTopic.createdAt)}</div>
 
@@ -408,7 +408,7 @@ export function ForumSection() {
           <div key={tp.id} className="border border-border rounded-sm bg-card p-4 card-lift">
             <div className="md:grid grid-cols-12 gap-4 items-center">
               <div className="col-span-8 cursor-pointer" onClick={() => loadTopic(tp)}>
-                <div className="flex items-center gap-2 mb-1"><span className="tag-security">{catTitle(tp.category)}</span></div>
+                <div className="flex items-center gap-2 mb-1"><span className="chip">{catTitle(tp.category)}</span></div>
                 <div className="font-montserrat font-semibold text-sm text-foreground mt-2">{trForum(tp.title)}</div>
                 <div className="text-[10px] text-muted-foreground mt-1">{tp.author} · {fmtDate(tp.createdAt)}</div>
               </div>

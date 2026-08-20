@@ -316,6 +316,11 @@ export const t: Dict = {
   // Сообщение при недоступности сервера (блокировка, сбой сети).
   // Пометка на переведённом сообщении: человек должен понимать, что читает
   // машинный перевод, а не оригинал — это вопрос доверия к переписке.
+  // Состояния незаполненной анкеты: честнее пустоты и выдуманных пятёрок.
+  demoRatingNote: { ru: "Пример анкеты, оценки условные", en: "Sample profile, ratings are illustrative" },
+  noReviewsYet: { ru: "Пока без отзывов", en: "No reviews yet" },
+  titleNotSet: { ru: "Специализация не указана", en: "Specialisation not set" },
+  priceOnRequest: { ru: "по запросу", en: "on request" },
   autoTranslated: { ru: "переведено", en: "translated" },
   showOriginal: { ru: "Показать оригинал", en: "Show original" },
   showTranslation: { ru: "Показать перевод", en: "Show translation" },
@@ -375,6 +380,11 @@ export const t: Dict = {
   profileVerifiedIdentity: { ru: "Личность подтверждена", en: "Identity verified" },
   profileLicenseChecked: { ru: "Лицензия проверена", en: "License verified" },
   profileDocsConfirmed: { ru: "Документы подтверждены", en: "Documents confirmed" },
+  // Отрицательные состояния проверки — нейтральные, без обвинения:
+  // отсутствие проверки не означает, что специалист недобросовестный.
+  profileIdentityPending: { ru: "Личность не подтверждена", en: "Identity not verified" },
+  profileLicensePending: { ru: "Лицензия не проверена", en: "Licence not verified" },
+  profileDocsPending: { ru: "Документы не загружены", en: "Documents not uploaded" },
   profileNotVerified: { ru: "Не подтверждено", en: "Not verified" },
   profileAliasNote: { ru: "Работает под псевдонимом в целях безопасности", en: "Works under an alias for safety reasons" },
 
