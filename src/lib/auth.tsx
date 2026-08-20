@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import func2url from "../../backend/func2url.json";
+import { getDevicePublicKey, clearDeviceKey } from "@/lib/deviceKey";
 
 export type AuthRole = "client" | "provider";
 export type AuthUser = { id: number; email: string; role: AuthRole; name: string; isAdmin?: boolean; publicId?: number };
@@ -22,9 +23,17 @@ type AuthContextValue = {
 const TOKEN_KEY = "shchit_auth_token";
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// Действия, при которых создаётся новая сессия: к ним прикладываем открытый
+// ключ устройства, чтобы сервер привязал сессию к этому браузеру.
+const SESSION_ACTIONS = new Set(["login", "register", "admin_login", "verify_2fa"]);
+
 async function callAuth(payload: Record<string, unknown>, token?: string) {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers["X-Auth-Token"] = token;
+  if (SESSION_ACTIONS.has(String(payload.action || ""))) {
+    const pub = await getDevicePublicKey();
+    if (pub) payload = { ...payload, devicePubKey: pub };
+  }
   const res = await fetch(func2url["auth"], {
     method: "POST",
     headers,
@@ -115,6 +124,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
     if (token) await callAuth({ action: "logout" }, token).catch(() => {});
+    // Ключ устройства больше не нужен: на общем компьютере он не должен
+    // оставаться после выхода.
+    await clearDeviceKey().catch(() => {});
   }, []);
 
   // Выход на всех устройствах: гасит все сессии пользователя на сервере.
@@ -124,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
     if (token) await callAuth({ action: "logout_all" }, token).catch(() => {});
+    await clearDeviceKey().catch(() => {});
   }, []);
 
   return (

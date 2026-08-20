@@ -1,6 +1,11 @@
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import './index.css'
+import { installSecureFetch } from '@/lib/secureFetch'
+
+// Подпись запросов ключом устройства. Ставим до отрисовки приложения,
+// чтобы ни один запрос не ушёл без защиты.
+installSecureFetch();
 
 createRoot(document.getElementById("root")!).render(<App />);
 

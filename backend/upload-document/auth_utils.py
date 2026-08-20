@@ -1,6 +1,7 @@
 import os
 import hashlib
 import hmac
+import device_sig
 from datetime import datetime, timedelta
 import psycopg2
 
@@ -51,7 +52,7 @@ def get_auth_user(event: dict):
         cur = conn.cursor()
         cur.execute(
             f"SELECT u.id, u.email, u.role, s.expires_at, u.is_admin, "
-            f"s.revoked, s.last_seen_at, s.fingerprint "
+            f"s.revoked, s.last_seen_at, s.fingerprint, s.device_pubkey "
             f"FROM {SCHEMA}.sessions s JOIN {SCHEMA}.users u ON u.id = s.user_id "
             f"WHERE s.token = %s",
             (token,),
@@ -72,6 +73,18 @@ def get_auth_user(event: dict):
             conn.commit()
             cur.close()
             return None
+        # Подпись устройства: закрытый ключ невозможно выгрузить из браузера,
+        # поэтому украденный токен без самого устройства бесполезен. Проверяем
+        # только если ключ был сохранён при входе — старые сессии работают.
+        if row[8]:
+            _h = event.get('headers') or {}
+            _sig = _h.get('X-Device-Sig') or _h.get('x-device-sig') or ''
+            _ts = _h.get('X-Device-Ts') or _h.get('x-device-ts') or ''
+            if not device_sig.verify(str(row[8]), _sig, _ts):
+                cur.execute(f"UPDATE {SCHEMA}.sessions SET revoked = true WHERE token = %s", (token,))
+                conn.commit()
+                cur.close()
+                return None
         # Скользящее продление, пока пользователь активен.
         cur.execute(
             f"UPDATE {SCHEMA}.sessions SET last_seen_at = now(), expires_at = %s WHERE token = %s",

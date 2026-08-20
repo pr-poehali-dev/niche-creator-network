@@ -3,6 +3,7 @@ import os
 import re
 import hashlib
 import hmac
+import device_sig
 import smtplib
 import secrets as pysecrets
 from datetime import datetime, timedelta
@@ -314,13 +315,15 @@ def handler(event: dict, context) -> dict:
     fingerprint = _fingerprint(event)
     device_label = _device_label(event)
     ip_masked = _ip_masked(event)
-
     raw_body = (event.get('body') or '').strip()
     try:
         body = json.loads(raw_body) if raw_body else {}
     except (ValueError, TypeError):
         body = {}
     action = (body.get('action') or '').strip()
+    # Открытый ключ устройства: закрытая часть остаётся в браузере и не может
+    # быть выгружена, поэтому украденный токен без устройства бесполезен.
+    device_pubkey = str(body.get('devicePubKey') or '')[:512]
 
     conn = _conn()
     conn.autocommit = True
@@ -351,7 +354,7 @@ def handler(event: dict, context) -> dict:
                     (admin_email, placeholder, role, 'Администратор'),
                 )
                 user_id = cur.fetchone()[0]
-            new_token = _create_session(cur, user_id, fingerprint, device_label, ip_masked)
+            new_token = _create_session(cur, user_id, fingerprint, device_label, ip_masked, device_pubkey)
             return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': admin_email, 'role': role, 'name': 'Администратор', 'isAdmin': True}}, event)
 
         if action == 'register':
@@ -396,7 +399,7 @@ def handler(event: dict, context) -> dict:
                     f"false, false, 'start') ON CONFLICT (slug) DO NOTHING",
                     (prov_slug, name or 'Специалист', name or 'Specialist'),
                 )
-            new_token = _create_session(cur, user_id, fingerprint, device_label, ip_masked)
+            new_token = _create_session(cur, user_id, fingerprint, device_label, ip_masked, device_pubkey)
             return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': email, 'role': role, 'name': name}}, event)
 
         if action == 'login':
@@ -418,7 +421,7 @@ def handler(event: dict, context) -> dict:
             if twofa_on:
                 ch = _start_2fa(cur, row[0], email, lang)
                 return _resp(200, {'need2fa': True, 'challengeId': ch['challengeId'], 'emailHint': _mask_email(email), 'sent': ch['sent']}, event)
-            new_token = _create_session(cur, row[0], fingerprint, device_label, ip_masked)
+            new_token = _create_session(cur, row[0], fingerprint, device_label, ip_masked, device_pubkey)
             return _resp(200, {'token': new_token, 'user': {'id': row[0], 'email': email, 'role': row[2], 'name': row[3]}}, event)
 
         if action == 'verify_2fa':
@@ -452,7 +455,7 @@ def handler(event: dict, context) -> dict:
             u = cur.fetchone()
             if not u:
                 return _resp(401, {'error': 'invalid_session'}, event)
-            new_token = _create_session(cur, u[0], fingerprint, device_label, ip_masked)
+            new_token = _create_session(cur, u[0], fingerprint, device_label, ip_masked, device_pubkey)
             return _resp(200, {'token': new_token, 'user': {'id': u[0], 'email': u[1], 'role': u[2], 'name': u[3]}}, event)
 
         if action == 'resend_2fa':
@@ -480,7 +483,7 @@ def handler(event: dict, context) -> dict:
                 return _resp(401, {'error': 'no_token'}, event)
             cur.execute(
                 f"SELECT u.id, u.email, u.role, u.name, s.expires_at, u.is_admin, u.public_id, "
-                f"s.revoked, s.last_seen_at, s.fingerprint "
+                f"s.revoked, s.last_seen_at, s.fingerprint, s.device_pubkey "
                 f"FROM {SCHEMA}.sessions s JOIN {SCHEMA}.users u ON u.id = s.user_id "
                 f"WHERE s.token = %s",
                 (token,),
@@ -499,6 +502,17 @@ def handler(event: dict, context) -> dict:
             if row[9] and fingerprint and not hmac.compare_digest(str(row[9]), fingerprint):
                 cur.execute(f"UPDATE {SCHEMA}.sessions SET revoked = true WHERE token = %s", (token,))
                 return _resp(401, {'error': 'invalid_session'}, event)
+            # Подпись устройства. Требуем её только если при входе ключ был
+            # сохранён: старые сессии и браузеры без нужной криптографии
+            # продолжают работать по-прежнему, никого не выбрасываем.
+            # Если ключ есть, а верной подписи нет — токен предъявлен не с того
+            # устройства, где выполнен вход. Это кража: гасим сессию.
+            if row[10]:
+                sig = headers.get('X-Device-Sig') or headers.get('x-device-sig') or ''
+                sig_ts = headers.get('X-Device-Ts') or headers.get('x-device-ts') or ''
+                if not device_sig.verify(str(row[10]), sig, sig_ts):
+                    cur.execute(f"UPDATE {SCHEMA}.sessions SET revoked = true WHERE token = %s", (token,))
+                    return _resp(401, {'error': 'device_mismatch'}, event)
             # Скользящее окно: пока человек пользуется сайтом, сессия живёт.
             cur.execute(
                 f"UPDATE {SCHEMA}.sessions SET last_seen_at = now(), expires_at = %s WHERE token = %s",
@@ -572,13 +586,13 @@ def handler(event: dict, context) -> dict:
         conn.close()
 
 
-def _create_session(cur, user_id: int, fingerprint: str = '', device: str = '', ip_masked: str = '') -> str:
+def _create_session(cur, user_id: int, fingerprint: str = '', device: str = '', ip_masked: str = '', pubkey: str = '') -> str:
     token = pysecrets.token_hex(32)
     expires = datetime.utcnow() + timedelta(days=SESSION_DAYS)
     cur.execute(
-        f"INSERT INTO {SCHEMA}.sessions (token, user_id, expires_at, fingerprint, device_label, ip_masked) "
-        f"VALUES (%s, %s, %s, %s, %s, %s)",
-        (token, user_id, expires, fingerprint or None, device or None, ip_masked or None),
+        f"INSERT INTO {SCHEMA}.sessions (token, user_id, expires_at, fingerprint, device_label, ip_masked, device_pubkey) "
+        f"VALUES (%s, %s, %s, %s, %s, %s, %s)",
+        (token, user_id, expires, fingerprint or None, device or None, ip_masked or None, pubkey or None),
     )
     # Гигиена: при каждом входе гасим давно неиспользуемые сессии этого
     # пользователя, чтобы старые токены не жили в базе бесконечно.
