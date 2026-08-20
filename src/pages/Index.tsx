@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import Icon from "@/components/ui/icon";
 import { useLang, t, LANGS, type Lang } from "@/lib/i18n";
 import { useGeo } from "@/lib/geo";
@@ -17,9 +17,9 @@ import NotificationBell from "@/components/NotificationBell";
 import LocationAutocomplete, { type LocationSuggestion } from "@/components/LocationAutocomplete";
 import { serviceCategories, services } from "@/lib/servicesCatalog";
 import { StarRating } from "@/components/SharedControls";
-import AdminPanel from "@/components/AdminPanel";
-import ClientDashboard from "@/components/ClientDashboard";
-import ProviderDashboard from "@/components/ProviderDashboard";
+const AdminPanel = lazy(() => import("@/components/AdminPanel"));
+const ClientDashboard = lazy(() => import("@/components/ClientDashboard"));
+const ProviderDashboard = lazy(() => import("@/components/ProviderDashboard"));
 import { TrustBadges, MinimalHome, FaqAccordion } from "@/components/LandingSections";
 import AuthModal from "@/components/AuthModal";
 import { PricingSection } from "@/components/Pricing";
@@ -36,6 +36,17 @@ import {
   type Section, type Role,
 } from "@/lib/shared";
 import { useLiveCounter, useTilt3D, useFavorites } from "@/hooks/useAppHooks";
+
+// Заглушка на время подгрузки раздела: мягкая, без резких спиннеров.
+function SectionLoader() {
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-24 flex flex-col items-center justify-center gap-4">
+      <div className="w-10 h-10 rounded-full border-2 border-gold/30 border-t-gold animate-spin" />
+      <div className="h-3 w-40 rounded-full bg-secondary animate-pulse" />
+      <div className="h-3 w-24 rounded-full bg-secondary/60 animate-pulse" />
+    </div>
+  );
+}
 
 function Lightbox({ src, title, onClose }: { src: string; title?: string; onClose: () => void }) {
   const { tr } = useLang();
@@ -54,7 +65,7 @@ function Lightbox({ src, title, onClose }: { src: string; title?: string; onClos
           <a href={src} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-gold hover:underline">
             <Icon name="ExternalLink" size={14} />{tr("lightboxOpenNewTab")}
           </a>
-          <button onClick={onClose} className="inline-flex items-center gap-1.5 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-gold hover:text-gold transition-all">
+          <button aria-label="Закрыть" onClick={onClose} className="inline-flex items-center gap-1.5 border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-gold hover:text-gold transition-all">
             <Icon name="X" size={14} />{tr("lightboxClose")}
           </button>
         </div>
@@ -869,7 +880,7 @@ export default function Index() {
                     <Icon name="LayoutDashboard" size={16} />
                     {tr("authCabinet")}
                   </button>
-                  <button onClick={handleLogout} className="w-full border border-border text-muted-foreground py-3 text-sm font-montserrat font-semibold rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center justify-center gap-2">
+                  <button aria-label="Выйти" onClick={handleLogout} className="w-full border border-border text-muted-foreground py-3 text-sm font-montserrat font-semibold rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center justify-center gap-2">
                     <Icon name="LogOut" size={16} />
                     {tr("dashLogout")}
                   </button>
@@ -902,7 +913,11 @@ export default function Index() {
 
       <main style={active === "home" ? { paddingTop: 64 + secBarH } : undefined}>
         <div key={active} className="section-transition">
-          {renderSection()}
+          {/* Кабинеты грузятся отдельным файлом — на время загрузки
+              показываем спокойную заглушку, а не пустой экран. */}
+          <Suspense fallback={<SectionLoader />}>
+            {renderSection()}
+          </Suspense>
         </div>
       </main>
 
@@ -1622,7 +1637,7 @@ function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider:
           <button onClick={() => setReportOpen(true)} className="text-xs text-muted-foreground hover:text-destructive transition-colors font-montserrat flex items-center gap-1">
             <Icon name="Flag" size={13} />{tr("reportBtn")}
           </button>
-          <button onClick={onBack} className="text-xs text-muted-foreground hover:text-gold transition-colors font-montserrat flex items-center gap-1">
+          <button aria-label="Назад" onClick={onBack} className="text-xs text-muted-foreground hover:text-gold transition-colors font-montserrat flex items-center gap-1">
             <Icon name="ArrowLeft" size={13} />{tr("back")}
           </button>
         </div>
@@ -2110,7 +2125,7 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
 
 function SearchSection({ setActive, initialCategory = "", initialService = "", openSpecialist }: { setActive: (s: Section) => void; initialCategory?: string; initialService?: string; openSpecialist?: (p: Provider) => void }) {
   const { lang, tr } = useLang();
-  const { providers } = useProviders();
+  const { providers, failed } = useProviders();
   const [query, setQuery] = useState(initialService);
   const [category, setCategory] = useState(initialCategory);
   const [licensedOnly, setLicensedOnly] = useState(false);
@@ -2246,12 +2261,23 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
           {tr("searchFLicensed")}
         </button>
         {hasFilters && (
-          <button onClick={reset} className="text-xs font-montserrat font-semibold text-muted-foreground hover:text-gold flex items-center gap-1.5"><Icon name="X" size={13} />{tr("searchReset")}</button>
+          <button aria-label="Закрыть" onClick={reset} className="text-xs font-montserrat font-semibold text-muted-foreground hover:text-gold flex items-center gap-1.5"><Icon name="X" size={13} />{tr("searchReset")}</button>
         )}
         <span className="text-xs text-muted-foreground ms-auto">{tr("searchFound")}: <span className="text-gold font-bold">{results.length}</span></span>
       </div>
 
-      {results.length === 0 ? (
+      {failed ? (
+        /* Каталог не загрузился — честно объясняем причину и даём действие.
+           Пустой экран человек читает как «здесь никого нет». */
+        <div className="border border-dashed border-gold/40 rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center px-6">
+          <Icon name="CloudOff" size={40} className="text-gold/50" />
+          <span className="text-sm text-foreground font-montserrat font-semibold">{tr("loadFailedTitle")}</span>
+          <span className="text-xs text-muted-foreground max-w-md">{tr("loadFailedText")}</span>
+          <button onClick={() => window.location.reload()} className="mt-1 text-xs font-montserrat font-semibold text-gold hover:underline">
+            {tr("loadFailedRetry")}
+          </button>
+        </div>
+      ) : results.length === 0 ? (
         <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
           <Icon name="SearchX" size={40} className="text-muted-foreground/30" />
           <span className="text-sm text-muted-foreground">{tr("filterNoResults")}</span>

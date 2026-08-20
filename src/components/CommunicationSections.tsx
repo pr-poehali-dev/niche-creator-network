@@ -60,7 +60,7 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <button onClick={onBack} className="text-xs text-muted-foreground hover:text-gold transition-colors font-montserrat flex items-center gap-1 mb-4">
+      <button aria-label="Назад" onClick={onBack} className="text-xs text-muted-foreground hover:text-gold transition-colors font-montserrat flex items-center gap-1 mb-4">
         <Icon name="ArrowLeft" size={13} />{tr("back")}
       </button>
       <div className="border border-border rounded-sm bg-card overflow-hidden flex flex-col" style={{ height: "600px" }}>
@@ -108,7 +108,7 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
               placeholder={tr("writeMessage")}
               className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
             />
-            <button onClick={send} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
+            <button aria-label="Отправить" onClick={send} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
               <Icon name="Send" size={16} />
             </button>
           </div>
@@ -207,7 +207,7 @@ export function ChatSection({ chatInput, setChatInput }: { chatInput: string; se
                   placeholder={tr("writeMessage")}
                   className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
                 />
-                <button onClick={send} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
+                <button aria-label="Отправить" onClick={send} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
                   <Icon name="Send" size={16} />
                 </button>
               </div>

@@ -226,7 +226,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
             <Icon name="ShieldOff" size={13} />
             {tr("dashLogoutAll")}
           </button>
-          <button onClick={handleLogout} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5">
+          <button aria-label="Выйти" onClick={handleLogout} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5">
             <Icon name="LogOut" size={13} />
             {tr("dashLogout")}
           </button>

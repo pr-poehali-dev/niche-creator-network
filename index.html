@@ -22,6 +22,13 @@
       frame-ancestors 'none';
       upgrade-insecure-requests;
     "/>
+    <!-- Дополнительные рубежи защиты. Запрещаем браузеру угадывать тип файла
+         (частый вектор атаки), не отдаём чужим сайтам адрес наших страниц
+         целиком и заранее отключаем доступ к камере, микрофону и геопозиции —
+         платформе они не нужны, а разрешение по умолчанию всегда риск. -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff"/>
+    <meta name="referrer" content="strict-origin-when-cross-origin"/>
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"/>
     <title>ЩИТ — Международная платформа специалистов по безопасности | SHCHIT</title>
     <meta name="description" content="Международная платформа проверенных специалистов по безопасности: частные детективы, телохранители, полиграфологи, эксперты по кибербезопасности и охранные агентства из разных стран — в одном каталоге. International platform of verified security specialists."/>
     <meta name="keywords" content="security specialists, detectives, bodyguards, polygraph, cybersecurity, безопасность, детектив, телохранитель, полиграфолог, охрана"/>
@@ -254,14 +261,18 @@
     })
     (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
 
-    ym(101026698, "init", {
-        trustedDomains: ["shieldpspl.ru"],
-        clickmap: true,
-        trackLinks: true,
-        accurateTrackBounce: true,
-        webvisor: true,
-        trackHash: true
-    });
+    // Аналитика не должна ронять сайт. Если скрипт заблокирован (санкции,
+    // блокировщик рекламы, сбой сети) — молча продолжаем работу.
+    try {
+        ym(101026698, "init", {
+            trustedDomains: ["shieldpspl.ru"],
+            clickmap: true,
+            trackLinks: true,
+            accurateTrackBounce: true,
+            webvisor: true,
+            trackHash: true
+        });
+    } catch (e) { /* аналитика недоступна — не мешаем работе сайта */ }
 </script>
 <noscript>
     <div><img src="https://mc.yandex.ru/watch/101026698" style="position:absolute; left:-9999px;" alt=""/></div>

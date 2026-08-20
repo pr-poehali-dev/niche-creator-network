@@ -86,7 +86,7 @@ export function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; on
                   </div>
                 ))}
               </div>
-              <button onClick={onPolicy} className="inline-flex items-center gap-1.5 text-sm font-montserrat font-semibold text-gold hover:underline">
+              <button aria-label="Вперёд" onClick={onPolicy} className="inline-flex items-center gap-1.5 text-sm font-montserrat font-semibold text-gold hover:underline">
                 {tr("homeReadPolicy")}
                 <Icon name="ArrowRight" size={14} />
               </button>

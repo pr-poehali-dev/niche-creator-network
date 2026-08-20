@@ -407,7 +407,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
             <Icon name="ShieldOff" size={13} />
             {tr("dashLogoutAll")}
           </button>
-          <button onClick={handleLogout} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5">
+          <button aria-label="Выйти" onClick={handleLogout} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all flex items-center gap-1.5">
             <Icon name="LogOut" size={13} />
             {tr("dashLogout")}
           </button>
@@ -1156,7 +1156,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                     placeholder={tr("pdFindFriendPh")}
                     className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
                   />
-                  <button onClick={searchFriendById} disabled={friendBusy || !searchPublicId.trim()} className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50 flex items-center gap-1.5">
+                  <button aria-label="Поиск" onClick={searchFriendById} disabled={friendBusy || !searchPublicId.trim()} className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50 flex items-center gap-1.5">
                     <Icon name="Search" size={14} />{tr("pdFindFriendBtn")}
                   </button>
                 </div>

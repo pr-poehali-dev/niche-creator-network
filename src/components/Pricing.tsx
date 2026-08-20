@@ -209,7 +209,7 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
                 <h3 className="font-montserrat font-bold text-lg text-foreground">{tr("payTitle")}</h3>
                 <p className="text-xs text-muted-foreground">{tr("paySubtitle")}</p>
               </div>
-              <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors"><Icon name="X" size={20} /></button>
+              <button aria-label="Закрыть" onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors"><Icon name="X" size={20} /></button>
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-4 p-1 bg-secondary rounded-sm">

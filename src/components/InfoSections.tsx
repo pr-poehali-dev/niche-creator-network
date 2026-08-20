@@ -226,7 +226,7 @@ export function MobileAppSection({ setActive }: { setActive: (s: Section) => voi
           <Icon name="Download" size={32} className="text-gold mx-auto mb-3" />
           <h2 className="font-montserrat font-bold text-lg md:text-xl text-foreground mb-2">{installEvt ? tr("maQuickTitle") : tr("maQuickTitleManual")}</h2>
           <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">{installEvt ? tr("maQuickText") : tr("maQuickTextManual")}</p>
-          <button
+          <button aria-label="Скачать"
             onClick={doInstall}
             className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2 glow-gold-sm"
           >
@@ -582,7 +582,7 @@ function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <button onClick={onBack} className="inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-muted-foreground hover:text-gold transition-colors mb-6">
+      <button aria-label="Назад" onClick={onBack} className="inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-muted-foreground hover:text-gold transition-colors mb-6">
         <Icon name="ArrowLeft" size={14} />{tr("blogBack")}
       </button>
 

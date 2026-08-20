@@ -166,7 +166,7 @@ export default function AdminPanel() {
           <Icon name="Search" size={15} className="text-muted-foreground" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr("adminSearch")} className="flex-1 bg-transparent py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
         </div>
-        <button onClick={load} className="flex items-center gap-1.5 border border-border text-muted-foreground px-3 py-2.5 text-xs font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">
+        <button aria-label="Обновить" onClick={load} className="flex items-center gap-1.5 border border-border text-muted-foreground px-3 py-2.5 text-xs font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">
           <Icon name="RefreshCw" size={14} />{tr("adminRefresh")}
         </button>
       </div>

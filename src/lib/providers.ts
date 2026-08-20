@@ -126,6 +126,10 @@ export function useProviders() {
   const [servicePrices, setServicePrices] = useState<ServicePrices>({});
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
+  // Признак «каталог не загрузился». Нужен, чтобы показать человеку причину,
+  // а не пустой экран: при блокировке или сбое сети молчание выглядит как
+  // «на сайте никого нет» и отпугивает сильнее самой ошибки.
+  const [failed, setFailed] = useState(false);
   const token = getAuthToken();
 
   useEffect(() => {
@@ -136,11 +140,14 @@ export function useProviders() {
       .then((r) => r.json())
       .then((d) => {
         if (!alive) return;
+        setFailed(false);
         if (Array.isArray(d.providers)) setProviders(d.providers);
         if (d.servicePrices && typeof d.servicePrices === "object") setServicePrices(d.servicePrices);
         if (d.stats && typeof d.stats === "object") setStats(d.stats);
       })
-      .catch(() => {})
+      .catch(() => {
+        if (alive) setFailed(true);
+      })
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
@@ -149,5 +156,5 @@ export function useProviders() {
     // контакты специалистов, у вышедшего — снова скрываются.
   }, [token]);
 
-  return { providers, servicePrices, stats, loading };
+  return { providers, servicePrices, stats, loading, failed };
 }

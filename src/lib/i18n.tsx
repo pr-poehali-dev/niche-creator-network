@@ -313,6 +313,10 @@ export const t: Dict = {
   cfeat6Desc: { ru: "Шифрованные чаты и защита данных — ваши задачи и переписка остаются приватными", en: "Encrypted chats and data protection — your tasks and messages stay private" },
 
   // Client reviews section
+  // Сообщение при недоступности сервера (блокировка, сбой сети).
+  loadFailedTitle: { ru: "Не удалось загрузить каталог", en: "Could not load the catalogue" },
+  loadFailedText: { ru: "Похоже, нет связи с сервером. Проверьте подключение к интернету — возможно, соединение блокирует провайдер, VPN или расширение браузера.", en: "There seems to be no connection to the server. Check your internet — the connection may be blocked by your provider, VPN or a browser extension." },
+  loadFailedRetry: { ru: "Попробовать снова", en: "Try again" },
   clientReviewsTag: { ru: "Примеры обращений", en: "Example requests" },
   clientReviewsTitle: { ru: "С какими задачами приходят к специалистам", en: "What clients come to specialists with" },
   clientReviewsSub: { ru: "Типичные примеры обращений, составленные платформой. Это не отзывы клиентов: платформа только запускается, и настоящие отзывы появятся здесь после первых заказов.", en: "Typical examples of requests, composed by the platform. These are not client reviews: the platform is just launching, and real reviews will appear here after the first orders." },

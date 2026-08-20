@@ -56,7 +56,7 @@ export function UrgencyBanner({ onCta, sticky = false }: { onCta?: () => void; s
           <span className="text-[10px] text-[hsl(28,20%,7%)]/70 ms-1 hidden sm:inline">{tr("urgencyEnds")}</span>
         </div>
         {onCta && (
-          <button
+          <button aria-label="Вперёд"
             onClick={onCta}
             className="shrink-0 bg-[hsl(28,20%,7%)] text-gold px-4 py-1.5 rounded-sm font-montserrat font-bold text-xs hover:opacity-90 transition-opacity inline-flex items-center gap-1.5"
           >
