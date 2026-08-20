@@ -145,6 +145,18 @@
   h5,
   h6 {
     font-family: "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    /* Крупный текст на широких экранах смотрится рыхлым при обычных
+       межбуквенных расстояниях. Слегка сжимаем — заголовок читается как
+       единый блок, а не как набор букв. Так набирают в хороших изданиях. */
+    letter-spacing: -0.022em;
+    line-height: 1.1;
+    text-wrap: balance; /* не оставляет одно слово на последней строке */
+  }
+
+  /* Абзацы: комфортная длина строки. Слишком длинная строка утомляет глаз —
+     оптимум 60–75 знаков, к этому и стремимся. */
+  p {
+    text-wrap: pretty;
   }
 }
 
@@ -198,31 +210,6 @@
       0 12px 40px rgba(0, 0, 0, 0.5),
       0 0 0 1px hsl(43, 80%, 52%, 0.4),
       0 0 24px hsl(43, 80%, 52%, 0.08);
-  }
-
-  /* Лёгкий объём карточки при наведении: едва заметный наклон «к курсору».
-     Угол намеренно маленький (~3°) — платформа безопасности должна выглядеть
-     солидно, а не как развлекательный сайт. Только для мыши: на сенсорных
-     экранах наклон не нужен и мешает прокрутке (см. медиазапрос ниже). */
-  @media (hover: hover) and (pointer: fine) {
-    .card-tilt {
-      transform-style: preserve-3d;
-      transition:
-        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-        box-shadow 0.4s ease;
-    }
-    .card-tilt:hover {
-      transform: perspective(900px) rotateX(2.4deg) rotateY(-2.4deg)
-        translateY(-4px);
-    }
-    /* Внутренние элементы чуть «выступают» вперёд — даёт ощущение глубины
-       без единой сторонней библиотеки. */
-    .card-tilt:hover .tilt-lift {
-      transform: translateZ(18px);
-    }
-    .tilt-lift {
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
   }
 
   /* Появление цифр статистики при прокрутке: число мягко «вырастает».
@@ -286,9 +273,7 @@
      уменьшить анимацию (укачивание, чувствительность), всё отключаем.
      Для платформы, куда приходят в стрессе, это обязательно. */
   @media (prefers-reduced-motion: reduce) {
-    .card-tilt,
-    .card-tilt:hover,
-    .card-tilt:hover .tilt-lift {
+    .card-lift:hover {
       transform: none !important;
     }
     .verified-breathe,
@@ -655,16 +640,72 @@
     opacity: 0.4;
   }
 
+  /* Метка раздела. Раньше это была рамка-«капсула» — она конкурировала с
+     заголовком за внимание. Теперь тихая надпись с короткой чертой: глаз
+     сначала читает заголовок, а метка лишь подсказывает контекст. */
   .tag-security {
-    font-size: 0.65rem;
+    font-size: 0.68rem;
     font-family: "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
     font-weight: 600;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    padding: 3px 10px;
-    border: 1px solid hsl(var(--gold), 0.4);
     color: hsl(var(--gold));
-    border-radius: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.85;
+  }
+  .tag-security::before {
+    content: "";
+    width: 18px;
+    height: 1px;
+    background: hsl(var(--gold));
+    opacity: 0.6;
+  }
+
+  /* Карточка: спокойная в покое, живая при наведении. Подъём и мягкая
+     тень читаются как «этот элемент можно трогать» — без резких эффектов. */
+  .card-lift {
+    transition:
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.28s ease,
+      box-shadow 0.28s ease,
+      background-color 0.28s ease;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .card-lift:hover {
+      transform: translateY(-3px);
+      border-color: hsl(var(--gold) / 0.45);
+      box-shadow:
+        0 1px 0 hsl(var(--gold) / 0.06) inset,
+        0 12px 28px -12px hsl(0 0% 0% / 0.65);
+    }
+  }
+
+  /* Иконка в карточке. Вместо сплошной золотой плашки у каждого блока —
+     мягкая подложка с тонкой рамкой: акцент есть, но он не кричит,
+     и 27 одинаковых золотых квадратов больше не спорят друг с другом. */
+  .icon-tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: calc(var(--radius) - 2px);
+    background: linear-gradient(
+      145deg,
+      hsl(var(--gold) / 0.16) 0%,
+      hsl(var(--gold) / 0.06) 100%
+    );
+    border: 1px solid hsl(var(--gold) / 0.28);
+    color: hsl(var(--gold));
+    transition: background 0.28s ease, border-color 0.28s ease;
+  }
+  .card-lift:hover .icon-tile {
+    background: linear-gradient(
+      145deg,
+      hsl(var(--gold) / 0.26) 0%,
+      hsl(var(--gold) / 0.1) 100%
+    );
+    border-color: hsl(var(--gold) / 0.5);
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -817,20 +858,26 @@ img {
 }
 
 /* ===== Per-script fonts (правильные глифы для ja / ar / he) ===== */
+/* К каждому набору добавлены системные шрифты этого языка. Если Google Fonts
+   недоступен (блокировка, сбой), японский/арабский/иврит покажутся системным
+   шрифтом, а не «квадратиками» — текст останется читаемым в любом случае. */
 html[lang="ja"] body,
 html[lang="ja"] .font-montserrat,
 html[lang="ja"] .font-ibm {
-  font-family: "Noto Sans JP", "Montserrat", sans-serif;
+  font-family: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", "Meiryo", "MS PGothic", "Montserrat", sans-serif;
 }
 html[lang="ar"] body,
 html[lang="ar"] .font-montserrat,
 html[lang="ar"] .font-ibm {
-  font-family: "Noto Sans Arabic", "Montserrat", sans-serif;
+  font-family: "Noto Sans Arabic", "Geeza Pro", "Segoe UI", Tahoma, Arial,
+    "Montserrat", sans-serif;
 }
 html[lang="he"] body,
 html[lang="he"] .font-montserrat,
 html[lang="he"] .font-ibm {
-  font-family: "Noto Sans Hebrew", "Montserrat", sans-serif;
+  font-family: "Noto Sans Hebrew", "Arial Hebrew", "Segoe UI", Arial,
+    "Montserrat", sans-serif;
 }
 
 /* ===== Global RTL logical-flip for common Tailwind utilities =====

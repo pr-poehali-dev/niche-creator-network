@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Icon from "@/components/ui/icon";
 import { useLang } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
 import { cleanText } from "@/lib/moderation";
+import { useAutoTranslate } from "@/lib/autotranslate";
 import { trackGoal, GOALS } from "@/lib/analytics";
 import { ReportModal } from "@/components/ReviewsAndReports";
 import { FaqAccordion } from "@/components/LandingSections";
@@ -16,6 +17,11 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
   const { user } = useAuth();
   const [msgs, setMsgs] = useState<{ me: boolean; text: string; time: string }[]>([]);
   const [reportOpen, setReportOpen] = useState(false);
+  // Автоперевод переписки: собеседники могут писать на разных языках, включая
+  // те, которых нет в интерфейсе. Мемоизация обязательна — иначе новый массив
+  // на каждый рендер зацикливает хук.
+  const incoming = useMemo(() => msgs.filter((m) => !m.me).map((m) => m.text), [msgs]);
+  const { resolve: trMsg, isTranslated } = useAutoTranslate(incoming);
   const initial = (target.name || "?").trim()[0] || "?";
   const myDmId = user ? `u${user.id}` : "";
 
@@ -92,8 +98,16 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
           {msgs.map((m, i) => (
             <div key={i} className={`flex ${m.me ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[75%] rounded-sm px-3.5 py-2 ${m.me ? "gold-gradient text-[hsl(28,20%,7%)]" : "bg-secondary text-foreground"}`}>
-                <div className="text-sm leading-relaxed">{m.text}</div>
-                <div className={`text-[10px] mt-1 ${m.me ? "text-[hsl(28,20%,7%)]/70" : "text-muted-foreground"}`}>{m.time}</div>
+                <div className="text-sm leading-relaxed">{m.me ? m.text : trMsg(m.text)}</div>
+                <div className={`text-[10px] mt-1 flex items-center gap-1.5 ${m.me ? "text-[hsl(28,20%,7%)]/70" : "text-muted-foreground"}`}>
+                  {m.time}
+                  {!m.me && isTranslated(m.text) && (
+                    <span className="inline-flex items-center gap-1" title={tr("autoTranslated")}>
+                      <Icon name="Languages" size={10} />
+                      {tr("autoTranslated")}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -127,6 +141,10 @@ export function ChatSection({ chatInput, setChatInput }: { chatInput: string; se
   const me = user ? `user-${user.id}` : "guest";
   const myName = user?.name || tr("chatGuestName");
   const endRef = useRef<HTMLDivElement | null>(null);
+  // Общий чат международный: сообщения переводятся на язык интерфейса,
+  // включая языки, которых нет в списке сайта.
+  const chatTexts = useMemo(() => msgs.map((m) => m.text), [msgs]);
+  const { resolve: trMsg, isTranslated } = useAutoTranslate(chatTexts);
 
   const loadMsgs = useCallback((r: string) => {
     fetch(`${func2url["messages"]}?kind=chat&room=${r}`)
@@ -191,7 +209,13 @@ export function ChatSection({ chatInput, setChatInput }: { chatInput: string; se
                       <span className="text-xs font-montserrat font-semibold text-foreground">{m.author}</span>
                       <span className="text-[10px] text-muted-foreground">{fmtTime(m.createdAt)}</span>
                     </div>
-                    <div className="text-sm text-muted-foreground leading-relaxed">{m.text}</div>
+                    <div className="text-sm text-muted-foreground leading-relaxed">{trMsg(m.text)}</div>
+                    {isTranslated(m.text) && (
+                      <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-muted-foreground/70">
+                        <Icon name="Languages" size={10} />
+                        {tr("autoTranslated")}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -236,6 +260,12 @@ export function ForumSection() {
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [reply, setReply] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
+  // Форум международный: переводим и заголовки тем, и тексты ответов.
+  const forumTexts = useMemo(
+    () => [...topics.map((tp) => tp.title), ...posts.map((pp) => pp.text)],
+    [topics, posts],
+  );
+  const { resolve: trForum, isTranslated: forumTranslated } = useAutoTranslate(forumTexts);
 
   const loadTopics = useCallback((c: string) => {
     fetch(`${func2url["messages"]}?kind=forum${c ? `&category=${c}` : ""}`)
@@ -317,7 +347,13 @@ export function ForumSection() {
                 <span className="text-xs font-montserrat font-semibold text-foreground">{p.author}</span>
                 <span className="text-[10px] text-muted-foreground ms-auto">{fmtDate(p.createdAt)}</span>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{p.text}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trForum(p.text)}</p>
+              {forumTranslated(p.text) && (
+                <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-muted-foreground/70">
+                  <Icon name="Languages" size={10} />
+                  {tr("autoTranslated")}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -369,11 +405,11 @@ export function ForumSection() {
       <div className="space-y-3">
         {topics.length === 0 && <div className="text-sm text-muted-foreground border border-dashed border-border rounded-sm py-12 text-center">{tr("forumEmpty")}</div>}
         {topics.map((tp) => (
-          <div key={tp.id} className="border border-border rounded-sm bg-card p-4 card-hover">
+          <div key={tp.id} className="border border-border rounded-sm bg-card p-4 card-lift">
             <div className="md:grid grid-cols-12 gap-4 items-center">
               <div className="col-span-8 cursor-pointer" onClick={() => loadTopic(tp)}>
                 <div className="flex items-center gap-2 mb-1"><span className="tag-security">{catTitle(tp.category)}</span></div>
-                <div className="font-montserrat font-semibold text-sm text-foreground mt-2">{tp.title}</div>
+                <div className="font-montserrat font-semibold text-sm text-foreground mt-2">{trForum(tp.title)}</div>
                 <div className="text-[10px] text-muted-foreground mt-1">{tp.author} · {fmtDate(tp.createdAt)}</div>
               </div>
               <div className="col-span-2 text-center mt-3 md:mt-0 cursor-pointer" onClick={() => loadTopic(tp)}>
@@ -497,7 +533,7 @@ export function ContactsSection() {
             { icon: "Mail", title: tr("emailSupport"), val: "shieldpspl@yandex.ru", desc: tr("emailSupportDesc") },
             { icon: "MapPin", title: tr("legalAddress"), val: "Московская обл., г. Электросталь, пос. Всеволодово", desc: "ИП Давыдов Алексей Владимирович · ОГРНИП 320222500068242 · ИНН 222111361597" },
           ].map((c) => (
-            <div key={c.title} className="border border-border rounded-sm bg-card p-5 flex gap-4 card-hover">
+            <div key={c.title} className="border border-border rounded-sm bg-card p-5 flex gap-4 card-lift">
               <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">
                 <Icon name={c.icon} size={18} className="text-[hsl(28,20%,7%)]" />
               </div>

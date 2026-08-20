@@ -465,7 +465,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
             return (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {favProviders.map((s) => (
-                  <div key={s.slug} className="border border-border rounded-sm bg-card p-5 card-hover">
+                  <div key={s.slug} className="border border-border rounded-sm bg-card p-5 card-lift">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-11 h-11 rounded-sm overflow-hidden shrink-0">
                         <img src={resolveAvatar(s.img, s.gender)} alt={L(s.name, lang)} loading="lazy" className="w-full h-full object-cover" />

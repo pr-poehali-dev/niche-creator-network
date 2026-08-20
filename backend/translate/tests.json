@@ -10,22 +10,59 @@
       "name": "Translate batch returns 200",
       "method": "POST",
       "path": "/",
-      "body": { "texts": ["Привет, коллега"], "target": "en" },
+      "body": {
+        "texts": [
+          "Привет, коллега"
+        ],
+        "target": "en"
+      },
       "expectedStatus": 200
     },
     {
       "name": "Empty texts rejected",
       "method": "POST",
       "path": "/",
-      "body": { "texts": [], "target": "en" },
+      "body": {
+        "texts": [],
+        "target": "en"
+      },
       "expectedStatus": 400
     },
     {
-      "name": "Unsupported target rejected",
+      "name": "Invalid lang code rejected",
       "method": "POST",
       "path": "/",
-      "body": { "texts": ["hi"], "target": "xx" },
+      "body": {
+        "texts": [
+          "hi"
+        ],
+        "target": "not-a-language-code-123"
+      },
       "expectedStatus": 400
+    },
+    {
+      "name": "Language beyond UI is supported (Spanish)",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "texts": [
+          "Hello, colleague"
+        ],
+        "target": "es"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Language beyond UI is supported (Chinese)",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "texts": [
+          "Hello"
+        ],
+        "target": "zh-CN"
+      },
+      "expectedStatus": 200
     }
   ]
 }

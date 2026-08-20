@@ -17,7 +17,7 @@ export function TrustBadges() {
             ["Globe", "aboutTrust3"],
             ["Lock", "aboutTrust4"],
           ] as const).map(([icon, key]) => (
-            <div key={key} className="group border border-border rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2 card-hover card-tilt">
+            <div key={key} className="group border border-border rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2 card-lift">
               <Icon name={icon} size={22} className="icon-hover text-gold" />
               <span className="text-xs font-montserrat font-semibold text-foreground leading-snug">{tr(key)}</span>
             </div>
@@ -206,7 +206,7 @@ export function LandingWhyUs() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger">
         {cards.map((c) => (
-          <div key={c.title} className="group rounded-sm p-6 border border-border bg-card transition-all card-hover card-tilt">
+          <div key={c.title} className="group rounded-sm p-6 border border-border bg-card transition-all card-lift">
             <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
               <Icon name={c.icon} fallback="ShieldCheck" size={22} className="icon-hover text-[hsl(28,20%,7%)]" />
             </div>
@@ -239,8 +239,8 @@ export function LandingStats() {
       <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-6">
         {stats.map((s) => (
           <div key={s.key} className="group text-center">
-            <div className="w-11 h-11 gold-gradient rounded-full flex items-center justify-center mx-auto mb-3 glow-gold-sm">
-              <Icon name={s.icon} fallback="Star" size={19} className="icon-hover text-[hsl(28,20%,7%)]" />
+            <div className="w-11 h-11 icon-tile rounded-full flex items-center justify-center mx-auto mb-3">
+              <Icon name={s.icon} fallback="Star" size={19} className="icon-hover text-gold" />
             </div>
             <div className="font-montserrat font-extrabold text-2xl md:text-3xl gold-text-gradient">{s.value}</div>
             <div className="text-xs text-muted-foreground mt-1">{tr(s.key)}</div>
@@ -268,10 +268,10 @@ export function LandingHowItWorks() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5 stagger">
         {steps.map((s, i) => (
-          <div key={s.title} className="group relative border border-border rounded-sm bg-card p-6 card-hover card-tilt">
+          <div key={s.title} className="group relative border border-border rounded-sm bg-card p-6 card-lift">
             <div className="absolute top-4 end-4 font-montserrat font-extrabold text-3xl text-gold/15">{i + 1}</div>
-            <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center mb-4 glow-gold-sm">
-              <Icon name={s.icon} fallback="Check" size={21} className="icon-hover text-[hsl(28,20%,7%)]" />
+            <div className="w-12 h-12 icon-tile flex items-center justify-center mb-4">
+              <Icon name={s.icon} fallback="Check" size={21} className="icon-hover text-gold" />
             </div>
             <h3 className="font-montserrat font-bold text-base text-foreground mb-2">{tr(s.title)}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">{tr(s.desc)}</p>
@@ -292,7 +292,7 @@ export function LandingValue() {
     <section className="border-y border-border bg-card/30">
       <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-2 gap-6">
         {cards.map((c) => (
-          <div key={c.title} className="group rounded-sm p-7 md:p-8 border border-border bg-card card-hover">
+          <div key={c.title} className="group rounded-sm p-7 md:p-8 border border-border bg-card card-lift">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center shrink-0">
                 <Icon name={c.icon} fallback="User" size={21} className="icon-hover text-[hsl(28,20%,7%)]" />
@@ -328,7 +328,7 @@ export function LandingServices() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger">
         {services.slice(0, 6).map((s) => (
-          <div key={s.title.en} className="group border border-border rounded-sm bg-card p-5 card-hover shine-on-hover">
+          <div key={s.title.en} className="group border border-border rounded-sm bg-card p-5 card-lift shine-on-hover">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">
                 <Icon name={s.icon} fallback="ShieldCheck" size={18} className="icon-hover text-[hsl(28,20%,7%)]" />
@@ -379,7 +379,7 @@ export function LandingTestimonials() {
         {real.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
             {real.map((r, i) => (
-              <div key={`${r.author}-${i}`} className="border border-border rounded-sm bg-card p-6 card-hover card-tilt">
+              <div key={`${r.author}-${i}`} className="border border-border rounded-sm bg-card p-6 card-lift">
                 <div className="flex gap-0.5 mb-3">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <Icon key={n} name="Star" size={14} className={n <= r.rating ? "text-gold fill-current" : "text-muted-foreground/40"} />
@@ -401,9 +401,9 @@ export function LandingTestimonials() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
             {principles.map((p) => (
-              <div key={p.title} className="border border-border rounded-sm bg-card p-6 card-hover card-tilt">
-                <div className="w-10 h-10 gold-gradient rounded-sm flex items-center justify-center mb-3">
-                  <Icon name={p.icon} fallback="ShieldCheck" size={18} className="text-[hsl(28,20%,7%)]" />
+              <div key={p.title} className="border border-border rounded-sm bg-card p-6 card-lift">
+                <div className="w-10 h-10 icon-tile flex items-center justify-center mb-3">
+                  <Icon name={p.icon} fallback="ShieldCheck" size={18} className="text-gold" />
                 </div>
                 <div className="font-montserrat font-bold text-sm text-foreground mb-2">{p.title}</div>
                 <p className="text-xs text-muted-foreground leading-relaxed">{p.desc}</p>

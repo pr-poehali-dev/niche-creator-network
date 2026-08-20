@@ -82,8 +82,8 @@ export function InstallPromptBanner({ setActive }: { setActive: (s: Section) => 
   return (
     <div className="fixed bottom-0 inset-x-0 z-[70] p-3 sm:hidden animate-rise" role="dialog" aria-label={tr("maTitle")}>
       <div className="max-w-md mx-auto bg-card border border-gold/40 rounded-lg shadow-2xl security-glow p-4 flex items-center gap-3">
-        <div className="w-11 h-11 gold-gradient rounded-lg flex items-center justify-center shrink-0 glow-gold-sm">
-          <Icon name="Smartphone" size={22} className="text-[hsl(28,20%,7%)]" />
+        <div className="w-11 h-11 icon-tile flex items-center justify-center shrink-0">
+          <Icon name="Smartphone" size={22} className="text-gold" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="font-montserrat font-bold text-sm text-foreground leading-tight">{tr("installBannerTitle")}</div>
@@ -264,10 +264,10 @@ export function MobileAppSection({ setActive }: { setActive: (s: Section) => voi
       {/* Steps */}
       <div className="space-y-4 stagger mb-8">
         {steps[tab].map((s, i) => (
-          <div key={s.title} className="border border-border rounded-sm bg-card p-5 md:p-6 flex items-start gap-4 card-hover">
+          <div key={s.title} className="border border-border rounded-sm bg-card p-5 md:p-6 flex items-start gap-4 card-lift">
             <div className="flex flex-col items-center shrink-0">
-              <div className="w-10 h-10 gold-gradient rounded-full flex items-center justify-center glow-gold-sm">
-                <span className="font-montserrat font-bold text-sm text-[hsl(28,20%,7%)]">{i + 1}</span>
+              <div className="w-10 h-10 icon-tile rounded-full flex items-center justify-center">
+                <span className="font-montserrat font-bold text-sm text-gold">{i + 1}</span>
               </div>
             </div>
             <div className="flex-1">
@@ -369,9 +369,9 @@ export function HowItWorksSection({ setActive }: { setActive: (s: Section) => vo
 
       <div className="space-y-4 mb-8 stagger">
         {steps.map((s) => (
-          <div key={s.title} className="flex items-start gap-4 border border-border rounded-sm bg-card p-5 hover:border-gold/40 transition-colors">
-            <div className="w-11 h-11 gold-gradient rounded-sm flex items-center justify-center shrink-0 glow-gold-sm">
-              <Icon name={s.icon} size={20} className="text-[hsl(28,20%,7%)]" />
+          <div key={s.title} className="flex items-start gap-4 border border-border rounded-sm bg-card p-5 card-lift">
+            <div className="w-11 h-11 icon-tile flex items-center justify-center shrink-0">
+              <Icon name={s.icon} size={20} className="text-gold" />
             </div>
             <div>
               <h2 className="font-montserrat font-bold text-base text-foreground mb-1.5">{tr(s.title)}</h2>
@@ -473,7 +473,7 @@ export function AboutSection({ setActive }: { setActive: (s: Section) => void })
             ["Globe", "aboutTrust3"],
             ["Lock", "aboutTrust4"],
           ] as const).map(([icon, key]) => (
-            <div key={key} className="group border border-border rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2 card-hover card-tilt">
+            <div key={key} className="group border border-border rounded-sm bg-card p-4 flex flex-col items-center text-center gap-2 card-lift">
               <Icon name={icon} size={22} className="icon-hover text-gold" />
               <span className="text-xs font-montserrat font-semibold text-foreground leading-snug">{tr(key)}</span>
             </div>
@@ -486,7 +486,7 @@ export function AboutSection({ setActive }: { setActive: (s: Section) => void })
         <h2 className="font-montserrat font-bold text-lg text-foreground mb-4">{tr("aboutValuesTitle")}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 stagger">
           {values.map((v) => (
-            <div key={v.title} className="border border-border rounded-sm bg-card p-6 card-hover card-tilt">
+            <div key={v.title} className="border border-border rounded-sm bg-card p-6 card-lift">
               <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-4 glow-gold-sm">
                 <Icon name={v.icon} fallback="Check" size={19} className="text-[hsl(28,20%,7%)]" />
               </div>
@@ -587,8 +587,8 @@ function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (
       </button>
 
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-11 h-11 gold-gradient rounded-sm flex items-center justify-center shrink-0 glow-gold-sm">
-          <Icon name={post.icon} fallback="FileText" size={20} className="text-[hsl(28,20%,7%)]" />
+        <div className="w-11 h-11 icon-tile flex items-center justify-center shrink-0">
+          <Icon name={post.icon} fallback="FileText" size={20} className="text-gold" />
         </div>
         <div className="text-[11px] text-muted-foreground font-montserrat">{post.date} · {post.readMin} {tr("blogMinRead")}</div>
       </div>
@@ -732,11 +732,11 @@ export function BlogSection({ setActive }: { setActive: (s: Section) => void }) 
           <button
             key={post.slug}
             onClick={() => { setOpenSlug(post.slug); window.scrollTo({ top: 0 }); }}
-            className="group text-left border border-border rounded-sm bg-card p-6 hover:border-gold/50 transition-all card-hover card-tilt"
+            className="group text-left border border-border rounded-sm bg-card p-6 hover:border-gold/50 transition-all card-lift"
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-11 h-11 gold-gradient rounded-sm flex items-center justify-center shrink-0">
-                <Icon name={post.icon} fallback="FileText" size={20} className="icon-hover text-[hsl(28,20%,7%)]" />
+              <div className="w-11 h-11 icon-tile flex items-center justify-center shrink-0">
+                <Icon name={post.icon} fallback="FileText" size={20} className="icon-hover text-gold" />
               </div>
               <div className="text-[11px] text-muted-foreground font-montserrat">{post.readMin} {tr("blogMinRead")}</div>
             </div>
@@ -808,7 +808,7 @@ export function SecurityPolicySection({ setActive }: { setActive: (s: Section) =
 
           <div className="space-y-5 stagger">
             {sections.map((s, i) => (
-              <div key={s.title} id={`pol-${i}`} className="border border-border rounded-sm bg-card p-6 md:p-7 card-hover scroll-mt-24">
+              <div key={s.title} id={`pol-${i}`} className="border border-border rounded-sm bg-card p-6 md:p-7 card-lift scroll-mt-24">
                 <div className="flex items-start gap-4">
                   <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center shrink-0 glow-gold-sm">
                     <Icon name={s.icon} fallback="Lock" size={19} className="text-[hsl(28,20%,7%)]" />

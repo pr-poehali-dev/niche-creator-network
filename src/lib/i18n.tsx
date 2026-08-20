@@ -314,6 +314,11 @@ export const t: Dict = {
 
   // Client reviews section
   // Сообщение при недоступности сервера (блокировка, сбой сети).
+  // Пометка на переведённом сообщении: человек должен понимать, что читает
+  // машинный перевод, а не оригинал — это вопрос доверия к переписке.
+  autoTranslated: { ru: "переведено", en: "translated" },
+  showOriginal: { ru: "Показать оригинал", en: "Show original" },
+  showTranslation: { ru: "Показать перевод", en: "Show translation" },
   loadFailedTitle: { ru: "Не удалось загрузить каталог", en: "Could not load the catalogue" },
   loadFailedText: { ru: "Похоже, нет связи с сервером. Проверьте подключение к интернету — возможно, соединение блокирует провайдер, VPN или расширение браузера.", en: "There seems to be no connection to the server. Check your internet — the connection may be blocked by your provider, VPN or a browser extension." },
   loadFailedRetry: { ru: "Попробовать снова", en: "Try again" },

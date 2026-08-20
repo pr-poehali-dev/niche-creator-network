@@ -506,18 +506,20 @@ function CookieBanner({ go }: { go: (s: Section) => void }) {
   };
   if (!visible) return null;
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[90] p-3 sm:p-4">
-      <div className="max-w-5xl mx-auto bg-card border border-gold/40 rounded-sm shadow-2xl security-glow p-4 sm:p-5 flex flex-col md:flex-row md:items-center gap-4">
+    /* Баннер прижат к углу и компактен: согласие на cookie — формальность,
+       он не должен закрывать первый экран и мешать читать предложение. */
+    <div className="fixed inset-x-0 bottom-0 z-[90] p-3 sm:p-4 pointer-events-none">
+      <div className="max-w-md ms-auto me-0 bg-card/95 backdrop-blur-md border border-border rounded-sm shadow-2xl p-3.5 sm:p-4 flex flex-col gap-2.5 pointer-events-auto">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <Icon name="Cookie" size={20} className="text-gold shrink-0 mt-0.5" />
-          <p className="text-xs sm:text-[13px] text-muted-foreground leading-relaxed">
+          <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-3 sm:line-clamp-none">
             {tr("cookieText")}{" "}
             <button onClick={() => go("privacy")} className="text-gold hover:underline font-semibold whitespace-nowrap">{tr("cookieMore")}</button>
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button onClick={() => decide("essential")} className="border border-border text-muted-foreground hover:text-foreground hover:border-gold/50 text-xs font-montserrat font-semibold px-4 py-2.5 rounded-sm transition-all">{tr("cookieDecline")}</button>
-          <button onClick={() => decide("accepted")} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-5 py-2.5 rounded-sm hover:opacity-90 transition-opacity">{tr("cookieAccept")}</button>
+        <div className="flex items-center gap-2 justify-end">
+          <button onClick={() => decide("essential")} className="text-muted-foreground hover:text-foreground text-xs font-montserrat font-semibold px-3 py-2 rounded-sm transition-colors">{tr("cookieDecline")}</button>
+          <button onClick={() => decide("accepted")} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-5 py-2 rounded-sm hover:opacity-90 transition-opacity">{tr("cookieAccept")}</button>
         </div>
       </div>
     </div>
@@ -1089,7 +1091,7 @@ function ClientReviewsSection() {
   }, [paused, rtl]);
 
   return (
-    <section className="border-y border-border bg-card py-28 relative overflow-hidden">
+    <section className="border-y border-border bg-card py-20 md:py-32 relative overflow-hidden">
       <div className="absolute inset-0 grid-line-bg opacity-50" />
       <div className="max-w-7xl mx-auto px-4 relative z-10">
         <Reveal className="text-center mb-14">
@@ -1208,19 +1210,18 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 </div>
               )}
             </div>
-            {/* Размер шрифта рассчитан математически под длину русской фразы:
-                при ширине колонки ~860px и жирном Montserrat, 32 символа
-                («Найдите проверенного специалиста») умещаются в одну строку
-                только при размере шрифта не более ~44px. Раньше шрифт доходил
-                до 96px — тогда даже одно слово «проверенного» не помещалось
-                в строку и фраза разваливалась на 5 строк. */}
+            {/* Заголовок намеренно разбит на две короткие строки — тогда его
+                можно набрать крупно, не рискуя развалом на длинных языках
+                (русский и немецкий на ~30% длиннее английского).
+                clamp даёт плавный размер: мелкий на телефоне, крупный на
+                десктопе, без скачков на промежуточных ширинах. */}
             {isClient ? (
-              <h1 className="font-montserrat font-extrabold text-[clamp(1.75rem,4vw,2.75rem)] text-foreground leading-[1.2] mb-6 tracking-tight">
+              <h1 className="font-montserrat font-extrabold text-[clamp(2rem,5.2vw,3.9rem)] text-foreground leading-[1.06] mb-7 tracking-[-0.025em]">
                 {tr("heroClientTitle1")}<br />
                 <span className="gold-text-gradient">{tr("heroClientTitle2")}</span>
               </h1>
             ) : (
-              <h1 className="font-montserrat font-extrabold text-[clamp(1.75rem,4vw,2.75rem)] text-foreground leading-[1.2] mb-6 tracking-tight">
+              <h1 className="font-montserrat font-extrabold text-[clamp(2rem,5.2vw,3.9rem)] text-foreground leading-[1.06] mb-7 tracking-[-0.025em]">
                 <span>{tr("heroProviderTitle1")}</span><br />
                 <span className="gold-text-gradient">{tr("heroProviderTitle2")}</span>
               </h1>
@@ -1353,8 +1354,8 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               >
                 <Icon name="X" size={16} />
               </button>
-              <div className="w-12 h-12 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
-                <Icon name="Smartphone" size={22} className="text-[hsl(28,20%,7%)]" />
+              <div className="w-12 h-12 icon-tile rounded-full flex items-center justify-center shrink-0">
+                <Icon name="Smartphone" size={22} className="text-gold" />
               </div>
               <div className="flex-1 text-center sm:text-left">
                 <div className="font-montserrat font-bold text-sm text-foreground mb-0.5">{tr("appBannerTitle")}</div>
@@ -1373,7 +1374,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
       )}
 
       {!isClient && (
-        <section className="border-t border-border bg-card py-28 relative overflow-hidden ambient-gold">
+        <section className="border-t border-border bg-card py-20 md:py-28 relative overflow-hidden ambient-gold">
           <div className="max-w-7xl mx-auto px-4 relative z-10">
             <Reveal className="text-center mb-14">
               <div className="tag-security mb-3 inline-block">{tr("bpTag")}</div>
@@ -1386,7 +1387,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 { n: "03", icon: "Wallet", title: "bp3Title" as const, desc: "bp3Desc" as const },
                 { n: "04", icon: "TrendingUp", title: "bp4Title" as const, desc: "bp4Desc" as const },
               ].map((step) => (
-                <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-hover card-tilt">
+                <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-lift">
                   <div className="font-montserrat font-extrabold text-4xl text-gold/15 absolute top-4 right-5">{step.n}</div>
                   <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
                     <Icon name={step.icon} fallback="Check" size={19} className="text-[hsl(28,20%,7%)]" />
@@ -1407,7 +1408,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
       )}
 
       {isClient && (
-      <section className="border-t border-border bg-card py-28 relative overflow-hidden ambient-gold">
+      <section className="border-t border-border bg-card py-20 md:py-28 relative overflow-hidden ambient-gold">
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           <Reveal className="text-center mb-14">
             <div className="tag-security mb-3 inline-block">{tr("process")}</div>
@@ -1420,7 +1421,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               { n: "03", icon: "PhoneCall", title: "cstep3Title" as const, desc: "cstep3Desc" as const },
               { n: "04", icon: "CircleCheckBig", title: "cstep4Title" as const, desc: "cstep4Desc" as const },
             ].map((step) => (
-              <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-hover card-tilt">
+              <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-lift">
                 <div className="font-montserrat font-extrabold text-4xl text-gold/15 absolute top-4 right-5">{step.n}</div>
                 <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
                   <Icon name={step.icon} size={19} className="text-[hsl(28,20%,7%)]" />
@@ -1434,7 +1435,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
       </section>
       )}
 
-      <section className="py-28">
+      <section className="py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-4">
           <Reveal className="text-center mb-12">
             <div className="tag-security mb-3 inline-block">{tr("features")}</div>
@@ -1459,7 +1460,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                   { icon: "GraduationCap", title: "featPro6Title" as const, desc: "featPro6Desc" as const },
                 ]
             ).map((f) => (
-              <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-hover card-tilt cursor-default">
+              <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-lift cursor-default">
                 <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center mb-4">
                   <Icon name={f.icon} size={18} className="icon-hover text-[hsl(28,20%,7%)]" />
                 </div>
@@ -1475,7 +1476,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
       {isClient ? (
         <ClientReviewsSection />
       ) : (
-      <section className="border-y border-border bg-card py-28 relative overflow-hidden">
+      <section className="border-y border-border bg-card py-20 md:py-32 relative overflow-hidden">
         <div className="absolute inset-0 grid-line-bg opacity-50" />
         <Reveal className="max-w-4xl mx-auto px-4 relative z-10 text-center">
           <Icon name="Quote" size={40} className="text-gold/30 mx-auto mb-6" />
@@ -1499,7 +1500,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
       )}
 
       {/* Security / Encryption */}
-      <section className="border-t border-border py-32 relative overflow-hidden ambient-gold">
+      <section className="border-t border-border py-24 md:py-36 relative overflow-hidden ambient-gold">
         <div className="absolute inset-0 grid-line-bg opacity-40" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.07) 0%, transparent 70%)" }} />
         <div className="max-w-7xl mx-auto px-4 relative z-10">
@@ -1523,7 +1524,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               { icon: "FileLock2", title: "sec5Title" as const, desc: "sec5Desc" as const },
               { icon: "BadgeCheck", title: "sec6Title" as const, desc: "sec6Desc" as const },
             ].map((f) => (
-              <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-hover card-tilt shine-on-hover cursor-default">
+              <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-lift shine-on-hover cursor-default">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shrink-0">
                     <Icon name={f.icon} fallback="Lock" size={18} className="text-[hsl(28,20%,7%)]" />
@@ -1572,7 +1573,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
       </section>
 
       {!isClient && (
-        <section className="max-w-7xl mx-auto px-4 py-28">
+        <section className="max-w-7xl mx-auto px-4 py-20 md:py-28">
           <div className="border border-gold/30 rounded-sm glass-card p-10 md:p-16 text-center relative overflow-hidden grid-line-bg glow-gold ambient-gold">
             <Reveal className="relative z-10">
               <div className="tag-security mb-4 inline-block">{tr("proAccessTag")}</div>
@@ -1885,7 +1886,7 @@ function ProfileSection({ setActive, openChat }: { setActive: (s: Section) => vo
               {activeTab === "cases" && (
                 <div className="space-y-3">
                   {cases.slice(0, 2).map((c) => (
-                    <div key={c.title.en} className="p-4 border border-border rounded-sm hover:border-gold/40 transition-colors cursor-pointer">
+                    <div key={c.title.en} className="p-4 border border-border rounded-sm card-lift cursor-pointer">
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="font-montserrat font-semibold text-sm text-foreground">{L(c.title, lang)}</div>
                         <span className="tag-security whitespace-nowrap shrink-0">{L(c.category, lang)}</span>
@@ -1911,7 +1912,7 @@ function ProfileSection({ setActive, openChat }: { setActive: (s: Section) => vo
                     }
                     return services.slice(0, 3).map((s) => ({ s, price: "" }));
                   })().map(({ s, price }) => (
-                    <div key={s.title.en} className="flex items-center gap-4 p-4 border border-border rounded-sm hover:border-gold/40 transition-colors cursor-pointer">
+                    <div key={s.title.en} className="flex items-center gap-4 p-4 border border-border rounded-sm card-lift cursor-pointer">
                       <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
                         <Icon name={s.icon} size={15} className="text-[hsl(28,20%,7%)]" />
                       </div>
@@ -1990,7 +1991,7 @@ function CasesSection() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-4 stagger">
           {cases.map((c) => (
-            <div key={c.title.en} className="border border-border rounded-sm bg-card p-6 card-hover card-tilt shine-on-hover cursor-pointer">
+            <div key={c.title.en} className="border border-border rounded-sm bg-card p-6 card-lift shine-on-hover cursor-pointer">
               <div className="flex items-start gap-3 mb-3">
                 <span className="tag-security">{L(c.category, lang)}</span>
                 <span className="text-[10px] text-muted-foreground ml-auto">{L(c.date, lang)}</span>
@@ -2053,7 +2054,7 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
     <div
       ref={tiltRef}
       onClick={onOpen}
-      className={`card-hover card-tilt shine-on-hover rounded-sm overflow-hidden cursor-pointer group flex flex-col relative ${premium ? "border-2 border-gold security-glow ambient-gold bg-card" : "border border-border bg-card"}`}
+      className={`card-lift shine-on-hover rounded-sm overflow-hidden cursor-pointer group flex flex-col relative ${premium ? "border-2 border-gold security-glow ambient-gold bg-card" : "border border-border bg-card"}`}
     >
       {premium && (
         <div className="absolute top-0 inset-x-0 z-20 gold-gradient text-[hsl(28,20%,7%)] text-[10px] font-montserrat font-extrabold tracking-widest uppercase text-center py-1 flex items-center justify-center gap-1">
@@ -2544,7 +2545,7 @@ function GuardsSection() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
         {guards.map((g) => (
-          <div key={g.name.en} className="card-hover card-tilt shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group">
+          <div key={g.name.en} className="card-lift shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group">
             <div className="h-48 overflow-hidden relative">
               <img src={g.img} alt={L(g.name, lang)} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
@@ -2591,9 +2592,9 @@ function GuardsSection() {
         <h3 className="font-montserrat font-bold text-2xl text-foreground mb-6">{tr("guardServices")}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {guardServices.map((x) => (
-            <div key={x.title.en} className="group border border-border rounded-sm bg-card p-6 card-hover card-tilt shine-on-hover cursor-default">
-              <div className="w-11 h-11 gold-gradient rounded-full flex items-center justify-center mb-4 glow-gold-sm transition-transform duration-300 group-hover:scale-110">
-                <Icon name={x.icon} size={19} className="text-[hsl(28,20%,7%)]" />
+            <div key={x.title.en} className="group border border-border rounded-sm bg-card p-6 card-lift shine-on-hover cursor-default">
+              <div className="w-11 h-11 icon-tile rounded-full flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110">
+                <Icon name={x.icon} size={19} className="text-gold" />
               </div>
               <div className="font-montserrat font-bold text-sm text-foreground mb-2">{L(x.title, lang)}</div>
               <div className="text-xs text-muted-foreground leading-relaxed">{L(x.desc, lang)}</div>
@@ -2734,7 +2735,7 @@ function LegalDocSection({ doc, setActive, showFaq }: { doc: LegalDoc; setActive
 
           <div className="space-y-5 stagger">
             {doc.sections.map((s, i) => (
-              <div key={s.title} id={`lgl-${i}`} className="border border-border rounded-sm bg-card p-6 md:p-7 card-hover scroll-mt-24">
+              <div key={s.title} id={`lgl-${i}`} className="border border-border rounded-sm bg-card p-6 md:p-7 card-lift scroll-mt-24">
                 <div className="flex items-start gap-4">
                   <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0 glow-gold-sm">
                     <span className="font-montserrat font-extrabold text-sm text-[hsl(28,20%,7%)]">{String(i + 1).padStart(2, "0")}</span>

@@ -1,4 +1,5 @@
 import json
+import re
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -12,7 +13,18 @@ CORS = {
     'X-Frame-Options': 'DENY',
 }
 
-SUPPORTED = {'ru', 'en', 'fr', 'de', 'ja', 'ar', 'he'}
+# Языки интерфейса сайта.
+UI_LANGS = {'ru', 'en', 'fr', 'de', 'ja', 'ar', 'he'}
+
+# Переводить умеем НЕ только на языки интерфейса: если специалист или клиент
+# пишет на испанском, китайском, турецком и т.д., собеседник должен понять
+# сообщение. Принимаем любой корректный код языка (ISO 639-1, при желании
+# с регионом: pt-BR, zh-CN), а сам перевод выполняет внешний сервис.
+LANG_CODE_RE = re.compile(r'^[a-z]{2,3}(-[a-zA-Z]{2,4})?$')
+
+
+def _is_valid_lang(code: str) -> bool:
+    return bool(LANG_CODE_RE.match(code))
 
 USER_AGENT = (
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
@@ -68,7 +80,7 @@ def handler(event: dict, context) -> dict:
 
     if not isinstance(texts, list) or not texts:
         return _resp(400, {'error': 'texts required'})
-    if target not in SUPPORTED:
+    if not _is_valid_lang(target):
         return _resp(400, {'error': 'unsupported target'})
 
     texts = [str(t)[:2000] for t in texts][:50]

@@ -543,7 +543,7 @@ export function PricingSection({ setActive }: { setActive: (s: Section) => void 
         {plans.map((p) => (
           <div
             key={p.name}
-            className={`relative flex flex-col rounded-sm p-6 card-hover ${p.premium ? "border-2 border-gold security-glow ambient-gold bg-gradient-to-b from-gold/[0.07] to-card glow-gold-sm md:-mt-2 md:mb-2" : ("chop" in p && p.chop) ? "border-2 border-blue-500/60 security-glow bg-gradient-to-b from-blue-500/[0.06] to-card" : p.featured ? "border border-gold security-glow bg-card" : "border border-border bg-card"}`}
+            className={`relative flex flex-col rounded-sm p-6 card-lift ${p.premium ? "border-2 border-gold security-glow ambient-gold bg-gradient-to-b from-gold/[0.07] to-card glow-gold-sm md:-mt-2 md:mb-2" : ("chop" in p && p.chop) ? "border-2 border-blue-500/60 security-glow bg-gradient-to-b from-blue-500/[0.06] to-card" : p.featured ? "border border-gold security-glow bg-card" : "border border-border bg-card"}`}
           >
             {p.premium && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 gold-gradient text-[hsl(28,20%,7%)] text-[10px] font-montserrat font-extrabold tracking-widest uppercase px-3 py-1 rounded-sm whitespace-nowrap flex items-center gap-1 shadow-lg">
@@ -657,8 +657,8 @@ export function PricingSection({ setActive }: { setActive: (s: Section) => void 
 
       {/* No-commission promise */}
       <div className="mt-10 border border-gold/30 rounded-sm glass-card p-6 flex flex-col md:flex-row items-start md:items-center gap-4 security-glow">
-        <div className="w-10 h-10 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
-          <Icon name="HandCoins" size={18} className="text-[hsl(28,20%,7%)]" />
+        <div className="w-10 h-10 icon-tile rounded-full flex items-center justify-center shrink-0">
+          <Icon name="HandCoins" size={18} className="text-gold" />
         </div>
         <div>
           <div className="font-montserrat font-semibold text-sm text-foreground mb-1">{tr("pricingBottomTitle")}</div>

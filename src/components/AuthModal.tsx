@@ -94,8 +94,8 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
           <button onClick={onClose} className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
             <Icon name="X" size={20} />
           </button>
-          <div className="w-12 h-12 gold-gradient rounded-full flex items-center justify-center mb-4 glow-gold-sm">
-            <Icon name="ShieldCheck" size={22} className="text-[hsl(28,20%,7%)]" />
+          <div className="w-12 h-12 icon-tile rounded-full flex items-center justify-center mb-4">
+            <Icon name="ShieldCheck" size={22} className="text-gold" />
           </div>
           <h3 className="font-montserrat font-bold text-lg text-foreground mb-1">{tr("auth2faTitle")}</h3>
           <p className="text-xs text-muted-foreground mb-1">{tr("auth2faDesc")} <span className="text-gold font-semibold">{twofa.emailHint}</span></p>
