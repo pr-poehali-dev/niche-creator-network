@@ -110,6 +110,104 @@ def _send_2fa_email(to_email: str, code: str, lang: str = 'ru') -> bool:
         return False
 
 
+def _send_new_device_email(to_email: str, device: str, ip_masked: str, when: datetime, lang: str = 'ru') -> bool:
+    '''
+    Письмо о входе с нового устройства. Часто это единственный способ для
+    владельца вовремя узнать, что паролем завладели: подпись устройства не
+    спасает, если злоумышленник знает логин и пароль.
+
+    Таймаут намеренно короткий: вход не должен ждать почтовый сервер.
+    '''
+    host = os.environ.get('SMTP_HOST')
+    port = int(os.environ.get('SMTP_PORT', '465'))
+    user = os.environ.get('SMTP_USER')
+    password = os.environ.get('SMTP_PASSWORD')
+    if not all([host, user, password]):
+        return False
+
+    when_str = when.strftime('%d.%m.%Y %H:%M') + ' UTC'
+    if lang == 'en':
+        subject = 'SHCHIT — new sign-in to your account'
+        title = 'New device signed in'
+        intro = 'Your account was accessed from a device we have not seen before.'
+        l_device, l_when, l_ip = 'Device', 'Time', 'Network'
+        note = 'If this was you, no action is needed. If not — change your password immediately and end all sessions in your account settings.'
+    else:
+        subject = 'ЩИТ — вход в аккаунт с нового устройства'
+        title = 'Вход с нового устройства'
+        intro = 'В ваш аккаунт вошли с устройства, которое мы раньше не видели.'
+        l_device, l_when, l_ip = 'Устройство', 'Время', 'Сеть'
+        note = 'Если это были вы — ничего делать не нужно. Если нет — срочно смените пароль и завершите все сеансы в настройках аккаунта.'
+
+    rows = ''.join(
+        f'<tr><td style="padding:6px 0;color:#9aa0ab;font-size:12px;">{k}</td>'
+        f'<td style="padding:6px 0;font-size:13px;font-weight:600;text-align:right;">{v}</td></tr>'
+        for k, v in ((l_device, device or '—'), (l_when, when_str), (l_ip, ip_masked or '—'))
+    )
+    html = f'''<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#f4f5f7;font-family:Arial,sans-serif;color:#1a1d24;">
+<div style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #e4e6eb;border-radius:10px;overflow:hidden;">
+  <div style="padding:24px 30px;background:#1a1d24;color:#fff;">
+    <div style="font-weight:800;font-size:20px;letter-spacing:0.2em;">Щ<span style="color:#d4af37;">ИТ</span></div>
+  </div>
+  <div style="padding:28px 30px;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:10px;">{title}</div>
+    <div style="font-size:13px;color:#5b616e;line-height:1.6;margin-bottom:18px;">{intro}</div>
+    <table style="width:100%;border-collapse:collapse;border-top:1px solid #e4e6eb;border-bottom:1px solid #e4e6eb;">{rows}</table>
+    <div style="margin-top:18px;font-size:12px;color:#9aa0ab;line-height:1.6;">{note}</div>
+  </div>
+</div></body></html>'''
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = user
+    msg['To'] = to_email
+    msg.attach(MIMEText(html, 'html', 'utf-8'))
+    try:
+        if port == 465:
+            server = smtplib.SMTP_SSL(host, port, timeout=4)
+        else:
+            server = smtplib.SMTP(host, port, timeout=4)
+            server.starttls()
+        server.login(user, password)
+        server.sendmail(user, [to_email], msg.as_string())
+        server.quit()
+        return True
+    except (smtplib.SMTPException, OSError):
+        # Уведомление не критично: вход не должен падать из-за почты.
+        return False
+
+
+def _notify_if_new_device(cur, user_id: int, email: str, fingerprint: str,
+                          device_label: str, ip_masked: str, lang: str = 'ru') -> None:
+    '''
+    Отправляет письмо, если вход выполнен с устройства, которого раньше
+    не было. Первый в жизни вход не тревожит: уведомлять о нём бессмысленно.
+    '''
+    if not email or '@' not in email or not fingerprint:
+        return
+    try:
+        # Считаем только сессии, у которых отпечаток вообще записан. Иначе у
+        # давних пользователей (их старые сессии сохранены без отпечатка)
+        # первый же вход после обновления выглядел бы как «новое устройство»
+        # и вызвал ложную тревогу.
+        cur.execute(
+            f"SELECT COUNT(*), COUNT(*) FILTER (WHERE fingerprint = %s) "
+            f"FROM {SCHEMA}.sessions WHERE user_id = %s AND fingerprint IS NOT NULL",
+            (fingerprint, user_id),
+        )
+        row = cur.fetchone()
+        known, same_device = (row[0] or 0), (row[1] or 0)
+        # known <= 1 — это первая сессия с отпечатком (только что созданная):
+        #   сравнивать не с чем, молчим.
+        # same_device > 1 — с этого устройства уже входили раньше.
+        if known <= 1 or same_device > 1:
+            return
+        _send_new_device_email(email, device_label, ip_masked, datetime.utcnow(), lang)
+    except Exception:
+        # Никакая ошибка уведомления не должна ломать вход пользователя.
+        return
+
+
 def _start_2fa(cur, user_id: int, email: str, lang: str) -> dict:
     code = ''.join(pysecrets.choice('0123456789') for _ in range(6))
     challenge = pysecrets.token_hex(24)
@@ -422,6 +520,7 @@ def handler(event: dict, context) -> dict:
                 ch = _start_2fa(cur, row[0], email, lang)
                 return _resp(200, {'need2fa': True, 'challengeId': ch['challengeId'], 'emailHint': _mask_email(email), 'sent': ch['sent']}, event)
             new_token = _create_session(cur, row[0], fingerprint, device_label, ip_masked, device_pubkey)
+            _notify_if_new_device(cur, row[0], email, fingerprint, device_label, ip_masked, lang)
             return _resp(200, {'token': new_token, 'user': {'id': row[0], 'email': email, 'role': row[2], 'name': row[3]}}, event)
 
         if action == 'verify_2fa':
@@ -456,6 +555,8 @@ def handler(event: dict, context) -> dict:
             if not u:
                 return _resp(401, {'error': 'invalid_session'}, event)
             new_token = _create_session(cur, u[0], fingerprint, device_label, ip_masked, device_pubkey)
+            _notify_if_new_device(cur, u[0], u[1], fingerprint, device_label, ip_masked,
+                                  body.get('lang') if body.get('lang') in ('ru', 'en') else 'ru')
             return _resp(200, {'token': new_token, 'user': {'id': u[0], 'email': u[1], 'role': u[2], 'name': u[3]}}, event)
 
         if action == 'resend_2fa':
