@@ -421,7 +421,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
             <div className="font-montserrat font-bold text-sm text-foreground">{tr("paywallTitle")}</div>
             <div className="text-xs text-muted-foreground">{tr("paywallText")}</div>
           </div>
-          <button onClick={() => setTab("plan")} className="shrink-0 gold-gradient text-[hsl(220,20%,6%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+          <button onClick={() => setTab("plan")} className="shrink-0 gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
             {tr("paywallBtn")}
           </button>
         </div>
@@ -434,7 +434,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
               const tabLocked = locked && !ALLOWED_WHEN_LOCKED.includes(tb.id);
               return (
                 <button key={tb.id} onClick={() => handleTab(tb.id)}
-                  className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(220,20%,6%)]" : tabLocked ? "text-muted-foreground/50 hover:bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                  className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(28,20%,7%)]" : tabLocked ? "text-muted-foreground/50 hover:bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                   <Icon name={tabLocked ? "Lock" : tb.icon} fallback="LayoutDashboard" size={15} />
                   {tr(tb.key)}
                 </button>
@@ -520,7 +520,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                         {tr("pdNoSub")}
                       </div>
                     )}
-                    <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{active ? tr("pdChangePlan") : tr("choosePlan")}</button>
+                    <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{active ? tr("pdChangePlan") : tr("choosePlan")}</button>
                   </div>
                 );
               })()}
@@ -544,7 +544,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                     ]).map((b) => (
                       <div key={b.t} className="flex items-start gap-3 border border-gold/20 rounded-sm bg-gold/[0.04] p-3">
                         <div className="w-8 h-8 gold-gradient rounded flex items-center justify-center shrink-0">
-                          <Icon name={b.icon} fallback="Sparkles" size={15} className="text-[hsl(220,20%,6%)]" />
+                          <Icon name={b.icon} fallback="Sparkles" size={15} className="text-[hsl(28,20%,7%)]" />
                         </div>
                         <div>
                           <div className="font-montserrat font-bold text-xs text-foreground">{tr(b.t)}</div>
@@ -553,7 +553,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                       </div>
                     ))}
                   </div>
-                  <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity glow-gold-sm inline-flex items-center gap-2">
+                  <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity glow-gold-sm inline-flex items-center gap-2">
                     <Icon name="Crown" size={14} />{tr("pdUpgradePremium")}
                   </button>
                 </div>
@@ -651,7 +651,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
               <div className="border border-border rounded-sm bg-card p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdMyCases")}</div>
-                  <button onClick={() => setCaseFormOpen((o) => !o)} className="gold-gradient text-[hsl(220,20%,6%)] px-3 py-1.5 text-[10px] font-montserrat font-bold rounded-sm flex items-center gap-1">
+                  <button onClick={() => setCaseFormOpen((o) => !o)} className="gold-gradient text-[hsl(28,20%,7%)] px-3 py-1.5 text-[10px] font-montserrat font-bold rounded-sm flex items-center gap-1">
                     <Icon name={caseFormOpen ? "X" : "Plus"} size={12} />{caseFormOpen ? tr("cancel") : tr("pdAddCase")}
                   </button>
                 </div>
@@ -668,14 +668,14 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                         {serviceCategories.map((c) => <option key={c.id} value={L(c.title, lang)}>{L(c.title, lang)}</option>)}
                       </select>
                     </div>
-                    <button onClick={addCase} disabled={!caseTitle.trim()} className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{tr("pdCaseSave")}</button>
+                    <button onClick={addCase} disabled={!caseTitle.trim()} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{tr("pdCaseSave")}</button>
                   </div>
                 )}
                 <div className="space-y-3">
                   {myCases.map((c, i) => (
                     <div key={`${c.title.en}-${i}`} className="flex items-center gap-3 p-3 border border-border rounded-sm">
                       <div className="w-8 h-8 gold-gradient rounded flex items-center justify-center shrink-0">
-                        <Icon name="FolderOpen" size={14} className="text-[hsl(220,20%,6%)]" />
+                        <Icon name="FolderOpen" size={14} className="text-[hsl(28,20%,7%)]" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(c.title, lang)}</div>
@@ -695,7 +695,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                   <div className="flex items-center gap-2">
                     {svcSaveState === "saving" && <Icon name="Loader" size={13} className="animate-spin text-muted-foreground" />}
                     {svcSaveState === "saved" && <span className="text-[10px] text-green-400 flex items-center gap-1"><Icon name="Check" size={12} />{tr("pdSaved")}</span>}
-                    <button onClick={() => setSvcPickerOpen((o) => !o)} className="gold-gradient text-[hsl(220,20%,6%)] px-3 py-1.5 text-[10px] font-montserrat font-bold rounded-sm flex items-center gap-1">
+                    <button onClick={() => setSvcPickerOpen((o) => !o)} className="gold-gradient text-[hsl(28,20%,7%)] px-3 py-1.5 text-[10px] font-montserrat font-bold rounded-sm flex items-center gap-1">
                       <Icon name={svcPickerOpen ? "Check" : "Plus"} size={12} />{svcPickerOpen ? tr("pdDone") : tr("pdManageServices")}
                     </button>
                   </div>
@@ -713,7 +713,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                       return (
                         <div key={ms.key} className="flex items-center gap-3 p-3 border border-border rounded-sm">
                           <div className="w-8 h-8 gold-gradient rounded flex items-center justify-center shrink-0">
-                            <Icon name={s.icon} size={14} className="text-[hsl(220,20%,6%)]" />
+                            <Icon name={s.icon} size={14} className="text-[hsl(28,20%,7%)]" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-montserrat font-semibold text-sm text-foreground truncate">{L(s.title, lang)}</div>
@@ -746,7 +746,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                               <div key={s.title.en} className={`border rounded-sm transition-colors ${on ? "border-gold/60 bg-gold/[0.06]" : "border-border"}`}>
                                 <button onClick={() => toggleService(s.title.en)} className="w-full flex items-center gap-3 p-2.5 text-left">
                                   <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 border ${on ? "gold-gradient border-transparent" : "border-border"}`}>
-                                    {on && <Icon name="Check" size={13} className="text-[hsl(220,20%,6%)]" />}
+                                    {on && <Icon name="Check" size={13} className="text-[hsl(28,20%,7%)]" />}
                                   </div>
                                   <Icon name={s.icon} size={15} className={on ? "text-gold" : "text-muted-foreground"} />
                                   <span className={`flex-1 text-sm font-montserrat ${on ? "text-foreground font-semibold" : "text-muted-foreground"}`}>{L(s.title, lang)}</span>
@@ -798,7 +798,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                       <button
                         onClick={() => markTaskDone(t.id)}
                         disabled={markingDone === t.id}
-                        className="w-full gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-1.5"
+                        className="w-full gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-1.5"
                       >
                         {markingDone === t.id ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="CheckCircle2" size={14} />}
                         {tr("pdMarkDone")}
@@ -855,12 +855,12 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                             <input value={draft.price} onChange={(e) => setRespDraft({ ...respDraft, [r.id]: { ...draft, price: e.target.value } })} placeholder={tr("pdOfferPrice")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
                             <textarea value={draft.message} onChange={(e) => setRespDraft({ ...respDraft, [r.id]: { ...draft, message: e.target.value } })} rows={2} placeholder={tr("pdOfferMsg")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold resize-none" />
                             <div className="flex gap-2">
-                              <button onClick={() => sendResponse(r.id)} className="flex-1 gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90">{tr("pdSendOffer")}</button>
+                              <button onClick={() => sendResponse(r.id)} className="flex-1 gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90">{tr("pdSendOffer")}</button>
                               <button onClick={() => setRespOpen(null)} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm">{tr("cancel")}</button>
                             </div>
                           </div>
                         ) : (
-                          <button onClick={() => setRespOpen(r.id)} className="w-full gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity">{responded ? tr("pdEditOffer") : tr("pdRespond")}</button>
+                          <button onClick={() => setRespOpen(r.id)} className="w-full gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity">{responded ? tr("pdEditOffer") : tr("pdRespond")}</button>
                         )
                       )}
                     </div>
@@ -1128,7 +1128,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
 
               {vfState === "saved" && <div className="flex items-center gap-2 text-sm text-green-400"><Icon name="CheckCircle2" size={16} />{tr("pdVfSaved")}</div>}
               {vfState === "error" && <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("pdVfSaveErr")}</div>}
-              <button onClick={saveVerification} disabled={vfState === "saving"} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+              <button onClick={saveVerification} disabled={vfState === "saving"} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
                 {vfState === "saving" ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Save" size={16} />}
                 {tr("dashSave")}
               </button>
@@ -1156,7 +1156,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                     placeholder={tr("pdFindFriendPh")}
                     className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
                   />
-                  <button onClick={searchFriendById} disabled={friendBusy || !searchPublicId.trim()} className="gold-gradient text-[hsl(220,20%,6%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50 flex items-center gap-1.5">
+                  <button onClick={searchFriendById} disabled={friendBusy || !searchPublicId.trim()} className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50 flex items-center gap-1.5">
                     <Icon name="Search" size={14} />{tr("pdFindFriendBtn")}
                   </button>
                 </div>
@@ -1167,7 +1167,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                 {searchResult && searchResult !== "not_found" && (
                   <div className="flex items-center gap-3 p-3 border border-border rounded-sm">
                     <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
-                      {searchResult.provider?.avatar ? <img src={searchResult.provider.avatar} alt="" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(220,20%,6%)]" />}
+                      {searchResult.provider?.avatar ? <img src={searchResult.provider.avatar} alt="" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(28,20%,7%)]" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-montserrat font-semibold text-foreground truncate">{searchResult.provider ? L(searchResult.provider.name, lang) : searchResult.name}</div>
@@ -1178,7 +1178,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                     ) : searchResult.friendStatus === "pending" ? (
                       <span className="tag-security shrink-0 text-gold border-gold/40">{tr("pdRequestPending")}</span>
                     ) : (
-                      <button onClick={() => sendFriendRequest(searchResult.userId)} disabled={friendBusy} className="gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90 disabled:opacity-50">
+                      <button onClick={() => sendFriendRequest(searchResult.userId)} disabled={friendBusy} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90 disabled:opacity-50">
                         {tr("pdAddFriend")}
                       </button>
                     )}
@@ -1193,12 +1193,12 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                     {friendRequests.map((r) => (
                       <div key={r.requestId} className="flex items-center gap-3 p-3 border border-border rounded-sm">
                         <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
-                          {r.provider?.avatar ? <img src={r.provider.avatar} alt="" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(220,20%,6%)]" />}
+                          {r.provider?.avatar ? <img src={r.provider.avatar} alt="" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(28,20%,7%)]" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-montserrat font-semibold text-foreground truncate">{r.provider ? L(r.provider.name, lang) : `#${r.userId}`}</div>
                         </div>
-                        <button onClick={() => respondFriendRequest(r.requestId, true)} className="gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90">{tr("pdAccept")}</button>
+                        <button onClick={() => respondFriendRequest(r.requestId, true)} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90">{tr("pdAccept")}</button>
                         <button onClick={() => respondFriendRequest(r.requestId, false)} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-3 py-1.5 rounded-sm shrink-0">{tr("pdDecline")}</button>
                       </div>
                     ))}
@@ -1215,7 +1215,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                     {friendsList.map((f) => (
                       <div key={f.friendshipId} className="flex items-center gap-3 p-3 border border-border rounded-sm">
                         <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
-                          {f.provider?.avatar ? <img src={f.provider.avatar} alt="" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(220,20%,6%)]" />}
+                          {f.provider?.avatar ? <img src={f.provider.avatar} alt="" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(28,20%,7%)]" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-montserrat font-semibold text-foreground truncate">{f.provider ? L(f.provider.name, lang) : `#${f.userId}`}</div>
@@ -1303,7 +1303,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
               <button
                 onClick={saveContacts}
                 disabled={saveState === "saving"}
-                className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2"
+                className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 {saveState === "saving" ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Save" size={16} />}
                 {tr("dashSave")}
@@ -1318,11 +1318,11 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
         <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPaywallOpen(false)}>
           <div className="bg-card border border-gold/40 rounded-sm max-w-md w-full p-8 text-center security-glow" onClick={(e) => e.stopPropagation()}>
             <div className="w-14 h-14 gold-gradient rounded-sm flex items-center justify-center mx-auto mb-5 glow-gold-sm">
-              <Icon name="Lock" size={26} className="text-[hsl(220,20%,6%)]" />
+              <Icon name="Lock" size={26} className="text-[hsl(28,20%,7%)]" />
             </div>
             <h2 className="font-montserrat font-extrabold text-xl text-foreground mb-2">{tr("paywallTitle")}</h2>
             <p className="text-sm text-muted-foreground mb-6">{tr("paywallText")}</p>
-            <button onClick={() => { setPaywallOpen(false); setTab("plan"); }} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity mb-2">
+            <button onClick={() => { setPaywallOpen(false); setTab("plan"); }} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity mb-2">
               {tr("paywallBtn")}
             </button>
             <button onClick={() => setPaywallOpen(false)} className="w-full text-xs text-muted-foreground hover:text-foreground py-2 font-montserrat font-semibold">

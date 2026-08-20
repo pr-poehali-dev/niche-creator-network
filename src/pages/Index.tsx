@@ -104,7 +104,7 @@ function ContactButtons({ p, onChat, compact, onRequireAuth }: { p: Provider; on
         {!compact && <p className="text-[11px] text-muted-foreground mb-2 leading-snug">{tr("demoNoticeText")}</p>}
         <button
           onClick={() => window.dispatchEvent(new Event("shchit:new-request"))}
-          className="w-full gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold px-3 py-2 rounded-sm hover:opacity-90 transition-all"
+          className="w-full gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-2 rounded-sm hover:opacity-90 transition-all"
         >
           {tr("demoNoticeBtn")}
         </button>
@@ -122,7 +122,7 @@ function ContactButtons({ p, onChat, compact, onRequireAuth }: { p: Provider; on
         {!compact && <p className="text-[11px] text-muted-foreground mb-2 leading-snug">{tr("contactsLockedNote")}</p>}
         <button
           onClick={() => (onRequireAuth ? onRequireAuth() : window.dispatchEvent(new Event("shchit:require-auth")))}
-          className="w-full gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold px-3 py-2 rounded-sm hover:opacity-90 transition-all"
+          className="w-full gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-2 rounded-sm hover:opacity-90 transition-all"
         >
           {tr("contactsLockedBtn")}
         </button>
@@ -142,12 +142,12 @@ function ContactButtons({ p, onChat, compact, onRequireAuth }: { p: Provider; on
             <Icon name="PhoneOff" size={size} />{!compact && tr("quietHoursBtn")}
           </div>
         ) : (
-          <a href={`tel:${c.phone}`} className={`${btn} ${pad} gold-gradient text-[hsl(220,20%,6%)] hover:opacity-90`} aria-label={tr("contactCall")}>
+          <a href={`tel:${c.phone}`} className={`${btn} ${pad} gold-gradient text-[hsl(28,20%,7%)] hover:opacity-90`} aria-label={tr("contactCall")}>
             <Icon name="Phone" size={size} />{!compact && tr("contactCall")}
           </a>
         )
       )}
-      <button onClick={onChat} className={`${btn} ${pad} border border-gold text-gold hover:bg-gold hover:text-[hsl(220,20%,6%)]`} aria-label={tr("contactChat")}>
+      <button onClick={onChat} className={`${btn} ${pad} border border-gold text-gold hover:bg-gold hover:text-[hsl(28,20%,7%)]`} aria-label={tr("contactChat")}>
         <Icon name="MessageCircle" size={size} />{!compact && tr("contactChat")}
       </button>
       {c.whatsapp && (
@@ -277,7 +277,7 @@ function LangSwitcher({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => voi
             <button
               key={l.code}
               onClick={() => { setLang(l.code); setOpen(false); }}
-              className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-xs font-montserrat text-start transition-colors ${l.code === lang ? "bg-gold text-[hsl(220,20%,6%)] font-bold" : "text-foreground hover:bg-secondary"}`}
+              className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-xs font-montserrat text-start transition-colors ${l.code === lang ? "bg-gold text-[hsl(28,20%,7%)] font-bold" : "text-foreground hover:bg-secondary"}`}
             >
               <span>{l.label}</span>
               <span className="uppercase opacity-60">{l.code}</span>
@@ -506,7 +506,7 @@ function CookieBanner({ go }: { go: (s: Section) => void }) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button onClick={() => decide("essential")} className="border border-border text-muted-foreground hover:text-foreground hover:border-gold/50 text-xs font-montserrat font-semibold px-4 py-2.5 rounded-sm transition-all">{tr("cookieDecline")}</button>
-          <button onClick={() => decide("accepted")} className="gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold px-5 py-2.5 rounded-sm hover:opacity-90 transition-opacity">{tr("cookieAccept")}</button>
+          <button onClick={() => decide("accepted")} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-5 py-2.5 rounded-sm hover:opacity-90 transition-opacity">{tr("cookieAccept")}</button>
         </div>
       </div>
     </div>
@@ -782,7 +782,7 @@ export default function Index() {
         <div className={`max-w-7xl mx-auto px-4 h-full flex items-center justify-between gap-3 transition-[padding] duration-300`}>
           <div className="flex items-center gap-3 shrink-0">
             <div className={`logo-sheen gold-gradient rounded flex items-center justify-center shrink-0 transition-all duration-300 ${scrolled ? "w-6 h-6" : "w-8 h-8"}`}>
-              <Icon name="Shield" size={scrolled ? 13 : 16} className="text-[hsl(220,20%,6%)]" />
+              <Icon name="Shield" size={scrolled ? 13 : 16} className="text-[hsl(28,20%,7%)]" />
             </div>
             <div>
               <Brand className={`font-montserrat font-bold tracking-[0.2em] text-foreground transition-all duration-300 ${scrolled ? "text-base" : "text-lg"}`} />
@@ -821,7 +821,7 @@ export default function Index() {
                     )}
                   </button>
                 )}
-                <button onClick={() => go("dashboard")} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] px-3 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity shrink-0 whitespace-nowrap">
+                <button onClick={() => go("dashboard")} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(28,20%,7%)] px-3 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity shrink-0 whitespace-nowrap">
                   <Icon name="LayoutDashboard" size={15} />
                   {tr("authCabinet")}
                 </button>
@@ -830,7 +830,7 @@ export default function Index() {
                 </button>
               </>
             ) : (
-              <button onClick={openCabinet} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] px-3 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity shrink-0 whitespace-nowrap">
+              <button onClick={openCabinet} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(28,20%,7%)] px-3 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity shrink-0 whitespace-nowrap">
                 <Icon name="LogIn" size={15} />
                 {tr("authCabinet")}
               </button>
@@ -865,7 +865,7 @@ export default function Index() {
                       )}
                     </button>
                   )}
-                  <button onClick={() => go("dashboard")} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                  <button onClick={() => go("dashboard")} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
                     <Icon name="LayoutDashboard" size={16} />
                     {tr("authCabinet")}
                   </button>
@@ -875,7 +875,7 @@ export default function Index() {
                   </button>
                 </>
               ) : (
-                <button onClick={openCabinet} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                <button onClick={openCabinet} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
                   <Icon name="LogIn" size={16} />
                   {tr("authCabinet")}
                 </button>
@@ -912,7 +912,7 @@ export default function Index() {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 gold-gradient rounded flex items-center justify-center">
-                  <Icon name="Shield" size={12} className="text-[hsl(220,20%,6%)]" />
+                  <Icon name="Shield" size={12} className="text-[hsl(28,20%,7%)]" />
                 </div>
                 <Brand className="font-montserrat font-bold text-sm text-foreground tracking-[0.2em]" />
               </div>
@@ -975,6 +975,11 @@ export default function Index() {
             <div className="text-xs text-muted-foreground">{tr("rights")}</div>
             <div className="text-xs text-muted-foreground">{tr("forVerified")}</div>
           </div>
+          {/* Оговорка о чужих товарных знаках: мы упоминаем платёжные системы
+              и мессенджеры, и обязаны указать, что права на них не наши. */}
+          <div className="text-[11px] text-muted-foreground/70 leading-relaxed mt-3 pt-3 border-t border-border/50">
+            {tr("trademarksNote")}
+          </div>
         </div>
       </footer>
 
@@ -986,12 +991,12 @@ export default function Index() {
         <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setRegGateOpen(false)}>
           <div className="bg-card border border-gold/40 rounded-sm max-w-md w-full p-8 text-center security-glow" onClick={(e) => e.stopPropagation()}>
             <div className="w-14 h-14 gold-gradient rounded-sm flex items-center justify-center mx-auto mb-5 glow-gold-sm">
-              <Icon name="UserCheck" size={26} className="text-[hsl(220,20%,6%)]" />
+              <Icon name="UserCheck" size={26} className="text-[hsl(28,20%,7%)]" />
             </div>
             <h3 className="font-montserrat font-bold text-lg text-foreground mb-2">{tr("regRequiredTitle")}</h3>
             <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{tr("regRequiredText")}</p>
             <div className="flex flex-col gap-2">
-              <button onClick={() => { setRegGateOpen(false); go("dashboard"); }} className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+              <button onClick={() => { setRegGateOpen(false); go("dashboard"); }} className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
                 {tr("regRequiredBtn")}
               </button>
               <button onClick={() => setRegGateOpen(false)} className="text-xs text-muted-foreground hover:text-foreground font-montserrat py-2">
@@ -1006,11 +1011,11 @@ export default function Index() {
         <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPaywallOpen(false)}>
           <div className="bg-card border border-gold/40 rounded-sm max-w-md w-full p-8 text-center security-glow" onClick={(e) => e.stopPropagation()}>
             <div className="w-14 h-14 gold-gradient rounded-sm flex items-center justify-center mx-auto mb-5 glow-gold-sm">
-              <Icon name="Lock" size={26} className="text-[hsl(220,20%,6%)]" />
+              <Icon name="Lock" size={26} className="text-[hsl(28,20%,7%)]" />
             </div>
             <h2 className="font-montserrat font-extrabold text-xl text-foreground mb-2">{tr("paywallTitle")}</h2>
             <p className="text-sm text-muted-foreground mb-6">{tr("paywallText")}</p>
-            <button onClick={() => { setPaywallOpen(false); setActive("dashboard"); window.scrollTo({ top: 0 }); }} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity mb-2">
+            <button onClick={() => { setPaywallOpen(false); setActive("dashboard"); window.scrollTo({ top: 0 }); }} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity mb-2">
               {tr("paywallBtn")}
             </button>
             <button onClick={() => setPaywallOpen(false)} className="w-full text-xs text-muted-foreground hover:text-foreground py-2 font-montserrat font-semibold">
@@ -1112,20 +1117,20 @@ function ClientReviewsSection() {
                 data-review-card
                 className="snap-start shrink-0 w-[300px] sm:w-[340px] p-6 border border-border rounded-sm bg-background flex flex-col"
               >
-                <div className="flex items-center gap-1 mb-3">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Icon key={i} name="Star" size={14} className={i < r.rating ? "text-gold" : "text-muted-foreground/30"} />
-                  ))}
+                {/* Это составленные платформой примеры, а не отзывы клиентов,
+                    поэтому ни звёзд, ни значка «проверено» здесь быть не должно. */}
+                <div className="flex items-center gap-1.5 mb-3">
+                  <Icon name="MessageSquareQuote" size={14} className="text-gold/70" />
+                  <span className="text-[11px] font-montserrat text-muted-foreground">{tr("clientReviewsDisclaimer")}</span>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-5 flex-1">«{loc(r.text)}»</p>
                 <div className="flex items-center gap-3 border-t border-border pt-4">
                   <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center shrink-0">
-                    <span className="font-montserrat font-bold text-sm text-[hsl(220,20%,6%)]">{loc(r.name).trim().charAt(0)}</span>
+                    <span className="font-montserrat font-bold text-sm text-[hsl(28,20%,7%)]">{loc(r.name).trim().charAt(0)}</span>
                   </div>
                   <div className="min-w-0">
-                    <div className="font-montserrat font-bold text-sm text-foreground flex items-center gap-1.5">
+                    <div className="font-montserrat font-bold text-sm text-foreground">
                       {loc(r.name)}
-                      <Icon name="BadgeCheck" size={13} className="text-gold shrink-0" />
                     </div>
                     <div className="text-[11px] text-muted-foreground truncate">{loc(r.city)} · {loc(r.service)}</div>
                   </div>
@@ -1140,7 +1145,7 @@ function ClientReviewsSection() {
 }
 
 function HomeSection({ setActive, role }: { setActive: (s: Section) => void; role: Role; openChat?: (t: { name: string; title: string; avatar?: string | null }) => void }) {
-  const { lang, tr } = useLang();
+  const { tr } = useLang();
   const [appBannerOpen, setAppBannerOpen] = useState(false);
 
   useEffect(() => {
@@ -1211,7 +1216,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
             <div className="flex flex-wrap gap-3 items-center">
               <button
                 onClick={() => setActive(isClient ? "services" : "dashboard")}
-                className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-6 sm:px-9 py-3.5 sm:py-4 font-montserrat font-extrabold text-sm sm:text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm flex items-center gap-2.5"
+                className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-6 sm:px-9 py-3.5 sm:py-4 font-montserrat font-extrabold text-sm sm:text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm flex items-center gap-2.5"
               >
                 <Icon name="Search" size={18} />
                 {tr(isClient ? "heroClientCta1" : "heroProviderFindOrders")}
@@ -1252,13 +1257,13 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                   </div>
                 ))}
                 {liveCount > 3 && (
-                  <div className="w-9 h-9 rounded-full border-2 border-background bg-gold flex items-center justify-center text-[10px] font-montserrat font-extrabold text-[hsl(220,20%,6%)]">+{liveCount - 3}</div>
+                  <div className="w-9 h-9 rounded-full border-2 border-background bg-gold flex items-center justify-center text-[10px] font-montserrat font-extrabold text-[hsl(28,20%,7%)]">+{liveCount - 3}</div>
                 )}
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <StarRating rating={5} />
-                  <span className="text-sm font-montserrat font-bold text-foreground">4.9</span>
+                  <Icon name="ShieldCheck" size={16} className="text-gold" />
+                  <span className="text-sm font-montserrat font-bold text-foreground">{tr("heroProofRating")}</span>
                 </div>
                 <div className="text-[11px] text-muted-foreground font-montserrat">{tr("heroProofReviews")}</div>
               </div>
@@ -1293,18 +1298,21 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
         <div className="absolute bottom-0 left-0 right-0 z-20 border-t border-border bg-card/90 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
+              {/* Показываем только то, что подтверждается фактами платформы:
+                  выдуманные счётчики «1 240+ специалистов» убраны — они
+                  вводили в заблуждение и юридически рискованны. */}
               {(isClient
                 ? [
-                    { n: "1 240+", l: "statSpecialists" as const },
-                    { n: "4 800+", l: "statCases" as const },
-                    { n: "320+", l: "statServices" as const },
-                    { n: "98%", l: "statClients" as const },
+                    { n: "100%", l: "statSpecialists" as const },
+                    { n: "0%", l: "statCases" as const },
+                    { n: "7", l: "statServices" as const },
+                    { n: "AES-256", l: "statClients" as const },
                   ]
                 : [
-                    { n: "5 600+", l: "statProvClients" as const },
-                    { n: "4 800+", l: "statCases" as const },
-                    { n: "700+", l: "statProvSearches" as const },
-                    { n: "98%", l: "statClients" as const },
+                    { n: "0%", l: "statCases" as const },
+                    { n: "100%", l: "statProvClients" as const },
+                    { n: "7", l: "statProvSearches" as const },
+                    { n: "AES-256", l: "statClients" as const },
                   ]
               ).map((s, i) => (
                 <div key={s.n} className="py-5 px-6 text-center">
@@ -1331,7 +1339,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 <Icon name="X" size={16} />
               </button>
               <div className="w-12 h-12 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
-                <Icon name="Smartphone" size={22} className="text-[hsl(220,20%,6%)]" />
+                <Icon name="Smartphone" size={22} className="text-[hsl(28,20%,7%)]" />
               </div>
               <div className="flex-1 text-center sm:text-left">
                 <div className="font-montserrat font-bold text-sm text-foreground mb-0.5">{tr("appBannerTitle")}</div>
@@ -1339,7 +1347,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               </div>
               <button
                 onClick={() => setActive("mobileapp")}
-                className="shrink-0 gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2 whitespace-nowrap"
+                className="shrink-0 gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2 whitespace-nowrap"
               >
                 <Icon name="Download" size={16} />
                 {tr("appBannerBtn")}
@@ -1366,7 +1374,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-hover card-tilt">
                   <div className="font-montserrat font-extrabold text-4xl text-gold/15 absolute top-4 right-5">{step.n}</div>
                   <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
-                    <Icon name={step.icon} fallback="Check" size={19} className="text-[hsl(220,20%,6%)]" />
+                    <Icon name={step.icon} fallback="Check" size={19} className="text-[hsl(28,20%,7%)]" />
                   </div>
                   <div className="font-montserrat font-bold text-sm text-foreground mb-2">{tr(step.title)}</div>
                   <div className="text-xs text-muted-foreground leading-relaxed">{tr(step.desc)}</div>
@@ -1374,7 +1382,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               ))}
             </div>
             <div className="text-center mt-10">
-              <button onClick={() => setActive("dashboard")} className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-8 py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity glow-gold-sm inline-flex items-center gap-2">
+              <button onClick={() => setActive("dashboard")} className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-8 py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity glow-gold-sm inline-flex items-center gap-2">
                 <Icon name="Search" size={16} />
                 {tr("heroProviderFindOrders")}
               </button>
@@ -1400,7 +1408,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               <div key={step.n} className="relative p-6 border border-border rounded-sm bg-background card-hover card-tilt">
                 <div className="font-montserrat font-extrabold text-4xl text-gold/15 absolute top-4 right-5">{step.n}</div>
                 <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
-                  <Icon name={step.icon} size={19} className="text-[hsl(220,20%,6%)]" />
+                  <Icon name={step.icon} size={19} className="text-[hsl(28,20%,7%)]" />
                 </div>
                 <div className="font-montserrat font-bold text-sm text-foreground mb-2">{tr(step.title)}</div>
                 <div className="text-xs text-muted-foreground leading-relaxed">{tr(step.desc)}</div>
@@ -1438,7 +1446,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
             ).map((f) => (
               <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-hover card-tilt cursor-default">
                 <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center mb-4">
-                  <Icon name={f.icon} size={18} className="icon-hover text-[hsl(220,20%,6%)]" />
+                  <Icon name={f.icon} size={18} className="icon-hover text-[hsl(28,20%,7%)]" />
                 </div>
                 <div className="font-montserrat font-semibold text-sm text-foreground mb-2">{tr(f.title)}</div>
                 <div className="text-xs text-muted-foreground leading-relaxed">{tr(f.desc)}</div>
@@ -1459,16 +1467,16 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
           <p className="font-montserrat font-medium text-xl md:text-2xl text-foreground leading-relaxed mb-8">
             {tr("testimonialText")}
           </p>
+          {/* Подписано реальной ролью, без вымышленного имени и без значка
+              «проверено»: выдавать сочинённый отзыв за настоящий нельзя. */}
           <div className="flex items-center justify-center gap-3">
-            <div className="w-11 h-11 rounded-sm overflow-hidden border border-gold/40">
-              <img src={DETECTIVE_IMAGE} alt="Alexander Morozov" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+            <div className="w-11 h-11 rounded-full gold-gradient flex items-center justify-center shrink-0">
+              <Icon name="Shield" size={20} className="text-[hsl(28,20%,7%)]" />
             </div>
             <div className="text-start">
-              <div className="font-montserrat font-bold text-sm text-foreground flex items-center gap-1.5">
-                {L(specialists[0].name, lang)}
-                <Icon name="BadgeCheck" size={14} className="text-gold" />
+              <div className="font-montserrat font-bold text-sm text-foreground">
+                {tr("testimonialAuthor")}
               </div>
-              <div className="text-xs text-muted-foreground">{L(specialists[0].title, lang)} · {specialists[0].experience} {tr("yearsShort")}</div>
             </div>
           </div>
         </Reveal>
@@ -1483,7 +1491,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
           <Reveal className="text-center mb-14">
             <div className="inline-flex items-center justify-center mb-6">
               <div className="pulse-ring w-16 h-16 gold-gradient rounded-full flex items-center justify-center security-glow">
-                <Icon name="ShieldCheck" size={28} className="text-[hsl(220,20%,6%)]" />
+                <Icon name="ShieldCheck" size={28} className="text-[hsl(28,20%,7%)]" />
               </div>
             </div>
             <div className="tag-security mb-4 inline-block">{tr("secTag")}</div>
@@ -1503,7 +1511,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               <div key={f.title} className="group p-6 border border-border rounded-sm bg-card card-hover card-tilt shine-on-hover cursor-default">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shrink-0">
-                    <Icon name={f.icon} fallback="Lock" size={18} className="text-[hsl(220,20%,6%)]" />
+                    <Icon name={f.icon} fallback="Lock" size={18} className="text-[hsl(28,20%,7%)]" />
                   </div>
                   <div className="font-montserrat font-bold text-sm text-foreground">{tr(f.title)}</div>
                 </div>
@@ -1526,7 +1534,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               {[
                 { n: "256-bit", l: "secStat1" as const },
                 { n: "0", l: "secStat2" as const },
-                { n: "24/7", l: "secStat3" as const },
+                { n: "3", l: "secStat3" as const },
               ].map((s, i) => (
                 <div key={s.n} className="py-4 sm:py-0 px-6 text-center">
                   <div className="stat-number stat-appear text-3xl mb-1" data-reveal-delay={i * 90}>{s.n}</div>
@@ -1539,7 +1547,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
           <div className="text-center mt-10">
             <button
               onClick={() => setActive("policy")}
-              className="inline-flex items-center gap-2 border border-gold text-gold px-8 py-3.5 font-montserrat font-bold text-sm tracking-wide hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm"
+              className="inline-flex items-center gap-2 border border-gold text-gold px-8 py-3.5 font-montserrat font-bold text-sm tracking-wide hover:bg-gold hover:text-[hsl(28,20%,7%)] transition-all rounded-sm"
             >
               <Icon name="FileText" size={16} />
               {tr("secReadPolicy")}
@@ -1560,7 +1568,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 {tr("proCtaDesc")}
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3">
-                <button onClick={() => setActive("forum")} className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm">
+                <button onClick={() => setActive("forum")} className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm">
                   {tr("proOpenCommunity")}
                 </button>
                 <button onClick={() => setActive("contacts")} className="border border-border text-foreground px-8 py-4 font-montserrat font-semibold text-sm hover:border-gold hover:text-gold transition-all rounded-sm">
@@ -1890,7 +1898,7 @@ function ProfileSection({ setActive, openChat }: { setActive: (s: Section) => vo
                   })().map(({ s, price }) => (
                     <div key={s.title.en} className="flex items-center gap-4 p-4 border border-border rounded-sm hover:border-gold/40 transition-colors cursor-pointer">
                       <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
-                        <Icon name={s.icon} size={15} className="text-[hsl(220,20%,6%)]" />
+                        <Icon name={s.icon} size={15} className="text-[hsl(28,20%,7%)]" />
                       </div>
                       <div className="flex-1">
                         <div className="font-montserrat font-semibold text-sm text-foreground">{L(s.title, lang)}</div>
@@ -1950,7 +1958,7 @@ function CasesSection() {
           <div className="tag-security mb-3 inline-block">{tr("knowledgeBase")}</div>
           <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("proCases")}</h2>
         </div>
-        <button className="gold-gradient text-[hsl(220,20%,6%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm self-start md:self-auto">
+        <button className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm self-start md:self-auto">
           {tr("publishCase")}
         </button>
       </div>
@@ -1977,7 +1985,7 @@ function CasesSection() {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <div className="w-5 h-5 gold-gradient rounded-sm flex items-center justify-center">
-                    <Icon name="User" size={10} className="text-[hsl(220,20%,6%)]" />
+                    <Icon name="User" size={10} className="text-[hsl(28,20%,7%)]" />
                   </div>
                   <span className="text-xs text-muted-foreground">{L(c.author, lang)}</span>
                 </div>
@@ -2033,14 +2041,14 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
       className={`card-hover card-tilt shine-on-hover rounded-sm overflow-hidden cursor-pointer group flex flex-col relative ${premium ? "border-2 border-gold security-glow ambient-gold bg-card" : "border border-border bg-card"}`}
     >
       {premium && (
-        <div className="absolute top-0 inset-x-0 z-20 gold-gradient text-[hsl(220,20%,6%)] text-[10px] font-montserrat font-extrabold tracking-widest uppercase text-center py-1 flex items-center justify-center gap-1">
+        <div className="absolute top-0 inset-x-0 z-20 gold-gradient text-[hsl(28,20%,7%)] text-[10px] font-montserrat font-extrabold tracking-widest uppercase text-center py-1 flex items-center justify-center gap-1">
           <Icon name="Crown" size={11} />{tr("premiumBadge")}
         </div>
       )}
       <button
         onClick={(e) => { e.stopPropagation(); toggleFavorite(p.slug); }}
         aria-label={tr(fav ? "favRemove" : "favAdd")}
-        className={`absolute z-20 end-3 ${premium ? "top-9" : "top-3"} w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm border transition-colors ${fav ? "bg-gold/90 border-gold text-[hsl(220,20%,6%)]" : "bg-card/80 border-border text-muted-foreground hover:text-gold hover:border-gold"}`}
+        className={`absolute z-20 end-3 ${premium ? "top-9" : "top-3"} w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm border transition-colors ${fav ? "bg-gold/90 border-gold text-[hsl(28,20%,7%)]" : "bg-card/80 border-border text-muted-foreground hover:text-gold hover:border-gold"}`}
       >
         <Icon name="Heart" size={15} className={fav ? "fill-current" : ""} />
       </button>
@@ -2219,11 +2227,11 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        <button onClick={() => setCategory("")} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors flex items-center gap-1.5 ${category === "" ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-gold/50 text-gold hover:bg-gold/10"}`}>
+        <button onClick={() => setCategory("")} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors flex items-center gap-1.5 ${category === "" ? "gold-gradient text-[hsl(28,20%,7%)] border-transparent" : "border-gold/50 text-gold hover:bg-gold/10"}`}>
             {tr("searchAnyCategory")}
         </button>
         {serviceCategories.map((c) => (
-          <button key={c.id} onClick={() => setCategory(c.id === category ? "" : c.id)} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors flex items-center gap-1.5 ${category === c.id ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"}`}>
+          <button key={c.id} onClick={() => setCategory(c.id === category ? "" : c.id)} className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-colors flex items-center gap-1.5 ${category === c.id ? "gold-gradient text-[hsl(28,20%,7%)] border-transparent" : "border-border text-muted-foreground hover:text-gold hover:border-gold/50"}`}>
             <Icon name={c.icon} fallback="Shield" size={13} />{L(c.title, lang)}
           </button>
         ))}
@@ -2391,7 +2399,7 @@ function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTi
                 className="w-full flex items-center gap-4 p-4 sm:p-5 text-start hover:bg-secondary/40 transition-colors"
               >
                 <div className="w-11 h-11 sm:w-12 sm:h-12 gold-gradient rounded flex items-center justify-center shrink-0">
-                  <Icon name={cat.icon} fallback="Shield" size={22} className="text-[hsl(220,20%,6%)]" />
+                  <Icon name={cat.icon} fallback="Shield" size={22} className="text-[hsl(28,20%,7%)]" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="font-montserrat font-bold text-sm sm:text-base text-foreground leading-tight">{L(cat.title, lang)}</h3>
@@ -2425,7 +2433,7 @@ function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTi
                               {onOrder && (
                                 <button
                                   onClick={() => onOrder(s.cat, s.title.en)}
-                                  className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm inline-flex items-center gap-1.5 shrink-0"
+                                  className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(28,20%,7%)] transition-all rounded-sm inline-flex items-center gap-1.5 shrink-0"
                                 >
                                   {tr("catFindSpecialist")}<Icon name="ArrowRight" size={13} />
                                 </button>
@@ -2445,7 +2453,7 @@ function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTi
 
       <div className="mt-10 border border-gold/30 rounded-sm bg-card p-6 flex flex-col md:flex-row items-start md:items-center gap-4">
         <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">
-          <Icon name="HandCoins" size={18} className="text-[hsl(220,20%,6%)]" />
+          <Icon name="HandCoins" size={18} className="text-[hsl(28,20%,7%)]" />
         </div>
         <div>
           <div className="font-montserrat font-semibold text-sm text-foreground mb-1">{tr("noCommissionTitle")}</div>
@@ -2473,7 +2481,7 @@ function CoursesSection() {
             <span className="badge-pro">{tr("coursesSoonBadge")}</span>
           </div>
           <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center mx-auto mb-6 glow-gold-sm">
-            <Icon name="GraduationCap" size={30} className="text-[hsl(220,20%,6%)]" />
+            <Icon name="GraduationCap" size={30} className="text-[hsl(28,20%,7%)]" />
           </div>
           <h3 className="font-montserrat font-extrabold text-2xl md:text-3xl text-foreground mb-4">{tr("coursesSoonTitle")}</h3>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-8">{tr("coursesSoonText")}</p>
@@ -2505,7 +2513,7 @@ function GuardsSection() {
           <Icon name="Search" size={16} className="text-muted-foreground" />
           <input placeholder={tr("searchGuards")} className="flex-1 bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
         </div>
-        <button className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 text-xs font-montserrat font-bold rounded-sm">{tr("search")}</button>
+        <button className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-xs font-montserrat font-bold rounded-sm">{tr("search")}</button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
@@ -2544,7 +2552,7 @@ function GuardsSection() {
                   <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("cost")}</div>
                   <div className="font-montserrat font-bold text-sm text-gold">{L(g.price, lang)}</div>
                 </div>
-                <button className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">
+                <button className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(28,20%,7%)] transition-all rounded-sm">
                   {tr("requestQuote")}
                 </button>
               </div>
@@ -2559,7 +2567,7 @@ function GuardsSection() {
           {guardServices.map((x) => (
             <div key={x.title.en} className="group border border-border rounded-sm bg-card p-6 card-hover card-tilt shine-on-hover cursor-default">
               <div className="w-11 h-11 gold-gradient rounded-full flex items-center justify-center mb-4 glow-gold-sm transition-transform duration-300 group-hover:scale-110">
-                <Icon name={x.icon} size={19} className="text-[hsl(220,20%,6%)]" />
+                <Icon name={x.icon} size={19} className="text-[hsl(28,20%,7%)]" />
               </div>
               <div className="font-montserrat font-bold text-sm text-foreground mb-2">{L(x.title, lang)}</div>
               <div className="text-xs text-muted-foreground leading-relaxed">{L(x.desc, lang)}</div>
@@ -2667,7 +2675,7 @@ function LegalDocSection({ doc, setActive, showFaq }: { doc: LegalDoc; setActive
         <div className="absolute inset-0 grid-line-bg opacity-30" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
           <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
-            <Icon name={doc.icon} fallback="FileText" size={30} className="text-[hsl(220,20%,6%)]" />
+            <Icon name={doc.icon} fallback="FileText" size={30} className="text-[hsl(28,20%,7%)]" />
           </div>
           <div>
             <div className="tag-security mb-3 inline-block">{tr(doc.tag)}</div>
@@ -2703,7 +2711,7 @@ function LegalDocSection({ doc, setActive, showFaq }: { doc: LegalDoc; setActive
               <div key={s.title} id={`lgl-${i}`} className="border border-border rounded-sm bg-card p-6 md:p-7 card-hover scroll-mt-24">
                 <div className="flex items-start gap-4">
                   <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0 glow-gold-sm">
-                    <span className="font-montserrat font-extrabold text-sm text-[hsl(220,20%,6%)]">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="font-montserrat font-extrabold text-sm text-[hsl(28,20%,7%)]">{String(i + 1).padStart(2, "0")}</span>
                   </div>
                   <div>
                     <h2 className="font-montserrat font-bold text-base text-foreground mb-2">{tr(s.title)}</h2>
@@ -2752,7 +2760,7 @@ function LegalDocSection({ doc, setActive, showFaq }: { doc: LegalDoc; setActive
             <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-6">{tr("polContactText")}</p>
             <button
               onClick={() => setActive("contacts")}
-              className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+              className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
             >
               {tr("polContactBtn")}
             </button>

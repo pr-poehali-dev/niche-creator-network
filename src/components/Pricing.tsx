@@ -149,7 +149,7 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
           <div className="p-7">
             <div className="text-center mb-6">
               <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center mx-auto mb-5 glow-gold-sm">
-                <Icon name="Check" size={32} className="text-[hsl(220,20%,6%)]" />
+                <Icon name="Check" size={32} className="text-[hsl(28,20%,7%)]" />
               </div>
               <h3 className="font-montserrat font-extrabold text-xl text-foreground mb-2">{tr("paySuccess")}</h3>
               <p className="text-sm text-muted-foreground">{tr("paySuccessDesc")}</p>
@@ -185,7 +185,7 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
                     <button
                       onClick={sendEmail}
                       disabled={emailState === "sending" || !email.includes("@")}
-                      className="shrink-0 gold-gradient text-[hsl(220,20%,6%)] px-4 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-1.5"
+                      className="shrink-0 gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-1.5"
                     >
                       {emailState === "sending" ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="Send" size={14} />}
                       <span className="hidden sm:inline">{tr(emailState === "sending" ? "payEmailSending" : "payEmailSend")}</span>
@@ -196,11 +196,11 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
               )}
             </div>
 
-            <button onClick={() => downloadReceipt(receipt())} className="w-full border border-gold text-gold py-2.5 text-sm font-montserrat font-semibold rounded-sm hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all flex items-center justify-center gap-2 mb-2.5">
+            <button onClick={() => downloadReceipt(receipt())} className="w-full border border-gold text-gold py-2.5 text-sm font-montserrat font-semibold rounded-sm hover:bg-gold hover:text-[hsl(28,20%,7%)] transition-all flex items-center justify-center gap-2 mb-2.5">
               <Icon name="Download" size={15} />
               {tr("payDownloadPdf")}
             </button>
-            <button onClick={onClose} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("payDone")}</button>
+            <button onClick={onClose} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("payDone")}</button>
           </div>
         ) : (
           <div className="p-6">
@@ -221,10 +221,10 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
               </button>
               <button
                 onClick={() => setPeriod("year")}
-                className={`relative py-2.5 text-xs font-montserrat font-bold rounded-sm transition-all ${period === "year" ? "gold-gradient text-[hsl(220,20%,6%)]" : "text-muted-foreground hover:text-foreground"}`}
+                className={`relative py-2.5 text-xs font-montserrat font-bold rounded-sm transition-all ${period === "year" ? "gold-gradient text-[hsl(28,20%,7%)]" : "text-muted-foreground hover:text-foreground"}`}
               >
                 {tr("billYearly")}
-                <span className={`absolute -top-2 end-1 text-[9px] px-1.5 py-0.5 rounded-sm font-bold ${period === "year" ? "bg-[hsl(220,20%,6%)] text-gold" : "bg-gold text-[hsl(220,20%,6%)]"}`}>−17%</span>
+                <span className={`absolute -top-2 end-1 text-[9px] px-1.5 py-0.5 rounded-sm font-bold ${period === "year" ? "bg-[hsl(28,20%,7%)] text-gold" : "bg-gold text-[hsl(28,20%,7%)]"}`}>−17%</span>
               </button>
             </div>
 
@@ -315,7 +315,7 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
             )}
 
             <button onClick={pay} disabled={status === "processing"}
-              className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3.5 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+              className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3.5 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
               {status === "processing" ? (
                 <><Icon name="Loader" size={16} className="animate-spin" /> {tr("payProcessing")}</>
               ) : (
@@ -376,7 +376,7 @@ function PricingCalculator({ plans, promoActive }: { plans: PricingPlan[]; promo
                 <button
                   key={p.name}
                   onClick={() => setPlanIdx(i)}
-                  className={`px-3 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-all ${planIdx === i ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
+                  className={`px-3 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-all ${planIdx === i ? "gold-gradient text-[hsl(28,20%,7%)] border-transparent" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
                 >
                   {tr(p.name)}
                 </button>
@@ -529,7 +529,7 @@ export function PricingSection({ setActive }: { setActive: (s: Section) => void 
         ].map((h) => (
           <div key={h.title} className="flex items-start gap-3 border border-gold/30 rounded-sm bg-card p-4">
             <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
-              <Icon name={h.icon} size={16} className="text-[hsl(220,20%,6%)]" />
+              <Icon name={h.icon} size={16} className="text-[hsl(28,20%,7%)]" />
             </div>
             <div>
               <div className="font-montserrat font-bold text-sm text-foreground leading-tight">{tr(h.title)}</div>
@@ -546,7 +546,7 @@ export function PricingSection({ setActive }: { setActive: (s: Section) => void 
             className={`relative flex flex-col rounded-sm p-6 card-hover ${p.premium ? "border-2 border-gold security-glow ambient-gold bg-gradient-to-b from-gold/[0.07] to-card glow-gold-sm md:-mt-2 md:mb-2" : ("chop" in p && p.chop) ? "border-2 border-blue-500/60 security-glow bg-gradient-to-b from-blue-500/[0.06] to-card" : p.featured ? "border border-gold security-glow bg-card" : "border border-border bg-card"}`}
           >
             {p.premium && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 gold-gradient text-[hsl(220,20%,6%)] text-[10px] font-montserrat font-extrabold tracking-widest uppercase px-3 py-1 rounded-sm whitespace-nowrap flex items-center gap-1 shadow-lg">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 gold-gradient text-[hsl(28,20%,7%)] text-[10px] font-montserrat font-extrabold tracking-widest uppercase px-3 py-1 rounded-sm whitespace-nowrap flex items-center gap-1 shadow-lg">
                 <Icon name="Crown" size={11} />{tr("bestChoice")}
               </div>
             )}
@@ -628,7 +628,7 @@ export function PricingSection({ setActive }: { setActive: (s: Section) => void 
             </div>
             <button
               onClick={() => p.enterprise ? setActive("contacts") : (trackGoal(GOALS.startPayment), setPayPlan({ name: p.name, price: p.price }))}
-              className={`w-full py-3 text-xs font-montserrat font-bold rounded-sm transition-all ${(p.featured || p.premium) ? "gold-gradient text-[hsl(220,20%,6%)] hover:opacity-90 glow-gold-sm" : "border border-gold text-gold hover:bg-gold hover:text-[hsl(220,20%,6%)]"}`}
+              className={`w-full py-3 text-xs font-montserrat font-bold rounded-sm transition-all ${(p.featured || p.premium) ? "gold-gradient text-[hsl(28,20%,7%)] hover:opacity-90 glow-gold-sm" : "border border-gold text-gold hover:bg-gold hover:text-[hsl(28,20%,7%)]"}`}
             >
               {p.enterprise ? tr("contactSales") : p.premium ? tr("choosePremium") : tr("choosePlan")}
             </button>
@@ -658,7 +658,7 @@ export function PricingSection({ setActive }: { setActive: (s: Section) => void 
       {/* No-commission promise */}
       <div className="mt-10 border border-gold/30 rounded-sm glass-card p-6 flex flex-col md:flex-row items-start md:items-center gap-4 security-glow">
         <div className="w-10 h-10 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
-          <Icon name="HandCoins" size={18} className="text-[hsl(220,20%,6%)]" />
+          <Icon name="HandCoins" size={18} className="text-[hsl(28,20%,7%)]" />
         </div>
         <div>
           <div className="font-montserrat font-semibold text-sm text-foreground mb-1">{tr("pricingBottomTitle")}</div>

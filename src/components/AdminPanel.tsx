@@ -132,7 +132,7 @@ export default function AdminPanel() {
         <div className="absolute inset-0 grid-line-bg opacity-30" />
         <div className="relative z-10 flex items-center gap-4">
           <div className="w-14 h-14 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
-            <Icon name="ShieldCheck" size={26} className="text-[hsl(220,20%,6%)]" />
+            <Icon name="ShieldCheck" size={26} className="text-[hsl(28,20%,7%)]" />
           </div>
           <div>
             <h1 className="font-montserrat font-extrabold text-2xl md:text-3xl text-foreground">{tr("adminPanelTitle")}</h1>
@@ -215,7 +215,7 @@ export default function AdminPanel() {
                     <button
                       onClick={() => toggle(p, "licenseVerified")}
                       disabled={savingSlug === p.slug + "licenseVerified"}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-montserrat font-bold rounded-sm transition-all disabled:opacity-50 ${p.licenseVerified ? "gold-gradient text-[hsl(220,20%,6%)]" : "border border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-montserrat font-bold rounded-sm transition-all disabled:opacity-50 ${p.licenseVerified ? "gold-gradient text-[hsl(28,20%,7%)]" : "border border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
                     >
                       {savingSlug === p.slug + "licenseVerified" ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name={p.licenseVerified ? "BadgeCheck" : "Badge"} size={14} />}
                       {p.licenseVerified ? tr("adminLicenseOn") : tr("adminLicenseOff")}

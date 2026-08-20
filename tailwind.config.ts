@@ -71,13 +71,15 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				gold: 'hsl(43, 80%, 52%)',
-				navy: 'hsl(220, 40%, 12%)',
-				charcoal: 'hsl(220, 18%, 9%)',
+				navy: 'hsl(28, 22%, 13%)',
+				charcoal: 'hsl(28, 12%, 11%)',
 			},
+			// Мягкая, но не «пузырящаяся» шкала скруглений. sm намеренно
+			// заметно меньше lg: мелким чипам и бейджам большой радиус вредит.
 			borderRadius: {
 				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				md: 'calc(var(--radius) - 4px)',
+				sm: 'calc(var(--radius) - 6px)'
 			},
 			keyframes: {
 				'accordion-down': {

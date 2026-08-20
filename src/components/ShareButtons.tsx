@@ -51,7 +51,7 @@ export default function ShareButtons({ className = "", shareUrl, shareText }: { 
           <button
             type="button"
             onClick={nativeShare}
-            className="inline-flex items-center gap-1.5 border border-gold/40 text-gold px-3 py-2 rounded-sm text-xs font-montserrat font-semibold hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all"
+            className="inline-flex items-center gap-1.5 border border-gold/40 text-gold px-3 py-2 rounded-sm text-xs font-montserrat font-semibold hover:bg-gold hover:text-[hsl(28,20%,7%)] transition-all"
             aria-label={tr("shareTitle")}
           >
             <Icon name="Share2" size={14} />

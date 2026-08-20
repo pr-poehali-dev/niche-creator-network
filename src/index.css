@@ -4,43 +4,46 @@
 
 @layer base {
   :root {
-    --background: 220 20% 6%;
-    --foreground: 210 20% 92%;
+    --background: 28 14% 7%;
+    --foreground: 40 18% 93%;
 
-    --card: 220 18% 9%;
-    --card-foreground: 210 20% 92%;
+    --card: 28 12% 11%;
+    --card-foreground: 40 18% 93%;
 
-    --popover: 220 18% 9%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 28 12% 11%;
+    --popover-foreground: 40 18% 93%;
 
     --primary: 43 80% 52%;
-    --primary-foreground: 220 20% 6%;
+    --primary-foreground: 28 20% 7%;
 
-    --secondary: 220 15% 14%;
-    --secondary-foreground: 210 20% 80%;
+    --secondary: 28 11% 16%;
+    --secondary-foreground: 40 14% 82%;
 
-    --muted: 220 15% 14%;
-    --muted-foreground: 215 16% 64%;
+    --muted: 28 11% 16%;
+    --muted-foreground: 35 12% 66%;
 
     --accent: 43 80% 52%;
-    --accent-foreground: 220 20% 6%;
+    --accent-foreground: 28 20% 7%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 15% 16%;
-    --input: 220 15% 16%;
+    --border: 28 12% 19%;
+    --input: 28 12% 19%;
     --ring: 43 80% 52%;
 
-    --radius: 0.25rem;
+    /* Базовое скругление. Было 0.25rem — из-за вычитания в tailwind это
+       давало rounded-sm = 0px, то есть абсолютно острые углы у 477 элементов.
+       Отсюда «машинный», холодный вид. Теперь углы мягкие по всему сайту. */
+    --radius: 0.75rem;
 
-    --sidebar-background: 220 22% 7%;
-    --sidebar-foreground: 210 20% 80%;
+    --sidebar-background: 28 14% 8%;
+    --sidebar-foreground: 40 14% 82%;
     --sidebar-primary: 43 80% 52%;
-    --sidebar-primary-foreground: 220 20% 6%;
-    --sidebar-accent: 220 15% 12%;
-    --sidebar-accent-foreground: 210 20% 80%;
-    --sidebar-border: 220 15% 14%;
+    --sidebar-primary-foreground: 28 20% 7%;
+    --sidebar-accent: 28 11% 14%;
+    --sidebar-accent-foreground: 40 14% 82%;
+    --sidebar-border: 28 12% 17%;
     --sidebar-ring: 43 80% 52%;
 
     /* Custom brand colors */
@@ -176,8 +179,8 @@
   .dark-gradient {
     background: linear-gradient(
       180deg,
-      hsl(220, 22%, 7%) 0%,
-      hsl(220, 20%, 4%) 100%
+      hsl(28, 14%, 8%) 0%,
+      hsl(28, 16%, 5%) 100%
     );
   }
 
@@ -345,8 +348,8 @@
   .glass-card {
     background: linear-gradient(
       145deg,
-      hsl(220, 18%, 11%) 0%,
-      hsl(220, 20%, 8%) 100%
+      hsl(28, 12%, 13%) 0%,
+      hsl(28, 13%, 9%) 100%
     );
     backdrop-filter: blur(12px);
   }
@@ -623,7 +626,7 @@
 
   .badge-pro {
     background: linear-gradient(135deg, hsl(43, 80%, 52%), hsl(38, 70%, 40%));
-    color: hsl(220, 20%, 6%);
+    color: hsl(28, 20%, 7%);
     font-family: "Montserrat", sans-serif;
     font-weight: 700;
     font-size: 0.6rem;

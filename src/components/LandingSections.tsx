@@ -64,7 +64,7 @@ export function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; on
 
             <button
               onClick={onCabinet}
-              className="shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-9 py-4 font-montserrat font-extrabold text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm inline-flex items-center gap-2.5"
+              className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-9 py-4 font-montserrat font-extrabold text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm inline-flex items-center gap-2.5"
             >
               <Icon name="LogIn" size={18} />
               {tr("homeOpenCabinet")}
@@ -74,7 +74,7 @@ export function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; on
             <div className="mt-12 border border-gold/30 rounded-sm glass-card p-6 max-w-xl">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
-                  <Icon name="ShieldCheck" size={17} className="text-[hsl(220,20%,6%)]" />
+                  <Icon name="ShieldCheck" size={17} className="text-[hsl(28,20%,7%)]" />
                 </div>
                 <span className="font-montserrat font-bold text-base text-foreground">{tr("homeSecTitle")}</span>
               </div>
@@ -208,7 +208,7 @@ export function LandingWhyUs() {
         {cards.map((c) => (
           <div key={c.title} className="group rounded-sm p-6 border border-border bg-card transition-all card-hover card-tilt">
             <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center mb-5 glow-gold-sm">
-              <Icon name={c.icon} fallback="ShieldCheck" size={22} className="icon-hover text-[hsl(220,20%,6%)]" />
+              <Icon name={c.icon} fallback="ShieldCheck" size={22} className="icon-hover text-[hsl(28,20%,7%)]" />
             </div>
             <h3 className="font-montserrat font-bold text-base text-foreground mb-2">{tr(c.title)}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">{tr(c.desc)}</p>
@@ -231,7 +231,7 @@ export function LandingStats() {
   const stats = [
     { value: real ? String(real.cities) : "—", key: "lpStat1" as const, icon: "MapPin" },
     { value: "5", key: "lpStat2" as const, icon: "LayoutGrid" },
-    { value: "24/7", key: "lpStat3" as const, icon: "Headset" },
+    { value: "7", key: "lpStat3" as const, icon: "Languages" },
     { value: real ? String(real.countries) : "—", key: "lpStat4" as const, icon: "Globe" },
   ];
   return (
@@ -240,7 +240,7 @@ export function LandingStats() {
         {stats.map((s) => (
           <div key={s.key} className="group text-center">
             <div className="w-11 h-11 gold-gradient rounded-full flex items-center justify-center mx-auto mb-3 glow-gold-sm">
-              <Icon name={s.icon} fallback="Star" size={19} className="icon-hover text-[hsl(220,20%,6%)]" />
+              <Icon name={s.icon} fallback="Star" size={19} className="icon-hover text-[hsl(28,20%,7%)]" />
             </div>
             <div className="font-montserrat font-extrabold text-2xl md:text-3xl gold-text-gradient">{s.value}</div>
             <div className="text-xs text-muted-foreground mt-1">{tr(s.key)}</div>
@@ -271,7 +271,7 @@ export function LandingHowItWorks() {
           <div key={s.title} className="group relative border border-border rounded-sm bg-card p-6 card-hover card-tilt">
             <div className="absolute top-4 end-4 font-montserrat font-extrabold text-3xl text-gold/15">{i + 1}</div>
             <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center mb-4 glow-gold-sm">
-              <Icon name={s.icon} fallback="Check" size={21} className="icon-hover text-[hsl(220,20%,6%)]" />
+              <Icon name={s.icon} fallback="Check" size={21} className="icon-hover text-[hsl(28,20%,7%)]" />
             </div>
             <h3 className="font-montserrat font-bold text-base text-foreground mb-2">{tr(s.title)}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">{tr(s.desc)}</p>
@@ -295,7 +295,7 @@ export function LandingValue() {
           <div key={c.title} className="group rounded-sm p-7 md:p-8 border border-border bg-card card-hover">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-12 h-12 gold-gradient rounded flex items-center justify-center shrink-0">
-                <Icon name={c.icon} fallback="User" size={21} className="icon-hover text-[hsl(220,20%,6%)]" />
+                <Icon name={c.icon} fallback="User" size={21} className="icon-hover text-[hsl(28,20%,7%)]" />
               </div>
               <div>
                 <div className="text-[10px] font-montserrat font-bold text-gold uppercase tracking-widest">{tr(c.tag)}</div>
@@ -331,7 +331,7 @@ export function LandingServices() {
           <div key={s.title.en} className="group border border-border rounded-sm bg-card p-5 card-hover shine-on-hover">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">
-                <Icon name={s.icon} fallback="ShieldCheck" size={18} className="icon-hover text-[hsl(220,20%,6%)]" />
+                <Icon name={s.icon} fallback="ShieldCheck" size={18} className="icon-hover text-[hsl(28,20%,7%)]" />
               </div>
               <h3 className="font-montserrat font-bold text-sm text-foreground">{L(s.title, lang)}</h3>
             </div>
@@ -387,7 +387,7 @@ export function LandingTestimonials() {
                 </div>
                 <p className="text-sm text-foreground leading-relaxed mb-4">«{r.text}»</p>
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full gold-gradient flex items-center justify-center text-[hsl(220,20%,6%)] font-montserrat font-bold text-xs">
+                  <div className="w-8 h-8 rounded-full gold-gradient flex items-center justify-center text-[hsl(28,20%,7%)] font-montserrat font-bold text-xs">
                     {(r.author || "?").charAt(0)}
                   </div>
                   <div>
@@ -403,7 +403,7 @@ export function LandingTestimonials() {
             {principles.map((p) => (
               <div key={p.title} className="border border-border rounded-sm bg-card p-6 card-hover card-tilt">
                 <div className="w-10 h-10 gold-gradient rounded-sm flex items-center justify-center mb-3">
-                  <Icon name={p.icon} fallback="ShieldCheck" size={18} className="text-[hsl(220,20%,6%)]" />
+                  <Icon name={p.icon} fallback="ShieldCheck" size={18} className="text-[hsl(28,20%,7%)]" />
                 </div>
                 <div className="font-montserrat font-bold text-sm text-foreground mb-2">{p.title}</div>
                 <p className="text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
@@ -424,13 +424,13 @@ export function LandingFinalCta({ onCabinet }: { onCabinet: () => void }) {
         <div className="absolute inset-0 grid-line-bg opacity-30" />
         <div className="relative z-10">
           <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center mx-auto mb-6 glow-gold-sm">
-            <Icon name="ShieldCheck" size={30} className="text-[hsl(220,20%,6%)]" />
+            <Icon name="ShieldCheck" size={30} className="text-[hsl(28,20%,7%)]" />
           </div>
           <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-4">{tr("lpCtaTitle")}</h2>
           <p className="text-muted-foreground text-base max-w-xl mx-auto mb-8">{tr("lpCtaDesc")}</p>
           <button
             onClick={onCabinet}
-            className="group cta-attention shine-on-hover gold-gradient text-[hsl(220,20%,6%)] px-10 py-4 font-montserrat font-extrabold text-base tracking-wide rounded-sm inline-flex items-center gap-2.5"
+            className="group cta-attention shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-10 py-4 font-montserrat font-extrabold text-base tracking-wide rounded-sm inline-flex items-center gap-2.5"
           >
             <Icon name="UserPlus" size={18} className="icon-hover" />
             {tr("lpCtaBtn")}

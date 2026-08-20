@@ -66,7 +66,7 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
       <div className="border border-border rounded-sm bg-card overflow-hidden flex flex-col" style={{ height: "600px" }}>
         <div className="p-4 border-b border-border flex items-center gap-3">
           <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
-            {target.avatar ? <img src={target.avatar} alt={shortName(target.name)} loading="lazy" className="w-full h-full object-cover" /> : <span className="font-montserrat font-bold text-sm text-[hsl(220,20%,6%)]">{initial}</span>}
+            {target.avatar ? <img src={target.avatar} alt={shortName(target.name)} loading="lazy" className="w-full h-full object-cover" /> : <span className="font-montserrat font-bold text-sm text-[hsl(28,20%,7%)]">{initial}</span>}
           </div>
           <div className="min-w-0">
             <div className="text-sm font-montserrat font-semibold text-foreground truncate">{shortName(target.name)}</div>
@@ -91,9 +91,9 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
           )}
           {msgs.map((m, i) => (
             <div key={i} className={`flex ${m.me ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[75%] rounded-sm px-3.5 py-2 ${m.me ? "gold-gradient text-[hsl(220,20%,6%)]" : "bg-secondary text-foreground"}`}>
+              <div className={`max-w-[75%] rounded-sm px-3.5 py-2 ${m.me ? "gold-gradient text-[hsl(28,20%,7%)]" : "bg-secondary text-foreground"}`}>
                 <div className="text-sm leading-relaxed">{m.text}</div>
-                <div className={`text-[10px] mt-1 ${m.me ? "text-[hsl(220,20%,6%)]/70" : "text-muted-foreground"}`}>{m.time}</div>
+                <div className={`text-[10px] mt-1 ${m.me ? "text-[hsl(28,20%,7%)]/70" : "text-muted-foreground"}`}>{m.time}</div>
               </div>
             </div>
           ))}
@@ -108,7 +108,7 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
               placeholder={tr("writeMessage")}
               className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
             />
-            <button onClick={send} className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
+            <button onClick={send} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
               <Icon name="Send" size={16} />
             </button>
           </div>
@@ -183,7 +183,7 @@ export function ChatSection({ chatInput, setChatInput }: { chatInput: string; se
               {msgs.length === 0 && <div className="text-sm text-muted-foreground text-center py-10">{tr("chatEmpty")}</div>}
               {msgs.map((m, i) => (
                 <div key={i} className="flex gap-3">
-                  <div className="w-8 h-8 gold-gradient rounded-sm flex items-center justify-center shrink-0 font-montserrat font-bold text-xs text-[hsl(220,20%,6%)]">
+                  <div className="w-8 h-8 gold-gradient rounded-sm flex items-center justify-center shrink-0 font-montserrat font-bold text-xs text-[hsl(28,20%,7%)]">
                     {(m.author || "?")[0]}
                   </div>
                   <div>
@@ -207,7 +207,7 @@ export function ChatSection({ chatInput, setChatInput }: { chatInput: string; se
                   placeholder={tr("writeMessage")}
                   className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
                 />
-                <button onClick={send} className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
+                <button onClick={send} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
                   <Icon name="Send" size={16} />
                 </button>
               </div>
@@ -313,7 +313,7 @@ export function ForumSection() {
           {posts.map((p, i) => (
             <div key={i} className="border border-border rounded-sm bg-card p-4">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-7 h-7 gold-gradient rounded-sm flex items-center justify-center text-xs font-montserrat font-bold text-[hsl(220,20%,6%)]">{(p.author || "?")[0]}</div>
+                <div className="w-7 h-7 gold-gradient rounded-sm flex items-center justify-center text-xs font-montserrat font-bold text-[hsl(28,20%,7%)]">{(p.author || "?")[0]}</div>
                 <span className="text-xs font-montserrat font-semibold text-foreground">{p.author}</span>
                 <span className="text-[10px] text-muted-foreground ms-auto">{fmtDate(p.createdAt)}</span>
               </div>
@@ -324,7 +324,7 @@ export function ForumSection() {
 
         <div className="border border-border rounded-sm bg-card p-4">
           <textarea value={reply} onChange={(e) => setReply(e.target.value)} rows={3} placeholder={tr("forumReplyPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold resize-none mb-2" />
-          <button onClick={sendReply} disabled={!reply.trim()} className="gold-gradient text-[hsl(220,20%,6%)] px-5 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{tr("forumReplyBtn")}</button>
+          <button onClick={sendReply} disabled={!reply.trim()} className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{tr("forumReplyBtn")}</button>
         </div>
       </div>
     );
@@ -337,7 +337,7 @@ export function ForumSection() {
           <div className="tag-security mb-3 inline-block">{tr("discussions")}</div>
           <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("proForum")}</h2>
         </div>
-        <button onClick={() => setNewOpen((o) => !o)} className="gold-gradient text-[hsl(220,20%,6%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm self-start flex items-center gap-1.5">
+        <button onClick={() => setNewOpen((o) => !o)} className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm self-start flex items-center gap-1.5">
           <Icon name={newOpen ? "X" : "Plus"} size={14} />{newOpen ? tr("cancel") : tr("createTopic")}
         </button>
       </div>
@@ -355,14 +355,14 @@ export function ForumSection() {
             <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("forumNewTopicTitle")}</label>
             <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder={tr("forumNewTopicPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
           </div>
-          <button onClick={createTopic} disabled={!newTitle.trim()} className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{tr("forumCreateBtn")}</button>
+          <button onClick={createTopic} disabled={!newTitle.trim()} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{tr("forumCreateBtn")}</button>
         </div>
       )}
 
       <div className="flex flex-wrap gap-2 mb-6">
-        <button onClick={() => setCat("")} className={`px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border transition-colors ${cat === "" ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold"}`}>{tr("forumAllCats")}</button>
+        <button onClick={() => setCat("")} className={`px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border transition-colors ${cat === "" ? "gold-gradient text-[hsl(28,20%,7%)] border-transparent" : "border-border text-muted-foreground hover:text-gold"}`}>{tr("forumAllCats")}</button>
         {serviceCategories.map((c) => (
-          <button key={c.id} onClick={() => setCat(c.id === cat ? "" : c.id)} className={`px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border transition-colors ${cat === c.id ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:text-gold"}`}>{L(c.title, lang)}</button>
+          <button key={c.id} onClick={() => setCat(c.id === cat ? "" : c.id)} className={`px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border transition-colors ${cat === c.id ? "gold-gradient text-[hsl(28,20%,7%)] border-transparent" : "border-border text-muted-foreground hover:text-gold"}`}>{L(c.title, lang)}</button>
         ))}
       </div>
 
@@ -453,11 +453,11 @@ export function ContactsSection() {
           {fbState === "sent" ? (
             <div className="flex flex-col items-center text-center py-10">
               <div className="w-14 h-14 gold-gradient rounded-full flex items-center justify-center mb-4 glow-gold-sm">
-                <Icon name="CheckCircle2" size={26} className="text-[hsl(220,20%,6%)]" />
+                <Icon name="CheckCircle2" size={26} className="text-[hsl(28,20%,7%)]" />
               </div>
               <div className="font-montserrat font-bold text-base text-foreground mb-1">{tr("feedbackSentTitle")}</div>
               <div className="text-sm text-muted-foreground mb-6">{tr("feedbackSentDesc")}</div>
-              <button onClick={() => setFbState("idle")} className="border border-gold text-gold text-xs font-montserrat font-semibold px-5 py-2.5 hover:bg-gold hover:text-[hsl(220,20%,6%)] transition-all rounded-sm">
+              <button onClick={() => setFbState("idle")} className="border border-gold text-gold text-xs font-montserrat font-semibold px-5 py-2.5 hover:bg-gold hover:text-[hsl(28,20%,7%)] transition-all rounded-sm">
                 {tr("feedbackSendAnother")}
               </button>
             </div>
@@ -484,7 +484,7 @@ export function ContactsSection() {
               {fbState === "error" && (
                 <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("feedbackError")}</div>
               )}
-              <button onClick={sendFeedback} disabled={!canSend} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
+              <button onClick={sendFeedback} disabled={!canSend} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
                 {fbState === "sending" ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Send" size={16} />}
                 {tr("sendMessage")}
               </button>
@@ -499,7 +499,7 @@ export function ContactsSection() {
           ].map((c) => (
             <div key={c.title} className="border border-border rounded-sm bg-card p-5 flex gap-4 card-hover">
               <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">
-                <Icon name={c.icon} size={18} className="text-[hsl(220,20%,6%)]" />
+                <Icon name={c.icon} size={18} className="text-[hsl(28,20%,7%)]" />
               </div>
               <div>
                 <div className="text-xs font-montserrat font-semibold text-muted-foreground uppercase tracking-widest mb-1">{c.title}</div>
@@ -511,7 +511,7 @@ export function ContactsSection() {
 
           <div className="border border-gold/30 rounded-sm bg-card p-5 flex gap-4">
             <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center shrink-0">
-              <Icon name="Clock" size={18} className="text-[hsl(220,20%,6%)]" />
+              <Icon name="Clock" size={18} className="text-[hsl(28,20%,7%)]" />
             </div>
             <div>
               <div className="text-xs font-montserrat font-semibold text-gold uppercase tracking-widest mb-1">{tr("feedbackReplyTitle")}</div>

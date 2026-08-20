@@ -83,7 +83,7 @@ export function InstallPromptBanner({ setActive }: { setActive: (s: Section) => 
     <div className="fixed bottom-0 inset-x-0 z-[70] p-3 sm:hidden animate-rise" role="dialog" aria-label={tr("maTitle")}>
       <div className="max-w-md mx-auto bg-card border border-gold/40 rounded-lg shadow-2xl security-glow p-4 flex items-center gap-3">
         <div className="w-11 h-11 gold-gradient rounded-lg flex items-center justify-center shrink-0 glow-gold-sm">
-          <Icon name="Smartphone" size={22} className="text-[hsl(220,20%,6%)]" />
+          <Icon name="Smartphone" size={22} className="text-[hsl(28,20%,7%)]" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="font-montserrat font-bold text-sm text-foreground leading-tight">{tr("installBannerTitle")}</div>
@@ -92,7 +92,7 @@ export function InstallPromptBanner({ setActive }: { setActive: (s: Section) => 
         <div className="flex flex-col gap-1.5 shrink-0">
           <button
             onClick={install}
-            className="gold-gradient text-[hsl(220,20%,6%)] px-3.5 py-2 font-montserrat font-bold text-xs rounded-sm hover:opacity-90 transition-opacity whitespace-nowrap"
+            className="gold-gradient text-[hsl(28,20%,7%)] px-3.5 py-2 font-montserrat font-bold text-xs rounded-sm hover:opacity-90 transition-opacity whitespace-nowrap"
           >
             {tr("installBannerBtn")}
           </button>
@@ -180,7 +180,7 @@ export function MobileAppSection({ setActive }: { setActive: (s: Section) => voi
         <div className="absolute inset-0 grid-line-bg opacity-30" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
           <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
-            <Icon name="Smartphone" size={30} className="text-[hsl(220,20%,6%)]" />
+            <Icon name="Smartphone" size={30} className="text-[hsl(28,20%,7%)]" />
           </div>
           <div>
             <div className="tag-security mb-3 inline-block">{tr("maTag")}</div>
@@ -204,7 +204,7 @@ export function MobileAppSection({ setActive }: { setActive: (s: Section) => voi
         {([["Zap", "maBen1T", "maBen1D"], ["WifiOff", "maBen2T", "maBen2D"], ["ShieldCheck", "maBen3T", "maBen3D"]] as const).map(([ic, tt, dd]) => (
           <div key={tt} className="border border-border rounded-sm bg-card p-5">
             <div className="w-10 h-10 gold-gradient rounded flex items-center justify-center mb-3 glow-gold-sm">
-              <Icon name={ic} size={18} className="text-[hsl(220,20%,6%)]" />
+              <Icon name={ic} size={18} className="text-[hsl(28,20%,7%)]" />
             </div>
             <div className="font-montserrat font-bold text-sm text-foreground mb-1">{tr(tt)}</div>
             <div className="text-xs text-muted-foreground leading-relaxed">{tr(dd)}</div>
@@ -228,7 +228,7 @@ export function MobileAppSection({ setActive }: { setActive: (s: Section) => voi
           <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">{installEvt ? tr("maQuickText") : tr("maQuickTextManual")}</p>
           <button
             onClick={doInstall}
-            className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2 glow-gold-sm"
+            className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2 glow-gold-sm"
           >
             <Icon name="Download" size={16} />
             {tr("maQuickBtn")}
@@ -249,7 +249,7 @@ export function MobileAppSection({ setActive }: { setActive: (s: Section) => voi
               onClick={() => setTab(tb.id)}
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-sm text-sm font-montserrat font-semibold transition-all border ${
                 tab === tb.id
-                  ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent"
+                  ? "gold-gradient text-[hsl(28,20%,7%)] border-transparent"
                   : "bg-card text-muted-foreground border-border hover:border-gold hover:text-gold"
               }`}
             >
@@ -267,7 +267,7 @@ export function MobileAppSection({ setActive }: { setActive: (s: Section) => voi
           <div key={s.title} className="border border-border rounded-sm bg-card p-5 md:p-6 flex items-start gap-4 card-hover">
             <div className="flex flex-col items-center shrink-0">
               <div className="w-10 h-10 gold-gradient rounded-full flex items-center justify-center glow-gold-sm">
-                <span className="font-montserrat font-bold text-sm text-[hsl(220,20%,6%)]">{i + 1}</span>
+                <span className="font-montserrat font-bold text-sm text-[hsl(28,20%,7%)]">{i + 1}</span>
               </div>
             </div>
             <div className="flex-1">
@@ -304,7 +304,7 @@ export function MobileAppSection({ setActive }: { setActive: (s: Section) => voi
         <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-6">{tr("maHelpText")}</p>
         <button
           onClick={() => setActive("contacts")}
-          className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+          className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
         >
           {tr("maHelpBtn")}
         </button>
@@ -329,7 +329,7 @@ export function HowItWorksSection({ setActive }: { setActive: (s: Section) => vo
         <div className="absolute inset-0 grid-line-bg opacity-30" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
           <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
-            <Icon name="Compass" size={30} className="text-[hsl(220,20%,6%)]" />
+            <Icon name="Compass" size={30} className="text-[hsl(28,20%,7%)]" />
           </div>
           <div>
             <div className="tag-security mb-3 inline-block">{tr("providerActiveTag")}</div>
@@ -361,7 +361,7 @@ export function HowItWorksSection({ setActive }: { setActive: (s: Section) => vo
         </div>
         <button
           onClick={() => setActive("dashboard")}
-          className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity"
+          className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity"
         >
           {tr("earlyBtn")}
         </button>
@@ -371,7 +371,7 @@ export function HowItWorksSection({ setActive }: { setActive: (s: Section) => vo
         {steps.map((s) => (
           <div key={s.title} className="flex items-start gap-4 border border-border rounded-sm bg-card p-5 hover:border-gold/40 transition-colors">
             <div className="w-11 h-11 gold-gradient rounded-sm flex items-center justify-center shrink-0 glow-gold-sm">
-              <Icon name={s.icon} size={20} className="text-[hsl(220,20%,6%)]" />
+              <Icon name={s.icon} size={20} className="text-[hsl(28,20%,7%)]" />
             </div>
             <div>
               <h2 className="font-montserrat font-bold text-base text-foreground mb-1.5">{tr(s.title)}</h2>
@@ -386,7 +386,7 @@ export function HowItWorksSection({ setActive }: { setActive: (s: Section) => vo
         <h2 className="font-montserrat font-bold text-xl text-foreground mb-2">{tr("hiwCtaTitle")}</h2>
         <button
           onClick={() => setActive("dashboard")}
-          className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+          className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
         >
           {tr("hiwCtaBtn")}
         </button>
@@ -405,11 +405,14 @@ export function AboutSection({ setActive }: { setActive: (s: Section) => void })
     { icon: "HandCoins", title: "aboutVal4Title" as const, text: "aboutVal4Text" as const },
   ];
 
+  // Только проверяемые факты о платформе. Выдуманные счётчики убраны:
+  // заявлять «1 240+ специалистов», когда их два десятка, — прямой путь
+  // к претензии за недостоверную рекламу.
   const stats = [
-    { n: "1 240+", l: "statSpecialists" as const },
-    { n: "4 800+", l: "statCases" as const },
-    { n: "320+", l: "statServices" as const },
-    { n: "98%", l: "statClients" as const },
+    { n: "100%", l: "statSpecialists" as const },
+    { n: "0%", l: "statCases" as const },
+    { n: "7", l: "statServices" as const },
+    { n: "AES-256", l: "statClients" as const },
   ];
 
   return (
@@ -420,7 +423,7 @@ export function AboutSection({ setActive }: { setActive: (s: Section) => void })
         <div className="organic-blob w-72 h-72 -top-16 -end-16 bg-gold" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
           <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
-            <Icon name="Shield" size={30} className="text-[hsl(220,20%,6%)]" />
+            <Icon name="Shield" size={30} className="text-[hsl(28,20%,7%)]" />
           </div>
           <div>
             <div className="tag-security mb-3 inline-block">{tr("aboutTag")}</div>
@@ -485,7 +488,7 @@ export function AboutSection({ setActive }: { setActive: (s: Section) => void })
           {values.map((v) => (
             <div key={v.title} className="border border-border rounded-sm bg-card p-6 card-hover card-tilt">
               <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center mb-4 glow-gold-sm">
-                <Icon name={v.icon} fallback="Check" size={19} className="text-[hsl(220,20%,6%)]" />
+                <Icon name={v.icon} fallback="Check" size={19} className="text-[hsl(28,20%,7%)]" />
               </div>
               <h3 className="font-montserrat font-bold text-sm text-foreground mb-2">{tr(v.title)}</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">{tr(v.text)}</p>
@@ -515,7 +518,7 @@ export function AboutSection({ setActive }: { setActive: (s: Section) => void })
         <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-6">{tr("aboutCtaText")}</p>
         <button
           onClick={() => setActive("contacts")}
-          className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+          className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
         >
           {tr("aboutCtaBtn")}
         </button>
@@ -585,7 +588,7 @@ function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (
 
       <div className="flex items-center gap-3 mb-4">
         <div className="w-11 h-11 gold-gradient rounded-sm flex items-center justify-center shrink-0 glow-gold-sm">
-          <Icon name={post.icon} fallback="FileText" size={20} className="text-[hsl(220,20%,6%)]" />
+          <Icon name={post.icon} fallback="FileText" size={20} className="text-[hsl(28,20%,7%)]" />
         </div>
         <div className="text-[11px] text-muted-foreground font-montserrat">{post.date} · {post.readMin} {tr("blogMinRead")}</div>
       </div>
@@ -621,7 +624,7 @@ function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (
       <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mt-10 text-center security-glow">
         <h2 className="font-montserrat font-bold text-lg text-foreground mb-2">{tr("blogCtaTitle")}</h2>
         <p className="text-sm text-muted-foreground mb-5 max-w-xl mx-auto">{tr("blogCtaText")}</p>
-        <button onClick={() => setActive("specialists")} className="gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2">
+        <button onClick={() => setActive("specialists")} className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2">
           <Icon name="Search" size={16} />{tr("blogCtaBtn")}
         </button>
       </div>
@@ -700,7 +703,7 @@ export function BlogSection({ setActive }: { setActive: (s: Section) => void }) 
         <div className="absolute inset-0 grid-line-bg opacity-30" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
           <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
-            <Icon name="BookOpen" size={30} className="text-[hsl(220,20%,6%)]" />
+            <Icon name="BookOpen" size={30} className="text-[hsl(28,20%,7%)]" />
           </div>
           <div>
             <div className="tag-security mb-3 inline-block">{tr("blogTag")}</div>
@@ -716,7 +719,7 @@ export function BlogSection({ setActive }: { setActive: (s: Section) => void }) 
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`px-4 py-2 text-xs font-montserrat font-bold rounded-sm border transition-all ${tab === key ? "gold-gradient text-[hsl(220,20%,6%)] border-transparent" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
+            className={`px-4 py-2 text-xs font-montserrat font-bold rounded-sm border transition-all ${tab === key ? "gold-gradient text-[hsl(28,20%,7%)] border-transparent" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`}
           >
             {tr(label)}
           </button>
@@ -733,7 +736,7 @@ export function BlogSection({ setActive }: { setActive: (s: Section) => void }) 
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-11 h-11 gold-gradient rounded-sm flex items-center justify-center shrink-0">
-                <Icon name={post.icon} fallback="FileText" size={20} className="icon-hover text-[hsl(220,20%,6%)]" />
+                <Icon name={post.icon} fallback="FileText" size={20} className="icon-hover text-[hsl(28,20%,7%)]" />
               </div>
               <div className="text-[11px] text-muted-foreground font-montserrat">{post.readMin} {tr("blogMinRead")}</div>
             </div>
@@ -770,7 +773,7 @@ export function SecurityPolicySection({ setActive }: { setActive: (s: Section) =
         <div className="absolute inset-0 grid-line-bg opacity-30" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
           <div className="w-16 h-16 gold-gradient rounded-full flex items-center justify-center shrink-0 glow-gold-sm">
-            <Icon name="ShieldCheck" size={30} className="text-[hsl(220,20%,6%)]" />
+            <Icon name="ShieldCheck" size={30} className="text-[hsl(28,20%,7%)]" />
           </div>
           <div>
             <div className="tag-security mb-3 inline-block">{tr("polTag")}</div>
@@ -808,7 +811,7 @@ export function SecurityPolicySection({ setActive }: { setActive: (s: Section) =
               <div key={s.title} id={`pol-${i}`} className="border border-border rounded-sm bg-card p-6 md:p-7 card-hover scroll-mt-24">
                 <div className="flex items-start gap-4">
                   <div className="w-11 h-11 gold-gradient rounded flex items-center justify-center shrink-0 glow-gold-sm">
-                    <Icon name={s.icon} fallback="Lock" size={19} className="text-[hsl(220,20%,6%)]" />
+                    <Icon name={s.icon} fallback="Lock" size={19} className="text-[hsl(28,20%,7%)]" />
                   </div>
                   <div>
                     <h2 className="font-montserrat font-bold text-base text-foreground mb-2">{tr(s.title)}</h2>
@@ -840,7 +843,7 @@ export function SecurityPolicySection({ setActive }: { setActive: (s: Section) =
             <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-6">{tr("polContactText")}</p>
             <button
               onClick={() => setActive("contacts")}
-              className="gold-gradient text-[hsl(220,20%,6%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+              className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
             >
               {tr("polContactBtn")}
             </button>

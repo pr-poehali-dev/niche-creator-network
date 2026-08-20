@@ -236,10 +236,10 @@ export const t: Dict = {
   trust3: { ru: "Работа в правовом поле", en: "Fully compliant" },
 
   // Stats
-  statSpecialists: { ru: "Верифицированных специалистов", en: "Verified specialists" },
-  statCases: { ru: "Реализованных кейсов", en: "Completed cases" },
-  statServices: { ru: "Доступных услуг", en: "Available services" },
-  statClients: { ru: "Довольных клиентов", en: "Satisfied clients" },
+  statSpecialists: { ru: "Проверка документов вручную", en: "Documents checked by hand" },
+  statCases: { ru: "Комиссия с заказов", en: "Commission on orders" },
+  statServices: { ru: "Направлений безопасности", en: "Security fields" },
+  statClients: { ru: "Контакты под шифрованием", en: "Contacts encrypted" },
 
   // Sections common
   specialists: { ru: "Специалисты", en: "Specialists" },
@@ -280,10 +280,13 @@ export const t: Dict = {
   feat6Desc: { ru: "Прозрачная система оценки и отзывов для формирования профессиональной репутации", en: "A transparent rating and review system to build your reputation" },
 
   // Testimonial
+  // Обращение основателя вместо выдуманного отзыва специалиста: платформа
+  // только запускается, и отзыв «за год работы» был бы неправдой.
   testimonialText: {
-    ru: "«За год на платформе я полностью закрыл вопрос поиска корпоративных клиентов. Закрытое сообщество профессионалов — это совсем другой уровень доверия и качества заказов».",
-    en: "\"In a year on the platform I fully solved the problem of finding corporate clients. A private community of professionals is a whole new level of trust and order quality.\"",
+    ru: "«Мы отбираем специалистов вручную и проверяем документы каждого. Каталог растёт медленно — зато в нём нет случайных людей. Это и есть главное, ради чего создавалась платформа».",
+    en: "\"We select specialists by hand and verify everyone's documents. The catalogue grows slowly — but there are no random people in it. That is exactly what the platform was built for.\"",
   },
+  testimonialAuthor: { ru: "Основатель платформы ЩИТ", en: "Founder of SHCHIT" },
 
   // Client process (how the platform works — FOR CLIENTS)
   cstep1Title: { ru: "Опишите задачу", en: "Describe your task" },
@@ -310,9 +313,10 @@ export const t: Dict = {
   cfeat6Desc: { ru: "Шифрованные чаты и защита данных — ваши задачи и переписка остаются приватными", en: "Encrypted chats and data protection — your tasks and messages stay private" },
 
   // Client reviews section
-  clientReviewsTag: { ru: "Отзывы клиентов", en: "Client reviews" },
-  clientReviewsTitle: { ru: "Клиенты о специалистах платформы", en: "Clients about the platform's specialists" },
-  clientReviewsSub: { ru: "Реальные истории людей и компаний, которым помогли специалисты ЩИТ", en: "Real stories from people and companies helped by SHCHIT specialists" },
+  clientReviewsTag: { ru: "Примеры обращений", en: "Example requests" },
+  clientReviewsTitle: { ru: "С какими задачами приходят к специалистам", en: "What clients come to specialists with" },
+  clientReviewsSub: { ru: "Типичные примеры обращений, составленные платформой. Это не отзывы клиентов: платформа только запускается, и настоящие отзывы появятся здесь после первых заказов.", en: "Typical examples of requests, composed by the platform. These are not client reviews: the platform is just launching, and real reviews will appear here after the first orders." },
+  clientReviewsDisclaimer: { ru: "Пример обращения", en: "Example request" },
 
   // Registration gate (client must complete profile to open specialist profiles)
   regRequiredTitle: { ru: "Завершите регистрацию", en: "Complete your registration" },
@@ -521,7 +525,7 @@ export const t: Dict = {
   secBadge4: { ru: "Двухфакторная защита", en: "Two-factor security" },
   secStat1: { ru: "Шифрование данных", en: "Data encryption" },
   secStat2: { ru: "Утечек данных", en: "Data breaches" },
-  secStat3: { ru: "Мониторинг угроз", en: "Threat monitoring" },
+  secStat3: { ru: "Рубежа защиты входа", en: "Login security layers" },
   secReadPolicy: { ru: "Читать политику безопасности", en: "Read the security policy" },
 
   // Security policy page
@@ -706,8 +710,8 @@ export const t: Dict = {
   becomeProvider: { ru: "Стать исполнителем", en: "Become a provider" },
   providerActiveTag: { ru: "Ваш кабинет исполнителя", en: "Your provider dashboard" },
   providerGetClients: { ru: "Получайте заказы от клиентов напрямую", en: "Get orders from clients directly" },
-  statProvClients: { ru: "Клиентов на платформе", en: "Clients on the platform" },
-  statProvSearches: { ru: "Поисковых запросов от клиентов", en: "Client search queries" },
+  statProvClients: { ru: "Прямые контакты с клиентом", en: "Direct contact with the client" },
+  statProvSearches: { ru: "Языков интерфейса", en: "Interface languages" },
   proAccessTag: { ru: "Доступ открыт", en: "Access granted" },
   proCtaTitle1: { ru: "Вы в профессиональном", en: "You're in the professional" },
   proCtaTitle2: { ru: "сообществе ЩИТ", en: "SHCHIT community" },
@@ -973,7 +977,7 @@ export const t: Dict = {
   // Landing (pre-login marketing)
   lpStat1: { ru: "городов в каталоге", en: "cities in the catalogue" },
   lpStat2: { ru: "направления безопасности", en: "security areas" },
-  lpStat3: { ru: "поддержка и связь", en: "support & messaging" },
+  lpStat3: { ru: "языков интерфейса", en: "interface languages" },
   lpStat4: { ru: "страны присутствия", en: "countries covered" },
   lpHowTag: { ru: "Как это работает", en: "How it works" },
   lpHowTitle: { ru: "Безопасность в 4 шага", en: "Security in 4 steps" },
@@ -1281,7 +1285,8 @@ export const t: Dict = {
   fSafetyDeal: { ru: "Безопасность сделки", en: "Deal safety" },
   fBecomeProvider: { ru: "Стать специалистом", en: "Become a specialist" },
   fSpecialistFaq: { ru: "Вопросы и ответы", en: "FAQ" },
-  rights: { ru: "© 2024 «ЩИТ». Все права защищены.", en: "© 2024 SHCHIT. All rights reserved." },
+  rights: { ru: "© 2026 «ЩИТ». Все права защищены.", en: "© 2026 SHCHIT. All rights reserved." },
+  trademarksNote: { ru: "Названия и логотипы Visa, Mastercard, «Мир», ЮKassa, Telegram, WhatsApp, VK и других упомянутых сервисов принадлежат их правообладателям и используются исключительно для указания способов оплаты и связи.", en: "Visa, Mastercard, Mir, YooKassa, Telegram, WhatsApp, VK and other names and logos mentioned belong to their respective owners and are used solely to indicate payment and contact methods." },
   forVerified: { ru: "Платформа для верифицированных специалистов", en: "A platform for verified professionals" },
   fAbout: { ru: "О нас", en: "About" },
   fSpecialists: { ru: "Специалисты", en: "Specialists" },
@@ -1325,9 +1330,9 @@ export const t: Dict = {
   payOneYear: { ru: "1 год", en: "1 year" },
 
   // Sales / social proof
-  heroProofRating: { ru: "4.9 из 5 — средняя оценка", en: "4.9 out of 5 — average rating" },
-  heroProofReviews: { ru: "на основе 2 800+ отзывов", en: "based on 2,800+ reviews" },
-  heroProofTrusted: { ru: "1 240+ верифицированных специалистов на платформе", en: "1,240+ verified specialists on the platform" },
+  heroProofRating: { ru: "Каждую анкету проверяет человек", en: "Every profile is checked by a person" },
+  heroProofReviews: { ru: "документы, лицензии, правовой статус", en: "documents, licences, legal status" },
+  heroProofTrusted: { ru: "Специалисты с подтверждёнными документами", en: "Specialists with verified documents" },
   heroFast: { ru: "Регистрация за 5 минут", en: "Sign up in 5 minutes" },
   heroNoFeeBig: { ru: "Без комиссии для клиентов", en: "No fees for clients" },
   heroGuarantee: { ru: "Проверенные лицензии и гарантия качества", en: "Verified licenses & quality guarantee" },

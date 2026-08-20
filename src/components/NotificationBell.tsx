@@ -138,7 +138,7 @@ export default function NotificationBell() {
                   onClick={() => !n.isRead && markRead(n.id)}
                   className={`w-full text-start flex gap-3 px-4 py-3 border-b border-border last:border-0 transition-colors hover:bg-secondary/40 ${n.isRead ? "" : "bg-gold/5"}`}
                 >
-                  <div className={`w-8 h-8 rounded-sm flex items-center justify-center shrink-0 ${n.isRead ? "bg-secondary text-muted-foreground" : "gold-gradient text-[hsl(220,20%,6%)]"}`}>
+                  <div className={`w-8 h-8 rounded-sm flex items-center justify-center shrink-0 ${n.isRead ? "bg-secondary text-muted-foreground" : "gold-gradient text-[hsl(28,20%,7%)]"}`}>
                     <Icon name={TYPE_ICON[n.type] || "Info"} fallback="Info" size={15} />
                   </div>
                   <div className="min-w-0 flex-1">

@@ -239,7 +239,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
           <div className="border border-border rounded-sm bg-card p-2 lg:sticky lg:top-24 flex lg:flex-col gap-1 overflow-x-auto">
             {tabs.map((tb) => (
               <button key={tb.id} onClick={() => setTab(tb.id)}
-                className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(220,20%,6%)]" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(28,20%,7%)]" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                 <Icon name={tb.icon} size={15} />
                 {tr(tb.key)}
               </button>
@@ -297,7 +297,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
               {clientState === "saved" && <div className="flex items-center gap-2 text-sm text-green-400"><Icon name="CheckCircle2" size={16} />{tr("cdClientSaved")}</div>}
               {clientState === "error" && <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("cdClientSaveErr")}</div>}
               {!profileLocked && (
-                <button onClick={saveClient} disabled={clientState === "saving"} className="w-full gold-gradient text-[hsl(220,20%,6%)] py-3 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+                <button onClick={saveClient} disabled={clientState === "saving"} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
                   {clientState === "saving" ? <Icon name="Loader" size={15} className="animate-spin" /> : <Icon name="Save" size={15} />}
                   {tr("dashSave")}
                 </button>
@@ -309,7 +309,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
             <div className="border border-border rounded-sm bg-card p-6">
               <div className="flex items-center justify-between mb-4 gap-2">
                 <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("cdReqTitle")}</div>
-                <button onClick={() => setReqFormOpen((o) => !o)} className="gold-gradient text-[hsl(220,20%,6%)] px-3 py-1.5 text-[10px] font-montserrat font-bold rounded-sm flex items-center gap-1">
+                <button onClick={() => setReqFormOpen((o) => !o)} className="gold-gradient text-[hsl(28,20%,7%)] px-3 py-1.5 text-[10px] font-montserrat font-bold rounded-sm flex items-center gap-1">
                   <Icon name={reqFormOpen ? "X" : "Plus"} size={12} />{reqFormOpen ? tr("cancel") : tr("reqNew")}
                 </button>
               </div>
@@ -352,7 +352,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
                       <input type="time" value={newReq.neededTime} onChange={(e) => setNewReq({ ...newReq, neededTime: e.target.value })} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold" />
                     </div>
                   </div>
-                  <button onClick={createReq} disabled={reqBusy || (!newReq.category && !newReq.service.trim())} className="gold-gradient text-[hsl(220,20%,6%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{reqBusy ? tr("pdSaving") : tr("reqPublish")}</button>
+                  <button onClick={createReq} disabled={reqBusy || (!newReq.category && !newReq.service.trim())} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{reqBusy ? tr("pdSaving") : tr("reqPublish")}</button>
                 </div>
               )}
 
@@ -369,7 +369,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
                     <div key={r.id} className="border border-border rounded-sm p-4">
                       <div className="flex items-start gap-3 mb-3">
                         <div className="w-9 h-9 gold-gradient rounded flex items-center justify-center shrink-0">
-                          <Icon name={cat?.icon || "FileText"} fallback="FileText" size={15} className="text-[hsl(220,20%,6%)]" />
+                          <Icon name={cat?.icon || "FileText"} fallback="FileText" size={15} className="text-[hsl(28,20%,7%)]" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-montserrat font-semibold text-sm text-foreground">{r.service || (cat ? L(cat.title, lang) : tr("reqService"))}</div>
@@ -406,7 +406,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
                       {!completed && (
                         <div className="flex justify-end gap-2 mb-3">
                           {r.canReview && r.chosenProvider && (
-                            <button onClick={() => setReviewModal({ requestId: r.id, providerSlug: r.chosenProvider })} className="inline-flex items-center gap-1.5 gold-gradient text-[hsl(220,20%,6%)] text-[11px] font-montserrat font-bold px-3 py-1.5 rounded-sm hover:opacity-90 transition-opacity">
+                            <button onClick={() => setReviewModal({ requestId: r.id, providerSlug: r.chosenProvider })} className="inline-flex items-center gap-1.5 gold-gradient text-[hsl(28,20%,7%)] text-[11px] font-montserrat font-bold px-3 py-1.5 rounded-sm hover:opacity-90 transition-opacity">
                               <Icon name="Star" size={13} />{tr("reqLeaveReview")}
                             </button>
                           )}
@@ -438,7 +438,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
                                   ? <span className="tag-security shrink-0 text-green-400 border-green-500/40">{tr("reqChosen")}</span>
                                   : <span className="tag-security shrink-0 text-muted-foreground border-border">{tr("reqDeclined")}</span>
                               ) : (
-                                <button onClick={() => chooseProvider(r.id, resp.providerSlug)} className="gold-gradient text-[hsl(220,20%,6%)] text-[11px] font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90">{tr("reqChoose")}</button>
+                                <button onClick={() => chooseProvider(r.id, resp.providerSlug)} className="gold-gradient text-[hsl(28,20%,7%)] text-[11px] font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90">{tr("reqChoose")}</button>
                               )}
                             </div>
                           ))}
@@ -458,7 +458,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
                 <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
                   <Icon name="HeartOff" size={40} className="text-muted-foreground/30" />
                   <span className="text-sm text-muted-foreground max-w-xs">{tr("favEmpty")}</span>
-                  <button onClick={() => setActive("specialists")} className="gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold px-4 py-2 rounded-sm mt-1">{tr("heroClientCta2")}</button>
+                  <button onClick={() => setActive("specialists")} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-4 py-2 rounded-sm mt-1">{tr("heroClientCta2")}</button>
                 </div>
               );
             }
@@ -483,7 +483,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
                       <span className="text-xs text-muted-foreground">{s.rating} ({s.reviews})</span>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => setActive("specialists")} className="flex-1 gold-gradient text-[hsl(220,20%,6%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity">{tr("cdViewProfile")}</button>
+                      <button onClick={() => setActive("specialists")} className="flex-1 gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity">{tr("cdViewProfile")}</button>
                       <button onClick={() => removeFavorite(s.slug)} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-3 py-2 rounded-sm hover:border-destructive hover:text-destructive transition-all">{tr("cdRemove")}</button>
                     </div>
                   </div>
@@ -545,16 +545,18 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
         <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setReviewModal(null)}>
           <div className="bg-card border border-gold/40 rounded-sm max-w-md w-full p-8 security-glow" onClick={(e) => e.stopPropagation()}>
             <div className="w-14 h-14 gold-gradient rounded-sm flex items-center justify-center mx-auto mb-5 glow-gold-sm">
-              <Icon name="Star" size={26} className="text-[hsl(220,20%,6%)]" />
+              <Icon name="Star" size={26} className="text-[hsl(28,20%,7%)]" />
             </div>
             <h3 className="font-montserrat font-bold text-lg text-foreground mb-2 text-center">{tr("reviewModalTitle")}</h3>
             <p className="text-sm text-muted-foreground mb-5 text-center">{tr("reviewModalHint")}</p>
             <div className="flex items-center justify-center gap-1.5 mb-5">
               {[1, 2, 3, 4, 5].map((i) => (
                 <button key={i} onClick={() => setReviewRating(i)} className="p-1">
-                  <svg className={`w-8 h-8 transition-colors ${i <= reviewRating ? "text-gold fill-current" : "text-muted-foreground"}`} viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
+                  <Icon
+                    name="Star"
+                    size={32}
+                    className={`transition-colors ${i <= reviewRating ? "text-gold fill-gold" : "text-muted-foreground"}`}
+                  />
                 </button>
               ))}
             </div>
@@ -569,7 +571,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
               <button onClick={() => setReviewModal(null)} className="flex-1 border border-border text-muted-foreground py-3 text-sm font-montserrat font-semibold rounded-sm hover:border-destructive hover:text-destructive transition-all">
                 {tr("cancel")}
               </button>
-              <button onClick={submitReview} disabled={reviewBusy} className="flex-1 gold-gradient text-[hsl(220,20%,6%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+              <button onClick={submitReview} disabled={reviewBusy} className="flex-1 gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
                 {reviewBusy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Send" size={16} />}
                 {tr("reviewModalSubmit")}
               </button>

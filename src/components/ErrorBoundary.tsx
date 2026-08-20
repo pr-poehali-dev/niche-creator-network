@@ -56,7 +56,7 @@ class ErrorBoundary extends Component<Props, State> {
             )}
             <button
               onClick={this.handleReload}
-              className="inline-flex items-center gap-2 gold-gradient text-[hsl(220,20%,6%)] px-6 py-3 font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity"
             >
               ↻ Обновить / Reload
             </button>
