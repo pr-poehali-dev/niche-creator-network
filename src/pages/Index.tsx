@@ -509,6 +509,9 @@ function CookieBanner({ go }: { go: (s: Section) => void }) {
   }, []);
   const decide = (value: "accepted" | "essential") => {
     try { localStorage.setItem(COOKIE_CONSENT_KEY, value); } catch { /* noop */ }
+    if (value === "accepted") {
+      try { (window as unknown as { __shchitInitMetrika?: () => void }).__shchitInitMetrika?.(); } catch { /* noop */ }
+    }
     setVisible(false);
   };
   if (!visible) return null;

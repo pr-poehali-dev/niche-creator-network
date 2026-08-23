@@ -160,7 +160,7 @@
           "name": "В каких странах работает платформа?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Платформа международная: специалисты присутствуют в 15+ странах. Часовой пояс и доступность для звонков учитываются автоматически."
+            "text": "Платформа международная: интерфейс на 7 языках, переписка переводится на любой язык. Часовой пояс и доступность для звонков учитываются автоматически."
           }
         }
       ]
@@ -254,18 +254,25 @@
     })
     (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
 
-    // Аналитика не должна ронять сайт. Если скрипт заблокирован (санкции,
-    // блокировщик рекламы, сбой сети) — молча продолжаем работу.
+    // Аналитика запускается ТОЛЬКО после согласия пользователя (GDPR/ePrivacy, 152-ФЗ).
+    // Вебвизор пишет экран вместе с полями форм — до согласия это недопустимо.
+    window.__shchitInitMetrika = function () {
+        if (window.__shchitMetrikaOn) return;
+        window.__shchitMetrikaOn = true;
+        try {
+            ym(101026698, "init", {
+                trustedDomains: ["shieldpspl.ru"],
+                clickmap: true,
+                trackLinks: true,
+                accurateTrackBounce: true,
+                webvisor: true,
+                trackHash: true
+            });
+        } catch (e) { /* аналитика недоступна — не мешаем работе сайта */ }
+    };
     try {
-        ym(101026698, "init", {
-            trustedDomains: ["shieldpspl.ru"],
-            clickmap: true,
-            trackLinks: true,
-            accurateTrackBounce: true,
-            webvisor: true,
-            trackHash: true
-        });
-    } catch (e) { /* аналитика недоступна — не мешаем работе сайта */ }
+        if (localStorage.getItem("shchit_cookie_consent") === "accepted") window.__shchitInitMetrika();
+    } catch (e) { /* приватный режим — аналитику не включаем */ }
 </script>
 <noscript>
     <div><img src="https://mc.yandex.ru/watch/101026698" style="position:absolute; left:-9999px;" alt=""/></div>

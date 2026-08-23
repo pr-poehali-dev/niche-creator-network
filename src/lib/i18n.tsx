@@ -1018,7 +1018,7 @@ export const t: Dict = {
   lpValProTag: { ru: "Для исполнителей", en: "For providers" },
   lpValProTitle: { ru: "Получайте заказы напрямую", en: "Get orders directly" },
   lpValPro1: { ru: "0% комиссии с заказов — только подписка", en: "0% order commission — subscription only" },
-  lpValPro2: { ru: "Поток клиентов из 15+ стран", en: "Client flow from 15+ countries" },
+  lpValPro2: { ru: "Клиенты из любой страны — 7 языков интерфейса", en: "Clients from any country — 7 interface languages" },
   lpValPro3: { ru: "Профиль, кейсы и продвижение", en: "Profile, cases and promotion" },
   lpValPro4: { ru: "Возможность работать под псевдонимом", en: "Option to work under an alias" },
   lpServicesTag: { ru: "Услуги", en: "Services" },
@@ -1044,7 +1044,7 @@ export const t: Dict = {
   lpFaq5Q: { ru: "Могу ли я работать под псевдонимом?", en: "Can I work under an alias?" },
   lpFaq5A: { ru: "Да. С учётом специфики сферы безопасности исполнители могут использовать псевдоним и ограничивать публичность части данных — но верификацию перед платформой проходят все.", en: "Yes. Given the nature of the security field, providers may use an alias and limit the visibility of some data — but everyone passes verification with the platform." },
   lpFaq6Q: { ru: "В каких странах работает платформа?", en: "Which countries does the platform operate in?" },
-  lpFaq6A: { ru: "Платформа международная: специалисты представлены в 15+ странах. Часовой пояс и доступность для звонков учитываются автоматически.", en: "The platform is international: specialists are present in 15+ countries. Time zone and call availability are taken into account automatically." },
+  lpFaq6A: { ru: "Платформа международная: интерфейс на 7 языках, переписка переводится на любой язык. Часовой пояс и доступность для звонков учитываются автоматически.", en: "The platform is international: the interface is available in 7 languages and messages are translated into any language. Time zone and call availability are taken into account automatically." },
 
   // Provider availability settings
   pdAvailTitle: { ru: "Доступность для звонков", en: "Call availability" },
@@ -1508,7 +1508,7 @@ export const t: Dict = {
   contactFaq4Q: { ru: "Как удалить мой аккаунт и данные?", en: "How do I delete my account and data?" },
   contactFaq4A: { ru: "Напишите на наш email с темой «Удаление аккаунта». Мы удалим или обезличим данные в течение 30 дней, за исключением сведений, которые обязаны хранить по закону.", en: "Email us with subject 'Account deletion'. We will delete or anonymize your data within 30 days, except information we are legally required to retain." },
   contactFaq5Q: { ru: "Вы работаете с другими странами?", en: "Do you work with other countries?" },
-  contactFaq5A: { ru: "Да, платформа международная — специалисты и клиенты есть в 15+ странах. Интерфейс доступен на 7 языках.", en: "Yes, the platform is international — specialists and clients are present in 15+ countries. The interface is available in 7 languages." },
+  contactFaq5A: { ru: "Да, платформа международная и открыта для специалистов из любой страны. Интерфейс доступен на 7 языках, переписка переводится на любой язык.", en: "Yes, the platform is international and open to specialists from any country. The interface is available in 7 languages and messages are translated into any language." },
   privFaqTag: { ru: "Частые вопросы", en: "FAQ" },
   privFaqTitle: { ru: "Вопросы о персональных данных", en: "Questions about personal data" },
   privFaq1Q: { ru: "Какие данные вы собираете?", en: "What data do you collect?" },
