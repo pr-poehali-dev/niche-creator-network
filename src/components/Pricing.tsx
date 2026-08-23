@@ -435,6 +435,9 @@ function PricingCalculator({ plans, promoActive }: { plans: PricingPlan[]; promo
               {isProfitable ? tr("calcProfitableNote") : tr("calcNeedMoreNote")}
             </span>
           </div>
+          {/* Оговорка обязательна: расчёт идёт по числам, которые ввёл сам
+              пользователь. Без неё калькулятор читается как обещание дохода. */}
+          <p className="text-[10px] text-muted-foreground leading-relaxed">{tr("calcDisclaimer")}</p>
         </div>
       </div>
     </div>
@@ -476,7 +479,7 @@ export function PricingSection({ setActive }: { setActive: (s: Section) => void 
       featured: false,
       premium: true,
       enterprise: false,
-      features: ["featProfile", "featUnlimCases", "featChat", "featCourses", "featPriority", "featTopPlacement", "featBadge", "featPremiumCard", "featPremiumTop", "featPremiumAnalytics"] as const,
+      features: ["featProfile", "featUnlimCases", "featChat", "featCourses", "featPriority", "featTopPlacement", "featBadge", "featPremiumCard", "featPremiumTop"] as const,
       muted: [] as const,
     },
     {
@@ -654,6 +657,13 @@ export function PricingSection({ setActive }: { setActive: (s: Section) => void 
       <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground text-center">
         <Icon name="Lock" size={13} className="text-green-400 shrink-0" />
         <span>{tr("planGuarantee")}</span>
+      </div>
+      {/* Ссылка на условия возврата обязательна рядом с оплатой:
+          закон о защите прав потребителей требует показать её до платежа. */}
+      <div className="mt-2 text-center">
+        <button onClick={() => setActive("offer")} className="text-[11px] text-muted-foreground hover:text-gold underline transition-colors">
+          {tr("planRefundLink")}
+        </button>
       </div>
 
       <PricingCalculator plans={plans} promoActive={promoActive} />

@@ -539,7 +539,6 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                     {([
                       { icon: "Crown", t: "featPremiumCard" as const, d: "pdPremB1" as const },
                       { icon: "ArrowUpToLine", t: "featPremiumTop" as const, d: "pdPremB2" as const },
-                      { icon: "ChartNoAxesColumn", t: "featPremiumAnalytics" as const, d: "pdPremB3" as const },
                       { icon: "BadgeCheck", t: "featBadge" as const, d: "pdPremB4" as const },
                     ]).map((b) => (
                       <div key={b.t} className="flex items-start gap-3 border border-gold/20 rounded-sm bg-gold/[0.04] p-3">
