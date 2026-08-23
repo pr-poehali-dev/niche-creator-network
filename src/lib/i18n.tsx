@@ -1446,6 +1446,9 @@ export const t: Dict = {
   pdVfDocReplace: { ru: "Заменить", en: "Replace" },
   pdVfDocError: { ru: "Ошибка загрузки файла", en: "File upload failed" },
   pdVfDocHint: { ru: "PDF или изображение, до 10 МБ", en: "PDF or image, up to 10 MB" },
+  pdVfPurposeLicense: { ru: "Зачем: номер лицензии нужен, чтобы подтвердить ваше право работать. Проверяем по реестру, клиентам показываем только по вашему разрешению.", en: "Why we ask: the licence number confirms your right to practise. We check it against the registry and show it to clients only with your permission." },
+  pdVfPurposeDocs: { ru: "Зачем: дипломы и сертификаты подтверждают квалификацию при проверке профиля. Файлы видны только модератору, пока вы не откроете их сами.", en: "Why we ask: diplomas and certificates confirm your qualifications during profile review. Files are visible only to the moderator until you make them public." },
+
   docOpen: { ru: "Открыть", en: "Open" },
   lightboxOpenNewTab: { ru: "Открыть в новой вкладке", en: "Open in new tab" },
   lightboxClose: { ru: "Закрыть", en: "Close" },

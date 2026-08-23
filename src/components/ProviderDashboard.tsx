@@ -1032,6 +1032,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                     </div>
                   ))}
                 </div>
+                <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">{tr("pdVfPurposeLicense")}</p>
                 {!vfLocked && (
                   <button onClick={() => { setVf({ ...vf, licenses: [...vf.licenses, { number: "", date: "", authority: "" }] }); setVfState("idle"); }} className="mt-2 inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-gold hover:underline">
                     <Icon name="Plus" size={13} />{tr("pdVfAddLicense")}
@@ -1062,10 +1063,11 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                           </button>
                         )}
                       </div>
-                      {!vfLocked && <DocFileButton slug="morozov" url={doc.url || ""} onUploaded={(u) => { const arr = [...vf.documents]; arr[i] = { ...arr[i], url: u }; setVf({ ...vf, documents: arr }); setVfState("idle"); }} />}
+                      {!vfLocked && <DocFileButton slug={slug} url={doc.url || ""} onUploaded={(u) => { const arr = [...vf.documents]; arr[i] = { ...arr[i], url: u }; setVf({ ...vf, documents: arr }); setVfState("idle"); }} />}
                     </div>
                   ))}
                 </div>
+                <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">{tr("pdVfPurposeDocs")}</p>
                 {!vfLocked && (
                   <button onClick={() => { setVf({ ...vf, documents: [...vf.documents, { title: "", url: "" }] }); setVfState("idle"); }} className="mt-2 inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-gold hover:underline">
                     <Icon name="Plus" size={13} />{tr("pdVfAddDocument")}
