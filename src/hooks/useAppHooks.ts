@@ -1,25 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FAVORITES_KEY, readFavorites } from "@/lib/shared";
 
-// Имитация «живого» счётчика людей на сайте: число плавно колеблется вокруг
-// базового значения (например, реального числа специалистов), создавая
-// ощущение активности в реальном времени — без реального трекинга онлайн-сессий.
-export function useLiveCounter(base: number, min = 8) {
-  const [count, setCount] = useState(() => Math.max(min, base));
-  useEffect(() => {
-    setCount(Math.max(min, base));
-    const tick = () => {
-      setCount((c) => {
-        const delta = Math.floor(Math.random() * 5) - 2; // -2..+2
-        return Math.max(min, c + delta);
-      });
-    };
-    const timer = setInterval(tick, 4000 + Math.random() * 3000);
-    return () => clearInterval(timer);
-  }, [base, min]);
-  return count;
-}
-
 // Лёгкий 3D-наклон карточки при движении мыши (премиальный hover-эффект).
 // Работает через прямую манипуляцию DOM (без ре-рендеров React) для плавности,
 // и отключается на touch-устройствах и при prefers-reduced-motion.

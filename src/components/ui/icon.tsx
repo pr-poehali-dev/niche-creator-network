@@ -1,6 +1,6 @@
 import React from 'react';
-import * as LucideIcons from 'lucide-react';
 import { LucideProps } from 'lucide-react';
+import { iconRegistry } from './icon-registry';
 
 interface IconProps extends LucideProps {
   name: string;
@@ -15,7 +15,7 @@ const DIRECTIONAL_ICONS = new Set([
 ]);
 
 const Icon: React.FC<IconProps> = ({ name, fallback = 'CircleAlert', className, ...props }) => {
-  const IconComponent = (LucideIcons as unknown as Record<string, React.FC<LucideProps>>)[name];
+  const IconComponent = iconRegistry[name];
   const dirClass = DIRECTIONAL_ICONS.has(name) ? 'rtl-flip' : '';
   // Скруглённые концы и стыки линий + чуть более тонкий штрих: иконки
   // становятся мягче и дружелюбнее, а не «чертёжными». Задаём здесь один
@@ -29,7 +29,7 @@ const Icon: React.FC<IconProps> = ({ name, fallback = 'CircleAlert', className, 
 
   if (!IconComponent) {
     // Если иконка не найдена, используем fallback иконку
-    const FallbackIcon = (LucideIcons as unknown as Record<string, React.FC<LucideProps>>)[fallback];
+    const FallbackIcon = iconRegistry[fallback];
 
     // Если даже fallback не найден, возвращаем пустой span
     if (!FallbackIcon) {

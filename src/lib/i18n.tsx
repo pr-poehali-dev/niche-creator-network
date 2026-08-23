@@ -1455,6 +1455,7 @@ export const t: Dict = {
   pdVfBio: { ru: "О себе и достижениях", en: "About yourself & achievements" },
   pdVfBioPh: { ru: "Краткая справка: опыт, специализация, ключевые достижения...", en: "Short summary: experience, specialization, key achievements..." },
   remove: { ru: "Удалить", en: "Remove" },
+  clearSearch: { ru: "Очистить поиск", en: "Clear search" },
 
   // Public profile/card
   verifyBio: { ru: "О специалисте", en: "About" },
@@ -1495,7 +1496,8 @@ export const t: Dict = {
   reqInn: { ru: "ИНН: 222111361597", en: "INN: 222111361597" },
   reqAddress: { ru: "Московская обл., г. Электросталь, пос. Всеволодово", en: "Vsevolodovo, Elektrostal, Moscow Region, Russia" },
   reqTaxOffice: { ru: "shieldpspl@yandex.ru", en: "shieldpspl@yandex.ru" },
-  cookieText: { ru: "Мы используем cookie и обрабатываем данные для работы сайта, аналитики и удобства. Оставаясь на сайте, вы соглашаетесь с этим.", en: "We use cookies and process data to run the site, for analytics and convenience. By staying on the site you agree to this." },
+  cookieTitle: { ru: "Cookie и аналитика", en: "Cookies and analytics" },
+  cookieText: { ru: "Обязательные cookie нужны для входа и работы сайта. Аналитику включаем только с вашего согласия — без него она не запускается.", en: "Essential cookies are required for login and basic site functions. Analytics runs only with your consent — without it, it stays off." },
   cookieAccept: { ru: "Принять", en: "Accept" },
   cookieDecline: { ru: "Только необходимые", en: "Essential only" },
   cookieMore: { ru: "Политика конфиденциальности", en: "Privacy policy" },

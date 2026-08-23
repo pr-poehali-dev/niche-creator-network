@@ -20,13 +20,20 @@ import { StarRating } from "@/components/SharedControls";
 const AdminPanel = lazy(() => import("@/components/AdminPanel"));
 const ClientDashboard = lazy(() => import("@/components/ClientDashboard"));
 const ProviderDashboard = lazy(() => import("@/components/ProviderDashboard"));
+// Разделы, которые открывают редко и не с первого экрана: грузим по требованию,
+// чтобы главная страница стартовала быстрее.
+const PricingSection = lazy(() => import("@/components/Pricing").then((m) => ({ default: m.PricingSection })));
+const MobileAppSection = lazy(() => import("@/components/InfoSections").then((m) => ({ default: m.MobileAppSection })));
+const AboutSection = lazy(() => import("@/components/InfoSections").then((m) => ({ default: m.AboutSection })));
+const BlogSection = lazy(() => import("@/components/InfoSections").then((m) => ({ default: m.BlogSection })));
+const SecurityPolicySection = lazy(() => import("@/components/InfoSections").then((m) => ({ default: m.SecurityPolicySection })));
+const ForumSection = lazy(() => import("@/components/CommunicationSections").then((m) => ({ default: m.ForumSection })));
+const ContactsSection = lazy(() => import("@/components/CommunicationSections").then((m) => ({ default: m.ContactsSection })));
 import { TrustBadges, MinimalHome, FaqAccordion } from "@/components/LandingSections";
 import AuthModal from "@/components/AuthModal";
-import { PricingSection } from "@/components/Pricing";
-import { InstallPromptBanner, MobileAppSection, HowItWorksSection, AboutSection,
-  BlogSection, SecurityPolicySection } from "@/components/InfoSections";
+import { InstallPromptBanner, HowItWorksSection } from "@/components/InfoSections";
 import { ReviewsList, ReportModal } from "@/components/ReviewsAndReports";
-import { DirectChatSection, ChatSection, ForumSection, ContactsSection } from "@/components/CommunicationSections";
+import { DirectChatSection, ChatSection } from "@/components/CommunicationSections";
 import func2url from "../../backend/func2url.json";
 
 import {
@@ -35,7 +42,7 @@ import {
   L, resolveAvatar, isImageUrl,
   type Section, type Role,
 } from "@/lib/shared";
-import { useLiveCounter, useTilt3D, useFavorites } from "@/hooks/useAppHooks";
+import { useTilt3D, useFavorites } from "@/hooks/useAppHooks";
 
 // Заглушка на время подгрузки раздела: мягкая, без резких спиннеров.
 function SectionLoader() {
@@ -519,7 +526,7 @@ function CookieBanner({ go }: { go: (s: Section) => void }) {
     /* Баннер прижат к углу и компактен: согласие на cookie — формальность,
        он не должен закрывать первый экран и мешать читать предложение. */
     <div className="fixed inset-x-0 bottom-0 z-[90] p-3 sm:p-4 pointer-events-none">
-      <div className="max-w-md ms-auto me-0 bg-card/95 backdrop-blur-md border border-border rounded-sm shadow-2xl p-3.5 sm:p-4 flex flex-col gap-2.5 pointer-events-auto">
+      <div role="region" aria-label={tr("cookieTitle")} className="max-w-md ms-auto me-0 bg-card/95 backdrop-blur-md border border-border rounded-sm shadow-2xl p-3.5 sm:p-4 flex flex-col gap-2.5 pointer-events-auto">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <Icon name="Cookie" size={20} className="text-gold shrink-0 mt-0.5" />
           <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-3 sm:line-clamp-none">
@@ -1245,9 +1252,10 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
   const isClient = role === "client";
   const { providers } = useProviders();
   const activeProvidersCount = providers.filter((p) => p.active !== false).length;
-  // Клиенту показываем «живой» счётчик специалистов на платформе, специалисту — клиентов.
-  // Число плавно колеблется во времени, имитируя присутствие людей на сайте в реальном времени.
-  const liveCount = useLiveCounter(isClient ? activeProvidersCount : 24, isClient ? 4 : 6);
+  // Показываем ТОЛЬКО реальное число анкет в каталоге. Раньше здесь стоял
+  // «живой» счётчик, который случайно колебался вокруг выдуманного числа —
+  // это вводило посетителя в заблуждение и проверялось за минуту.
+  const liveCount = activeProvidersCount;
 
   return (
     <div>
@@ -1337,7 +1345,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                     <img src={img} alt="Специалист платформы" loading="lazy" className="w-full h-full object-cover" />
                   </div>
                 ))}
-                {liveCount > 3 && (
+                {isClient && liveCount > 3 && (
                   <div className="w-9 h-9 rounded-full border-2 border-background bg-gold flex items-center justify-center text-[10px] font-montserrat font-extrabold text-[hsl(28,20%,7%)]">+{liveCount - 3}</div>
                 )}
               </div>
@@ -1350,16 +1358,16 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               </div>
             </div>
 
-            {liveCount > 0 && (
+            {/* Счётчик показываем только клиенту и только по фактическому числу
+                анкет в каталоге. Специалисту число клиентов не показываем:
+                подставлять сюда количество анкет было бы неправдой. */}
+            {isClient && liveCount > 0 && (
               <div className="flex items-center gap-2 mt-4 text-xs font-montserrat">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
-                </span>
+                <Icon name="ShieldCheck" size={13} className="text-gold" />
                 <span className="text-foreground font-bold">{liveCount}</span>
-                <span className="text-muted-foreground">{tr(isClient ? "liveOnline" : "liveOnlineClients")}</span>
+                <span className="text-muted-foreground">{tr("liveOnline")}</span>
                 <span className="text-muted-foreground/50">·</span>
-                <span className="text-muted-foreground">{tr(isClient ? "liveVerified" : "liveActiveNow")}</span>
+                <span className="text-muted-foreground">{tr("liveVerified")}</span>
               </div>
             )}
 
@@ -2365,7 +2373,7 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
           placeholder={tr("searchSimplePh")}
           className="flex-1 bg-transparent py-4 text-base text-foreground placeholder:text-muted-foreground outline-none"
         />
-        {query && <button onClick={() => setQuery("")} className="text-muted-foreground hover:text-foreground shrink-0"><Icon name="X" size={18} /></button>}
+        {query && <button onClick={() => setQuery("")} aria-label={tr("clearSearch")} className="text-muted-foreground hover:text-foreground shrink-0"><Icon name="X" size={18} /></button>}
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
@@ -2532,7 +2540,7 @@ function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTi
         <div className="flex-1 flex items-center gap-3 border border-border bg-card rounded-sm px-4">
           <Icon name="Search" size={16} className="text-muted-foreground" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr("searchServices")} className="flex-1 bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
-          {query && <button onClick={() => setQuery("")} className="text-muted-foreground hover:text-foreground"><Icon name="X" size={15} /></button>}
+          {query && <button onClick={() => setQuery("")} aria-label={tr("clearSearch")} className="text-muted-foreground hover:text-foreground"><Icon name="X" size={15} /></button>}
         </div>
       </div>
 

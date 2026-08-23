@@ -926,6 +926,8 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                 </div>
                 <button
                   onClick={() => { setVf({ ...vf, usePseudonym: !vf.usePseudonym }); setVfState("idle"); }}
+                  role="switch"
+                  aria-checked={vf.usePseudonym}
                   className="flex items-center justify-between w-full"
                 >
                   <span className="text-xs text-foreground">{tr("pdVfUsePseudonym")}</span>
@@ -1097,6 +1099,8 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                 </div>
                 <button
                   onClick={() => { setVf({ ...vf, alwaysAvailable: !vf.alwaysAvailable }); setVfState("idle"); }}
+                  role="switch"
+                  aria-checked={vf.alwaysAvailable}
                   className="flex items-center justify-between w-full"
                 >
                   <span className="text-xs text-foreground">{tr("pdAvailAlways")}</span>
