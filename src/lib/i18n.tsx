@@ -821,7 +821,7 @@ export const t: Dict = {
   featUnlimCases: { ru: "Безлимит кейсов", en: "Unlimited cases" },
   featPremiumCard: { ru: "Выделенная Премиум-карточка", en: "Highlighted Premium card" },
   featPremiumTop: { ru: "Всегда в топе выдачи", en: "Always at the top of results" },
-  featPremiumAnalytics: { ru: "Расширенная аналитика", en: "Advanced analytics" },
+  featPremiumAnalytics: { ru: "Статистика просмотров анкеты", en: "Profile view statistics" },
 
   // Premium plan extras
   bestChoice: { ru: "Лучший выбор", en: "Best choice" },
@@ -1164,6 +1164,12 @@ export const t: Dict = {
   pdStatRating: { ru: "Рейтинг", en: "Rating" },
   pdStatConversion: { ru: "Конверсия", en: "Conversion" },
   pdThisMonth: { ru: "за месяц", en: "this month" },
+  pdThisWeek: { ru: "за неделю", en: "this week" },
+  pdAllTime: { ru: "всего", en: "all time" },
+  pdStatViews7: { ru: "Просмотров за неделю", en: "Views this week" },
+  pdStatCases: { ru: "Кейсов в профиле", en: "Cases in profile" },
+  pdViewsChart: { ru: "Просмотры по дням", en: "Views by day" },
+  pdStatsEmpty: { ru: "Просмотров пока нет. Счётчик считает уникальных посетителей: один человек за сутки — один просмотр, накрутка невозможна.", en: "No views yet. The counter tracks unique visitors: one person per day counts once, so it cannot be inflated." },
   pdProfileFill: { ru: "Заполненность профиля", en: "Profile completeness" },
   pdVerified: { ru: "Документы проверены", en: "Documents verified" },
   // Provider plan

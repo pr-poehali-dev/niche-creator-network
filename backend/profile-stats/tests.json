@@ -1,0 +1,36 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Статистика без авторизации недоступна",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 401,
+      "expectedBody": {"error": "unauthorized"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Просмотр без slug отклоняется",
+      "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "slug_required"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Просмотр несуществующей анкеты не засчитывается",
+      "method": "POST",
+      "path": "/",
+      "body": {"slug": "no-such-provider-xyz", "source": "catalog"},
+      "expectedStatus": 404,
+      "expectedBody": {"error": "provider_not_found"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

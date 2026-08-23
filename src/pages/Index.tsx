@@ -1686,6 +1686,18 @@ function SpecialistProfileSection({ provider: p, onBack, openChat }: { provider:
     : "");
   const hasDocs = !!v && ((Array.isArray(v.licenses) && v.licenses.length > 0) || (Array.isArray(v.documents) && v.documents.length > 0));
 
+  // Считаем просмотр анкеты: специалист видит эти цифры в своём кабинете.
+  // Один посетитель за сутки засчитывается один раз — накрутка исключена
+  // на стороне сервера. Ошибку глушим: статистика не должна ломать страницу.
+  useEffect(() => {
+    if (!p.slug || p.isDemo) return;
+    fetch(func2url["profile-stats"], {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug: p.slug, source: "catalog" }),
+    }).catch(() => { /* статистика необязательна */ });
+  }, [p.slug, p.isDemo]);
+
   // Строка статуса проверки. Формулировка меняется вместе со значком:
   // раньше рядом с «крестиком» стояло «Личность подтверждена» — фраза
   // утверждала обратное тому, что показывал значок, и читатель терялся.

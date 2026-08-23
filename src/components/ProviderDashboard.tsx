@@ -124,6 +124,8 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
   const [sub, setSub] = useState<{ plan: string; active: boolean; until: string | null } | null>(null);
   const [payHistory, setPayHistory] = useState<{ date: string; plan: string; period: string; amount: number; currency: string; status: string; paymentId: string }[] | null>(null);
   const [payTotalRub, setPayTotalRub] = useState(0);
+  // Просмотры анкеты: реальные цифры из базы, а не заглушки-прочерки.
+  const [stats, setStats] = useState<{ views7: number; views30: number; daily: { date: string; count: number }[] } | null>(null);
   const [myServices, setMyServices] = useState<{ key: string; price: string }[]>([]);
   const [svcPickerOpen, setSvcPickerOpen] = useState(false);
   const [svcSaveState, setSvcSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -143,6 +145,13 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
     if (locked && !ALLOWED_WHEN_LOCKED.includes(id)) { setPaywallOpen(true); return; }
     setTab(id);
   };
+
+  useEffect(() => {
+    fetch(func2url["profile-stats"], { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d && typeof d.views7 === "number") setStats(d); })
+      .catch(() => { /* статистика необязательна */ });
+  }, []);
 
   useEffect(() => {
     fetch(func2url["provider-cases"], { headers: authHeaders() })
@@ -448,21 +457,45 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { n: "—", l: "pdStatViews" as const, icon: "Eye" },
-                  { n: String(incoming.length), l: "pdStatRequests" as const, icon: "Inbox" },
-                  { n: "—", l: "pdStatRating" as const, icon: "Star" },
-                  { n: "—", l: "pdStatConversion" as const, icon: "TrendingUp" },
+                  { n: stats ? String(stats.views30) : "—", l: "pdStatViews" as const, icon: "Eye", period: "pdThisMonth" as const },
+                  { n: stats ? String(stats.views7) : "—", l: "pdStatViews7" as const, icon: "TrendingUp", period: "pdThisWeek" as const },
+                  { n: String(incoming.length), l: "pdStatRequests" as const, icon: "Inbox", period: "pdThisMonth" as const },
+                  { n: String(myCases.length), l: "pdStatCases" as const, icon: "Briefcase", period: "pdAllTime" as const },
                 ].map((s) => (
                   <div key={s.l} className="border border-border rounded-sm bg-card p-5">
                     <div className="flex items-center justify-between mb-2">
                       <Icon name={s.icon} size={15} className="text-gold" />
-                      <span className="text-[10px] text-muted-foreground">{tr("pdThisMonth")}</span>
+                      <span className="text-[10px] text-muted-foreground">{tr(s.period)}</span>
                     </div>
                     <div className="stat-number text-2xl mb-1">{s.n}</div>
                     <div className="text-[10px] text-muted-foreground">{tr(s.l)}</div>
                   </div>
                 ))}
               </div>
+              {/* График просмотров за неделю. Показываем, только когда просмотры
+                  действительно были: пустой график хуже, чем его отсутствие. */}
+              {stats && stats.views7 > 0 && (
+                <div className="border border-border rounded-sm bg-card p-6">
+                  <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("pdViewsChart")}</div>
+                  <div className="flex items-end gap-1.5 h-24">
+                    {stats.daily.map((d) => {
+                      const max = Math.max(...stats.daily.map((x) => x.count), 1);
+                      return (
+                        <div key={d.date} className="flex-1 flex flex-col items-center gap-1.5">
+                          <div className="w-full gold-gradient rounded-t-sm min-h-[3px]" style={{ height: `${(d.count / max) * 100}%` }} title={`${d.date}: ${d.count}`} />
+                          <span className="text-[9px] text-muted-foreground">{d.date.slice(8)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {stats && stats.views30 === 0 && (
+                <div className="flex items-start gap-2.5 border border-border rounded-sm bg-card p-5 text-xs text-muted-foreground leading-relaxed">
+                  <Icon name="Info" size={15} className="text-gold shrink-0 mt-0.5" />
+                  <span>{tr("pdStatsEmpty")}</span>
+                </div>
+              )}
               <div className="border border-border rounded-sm bg-card p-6">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdProfileFill")}</span>
