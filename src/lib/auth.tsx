@@ -18,6 +18,8 @@ type AuthContextValue = {
   adminLogin: (password: string, role: AuthRole) => Promise<AuthResult>;
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
+  resetRequest: (email: string, lang?: string) => Promise<AuthResult>;
+  resetConfirm: (email: string, code: string, password: string) => Promise<AuthResult>;
 };
 
 const TOKEN_KEY = "shchit_auth_token";
@@ -119,6 +121,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ok: false, error: data.error || "error" };
   }, []);
 
+  // Восстановление пароля. Ответ на запрос кода всегда успешный — сервер
+  // намеренно не говорит, зарегистрирована почта или нет.
+  const resetRequest = useCallback(async (email: string, lang?: string): Promise<AuthResult> => {
+    const { res, data } = await callAuth({ action: "reset_request", email, lang });
+    if (res.ok) return { ok: true };
+    return { ok: false, error: data.error || "error" };
+  }, []);
+
+  const resetConfirm = useCallback(async (email: string, code: string, password: string): Promise<AuthResult> => {
+    const { res, data } = await callAuth({ action: "reset_confirm", email, code, password });
+    if (res.ok) return { ok: true };
+    return { ok: false, error: data.error || "error" };
+  }, []);
+
   const logout = useCallback(async () => {
     const token = localStorage.getItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
@@ -140,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthed: !!user, login, verify2fa, resend2fa, register, adminLogin, logout, logoutAll }}>
+    <AuthContext.Provider value={{ user, loading, isAuthed: !!user, login, verify2fa, resend2fa, register, adminLogin, logout, logoutAll, resetRequest, resetConfirm }}>
       {children}
     </AuthContext.Provider>
   );

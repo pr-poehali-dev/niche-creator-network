@@ -53,6 +53,56 @@ def _hash_code(code: str) -> str:
     return hashlib.sha256(('2fa:' + code).encode()).hexdigest()
 
 
+def _hash_reset(token: str) -> str:
+    '''Хеш токена сброса пароля. В базе хранится только хеш: даже при утечке
+    таблицы ссылку из письма подобрать нельзя.'''
+    return hashlib.sha256(('reset:' + token).encode()).hexdigest()
+
+
+def _send_reset_email(to_email: str, code: str, lang: str = 'ru') -> bool:
+    '''Письмо с кодом восстановления пароля.'''
+    host = os.environ.get('SMTP_HOST')
+    port = int(os.environ.get('SMTP_PORT', '465'))
+    user = os.environ.get('SMTP_USER')
+    password = os.environ.get('SMTP_PASSWORD')
+    if not all([host, user, password]):
+        return False
+    if lang == 'en':
+        subject = 'SHCHIT — password reset code'
+        title = 'Password reset code'
+        note = ('Enter this code on the site to set a new password. It expires in 30 minutes. '
+                'If you did not request a reset, ignore this email — your password stays unchanged.')
+    else:
+        subject = 'ЩИТ — код восстановления пароля'
+        title = 'Код для смены пароля'
+        note = ('Введите этот код на сайте, чтобы задать новый пароль. Код действует 30 минут. '
+                'Если вы не запрашивали восстановление — просто проигнорируйте письмо, пароль останется прежним.')
+    html = f'''<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#f4f5f7;font-family:Arial,sans-serif;color:#1a1d24;">
+<div style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #e4e6eb;border-radius:10px;overflow:hidden;">
+  <div style="padding:24px 30px;background:#1a1d24;color:#fff;">
+    <div style="font-weight:800;font-size:20px;letter-spacing:0.2em;">Щ<span style="color:#d4af37;">ИТ</span></div>
+  </div>
+  <div style="padding:28px 30px;text-align:center;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:18px;">{title}</div>
+    <div style="font-size:38px;font-weight:800;letter-spacing:10px;color:#b8901f;background:#faf7ec;border:1px solid #ecdfb0;border-radius:8px;padding:16px;">{code}</div>
+    <div style="margin-top:20px;font-size:12px;color:#9aa0ab;line-height:1.5;">{note}</div>
+  </div>
+</div></body></html>'''
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = user
+    msg['To'] = to_email
+    msg.attach(MIMEText(html, 'html', 'utf-8'))
+    try:
+        with smtplib.SMTP_SSL(host, port, timeout=10) as server:
+            server.login(user, password)
+            server.sendmail(user, [to_email], msg.as_string())
+        return True
+    except Exception as e:  # noqa: BLE001 — письмо не должно ронять запрос
+        print(f'[auth] reset email failed: {e}')
+        return False
+
+
 def _mask_email(email: str) -> str:
     try:
         name, domain = email.split('@', 1)
@@ -620,6 +670,81 @@ def handler(event: dict, context) -> dict:
                 (now + timedelta(days=SESSION_DAYS), token),
             )
             return _resp(200, {'user': {'id': row[0], 'email': row[1], 'role': row[2], 'name': row[3], 'isAdmin': bool(row[5]), 'publicId': row[6]}}, event)
+
+        if action == 'reset_request':
+            # Запрос кода восстановления пароля.
+            email = (body.get('email') or '').strip().lower()[:200]
+            lang = body.get('lang') if body.get('lang') in ('ru', 'en') else 'ru'
+            # Ответ ВСЕГДА одинаковый: иначе по нему можно проверить,
+            # зарегистрирован ли человек на платформе (утечка базы клиентов).
+            ok_resp = _resp(200, {'ok': True}, event)
+            if not email or not EMAIL_RE.match(email) or _is_reserved_email(email):
+                return ok_resp
+            if _too_many_attempts(cur, f'reset:{email}', client_ip):
+                return _resp(429, {'error': 'too_many_attempts'}, event)
+            _record_attempt(cur, f'reset:{email}', client_ip)
+            cur.execute(f"SELECT id FROM {SCHEMA}.users WHERE email = %s", (email,))
+            urow = cur.fetchone()
+            if not urow:
+                return ok_resp
+            code = ''.join(pysecrets.choice('0123456789') for _ in range(6))
+            # Старые неиспользованные коды гасим: активным остаётся только последний.
+            cur.execute(
+                f"UPDATE {SCHEMA}.password_resets SET used_at = now() "
+                f"WHERE user_id = %s AND used_at IS NULL",
+                (urow[0],),
+            )
+            cur.execute(
+                f"INSERT INTO {SCHEMA}.password_resets (user_id, token_hash, expires_at, requested_ip) "
+                f"VALUES (%s, %s, %s, %s)",
+                (urow[0], _hash_reset(code), datetime.utcnow() + timedelta(minutes=30), ip_masked),
+            )
+            _send_reset_email(email, code, lang)
+            return ok_resp
+
+        if action == 'reset_confirm':
+            # Установка нового пароля по коду из письма.
+            email = (body.get('email') or '').strip().lower()[:200]
+            code = (body.get('code') or '').strip()
+            password = body.get('password') or ''
+            if not code.isdigit() or len(code) != 6:
+                return _resp(400, {'error': 'invalid_code'}, event)
+            if _too_many_attempts(cur, f'resetc:{email}', client_ip):
+                return _resp(429, {'error': 'too_many_attempts'}, event)
+            if len(password) < 8 or len(password) > 200:
+                return _resp(400, {'error': 'weak_password'}, event)
+            if not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
+                return _resp(400, {'error': 'weak_password'}, event)
+            cur.execute(f"SELECT id FROM {SCHEMA}.users WHERE email = %s", (email,))
+            urow = cur.fetchone()
+            if not urow:
+                _record_attempt(cur, f'resetc:{email}', client_ip)
+                return _resp(400, {'error': 'invalid_code'}, event)
+            cur.execute(
+                f"SELECT id, expires_at FROM {SCHEMA}.password_resets "
+                f"WHERE user_id = %s AND token_hash = %s AND used_at IS NULL "
+                f"ORDER BY id DESC LIMIT 1",
+                (urow[0], _hash_reset(code)),
+            )
+            rrow = cur.fetchone()
+            if not rrow:
+                _record_attempt(cur, f'resetc:{email}', client_ip)
+                return _resp(400, {'error': 'invalid_code'}, event)
+            if rrow[1] < datetime.utcnow():
+                cur.execute(f"UPDATE {SCHEMA}.password_resets SET used_at = now() WHERE id = %s", (rrow[0],))
+                return _resp(400, {'error': 'code_expired'}, event)
+            cur.execute(
+                f"UPDATE {SCHEMA}.users SET password_hash = %s WHERE id = %s",
+                (_make_hash(password), urow[0]),
+            )
+            cur.execute(f"UPDATE {SCHEMA}.password_resets SET used_at = now() WHERE id = %s", (rrow[0],))
+            # Все прежние сеансы гасим: если пароль менял злоумышленник или
+            # аккаунт был угнан, чужие устройства теряют доступ немедленно.
+            cur.execute(
+                f"UPDATE {SCHEMA}.sessions SET revoked = true, expires_at = now() WHERE user_id = %s",
+                (urow[0],),
+            )
+            return _resp(200, {'ok': True}, event)
 
         if action == 'logout':
             if token:

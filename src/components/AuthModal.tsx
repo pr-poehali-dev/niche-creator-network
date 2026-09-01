@@ -8,7 +8,7 @@ import { type Section } from "@/lib/shared";
 
 export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void; onOpenDoc: (s: Section) => void }) {
   const { tr, lang } = useLang();
-  const { login, verify2fa, resend2fa, register, adminLogin } = useAuth();
+  const { login, verify2fa, resend2fa, register, adminLogin, resetRequest, resetConfirm } = useAuth();
   const [mode, setMode] = useState<"login" | "register" | "admin">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,6 +20,10 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
   const [twofa, setTwofa] = useState<{ challengeId: string; emailHint: string; sent: boolean } | null>(null);
   const [code, setCode] = useState("");
   const [resent, setResent] = useState(false);
+  // Восстановление пароля: "request" — ввод почты, "confirm" — код и новый пароль.
+  const [reset, setReset] = useState<null | "request" | "confirm" | "done">(null);
+  const [resetCode, setResetCode] = useState("");
+  const [newPass, setNewPass] = useState("");
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -85,6 +89,111 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
       setTimeout(() => setResent(false), 4000);
     }
   };
+
+  const doResetRequest = async () => {
+    setError("");
+    setBusy(true);
+    const res = await resetRequest(email.trim(), lang);
+    setBusy(false);
+    if (res.ok) setReset("confirm");
+    else setError(errText(res.error || "error"));
+  };
+
+  const doResetConfirm = async () => {
+    setError("");
+    setBusy(true);
+    const res = await resetConfirm(email.trim(), resetCode, newPass);
+    setBusy(false);
+    if (res.ok) { setReset("done"); setResetCode(""); setNewPass(""); }
+    else setError(errText(res.error || "error"));
+  };
+
+  if (reset) {
+    const backToLogin = () => { setReset(null); setResetCode(""); setNewPass(""); setError(""); };
+    return (
+      <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
+        <div role="dialog" aria-modal="true" aria-label={tr("authForgotTitle")} className="relative z-10 w-full max-w-md bg-card border border-gold/40 rounded-sm shadow-2xl security-glow p-7" onClick={(e) => e.stopPropagation()}>
+          <button onClick={onClose} className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
+            <Icon name="X" size={20} />
+          </button>
+          <div className="w-12 h-12 icon-tile rounded-full flex items-center justify-center mb-4">
+            <Icon name={reset === "done" ? "CircleCheck" : "KeyRound"} size={22} className="text-gold" />
+          </div>
+
+          {reset === "done" ? (
+            <>
+              <h3 className="font-montserrat font-bold text-lg text-foreground mb-1">{tr("authResetDoneTitle")}</h3>
+              <p className="text-xs text-muted-foreground mb-5">{tr("authResetDoneDesc")}</p>
+              <button onClick={backToLogin} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                <Icon name="LogIn" size={16} />{tr("authTabLogin")}
+              </button>
+            </>
+          ) : reset === "request" ? (
+            <>
+              <h3 className="font-montserrat font-bold text-lg text-foreground mb-1">{tr("authForgotTitle")}</h3>
+              <p className="text-xs text-muted-foreground mb-4">{tr("authForgotDesc")}</p>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                onKeyDown={(e) => { if (e.key === "Enter" && email.trim() && !busy) doResetRequest(); }}
+                autoFocus
+                placeholder="your@email.com"
+                className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors mb-3"
+              />
+              {error && (
+                <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-sm px-3 py-2 mb-3">
+                  <Icon name="CircleAlert" size={14} className="shrink-0" />{error}
+                </div>
+              )}
+              <button onClick={doResetRequest} disabled={busy || !email.trim()} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
+                {busy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Send" size={16} />}
+                {tr("authForgotSend")}
+              </button>
+            </>
+          ) : (
+            <>
+              <h3 className="font-montserrat font-bold text-lg text-foreground mb-1">{tr("authResetTitle")}</h3>
+              <p className="text-xs text-muted-foreground mb-4">{tr("authResetDesc")}</p>
+              <input
+                value={resetCode}
+                onChange={(e) => { setResetCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }}
+                inputMode="numeric"
+                autoFocus
+                placeholder="••••••"
+                className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-center text-2xl tracking-[0.5em] font-montserrat font-bold text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors mb-3"
+              />
+              <input
+                type="password"
+                value={newPass}
+                onChange={(e) => { setNewPass(e.target.value); setError(""); }}
+                onKeyDown={(e) => { if (e.key === "Enter" && resetCode.length === 6 && newPass && !busy) doResetConfirm(); }}
+                placeholder={tr("authResetNewPass")}
+                className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors mb-1"
+              />
+              <p className="text-[11px] text-muted-foreground mb-3">{tr("authPassHint")}</p>
+              {error && (
+                <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-sm px-3 py-2 mb-3">
+                  <Icon name="CircleAlert" size={14} className="shrink-0" />{error}
+                </div>
+              )}
+              <button onClick={doResetConfirm} disabled={busy || resetCode.length !== 6 || !newPass} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
+                {busy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="ShieldCheck" size={16} />}
+                {tr("authResetConfirm")}
+              </button>
+            </>
+          )}
+
+          {reset !== "done" && (
+            <button onClick={backToLogin} className="mt-4 text-xs text-muted-foreground hover:text-gold flex items-center gap-1">
+              <Icon name="ArrowLeft" size={13} />{tr("authBackToLogin")}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (twofa) {
     return (
@@ -269,6 +378,13 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
               autoComplete={mode === "login" ? "current-password" : "new-password"}
               className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
             />
+
+            {/* Без этой ссылки забытый пароль означал потерю аккаунта навсегда. */}
+            {mode === "login" && (
+              <button type="button" onClick={() => { setReset("request"); setError(""); }} className="text-[11px] text-muted-foreground hover:text-gold transition-colors self-start">
+                {tr("authForgotLink")}
+              </button>
+            )}
 
             {mode === "register" && (
               <label className="flex items-start gap-2.5 cursor-pointer select-none pt-1">

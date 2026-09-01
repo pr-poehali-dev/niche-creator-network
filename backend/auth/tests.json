@@ -102,6 +102,51 @@
       "expectedStatus": 200,
       "expectedBody": {"ok": true},
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "Сброс: несуществующая почта не раскрывается",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "reset_request", "email": "definitely-no-such-user@example.com"},
+      "expectedStatus": 200,
+      "expectedBody": {"ok": true},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Сброс: некорректная почта отвечает так же",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "reset_request", "email": "not-an-email"},
+      "expectedStatus": 200,
+      "expectedBody": {"ok": true},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Сброс: неверный формат кода отклоняется",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "reset_confirm", "email": "a@b.co", "code": "12", "password": "newpass123"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "invalid_code"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Сброс: слабый пароль отклоняется",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "reset_confirm", "email": "a@b.co", "code": "123456", "password": "123"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "weak_password"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Сброс: подобранный код не проходит",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "reset_confirm", "email": "nouser-reset@example.com", "code": "123456", "password": "newpass123"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "invalid_code"},
+      "bodyMatcher": "partial"
     }
   ]
 }

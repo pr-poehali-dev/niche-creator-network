@@ -161,6 +161,17 @@ export const t: Dict = {
   authAdminViewAs: { ru: "Войти как", en: "View as" },
   authAdminBtn: { ru: "Войти", en: "Sign in" },
   authBackToLogin: { ru: "Назад ко входу", en: "Back to sign in" },
+  authForgotLink: { ru: "Забыли пароль?", en: "Forgot your password?" },
+  authForgotTitle: { ru: "Восстановление пароля", en: "Password recovery" },
+  authForgotDesc: { ru: "Укажите почту, с которой вы регистрировались. Если аккаунт существует, мы отправим код для смены пароля.", en: "Enter the email you registered with. If the account exists, we will send a code to change your password." },
+  authForgotSend: { ru: "Отправить код", en: "Send code" },
+  authResetTitle: { ru: "Новый пароль", en: "New password" },
+  authResetDesc: { ru: "Введите код из письма и придумайте новый пароль. Код действует 30 минут.", en: "Enter the code from the email and choose a new password. The code is valid for 30 minutes." },
+  authResetNewPass: { ru: "Новый пароль", en: "New password" },
+  authPassHint: { ru: "Минимум 8 символов, буквы и цифры.", en: "At least 8 characters, letters and digits." },
+  authResetConfirm: { ru: "Сменить пароль", en: "Change password" },
+  authResetDoneTitle: { ru: "Пароль изменён", en: "Password changed" },
+  authResetDoneDesc: { ru: "Войдите с новым паролем. Все прежние сеансы на других устройствах завершены — если доступом кто-то завладел, он его потерял.", en: "Sign in with your new password. All previous sessions on other devices have been ended — if someone had access, they lost it." },
 
   // Minimal home / promo
   promoBadge: { ru: "Международная платформа безопасности", en: "International security platform" },
