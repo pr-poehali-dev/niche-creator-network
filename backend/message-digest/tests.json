@@ -1,0 +1,18 @@
+{
+  "tests": [
+    {
+      "name": "CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Рассылка отрабатывает и возвращает статистику",
+      "method": "POST",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {"found": 0, "sent": 0},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
