@@ -13,7 +13,7 @@ export const CLIENT_AVATAR_F = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4
 
 export type Section =
   | "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards"
-  | "chat" | "forum" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy"
+  | "chat" | "community" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy"
   | "terms" | "agreement" | "offer" | "consent" | "admin" | "mobileapp" | "about"
   | "blog" | "howitworks";
 
@@ -32,7 +32,9 @@ export const PROVIDER_NAV: NavItem[] = [
   { id: "home", key: "navHome", icon: "Home" },
   { id: "courses", key: "navCourses", icon: "GraduationCap" },
   { id: "chat", key: "navChat", icon: "MessageSquare" },
-  { id: "forum", key: "navForum", icon: "MessagesSquare" },
+  // Форум удалён: общение специалистов переехало в «Сообщество» — там поиск
+  // коллег, заявки в друзья и личная переписка вместо публичных тем.
+  { id: "community", key: "navCommunity", icon: "Users" },
   { id: "blog", key: "navBlog", icon: "BookOpen" },
   { id: "dashboard", key: "navDashboard", icon: "LayoutDashboard" },
   { id: "contacts", key: "navContacts", icon: "Mail" },

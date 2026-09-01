@@ -114,3 +114,38 @@ def is_dm_participant(user: dict, pair_key: str) -> bool:
     uid = user_dm_id(user)
     parts = str(pair_key or '').split(':')
     return uid in parts
+
+
+def other_dm_user_id(user: dict, pair_key: str):
+    '''Числовой id собеседника из pair_key вида "u12:u34". None — если разобрать не удалось.'''
+    uid = user_dm_id(user)
+    for part in str(pair_key or '').split(':'):
+        if part and part != uid and part.startswith('u') and part[1:].isdigit():
+            return int(part[1:])
+    return None
+
+
+def are_friends(user: dict, pair_key: str) -> bool:
+    '''
+    Переписываться можно только с теми, с кем дружба подтверждена обеими сторонами.
+    Без этой проверки любой участник мог бы писать незнакомому специалисту,
+    зная лишь его номер, — это спам и способ давления на людей, чья работа
+    связана с риском.
+    '''
+    other = other_dm_user_id(user, pair_key)
+    if not other:
+        return False
+    a, b = (user['id'], other) if user['id'] < other else (other, user['id'])
+    conn = psycopg2.connect(os.environ['DATABASE_URL'])
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            f"SELECT 1 FROM {SCHEMA}.friendships "
+            f"WHERE user_id_a = %s AND user_id_b = %s AND status = 'accepted'",
+            (a, b),
+        )
+        ok = cur.fetchone() is not None
+        cur.close()
+        return ok
+    finally:
+        conn.close()

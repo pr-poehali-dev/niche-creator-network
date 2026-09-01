@@ -13,7 +13,7 @@ import func2url from "../../backend/func2url.json";
 
 type LicenseEntry = { number: string; date: string; authority: string };
 
-export default function ProviderDashboard({ setActive, openChat }: { setActive: (s: Section) => void; openChat?: (t: { name: string; title: string; avatar?: string | null; pairKey?: string }) => void }) {
+export default function ProviderDashboard({ setActive, openChat, initialTab }: { setActive: (s: Section) => void; openChat?: (t: { name: string; title: string; avatar?: string | null; pairKey?: string }) => void; initialTab?: "stats" | "plan" | "cases" | "requests" | "contacts" | "friends" }) {
   const { lang, tr } = useLang();
   const { logout, logoutAll, user } = useAuth();
   const slug = user ? `provider-${user.id}` : "morozov";
@@ -28,7 +28,7 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
   };
   // Вкладка "verify" объединена со "stats" в единый раздел "Профиль и статистика" —
   // верификация, документы и метрики теперь показываются вместе, без переключения.
-  const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts" | "friends">("requests");
+  const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts" | "friends">(initialTab || "requests");
 
   type DashCase = { title: LS; category: LS; views: number; published: boolean };
   const [myCases, setMyCases] = useState<DashCase[]>([]);
@@ -340,7 +340,10 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
   const [friendsList, setFriendsList] = useState<FriendItem[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendReq[]>([]);
   const [searchPublicId, setSearchPublicId] = useState("");
-  const [searchResult, setSearchResult] = useState<{ userId: number; publicId: number; role: string; name: string; provider: FriendItem["provider"]; friendStatus: string } | null | "not_found">(null);
+  // Поиск коллег теперь по имени, специализации или номеру — результатов может
+  // быть несколько, поэтому храним список, а не одну карточку.
+  type FoundPerson = { userId: number; publicId: number; role: string; name: string; provider: FriendItem["provider"]; friendStatus: string; incoming?: boolean };
+  const [searchResults, setSearchResults] = useState<FoundPerson[] | null>(null);
   const [friendBusy, setFriendBusy] = useState(false);
 
   const loadFriends = useCallback(() => {
@@ -357,14 +360,15 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
   useEffect(() => { loadFriends(); }, [loadFriends]);
 
   const searchFriendById = async () => {
-    const idNum = searchPublicId.trim();
-    if (!idNum) return;
+    const q = searchPublicId.trim();
+    if (q.length < 2) return;
     setFriendBusy(true);
     try {
-      const res = await fetch(`${func2url["friends"]}?action=search&publicId=${encodeURIComponent(idNum)}`, { headers: authHeaders() });
-      if (res.status === 404) { setSearchResult("not_found"); return; }
+      const res = await fetch(`${func2url["friends"]}?action=search&q=${encodeURIComponent(q)}`, { headers: authHeaders() });
       const d = await res.json();
-      setSearchResult(d);
+      setSearchResults(Array.isArray(d.results) ? d.results : []);
+    } catch {
+      setSearchResults([]);
     } finally {
       setFriendBusy(false);
     }
@@ -378,11 +382,25 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
         headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ action: "request", targetUserId }),
       });
-      setSearchResult(null);
-      setSearchPublicId("");
+      // Карточку не убираем — помечаем «заявка отправлена», чтобы человек
+      // видел результат действия и мог продолжить искать дальше.
+      setSearchResults((prev) => prev ? prev.map((p) => p.userId === targetUserId ? { ...p, friendStatus: "pending" } : p) : prev);
+      loadFriends();
     } finally {
       setFriendBusy(false);
     }
+  };
+
+  // Удаление из друзей: без него связь нельзя разорвать, а вместе с ней
+  // закрывается и доступ к личной переписке с этим человеком.
+  const removeFriend = async (friendUserId: number) => {
+    if (!window.confirm(tr("pdRemoveFriendConfirm"))) return;
+    await fetch(func2url["friends"], {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action: "remove", friendUserId }),
+    }).catch(() => {});
+    loadFriends();
   };
 
   const respondFriendRequest = async (requestId: number, accept: boolean) => {
@@ -446,6 +464,12 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                   className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(28,20%,7%)]" : tabLocked ? "text-muted-foreground/50 hover:bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                   <Icon name={tabLocked ? "Lock" : tb.icon} fallback="LayoutDashboard" size={15} />
                   {tr(tb.key)}
+                  {/* Счётчик заявок в друзья: иначе входящую заявку легко не заметить. */}
+                  {tb.id === "friends" && friendRequests.length > 0 && (
+                    <span className={`ms-auto text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center ${tab === "friends" ? "bg-[hsl(28,20%,7%)] text-gold" : "bg-gold text-[hsl(28,20%,7%)]"}`}>
+                      {friendRequests.length}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -1190,36 +1214,45 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                 <div className="flex gap-2 mb-4">
                   <input
                     value={searchPublicId}
-                    onChange={(e) => setSearchPublicId(e.target.value.replace(/\D/g, ""))}
+                    onChange={(e) => setSearchPublicId(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && searchPublicId.trim().length >= 2 && !friendBusy) searchFriendById(); }}
                     placeholder={tr("pdFindFriendPh")}
                     className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
                   />
-                  <button aria-label="Поиск" onClick={searchFriendById} disabled={friendBusy || !searchPublicId.trim()} className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50 flex items-center gap-1.5">
-                    <Icon name="Search" size={14} />{tr("pdFindFriendBtn")}
+                  <button aria-label={tr("pdFindFriendBtn")} onClick={searchFriendById} disabled={friendBusy || searchPublicId.trim().length < 2} className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50 flex items-center gap-1.5">
+                    <Icon name={friendBusy ? "Loader" : "Search"} size={14} className={friendBusy ? "animate-spin" : ""} />{tr("pdFindFriendBtn")}
                   </button>
                 </div>
 
-                {searchResult === "not_found" && (
+                {searchResults !== null && searchResults.length === 0 && (
                   <div className="text-xs text-muted-foreground italic">{tr("pdFriendNotFound")}</div>
                 )}
-                {searchResult && searchResult !== "not_found" && (
-                  <div className="flex items-center gap-3 p-3 border border-border rounded-sm">
-                    <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
-                      {searchResult.provider?.avatar ? <img src={searchResult.provider.avatar} alt="" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(28,20%,7%)]" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-montserrat font-semibold text-foreground truncate">{searchResult.provider ? L(searchResult.provider.name, lang) : searchResult.name}</div>
-                      {searchResult.provider && <div className="text-[11px] text-muted-foreground truncate">{L(searchResult.provider.title, lang)}</div>}
-                    </div>
-                    {searchResult.friendStatus === "accepted" ? (
-                      <span className="tag-security shrink-0 text-green-400 border-green-500/40">{tr("pdAlreadyFriends")}</span>
-                    ) : searchResult.friendStatus === "pending" ? (
-                      <span className="tag-security shrink-0 text-gold border-gold/40">{tr("pdRequestPending")}</span>
-                    ) : (
-                      <button onClick={() => sendFriendRequest(searchResult.userId)} disabled={friendBusy} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90 disabled:opacity-50">
-                        {tr("pdAddFriend")}
-                      </button>
-                    )}
+                {searchResults !== null && searchResults.length > 0 && (
+                  <div className="space-y-2.5">
+                    {searchResults.map((p) => (
+                      <div key={p.userId} className="flex items-center gap-3 p-3 border border-border rounded-sm hover:border-gold/40 transition-colors">
+                        <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
+                          {p.provider?.avatar ? <img src={p.provider.avatar} alt="" loading="lazy" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(28,20%,7%)]" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-montserrat font-semibold text-foreground truncate flex items-center gap-1.5">
+                            {p.provider ? L(p.provider.name, lang) : p.name}
+                            {p.provider?.verified && <Icon name="BadgeCheck" size={13} className="text-gold shrink-0" />}
+                          </div>
+                          {p.provider && <div className="text-[11px] text-muted-foreground truncate">{L(p.provider.title, lang)}</div>}
+                          <div className="text-[10px] text-muted-foreground/70">ID {p.publicId}</div>
+                        </div>
+                        {p.friendStatus === "accepted" ? (
+                          <span className="tag-security shrink-0 text-green-400 border-green-500/40">{tr("pdAlreadyFriends")}</span>
+                        ) : p.friendStatus === "pending" ? (
+                          <span className="tag-security shrink-0 text-gold border-gold/40">{tr(p.incoming ? "pdReqIncoming" : "pdRequestPending")}</span>
+                        ) : (
+                          <button onClick={() => sendFriendRequest(p.userId)} disabled={friendBusy} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5">
+                            <Icon name="UserPlus" size={13} />{tr("pdAddFriend")}
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -1267,6 +1300,14 @@ export default function ProviderDashboard({ setActive, openChat }: { setActive: 
                             <Icon name="MessageSquare" size={13} />{tr("pdMessage")}
                           </button>
                         )}
+                        <button
+                          onClick={() => removeFriend(f.userId)}
+                          aria-label={tr("pdRemoveFriend")}
+                          title={tr("pdRemoveFriend")}
+                          className="text-muted-foreground hover:text-destructive transition-colors shrink-0 p-1.5"
+                        >
+                          <Icon name="UserMinus" size={15} />
+                        </button>
                       </div>
                     ))}
                   </div>

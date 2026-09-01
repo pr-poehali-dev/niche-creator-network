@@ -27,7 +27,6 @@ const MobileAppSection = lazy(() => import("@/components/InfoSections").then((m)
 const AboutSection = lazy(() => import("@/components/InfoSections").then((m) => ({ default: m.AboutSection })));
 const BlogSection = lazy(() => import("@/components/InfoSections").then((m) => ({ default: m.BlogSection })));
 const SecurityPolicySection = lazy(() => import("@/components/InfoSections").then((m) => ({ default: m.SecurityPolicySection })));
-const ForumSection = lazy(() => import("@/components/CommunicationSections").then((m) => ({ default: m.ForumSection })));
 const ContactsSection = lazy(() => import("@/components/CommunicationSections").then((m) => ({ default: m.ContactsSection })));
 import { TrustBadges, MinimalHome, FaqAccordion } from "@/components/LandingSections";
 import AuthModal from "@/components/AuthModal";
@@ -434,7 +433,7 @@ const SECTION_CRUMB: Record<Section, keyof typeof t> = {
   courses: "crumbCourses",
   guards: "crumbGuards",
   chat: "crumbChat",
-  forum: "crumbForum",
+  community: "crumbCommunity",
   contacts: "crumbContacts",
   policy: "crumbPolicy",
   pricing: "crumbPricing",
@@ -662,7 +661,7 @@ export default function Index() {
   }, [isClientRole, user?.id, user?.isAdmin]);
 
   // Разделы, закрытые для исполнителя без оплаченного тарифа
-  const LOCKED_SECTIONS: Section[] = ["chat", "forum", "courses", "services", "cases", "guards"];
+  const LOCKED_SECTIONS: Section[] = ["chat", "community", "courses", "services", "cases", "guards"];
 
   useEffect(() => {
     if (!isProvider || !providerSlug) { setSubActive(null); return; }
@@ -818,7 +817,12 @@ export default function Index() {
       case "chat": return chatTarget
         ? <DirectChatSection target={chatTarget} chatInput={chatInput} setChatInput={setChatInput} onBack={goBack} />
         : (role === "client" ? <HomeSection setActive={go} role={role} openChat={openChat} /> : <ChatSection chatInput={chatInput} setChatInput={setChatInput} />);
-      case "forum": return role === "client" ? <HomeSection setActive={go} role={role} openChat={openChat} /> : <ForumSection />;
+      // «Сообщество» — это кабинет специалиста, открытый сразу на вкладке
+      // с поиском коллег, заявками и списком друзей. Отдельная страница не
+      // нужна: всё общение живёт рядом с профилем.
+      case "community": return role === "client"
+        ? <HomeSection setActive={go} role={role} openChat={openChat} />
+        : <ProviderDashboard setActive={go} openChat={openChat} initialTab="friends" />;
       case "contacts": return <ContactsSection />;
       case "policy": return <SecurityPolicySection setActive={go} />;
       case "mobileapp": return <MobileAppSection setActive={go} />;
@@ -1028,7 +1032,7 @@ export default function Index() {
                 ["fBecomeProvider", "pricing"],
                 ["navPricing", "pricing"],
                 ["navCourses", "courses"],
-                ["navForum", "forum"],
+                ["navCommunity", "community"],
                 ["navChat", "chat"],
                 ["fSpecialistFaq", "policy"],
               ] as const).map(([l, sec]) => (
@@ -1657,7 +1661,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 {tr("proCtaDesc")}
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3">
-                <button onClick={() => setActive("forum")} className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm">
+                <button onClick={() => setActive("community")} className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm">
                   {tr("proOpenCommunity")}
                 </button>
                 <button onClick={() => setActive("contacts")} className="border border-border text-foreground px-8 py-4 font-montserrat font-semibold text-sm hover:border-gold hover:text-gold transition-all rounded-sm">

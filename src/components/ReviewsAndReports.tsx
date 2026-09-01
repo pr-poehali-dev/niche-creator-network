@@ -40,7 +40,7 @@ export function ReviewsList({ targetType, targetId }: { targetType: "provider" |
 // Модалка жалобы: переиспользуется в профиле специалиста и личных сообщениях.
 // Отправляет жалобу в backend complaints, модерация — у администратора.
 const REPORT_REASONS = ["spam", "scam", "illegal", "harassment", "fake_profile", "other"] as const;
-export function ReportModal({ targetType, targetId, onClose }: { targetType: "provider" | "client" | "message" | "forum_topic"; targetId: string; onClose: () => void }) {
+export function ReportModal({ targetType, targetId, onClose }: { targetType: "provider" | "client" | "message"; targetId: string; onClose: () => void }) {
   const { tr } = useLang();
   const [reason, setReason] = useState<typeof REPORT_REASONS[number]>("other");
   const [details, setDetails] = useState("");

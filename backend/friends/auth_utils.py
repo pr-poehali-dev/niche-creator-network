@@ -52,7 +52,7 @@ def get_auth_user(event: dict):
         cur = conn.cursor()
         cur.execute(
             f"SELECT u.id, u.email, u.role, s.expires_at, u.is_admin, "
-            f"s.revoked, s.last_seen_at, s.fingerprint, s.device_pubkey "
+            f"s.revoked, s.last_seen_at, s.fingerprint, s.device_pubkey, u.name "
             f"FROM {SCHEMA}.sessions s JOIN {SCHEMA}.users u ON u.id = s.user_id "
             f"WHERE s.token = %s",
             (token,),
@@ -95,12 +95,57 @@ def get_auth_user(event: dict):
     finally:
         conn.close()
     email = str(row[1] or '')
-    return {'id': int(row[0]), 'email': email, 'role': row[2], 'is_admin': bool(row[4])}
+    # Имя берём из базы, а не из тела запроса: иначе кто угодно мог бы
+    # подписаться «Администратор» в общем чате и на форуме.
+    name = str(row[9] or '').strip() or email.split('@')[0]
+    return {'id': int(row[0]), 'email': email, 'role': row[2], 'is_admin': bool(row[4]), 'name': name}
 
 
-def provider_slug(user: dict) -> str:
-    return f"provider-{user['id']}"
+def user_dm_id(user: dict) -> str:
+    '''Идентификатор пользователя в личных сообщениях.'''
+    return f"u{user['id']}"
 
 
-def client_id(user: dict) -> str:
-    return f"client-{user['id']}"
+def is_dm_participant(user: dict, pair_key: str) -> bool:
+    '''
+    Проверяет, что пользователь является участником переписки.
+    pair_key имеет формат "uA:uB" (отсортированные id участников).
+    '''
+    uid = user_dm_id(user)
+    parts = str(pair_key or '').split(':')
+    return uid in parts
+
+
+def other_dm_user_id(user: dict, pair_key: str):
+    '''Числовой id собеседника из pair_key вида "u12:u34". None — если разобрать не удалось.'''
+    uid = user_dm_id(user)
+    for part in str(pair_key or '').split(':'):
+        if part and part != uid and part.startswith('u') and part[1:].isdigit():
+            return int(part[1:])
+    return None
+
+
+def are_friends(user: dict, pair_key: str) -> bool:
+    '''
+    Переписываться можно только с теми, с кем дружба подтверждена обеими сторонами.
+    Без этой проверки любой участник мог бы писать незнакомому специалисту,
+    зная лишь его номер, — это спам и способ давления на людей, чья работа
+    связана с риском.
+    '''
+    other = other_dm_user_id(user, pair_key)
+    if not other:
+        return False
+    a, b = (user['id'], other) if user['id'] < other else (other, user['id'])
+    conn = psycopg2.connect(os.environ['DATABASE_URL'])
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            f"SELECT 1 FROM {SCHEMA}.friendships "
+            f"WHERE user_id_a = %s AND user_id_b = %s AND status = 'accepted'",
+            (a, b),
+        )
+        ok = cur.fetchone() is not None
+        cur.close()
+        return ok
+    finally:
+        conn.close()

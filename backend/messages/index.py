@@ -1,7 +1,6 @@
 import json
 import os
 import re
-from datetime import datetime
 import psycopg2
 from crypto_utils import encrypt_field, decrypt_field
 import auth_utils
@@ -45,28 +44,14 @@ def _resp(status, payload):
     return {'statusCode': status, 'headers': CORS, 'body': json.dumps(payload, ensure_ascii=False)}
 
 
-def _is_admin(cur, token):
-    '''Проверяет, что токен сессии принадлежит администратору.'''
-    if not token:
-        return False
-    cur.execute(
-        f"SELECT u.is_admin, s.expires_at FROM {SCHEMA}.sessions s "
-        f"JOIN {SCHEMA}.users u ON u.id = s.user_id WHERE s.token = %s",
-        (token,),
-    )
-    row = cur.fetchone()
-    if not row or row[1] < datetime.utcnow():
-        return False
-    return bool(row[0])
-
-
 def handler(event: dict, context) -> dict:
     '''
-    Business: хранилище переписок — профессиональные чаты по категориям, форум и личные сообщения.
-              Все сообщения сохраняются в БД (не удаляются, хранятся бессрочно/≥6 мес по закону).
+    Business: хранилище переписок — профессиональные чаты по категориям и личные
+              сообщения между друзьями. Личная переписка доступна только участникам
+              и только при подтверждённой дружбе; содержимое шифруется в базе.
               Нецензурная лексика автоматически маскируется.
     Args: event с httpMethod, queryStringParameters, body
-    Returns: HTTP-ответ с сообщениями/темами или статусом
+    Returns: HTTP-ответ с сообщениями или статусом
     '''
     method = event.get('httpMethod', 'GET')
     if method == 'OPTIONS':
@@ -89,61 +74,15 @@ def handler(event: dict, context) -> dict:
                 msgs = [{'author': r[0], 'text': decrypt_field(r[1]), 'createdAt': r[2].isoformat() if r[2] else None} for r in cur.fetchall()]
                 return _resp(200, {'messages': msgs})
 
-            if kind == 'forum':
-                category = esc(params.get('category'), 40)
-                if category:
-                    cur.execute(
-                        f"SELECT t.id, t.category, t.title, t.author_name, t.views, t.created_at, "
-                        f"COUNT(p.id) AS replies "
-                        f"FROM {SCHEMA}.forum_topics t "
-                        f"LEFT JOIN {SCHEMA}.forum_posts p ON p.topic_id=t.id "
-                        f"WHERE t.blocked = false AND t.category=%s "
-                        f"GROUP BY t.id ORDER BY t.created_at DESC LIMIT 200",
-                        (category,),
-                    )
-                else:
-                    cur.execute(
-                        f"SELECT t.id, t.category, t.title, t.author_name, t.views, t.created_at, "
-                        f"COUNT(p.id) AS replies "
-                        f"FROM {SCHEMA}.forum_topics t "
-                        f"LEFT JOIN {SCHEMA}.forum_posts p ON p.topic_id=t.id "
-                        f"WHERE t.blocked = false "
-                        f"GROUP BY t.id ORDER BY t.created_at DESC LIMIT 200"
-                    )
-                topics = [{
-                    'id': r[0], 'category': r[1], 'title': r[2], 'author': r[3],
-                    'views': r[4], 'createdAt': r[5].isoformat() if r[5] else None, 'replies': int(r[6]),
-                } for r in cur.fetchall()]
-                return _resp(200, {'topics': topics})
-
-            if kind == 'forum_topic':
-                try:
-                    topic_id = int(params.get('topicId') or 0)
-                except (TypeError, ValueError):
-                    topic_id = 0
-                cur.execute(f"UPDATE {SCHEMA}.forum_topics SET views=views+1 WHERE id=%s", (topic_id,))
-                conn.commit()
-                cur.execute(
-                    f"SELECT id, category, title, author_name, created_at FROM {SCHEMA}.forum_topics WHERE id=%s",
-                    (topic_id,),
-                )
-                t = cur.fetchone()
-                if not t:
-                    return _resp(404, {'error': 'not found'})
-                cur.execute(
-                    f"SELECT author_name, text, created_at FROM {SCHEMA}.forum_posts "
-                    f"WHERE topic_id=%s ORDER BY created_at ASC LIMIT 500",
-                    (topic_id,),
-                )
-                posts = [{'author': p[0], 'text': decrypt_field(p[1]), 'createdAt': p[2].isoformat() if p[2] else None} for p in cur.fetchall()]
-                return _resp(200, {'topic': {'id': t[0], 'category': t[1], 'title': t[2], 'author': t[3], 'createdAt': t[4].isoformat() if t[4] else None}, 'posts': posts})
-
             if kind == 'dm':
                 pair = esc(params.get('pair'), 160)
-                # Личную переписку может читать только её участник
+                # Личную переписку может читать только её участник, и только
+                # пока дружба подтверждена: удалили из друзей — доступ закрыт.
                 user = auth_utils.get_auth_user(event)
                 if not user or not auth_utils.is_dm_participant(user, pair):
                     return _resp(403, {'error': 'forbidden'})
+                if not auth_utils.are_friends(user, pair):
+                    return _resp(403, {'error': 'not_friends'})
                 cur.execute(
                     f"SELECT from_id, from_name, text, created_at FROM {SCHEMA}.direct_messages "
                     f"WHERE pair_key=%s ORDER BY created_at ASC LIMIT 500",
@@ -179,75 +118,17 @@ def handler(event: dict, context) -> dict:
                 conn.commit()
                 return _resp(200, {'success': True})
 
-            if action == 'forum_create':
-                # Тему создаёт только авторизованный пользователь, имя — из базы.
-                user = auth_utils.get_auth_user(event)
-                if not user:
-                    return _resp(401, {'error': 'unauthorized'})
-                category = esc(body.get('category'), 40)
-                title = clean_text(esc(body.get('title'), 300))
-                author_id = auth_utils.user_dm_id(user)
-                author_name = esc(user.get('name'), 200)
-                if not title.strip():
-                    return _resp(400, {'error': 'empty title'})
-                cur.execute(
-                    f"INSERT INTO {SCHEMA}.forum_topics (category, title, author_id, author_name) "
-                    f"VALUES (%s, %s, %s, %s) RETURNING id",
-                    (category, title, author_id, author_name),
-                )
-                new_id = cur.fetchone()[0]
-                conn.commit()
-                return _resp(200, {'success': True, 'id': new_id})
-
-            if action == 'forum_reply':
-                try:
-                    topic_id = int(body.get('topicId') or 0)
-                except (TypeError, ValueError):
-                    topic_id = 0
-                # Ответ на форуме — тоже только от авторизованного, имя из базы.
-                user = auth_utils.get_auth_user(event)
-                if not user:
-                    return _resp(401, {'error': 'unauthorized'})
-                author_id = auth_utils.user_dm_id(user)
-                author_name = esc(user.get('name'), 200)
-                text = clean_text(esc(body.get('text'), 2000))
-                if not topic_id or not text.strip():
-                    return _resp(400, {'error': 'empty'})
-                cur.execute(
-                    f"INSERT INTO {SCHEMA}.forum_posts (topic_id, author_id, author_name, text) "
-                    f"VALUES (%s, %s, %s, %s)",
-                    (topic_id, author_id, author_name, encrypt_field(text)),
-                )
-                conn.commit()
-                return _resp(200, {'success': True})
-
-            if action in ('forum_delete', 'forum_block', 'forum_unblock'):
-                token = (event.get('headers') or {}).get('X-Auth-Token') or (event.get('headers') or {}).get('x-auth-token') or ''
-                if not _is_admin(cur, token):
-                    return _resp(403, {'error': 'forbidden'})
-                try:
-                    topic_id = int(body.get('topicId') or 0)
-                except (TypeError, ValueError):
-                    topic_id = 0
-                if not topic_id:
-                    return _resp(400, {'error': 'no topic'})
-                if action == 'forum_delete':
-                    cur.execute(f"DELETE FROM {SCHEMA}.forum_posts WHERE topic_id=%s", (topic_id,))
-                    cur.execute(f"DELETE FROM {SCHEMA}.forum_topics WHERE id=%s", (topic_id,))
-                else:
-                    blocked = action == 'forum_block'
-                    cur.execute(f"UPDATE {SCHEMA}.forum_topics SET blocked=%s WHERE id=%s", (blocked, topic_id))
-                conn.commit()
-                return _resp(200, {'success': True})
-
             if action == 'dm_send':
                 pair = esc(body.get('pair'), 160)
-                # Отправитель определяется по токену; отправлять можно только в свою переписку
+                # Отправитель определяется по токену; писать можно только другу.
                 user = auth_utils.get_auth_user(event)
                 if not user or not auth_utils.is_dm_participant(user, pair):
                     return _resp(403, {'error': 'forbidden'})
+                if not auth_utils.are_friends(user, pair):
+                    return _resp(403, {'error': 'not_friends'})
                 from_id = auth_utils.user_dm_id(user)
-                from_name = esc(body.get('fromName'), 200)
+                # Имя отправителя тоже из сессии, а не из запроса.
+                from_name = esc(user.get('name'), 200)
                 to_id = esc(body.get('toId'), 64)
                 text = clean_text(esc(body.get('text'), 2000))
                 if not pair or not text.strip():

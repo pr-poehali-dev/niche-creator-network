@@ -17,6 +17,8 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
   const { user } = useAuth();
   const [msgs, setMsgs] = useState<{ me: boolean; text: string; time: string }[]>([]);
   const [reportOpen, setReportOpen] = useState(false);
+  // Переписка закрыта: дружба не подтверждена или её разорвали.
+  const [blocked, setBlocked] = useState(false);
   // Автоперевод переписки: собеседники могут писать на разных языках, включая
   // те, которых нет в интерфейсе. Мемоизация обязательна — иначе новый массив
   // на каждый рендер зацикливает хук.
@@ -32,6 +34,10 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
     fetch(`${func2url["messages"]}?kind=dm&pair=${encodeURIComponent(target.pairKey)}`, { headers: authHeaders() })
       .then((r) => r.json())
       .then((d) => {
+        // Дружбу могли разорвать, пока окно было открыто — тогда сервер
+        // закрывает переписку, и человек должен понять почему.
+        if (d.error === "not_friends") { setBlocked(true); return; }
+        setBlocked(false);
         if (Array.isArray(d.messages)) {
           setMsgs(d.messages.map((m: { fromId: string; text: string; createdAt: string | null }) => ({
             me: m.fromId === myDmId,
@@ -47,14 +53,17 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
 
   const send = async () => {
     const text = cleanText(chatInput.trim());
-    if (!text) return;
+    if (!text || blocked) return;
     if (target.pairKey) {
       const toId = target.pairKey.split(":").find((p) => p !== myDmId) || "";
-      await fetch(func2url["messages"], {
+      const res = await fetch(func2url["messages"], {
         method: "POST",
         headers: authHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ action: "dm_send", pair: target.pairKey, fromName: user?.name || "", toId, text }),
-      }).catch(() => {});
+        body: JSON.stringify({ action: "dm_send", pair: target.pairKey, toId, text }),
+      }).catch(() => null);
+      // Дружбу разорвали между открытием окна и отправкой — показываем причину,
+      // а не молча теряем сообщение.
+      if (res && res.status === 403) { setBlocked(true); return; }
       setChatInput("");
       loadDm();
       return;
@@ -114,18 +123,25 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
         </div>
 
         <div className="p-4 border-t border-border">
-          <div className="flex gap-3">
-            <input
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") send(); }}
-              placeholder={tr("writeMessage")}
-              className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
-            />
-            <button aria-label="Отправить" onClick={send} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
-              <Icon name="Send" size={16} />
-            </button>
-          </div>
+          {blocked ? (
+            <div className="flex items-center gap-2.5 text-xs text-muted-foreground bg-secondary/50 border border-border rounded-sm px-3.5 py-3">
+              <Icon name="Lock" size={15} className="text-gold shrink-0" />
+              <span className="leading-relaxed">{tr("dcNotFriends")}</span>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") send(); }}
+                placeholder={tr("writeMessage")}
+                className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+              />
+              <button aria-label={tr("writeMessage")} onClick={send} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
+                <Icon name="Send" size={16} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -242,198 +258,6 @@ export function ChatSection({ chatInput, setChatInput }: { chatInput: string; se
   );
 }
 
-type ForumTopic = { id: number; category: string; title: string; author: string; views: number; replies: number; createdAt: string | null };
-type ForumPost = { author: string; text: string; createdAt: string | null };
-
-export function ForumSection() {
-  const { lang, tr } = useLang();
-  const { user } = useAuth();
-  const [cat, setCat] = useState("");
-  const [topics, setTopics] = useState<ForumTopic[]>([]);
-  const [newOpen, setNewOpen] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newCat, setNewCat] = useState("");
-  const [openTopic, setOpenTopic] = useState<ForumTopic | null>(null);
-  const [posts, setPosts] = useState<ForumPost[]>([]);
-  const [reply, setReply] = useState("");
-  const [reportOpen, setReportOpen] = useState(false);
-  // Форум международный: переводим и заголовки тем, и тексты ответов.
-  const forumTexts = useMemo(
-    () => [...topics.map((tp) => tp.title), ...posts.map((pp) => pp.text)],
-    [topics, posts],
-  );
-  const { resolve: trForum, isTranslated: forumTranslated } = useAutoTranslate(forumTexts);
-
-  const loadTopics = useCallback((c: string) => {
-    fetch(`${func2url["messages"]}?kind=forum${c ? `&category=${c}` : ""}`)
-      .then((r) => r.json())
-      .then((d) => { if (Array.isArray(d.topics)) setTopics(d.topics); })
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => { if (!openTopic) loadTopics(cat); }, [cat, openTopic, loadTopics]);
-
-  const loadTopic = (t: ForumTopic) => {
-    setOpenTopic(t);
-    fetch(`${func2url["messages"]}?kind=forum_topic&topicId=${t.id}`)
-      .then((r) => r.json())
-      .then((d) => { if (Array.isArray(d.posts)) setPosts(d.posts); })
-      .catch(() => {});
-  };
-
-  const createTopic = async () => {
-    const title = cleanText(newTitle.trim());
-    if (!title) return;
-    await fetch(func2url["messages"], {
-      method: "POST", headers: authHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ action: "forum_create", category: newCat, title }),
-    });
-    setNewTitle(""); setNewCat(""); setNewOpen(false);
-    loadTopics(cat);
-  };
-
-  const sendReply = async () => {
-    if (!openTopic) return;
-    const text = cleanText(reply.trim());
-    if (!text) return;
-    setReply("");
-    await fetch(func2url["messages"], {
-      method: "POST", headers: authHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ action: "forum_reply", topicId: openTopic.id, text }),
-    });
-    fetch(`${func2url["messages"]}?kind=forum_topic&topicId=${openTopic.id}`)
-      .then((r) => r.json())
-      .then((d) => { if (Array.isArray(d.posts)) setPosts(d.posts); });
-  };
-
-  const catTitle = (id: string) => { const c = serviceCategories.find((x) => x.id === id); return c ? L(c.title, lang) : id || "—"; };
-  const fmtDate = (iso: string | null) => iso ? new Date(iso).toLocaleDateString(lang, { day: "numeric", month: "short", year: "numeric" }) : "";
-
-  const moderate = async (topicId: number, action: "forum_delete" | "forum_block") => {
-    if (action === "forum_delete" && !window.confirm(tr("forumDeleteConfirm"))) return;
-    await fetch(func2url["messages"], {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Auth-Token": localStorage.getItem("shchit_auth_token") || "" },
-      body: JSON.stringify({ action, topicId }),
-    });
-    loadTopics(cat);
-  };
-
-  if (openTopic) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-10">
-        <div className="flex items-center justify-between mb-4">
-          <button onClick={() => { setOpenTopic(null); setPosts([]); }} className="text-xs text-muted-foreground hover:text-gold transition-colors font-montserrat flex items-center gap-1">
-            <Icon name="ArrowLeft" size={13} />{tr("forumBackToList")}
-          </button>
-          <button onClick={() => setReportOpen(true)} className="text-xs text-muted-foreground hover:text-destructive transition-colors font-montserrat flex items-center gap-1">
-            <Icon name="Flag" size={13} />{tr("reportBtn")}
-          </button>
-        </div>
-        {reportOpen && <ReportModal targetType="forum_topic" targetId={String(openTopic.id)} onClose={() => setReportOpen(false)} />}
-        <div className="mb-2"><span className="chip">{catTitle(openTopic.category)}</span></div>
-        <h2 className="font-montserrat font-bold text-2xl text-foreground mb-1">{openTopic.title}</h2>
-        <div className="text-xs text-muted-foreground mb-6">{openTopic.author} · {fmtDate(openTopic.createdAt)}</div>
-
-        <div className="space-y-3 mb-6">
-          {posts.length === 0 && <div className="text-sm text-muted-foreground border border-dashed border-border rounded-sm py-8 text-center">{tr("forumNoPosts")}</div>}
-          {posts.map((p, i) => (
-            <div key={i} className="border border-border rounded-sm bg-card p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-7 h-7 gold-gradient rounded-sm flex items-center justify-center text-xs font-montserrat font-bold text-[hsl(28,20%,7%)]">{(p.author || "?")[0]}</div>
-                <span className="text-xs font-montserrat font-semibold text-foreground">{p.author}</span>
-                <span className="text-[10px] text-muted-foreground ms-auto">{fmtDate(p.createdAt)}</span>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trForum(p.text)}</p>
-              {forumTranslated(p.text) && (
-                <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-muted-foreground/70">
-                  <Icon name="Languages" size={10} />
-                  {tr("autoTranslated")}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="border border-border rounded-sm bg-card p-4">
-          <textarea value={reply} onChange={(e) => setReply(e.target.value)} rows={3} placeholder={tr("forumReplyPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold resize-none mb-2" />
-          <button onClick={sendReply} disabled={!reply.trim()} className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{tr("forumReplyBtn")}</button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
-        <div>
-          <div className="tag-security mb-3 inline-block">{tr("discussions")}</div>
-          <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("proForum")}</h2>
-        </div>
-        <button onClick={() => setNewOpen((o) => !o)} className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm self-start flex items-center gap-1.5">
-          <Icon name={newOpen ? "X" : "Plus"} size={14} />{newOpen ? tr("cancel") : tr("createTopic")}
-        </button>
-      </div>
-
-      {newOpen && (
-        <div className="border border-gold/30 rounded-sm bg-secondary/40 p-4 mb-6 space-y-3">
-          <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("pdCaseCat")}</label>
-            <select value={newCat} onChange={(e) => setNewCat(e.target.value)} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold">
-              <option value="">{tr("forumAllCats")}</option>
-              {serviceCategories.map((c) => <option key={c.id} value={c.id}>{L(c.title, lang)}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("forumNewTopicTitle")}</label>
-            <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder={tr("forumNewTopicPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
-          </div>
-          <button onClick={createTopic} disabled={!newTitle.trim()} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{tr("forumCreateBtn")}</button>
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2 mb-6">
-        <button onClick={() => setCat("")} className={`px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border transition-colors ${cat === "" ? "gold-gradient text-[hsl(28,20%,7%)] border-transparent" : "border-border text-muted-foreground hover:text-gold"}`}>{tr("forumAllCats")}</button>
-        {serviceCategories.map((c) => (
-          <button key={c.id} onClick={() => setCat(c.id === cat ? "" : c.id)} className={`px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border transition-colors ${cat === c.id ? "gold-gradient text-[hsl(28,20%,7%)] border-transparent" : "border-border text-muted-foreground hover:text-gold"}`}>{L(c.title, lang)}</button>
-        ))}
-      </div>
-
-      <div className="space-y-3">
-        {topics.length === 0 && <div className="text-sm text-muted-foreground border border-dashed border-border rounded-sm py-12 text-center">{tr("forumEmpty")}</div>}
-        {topics.map((tp) => (
-          <div key={tp.id} className="border border-border rounded-sm bg-card p-4 card-lift">
-            <div className="md:grid grid-cols-12 gap-4 items-center">
-              <div className="col-span-8 cursor-pointer" onClick={() => loadTopic(tp)}>
-                <div className="flex items-center gap-2 mb-1"><span className="chip">{catTitle(tp.category)}</span></div>
-                <div className="font-montserrat font-semibold text-sm text-foreground mt-2">{trForum(tp.title)}</div>
-                <div className="text-[10px] text-muted-foreground mt-1">{tp.author} · {fmtDate(tp.createdAt)}</div>
-              </div>
-              <div className="col-span-2 text-center mt-3 md:mt-0 cursor-pointer" onClick={() => loadTopic(tp)}>
-                <div className="text-xs font-montserrat font-bold text-foreground">{tp.replies}</div>
-                <div className="text-[10px] text-muted-foreground">{tr("repliesLower")}</div>
-              </div>
-              <div className="col-span-2 text-center cursor-pointer" onClick={() => loadTopic(tp)}>
-                <div className="text-xs font-montserrat font-bold text-foreground">{tp.views}</div>
-                <div className="text-[10px] text-muted-foreground">{tr("viewsLower")}</div>
-              </div>
-            </div>
-            {user?.isAdmin && (
-              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
-                <button onClick={() => moderate(tp.id, "forum_block")} className="flex items-center gap-1.5 text-[11px] font-montserrat font-semibold text-muted-foreground hover:text-amber-400 transition-colors">
-                  <Icon name="Ban" size={12} />{tr("forumBlock")}
-                </button>
-                <button onClick={() => moderate(tp.id, "forum_delete")} className="flex items-center gap-1.5 text-[11px] font-montserrat font-semibold text-muted-foreground hover:text-destructive transition-colors">
-                  <Icon name="Trash2" size={12} />{tr("forumDelete")}
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export function ContactsSection() {
   const { tr } = useLang();

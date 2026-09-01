@@ -77,34 +77,58 @@ def handler(event: dict, context) -> dict:
             action = esc(params.get('action'), 20) or 'list'
 
             if action == 'search':
-                # Поиск участника по его уникальному публичному ID (users.public_id).
-                public_id_raw = esc(params.get('publicId'), 20)
-                try:
-                    public_id = int(public_id_raw)
-                except (TypeError, ValueError):
-                    return _resp(400, {'error': 'publicId must be a number'})
-                cur.execute(
-                    f"SELECT id, role, name FROM {SCHEMA}.users WHERE public_id=%s",
-                    (public_id,),
-                )
-                row = cur.fetchone()
-                if not row:
-                    return _resp(404, {'error': 'not found'})
-                found_id, role, name = row
-                if found_id == my_id:
-                    return _resp(400, {'error': 'cannot add yourself'})
-                provider = _provider_info(cur, found_id) if role == 'provider' else None
-                a, b = _pair(my_id, found_id)
-                cur.execute(
-                    f"SELECT status, requested_by FROM {SCHEMA}.friendships WHERE user_id_a=%s AND user_id_b=%s",
-                    (a, b),
-                )
-                fr = cur.fetchone()
-                friend_status = fr[0] if fr else 'none'
-                return _resp(200, {
-                    'userId': found_id, 'publicId': public_id, 'role': role, 'name': name,
-                    'provider': provider, 'friendStatus': friend_status,
-                })
+                # Поиск коллег: по числовому ID, имени или специализации.
+                # Ищем ТОЛЬКО среди исполнителей — это профессиональное
+                # сообщество, клиентов в нём быть не должно.
+                q = esc(params.get('q'), 80) or esc(params.get('publicId'), 80)
+                if len(q) < 2:
+                    return _resp(200, {'results': []})
+                rows = []
+                if q.isdigit():
+                    cur.execute(
+                        f"SELECT id, role, name, public_id FROM {SCHEMA}.users "
+                        f"WHERE public_id=%s AND role='provider' LIMIT 1",
+                        (int(q),),
+                    )
+                    rows = cur.fetchall()
+                if not rows:
+                    like = f'%{q.lower()}%'
+                    # Совпадение по имени специалиста, должности или тегам анкеты.
+                    cur.execute(
+                        f"SELECT u.id, u.role, u.name, u.public_id "
+                        f"FROM {SCHEMA}.users u "
+                        f"JOIN {SCHEMA}.providers p ON p.slug = 'provider-' || u.id "
+                        f"WHERE u.role='provider' AND u.id <> %s AND p.is_demo = false AND p.active = true "
+                        f"AND (lower(u.name) LIKE %s OR lower(p.name_ru) LIKE %s OR lower(p.name_en) LIKE %s "
+                        f"OR lower(p.title_ru) LIKE %s OR lower(p.title_en) LIKE %s "
+                        f"OR lower(p.tags_ru) LIKE %s OR lower(p.tags_en) LIKE %s) "
+                        f"ORDER BY p.rating DESC NULLS LAST LIMIT 20",
+                        (my_id, like, like, like, like, like, like, like),
+                    )
+                    rows = cur.fetchall()
+
+                results = []
+                for r in rows:
+                    found_id, role, name, pub = r[0], r[1], r[2], r[3]
+                    if found_id == my_id:
+                        continue
+                    a, b = _pair(my_id, found_id)
+                    cur.execute(
+                        f"SELECT status, requested_by FROM {SCHEMA}.friendships "
+                        f"WHERE user_id_a=%s AND user_id_b=%s",
+                        (a, b),
+                    )
+                    fr = cur.fetchone()
+                    status = fr[0] if fr else 'none'
+                    # Кто отправил заявку — нужно, чтобы показать «принять»
+                    # вместо «ожидает» тому, кому она пришла.
+                    incoming = bool(fr and fr[0] == 'pending' and fr[1] != my_id)
+                    results.append({
+                        'userId': found_id, 'publicId': pub, 'role': role, 'name': name,
+                        'provider': _provider_info(cur, found_id),
+                        'friendStatus': status, 'incoming': incoming,
+                    })
+                return _resp(200, {'results': results})
 
             if action == 'requests':
                 # Входящие заявки в друзья (кто-то отправил мне, ожидают моего решения).
