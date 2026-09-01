@@ -133,7 +133,10 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
       setStatus("form");
       // Понятные подсказки вместо технических кодов ошибок.
       if (res.status === 401) setPayErr(tr("payNeedLogin"));
-      else if (res.status === 403) setPayErr(tr("payProvidersOnly"));
+      // Роль не подходит под тариф. Сообщение зависит от того, кто и что
+      // покупает: специалисту незачем платить за поиск самого себя, а
+      // работодателю — за продвижение анкеты, которой у него нет.
+      else if (res.status === 403) setPayErr(tr(d.error === "clients_only" ? "payClientsOnly" : "payProvidersOnly"));
       else if (res.status === 429) setPayErr(tr("payTooMany"));
       else setPayErr(tr(d.configured ? "payError" : "payNotConfigured"));
     } catch {
@@ -669,11 +672,67 @@ export function PricingSection({ setActive }: { setActive: (s: Section) => void 
         </button>
       </div>
 
+      {/* Предложение для работодателей. Отдельным блоком, а не карточкой в
+          общей сетке: это другой покупатель с другой задачей — не продвигать
+          себя, а нанимать. Смешивать их в одном ряду значит запутать обоих. */}
+      <div className="mt-12 border-2 border-blue-500/50 rounded-sm bg-gradient-to-b from-blue-500/[0.07] to-card p-7 security-glow">
+        <div className="flex flex-col lg:flex-row gap-7">
+          <div className="flex-1 min-w-0">
+            <div className="inline-flex items-center gap-2 bg-blue-500 text-white text-[10px] font-montserrat font-extrabold tracking-widest uppercase px-3 py-1 rounded-sm mb-4">
+              <Icon name="Building2" size={11} />{tr("hrBlockTag")}
+            </div>
+            <h2 className="font-montserrat font-extrabold text-2xl text-foreground mb-2.5">{tr("hrBlockTitle")}</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-5 max-w-xl">{tr("hrBlockDesc")}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {([
+                { icon: "Users", k: "hrFeatBase" as const },
+                { icon: "Filter", k: "hrFeatFilters" as const },
+                { icon: "Contact", k: "hrFeatContacts" as const },
+                { icon: "Infinity", k: "hrFeatUnlimited" as const },
+                { icon: "BadgeCheck", k: "hrFeatVerified" as const },
+                { icon: "ShieldCheck", k: "hrFeatConsent" as const },
+              ]).map((f) => (
+                <div key={f.k} className="flex items-start gap-2.5">
+                  <Icon name={f.icon} size={15} className="text-blue-400 shrink-0 mt-0.5" />
+                  <span className="text-xs text-foreground leading-snug">{tr(f.k)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="lg:w-[290px] shrink-0 border border-blue-500/40 rounded-sm bg-card p-6 flex flex-col">
+            <div className="text-xs font-montserrat font-semibold text-muted-foreground uppercase tracking-widest mb-2">{tr("hrPlanLabel")}</div>
+            <div className="font-montserrat font-extrabold text-3xl text-foreground mb-1">{tr("planHrPrice")}</div>
+            <div className="text-xs text-muted-foreground mb-5">{tr("hrPerMonth")}</div>
+            <div className="divider-gold mb-5" />
+            <p className="text-[11px] text-muted-foreground leading-relaxed mb-5 flex-1">{tr("hrPlanNote")}</p>
+            <button
+              onClick={() => { trackGoal(GOALS.startPayment); setPayPlan({ name: "planHrName", price: "planHrPrice" }); }}
+              className="w-full py-3 text-xs font-montserrat font-bold rounded-sm bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+            >
+              <Icon name="Search" size={14} />{tr("hrPlanCta")}
+            </button>
+            <div className="mt-2.5 flex items-center justify-center gap-1 text-[10px] text-muted-foreground text-center leading-tight">
+              <Icon name="ShieldCheck" size={11} className="text-green-400 shrink-0" />
+              <span>{tr("planCancelAnytime")}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <PricingCalculator plans={plans} promoActive={promoActive} />
 
       {payPlan && (
         <ErrorBoundary fallback={null} onReset={() => setPayPlan(null)}>
-          <PaymentModal plan={payPlan} onClose={() => setPayPlan(null)} defaultEmail={user?.email || ""} slug={user ? `provider-${user.id}` : ""} />
+          {/* Доступ к базе резюме покупает работодатель, а не специалист,
+              поэтому и адресат подписки другой: hr-{id}, а не provider-{id}.
+              С чужим slug оплата ушла бы «в никуда». */}
+          <PaymentModal
+            plan={payPlan}
+            onClose={() => setPayPlan(null)}
+            defaultEmail={user?.email || ""}
+            slug={user ? `${payPlan.name === "planHrName" ? "hr" : "provider"}-${user.id}` : ""}
+          />
         </ErrorBoundary>
       )}
 

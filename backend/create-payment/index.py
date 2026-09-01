@@ -153,7 +153,10 @@ def _create_yookassa(amount_rub, plan, email, return_url, slug, period):
         return {'paymentId': res.get('id'), 'confirmationUrl': confirm, 'provider': 'yookassa'}, None
     except urllib.error.HTTPError as e:
         try:
-            print(f'YooKassa HTTP {e.code}: {e.read().decode("utf-8")}')
+            # Тело ответа платёжной системы в журнал не пишем: там могут быть
+            # данные плательщика и служебные идентификаторы. Кода ошибки
+            # достаточно, чтобы понять причину отказа.
+            print(f'YooKassa HTTP error {e.code}')
         except (ValueError, AttributeError, TypeError):
             pass
         return None, f'yookassa_error_{e.code}'

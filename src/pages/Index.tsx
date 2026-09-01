@@ -31,9 +31,15 @@ const SecurityPolicySection = lazy(() => import("@/components/InfoSections").the
 const ContactsSection = lazy(() => import("@/components/CommunicationSections").then((m) => ({ default: m.ContactsSection })));
 import { TrustBadges, MinimalHome, FaqAccordion } from "@/components/LandingSections";
 import AuthModal from "@/components/AuthModal";
-import { InstallPromptBanner, HowItWorksSection } from "@/components/InfoSections";
-import { ReviewsList, ReportModal } from "@/components/ReviewsAndReports";
-import { DirectChatSection, ChatSection } from "@/components/CommunicationSections";
+import { InstallPromptBanner } from "@/components/InfoSections";
+// Чат, отзывы и «как это работает» не нужны на первом экране: раньше они
+// грузились вместе с главной и утяжеляли её почти на треть. Теперь
+// подгружаются в момент открытия — сайт быстрее стартует на телефоне.
+const HowItWorksSection = lazy(() => import("@/components/InfoSections").then((m) => ({ default: m.HowItWorksSection })));
+const ReviewsList = lazy(() => import("@/components/ReviewsAndReports").then((m) => ({ default: m.ReviewsList })));
+const ReportModal = lazy(() => import("@/components/ReviewsAndReports").then((m) => ({ default: m.ReportModal })));
+const DirectChatSection = lazy(() => import("@/components/CommunicationSections").then((m) => ({ default: m.DirectChatSection })));
+const ChatSection = lazy(() => import("@/components/CommunicationSections").then((m) => ({ default: m.ChatSection })));
 import func2url from "../../backend/func2url.json";
 
 import {
@@ -494,6 +500,9 @@ const PUBLIC_URL_SECTIONS: Section[] = [
   // и для ссылок из соцсетей. Без них человек по ссылке попадал на главную
   // и должен был искать раздел заново.
   "specialists", "services", "howitworks", "courses", "guards", "cases",
+  // База резюме: ссылку на неё отправляют работодателям напрямую, поэтому
+  // она должна открываться по прямому адресу, а не терять человека на главной.
+  "resumes",
 ];
 
 function getInitialSection(): Section {
@@ -526,11 +535,14 @@ function CookieBanner({ go }: { go: (s: Section) => void }) {
   return (
     /* Баннер прижат к углу и компактен: согласие на cookie — формальность,
        он не должен закрывать первый экран и мешать читать предложение. */
-    <div className="fixed inset-x-0 bottom-0 z-[90] p-3 sm:p-4 pointer-events-none">
-      <div role="region" aria-label={tr("cookieTitle")} className="max-w-md ms-auto me-0 bg-card/95 backdrop-blur-md border border-border rounded-sm shadow-2xl p-3.5 sm:p-4 flex flex-col gap-2.5 pointer-events-auto">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <Icon name="Cookie" size={20} className="text-gold shrink-0 mt-0.5" />
-          <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-3 sm:line-clamp-none">
+    <div className="fixed inset-x-0 bottom-0 z-[90] p-2 sm:p-4 pointer-events-none">
+      <div role="region" aria-label={tr("cookieTitle")} className="max-w-md ms-auto me-0 bg-card/95 backdrop-blur-md border border-border rounded-sm shadow-2xl p-3 sm:p-4 flex flex-col gap-2 pointer-events-auto">
+        <div className="flex items-start gap-2.5 flex-1 min-w-0">
+          <Icon name="Cookie" size={18} className="text-gold shrink-0 mt-0.5" />
+          {/* На телефоне текст сжат до двух строк: раньше баннер занимал
+              треть экрана и наглухо закрывал главную кнопку на первом
+              экране — человек не мог начать, не разобравшись с cookie. */}
+          <p className="text-[11px] sm:text-xs text-muted-foreground leading-snug sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
             {tr("cookieText")}{" "}
             <button onClick={() => go("privacy")} className="text-gold hover:underline font-semibold whitespace-nowrap">{tr("cookieMore")}</button>
           </p>
@@ -798,6 +810,9 @@ export default function Index() {
       if (active === "specialists") return <SpecialistsListSection setActive={go} openSpecialist={openSpecialist} />;
       if (active === "services") return <ClientServices setActive={go} openSpecialist={openSpecialist} />;
       if (active === "howitworks") return <HowItWorksSection setActive={go} />;
+      // База резюме показывает гостю приглашение войти, а не пустую главную:
+      // по ссылке «ищу сотрудника» должен открываться понятный экран.
+      if (active === "resumes") return <ResumeSearch />;
       if (active === "profile" && selectedProvider) return <SpecialistProfileSection provider={selectedProvider} onBack={goBack} openChat={openChat} />;
       return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} />;
     }
@@ -1024,6 +1039,9 @@ export default function Index() {
               {([
                 ["heroClientCta1", "services"],
                 ["specialists", "specialists"],
+                // Работодатели ищут не услугу, а сотрудника в штат —
+                // без ссылки в подвале они бы не узнали о базе резюме.
+                ["navResumes", "resumes"],
                 ["navCases", "cases"],
                 ["fHowToOrder", "policy"],
                 ["fSafetyDeal", "policy"],

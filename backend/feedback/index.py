@@ -120,4 +120,7 @@ def handler(event: dict, context) -> dict:
         print(f"[feedback] SMTP ERROR: {type(e).__name__}: {e}")
         return _resp(500, {'error': 'Send failed', 'code': 'smtp_send'})
 
-    return _resp(200, {'success': True, 'sent_to': to_addr, 'test': is_test})
+    # Адрес получателя наружу не отдаём: раньше любой мог отправить пустую
+    # форму и узнать рабочую почту владельца площадки — готовая мишень для
+    # спама и подбора пароля.
+    return _resp(200, {'success': True, 'test': is_test})

@@ -34,6 +34,22 @@ MAX_DISCOUNT = 0.30
 ROUNDING_TOLERANCE = 0.02
 
 
+# Сколько единиц валюты стоит 1 рубль. Курсы намеренно занижены (валюта
+# «дешевле» рубля, чем на деле): порог проверки становится мягче, и настоящий
+# платёж не отклонится из-за колебаний курса, а копеечный — всё равно не пройдёт.
+RUB_RATES = {
+    'RUB': 1.0, 'USD': 0.009, 'EUR': 0.008, 'GBP': 0.007,
+    'AED': 0.033, 'BYN': 0.028, 'KZT': 4.5, 'UAH': 0.36,
+    'TRY': 0.30, 'CNY': 0.065, 'INR': 0.75,
+}
+
+
+def _to_rub_rate(currency: str) -> float:
+    '''Множитель для перевода рублёвой цены в валюту платежа.
+    Неизвестная валюта — считаем по доллару: это самый строгий порог.'''
+    return RUB_RATES.get((currency or 'RUB').upper(), 0.009)
+
+
 def _expected_min_rub(plan: str, period: str) -> float:
     '''
     Минимально допустимая сумма для тарифа с учётом периода и максимальной
@@ -87,7 +103,10 @@ def _send_receipt(email, plan, period, amount, currency, payment_id):
         )
         urllib.request.urlopen(req, timeout=15).read()
     except (urllib.error.URLError, urllib.error.HTTPError, ValueError, TimeoutError) as e:
-        print(f'receipt send failed for {email}: {e}')
+        # Почту в журнал не пишем — это персональные данные, а логи хранятся
+        # дольше и доступны шире, чем сама база. Для диагностики хватает
+        # номера платежа.
+        print(f'receipt send failed for payment {payment_id}: {type(e).__name__}')
 
 
 def _resp(status, body):
@@ -256,16 +275,30 @@ def handler(event, context):
             cd = data.get('custom_data') or {}
             p_plan = (cd.get('plan') or '').lower()
             p_period = cd.get('period', 'month')
+            if p_plan not in VALID_PLANS:
+                return _resp(400, {'error': 'invalid_plan'})
+            if p_period not in ('month', 'year'):
+                p_period = 'month'
+
+            details = data.get('details') or {}
+            totals = (details.get('totals') or {})
+            p_amount = totals.get('grand_total') or totals.get('total') or 0
+            try:
+                p_amount = float(p_amount) / 100  # Paddle отдаёт сумму в минорных единицах
+            except (TypeError, ValueError):
+                p_amount = 0
+            p_currency = data.get('currency_code', 'USD')
+
+            # ПРОВЕРКА СУММЫ. Раньше подписка Paddle включалась до сверки
+            # оплаченного с ценой тарифа — в отличие от ЮКассы. Уведомление с
+            # копеечной суммой открывало полный доступ. Теперь сумма приводится
+            # к рублям и сверяется с минимально допустимой ценой тарифа.
+            if p_amount < _expected_min_rub(p_plan, p_period) * _to_rub_rate(p_currency):
+                print(f'[payment-webhook] paddle amount_mismatch plan={p_plan} period={p_period}')
+                return _resp(400, {'error': 'amount_mismatch'})
+
             ok = _activate(cd.get('slug', ''), p_plan, p_period)
-            if ok and p_plan in VALID_PLANS:
-                details = data.get('details') or {}
-                totals = (details.get('totals') or {})
-                p_amount = totals.get('grand_total') or totals.get('total') or 0
-                try:
-                    p_amount = float(p_amount) / 100  # Paddle отдаёт сумму в минорных единицах
-                except (TypeError, ValueError):
-                    p_amount = 0
-                p_currency = data.get('currency_code', 'USD')
+            if ok:
                 _send_receipt(cd.get('email', ''), p_plan, p_period, p_amount, p_currency, payment_id)
                 _record_payment(cd.get('slug', ''), p_plan, p_period, p_amount, p_currency, 'paddle', payment_id, cd.get('email', ''))
             return _resp(200, {'ok': ok, 'provider': 'paddle'})

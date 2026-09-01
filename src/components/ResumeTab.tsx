@@ -215,7 +215,7 @@ export default function ResumeTab() {
             <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSkill(); } }}
               placeholder={tr("resSkillsPh")} className={field} />
-            <button onClick={addSkill} className="shrink-0 border border-gold text-gold px-4 rounded-sm hover:bg-gold hover:text-[hsl(28,20%,7%)] transition-all">
+            <button onClick={addSkill} aria-label={tr("resSkills")} className="shrink-0 border border-gold text-gold px-4 rounded-sm hover:bg-gold hover:text-[hsl(28,20%,7%)] transition-all">
               <Icon name="Plus" size={16} />
             </button>
           </div>

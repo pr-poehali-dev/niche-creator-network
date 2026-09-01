@@ -47,6 +47,7 @@ export default function ResumeSearch() {
   const [open, setOpen] = useState<Full | null>(null);
   const [payOpen, setPayOpen] = useState(false);
   const [company, setCompany] = useState("");
+  const [needAuth, setNeedAuth] = useState(false);
 
   const search = useCallback(() => {
     setLoading(true);
@@ -56,9 +57,14 @@ export default function ResumeSearch() {
     if (remote) p.set("remote", "1");
     if (relocation) p.set("relocation", "1");
     fetch(`${func2url["resumes"]}?${p}`, { headers: authHeaders() })
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        // Гость видит не пустой экран, а понятное приглашение войти:
+        // иначе база выглядит так, будто в ней просто нет кандидатов.
+        if (r.status === 401) { setNeedAuth(true); return null; }
+        return r.ok ? r.json() : null;
+      })
       .then((d) => {
-        if (d) { setItems(d.items || []); setPaid(!!d.paid); }
+        if (d) { setNeedAuth(false); setItems(d.items || []); setPaid(!!d.paid); }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -102,8 +108,23 @@ export default function ResumeSearch() {
         <p className="text-muted-foreground text-sm max-w-2xl mx-auto">{tr("resSearchDesc")}</p>
       </div>
 
+      {/* Гость: не пустая выдача, а приглашение войти. */}
+      {needAuth && (
+        <div className="border border-gold/40 rounded-sm glass-card p-8 text-center security-glow max-w-2xl mx-auto">
+          <div className="w-14 h-14 gold-gradient rounded-sm flex items-center justify-center mx-auto mb-4">
+            <Icon name="UserRoundCheck" size={26} className="text-[hsl(28,20%,7%)]" />
+          </div>
+          <div className="font-montserrat font-bold text-lg text-foreground mb-2">{tr("resNeedAuthTitle")}</div>
+          <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto leading-relaxed">{tr("resNeedAuthDesc")}</p>
+          <button onClick={() => window.dispatchEvent(new CustomEvent("shchit:require-auth"))}
+            className="gold-gradient text-[hsl(28,20%,7%)] px-7 py-3 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+            {tr("authCabinet")}
+          </button>
+        </div>
+      )}
+
       {/* Пока доступ не оплачен — объясняем, что именно даёт оплата. */}
-      {!paid && (
+      {!needAuth && !paid && (
         <div className="border border-gold/40 rounded-sm glass-card p-6 mb-8 security-glow flex flex-col md:flex-row items-start md:items-center gap-5">
           <div className="w-12 h-12 gold-gradient rounded-sm flex items-center justify-center shrink-0">
             <Icon name="Lock" size={22} className="text-[hsl(28,20%,7%)]" />
@@ -128,6 +149,9 @@ export default function ResumeSearch() {
         </div>
       )}
 
+      {/* Фильтры и выдача — только для вошедших: гостю показывать пустой
+          поиск бессмысленно, он всё равно ничего не получит. */}
+      {!needAuth && (<>
       <div className="border border-border rounded-sm bg-card p-5 mb-6 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr("resSearchPh")} className={field} />
@@ -209,6 +233,7 @@ export default function ResumeSearch() {
           </div>
         </>
       )}
+      </>)}
 
       {open && (
         <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setOpen(null)}>
