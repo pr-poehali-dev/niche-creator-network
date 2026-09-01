@@ -102,7 +102,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
   const doResetConfirm = async () => {
     setError("");
     setBusy(true);
-    const res = await resetConfirm(email.trim(), resetCode, newPass);
+    const res = await resetConfirm(email.trim(), resetCode, newPass, lang);
     setBusy(false);
     if (res.ok) { setReset("done"); setResetCode(""); setNewPass(""); }
     else setError(errText(res.error || "error"));

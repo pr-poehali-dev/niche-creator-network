@@ -59,6 +59,79 @@ def _hash_reset(token: str) -> str:
     return hashlib.sha256(('reset:' + token).encode()).hexdigest()
 
 
+def _send_password_changed_email(to_email: str, ip_masked: str, when: datetime, lang: str = 'ru') -> bool:
+    '''
+    Письмо о состоявшейся смене пароля. Это последний рубеж защиты: если сброс
+    запросил не владелец, только такое письмо даст ему шанс среагировать
+    сразу, а не когда аккаунт уже используют чужие руки.
+    '''
+    host = os.environ.get('SMTP_HOST')
+    port = int(os.environ.get('SMTP_PORT', '465'))
+    user = os.environ.get('SMTP_USER')
+    password = os.environ.get('SMTP_PASSWORD')
+    if not all([host, user, password]):
+        return False
+
+    when_str = when.strftime('%d.%m.%Y %H:%M') + ' UTC'
+    # Отдельного адреса поддержки в секретах нет — обратный контакт даём
+    # по почте-роботу: на неё письмо гарантированно дойдёт.
+    support = os.environ.get('SUPPORT_EMAIL', '') or (user or '')
+    if lang == 'en':
+        subject = 'SHCHIT — your password was changed'
+        title = 'Password changed'
+        intro = 'The password for your account has just been changed. All sessions on other devices were ended.'
+        l_when, l_ip = 'Time', 'Network'
+        note = ('If this was you, no action is needed. If you did NOT change your password, '
+                'your account may be compromised — request a new reset immediately and contact support.')
+    else:
+        subject = 'ЩИТ — пароль от аккаунта изменён'
+        title = 'Пароль изменён'
+        intro = 'Пароль от вашего аккаунта только что изменён. Все сеансы на других устройствах завершены.'
+        l_when, l_ip = 'Время', 'Сеть'
+        note = ('Если это были вы — ничего делать не нужно. Если пароль меняли НЕ вы, '
+                'аккаунтом мог завладеть посторонний: сразу запросите восстановление ещё раз и напишите в поддержку.')
+
+    rows = ''.join(
+        f'<tr><td style="padding:6px 0;color:#9aa0ab;font-size:12px;">{k}</td>'
+        f'<td style="padding:6px 0;font-size:13px;font-weight:600;text-align:right;">{v}</td></tr>'
+        for k, v in ((l_when, when_str), (l_ip, ip_masked or '—'))
+    )
+    contact_label = 'Support: ' if lang == 'en' else 'Поддержка: '
+    support_row = (f'<div style="margin-top:14px;font-size:12px;color:#9aa0ab;">{contact_label}{support}</div>'
+                   if support else '')
+    html = f'''<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#f4f5f7;font-family:Arial,sans-serif;color:#1a1d24;">
+<div style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #e4e6eb;border-radius:10px;overflow:hidden;">
+  <div style="padding:24px 30px;background:#1a1d24;color:#fff;">
+    <div style="font-weight:800;font-size:20px;letter-spacing:0.2em;">Щ<span style="color:#d4af37;">ИТ</span></div>
+  </div>
+  <div style="padding:28px 30px;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:10px;">{title}</div>
+    <div style="font-size:13px;color:#5b616e;line-height:1.6;margin-bottom:18px;">{intro}</div>
+    <table style="width:100%;border-collapse:collapse;border-top:1px solid #e4e6eb;border-bottom:1px solid #e4e6eb;">{rows}</table>
+    <div style="margin-top:18px;font-size:12px;color:#9aa0ab;line-height:1.6;">{note}</div>
+    {support_row}
+  </div>
+</div></body></html>'''
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = user
+    msg['To'] = to_email
+    msg.attach(MIMEText(html, 'html', 'utf-8'))
+    try:
+        if port == 465:
+            server = smtplib.SMTP_SSL(host, port, timeout=4)
+        else:
+            server = smtplib.SMTP(host, port, timeout=4)
+            server.starttls()
+        server.login(user, password)
+        server.sendmail(user, [to_email], msg.as_string())
+        server.quit()
+        return True
+    except (smtplib.SMTPException, OSError) as e:
+        print(f'[auth] password-changed email failed: {e}')
+        return False
+
+
 def _send_reset_email(to_email: str, code: str, lang: str = 'ru') -> bool:
     '''Письмо с кодом восстановления пароля.'''
     host = os.environ.get('SMTP_HOST')
@@ -744,6 +817,13 @@ def handler(event: dict, context) -> dict:
                 f"UPDATE {SCHEMA}.sessions SET revoked = true, expires_at = now() WHERE user_id = %s",
                 (urow[0],),
             )
+            # Владелец должен узнать о смене пароля, даже если менял её не он.
+            # Ошибка почты не должна отменять уже применённый новый пароль.
+            try:
+                lang = body.get('lang') if body.get('lang') in ('ru', 'en') else 'ru'
+                _send_password_changed_email(email, ip_masked, datetime.utcnow(), lang)
+            except Exception as e:  # noqa: BLE001
+                print(f'[auth] password-changed notify failed: {e}')
             return _resp(200, {'ok': True}, event)
 
         if action == 'logout':

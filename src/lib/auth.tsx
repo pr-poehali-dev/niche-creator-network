@@ -19,7 +19,7 @@ type AuthContextValue = {
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
   resetRequest: (email: string, lang?: string) => Promise<AuthResult>;
-  resetConfirm: (email: string, code: string, password: string) => Promise<AuthResult>;
+  resetConfirm: (email: string, code: string, password: string, lang?: string) => Promise<AuthResult>;
 };
 
 const TOKEN_KEY = "shchit_auth_token";
@@ -129,8 +129,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ok: false, error: data.error || "error" };
   }, []);
 
-  const resetConfirm = useCallback(async (email: string, code: string, password: string): Promise<AuthResult> => {
-    const { res, data } = await callAuth({ action: "reset_confirm", email, code, password });
+  const resetConfirm = useCallback(async (email: string, code: string, password: string, lang?: string): Promise<AuthResult> => {
+    const { res, data } = await callAuth({ action: "reset_confirm", email, code, password, lang });
     if (res.ok) return { ok: true };
     return { ok: false, error: data.error || "error" };
   }, []);
