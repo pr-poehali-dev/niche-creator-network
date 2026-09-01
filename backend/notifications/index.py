@@ -122,9 +122,22 @@ def handler(event: dict, context) -> dict:
                 (user_id,),
             )
             unread = cur.fetchone()[0]
+            # Непрочитанные личные сообщения считаем здесь же: отдельный опрос
+            # из шапки удвоил бы число вызовов функций на каждого посетителя.
+            cur.execute(
+                f"SELECT COUNT(*) FROM {SCHEMA}.direct_messages "
+                f"WHERE to_id = %s AND read_at IS NULL",
+                (f'u{user_id}',),
+            )
+            unread_messages = int((cur.fetchone() or [0])[0])
             email_enabled = _email_enabled(cur, user_id)
             conn.commit()
-            return _resp(200, {'notifications': items, 'unread': unread, 'emailEnabled': email_enabled})
+            return _resp(200, {
+                'notifications': items,
+                'unread': unread,
+                'unreadMessages': unread_messages,
+                'emailEnabled': email_enabled,
+            })
 
         body = {}
         try:

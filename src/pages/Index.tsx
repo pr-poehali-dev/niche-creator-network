@@ -900,7 +900,7 @@ export default function Index() {
             <LangSwitcher lang={lang} setLang={setLang} />
             {isAuthed ? (
               <>
-                <NotificationBell />
+                <NotificationBell onOpenMessages={role === "provider" ? () => go("community") : undefined} />
                 {user?.isAdmin && (
                   <button onClick={() => go("admin")} className={`hidden sm:flex items-center gap-1.5 px-2.5 py-2 text-sm font-montserrat font-bold rounded-sm transition-all border shrink-0 whitespace-nowrap relative ${active === "admin" ? "border-gold text-gold bg-gold/10" : "border-border text-muted-foreground hover:border-gold hover:text-gold"}`} aria-label={tr("adminPanelTitle")}>
                     <Icon name="ShieldCheck" size={15} />

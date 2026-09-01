@@ -30,11 +30,12 @@ function authHeaders(extra: Record<string, string> = {}): Record<string, string>
   return { "X-Auth-Token": token, ...extra };
 }
 
-export default function NotificationBell() {
+export default function NotificationBell({ onOpenMessages }: { onOpenMessages?: () => void }) {
   const { tr } = useLang();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notif[]>([]);
   const [unread, setUnread] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [emailEnabled, setEmailEnabled] = useState(true);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -51,16 +52,21 @@ export default function NotificationBell() {
       .then((d) => {
         if (Array.isArray(d.notifications)) setItems(d.notifications);
         if (typeof d.unread === "number") setUnread(d.unread);
+        if (typeof d.unreadMessages === "number") setUnreadMessages(d.unreadMessages);
         if (typeof d.emailEnabled === "boolean") setEmailEnabled(d.emailEnabled);
       })
       .catch(() => {});
   }, []);
 
   // Первичная загрузка и мягкий опрос каждые 60 секунд.
+  // Плюс обновление при возврате на вкладку: человек прочитал сообщения в
+  // другом окне — счётчик в шапке не должен висеть до конца минуты.
   useEffect(() => {
     load();
     const timer = setInterval(load, 60000);
-    return () => clearInterval(timer);
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
   }, [load]);
 
   // Закрытие панели по клику вне её области.
@@ -106,7 +112,29 @@ export default function NotificationBell() {
   };
 
   return (
-    <div className="relative" ref={panelRef}>
+    <div className="relative flex items-center gap-2" ref={panelRef}>
+      {/* Непрочитанные сообщения видны с любой страницы, а не только из
+          кабинета. Счётчик приходит тем же запросом, что и уведомления —
+          отдельного опроса нет. */}
+      {onOpenMessages && unreadMessages > 0 && (
+        <button
+          onClick={() => {
+            // Гасим счётчик сразу: сообщения будут отмечены прочитанными
+            // при открытии переписки, а висящий значок сбивает с толку.
+            setUnreadMessages(0);
+            onOpenMessages();
+            setTimeout(load, 1500);
+          }}
+          aria-label={`${tr("pdDialogs")}: ${unreadMessages}`}
+          title={tr("pdDialogs")}
+          className="relative flex items-center justify-center border border-gold/50 text-gold w-9 h-9 rounded-sm hover:bg-gold/10 transition-all shrink-0"
+        >
+          <Icon name="MessageSquare" size={16} />
+          <span className="absolute -top-1.5 -end-1.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center leading-none">
+            {unreadMessages > 9 ? "9+" : unreadMessages}
+          </span>
+        </button>
+      )}
       <button
         onClick={() => { setOpen((o) => !o); if (!open) load(); }}
         aria-label={tr("notifAria")}
