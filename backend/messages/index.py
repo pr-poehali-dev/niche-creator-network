@@ -89,7 +89,70 @@ def handler(event: dict, context) -> dict:
                     (pair,),
                 )
                 msgs = [{'fromId': r[0], 'fromName': r[1], 'text': decrypt_field(r[2]), 'createdAt': r[3].isoformat() if r[3] else None} for r in cur.fetchall()]
+                # Открыли переписку — входящие считаются прочитанными.
+                cur.execute(
+                    f"UPDATE {SCHEMA}.direct_messages SET read_at = now() "
+                    f"WHERE pair_key = %s AND to_id = %s AND read_at IS NULL",
+                    (pair, auth_utils.user_dm_id(user)),
+                )
+                conn.commit()
                 return _resp(200, {'messages': msgs})
+
+            if kind == 'dialogs':
+                # Список переписок: собеседник, последнее сообщение и счётчик
+                # непрочитанных. Без него новое сообщение легко пропустить —
+                # чат открывался только из списка друзей.
+                user = auth_utils.get_auth_user(event)
+                if not user:
+                    return _resp(401, {'error': 'unauthorized'})
+                me = auth_utils.user_dm_id(user)
+                my_id = user['id']
+                # Берём только переписки с подтверждёнными друзьями: расторгли
+                # дружбу — диалог исчезает из списка, как и доступ к нему.
+                cur.execute(
+                    f"SELECT CASE WHEN user_id_a = %s THEN user_id_b ELSE user_id_a END "
+                    f"FROM {SCHEMA}.friendships "
+                    f"WHERE (user_id_a = %s OR user_id_b = %s) AND status = 'accepted'",
+                    (my_id, my_id, my_id),
+                )
+                friend_ids = [r[0] for r in cur.fetchall()]
+                dialogs = []
+                for fid in friend_ids:
+                    pair_key = f"u{min(my_id, fid)}:u{max(my_id, fid)}"
+                    cur.execute(
+                        f"SELECT from_id, text, created_at FROM {SCHEMA}.direct_messages "
+                        f"WHERE pair_key = %s ORDER BY created_at DESC LIMIT 1",
+                        (pair_key,),
+                    )
+                    last = cur.fetchone()
+                    cur.execute(
+                        f"SELECT COUNT(*) FROM {SCHEMA}.direct_messages "
+                        f"WHERE pair_key = %s AND to_id = %s AND read_at IS NULL",
+                        (pair_key, me),
+                    )
+                    unread = int((cur.fetchone() or [0])[0])
+                    # Анкета собеседника — имя и фото для карточки диалога.
+                    cur.execute(
+                        f"SELECT name_ru, name_en, title_ru, title_en, avatar_url "
+                        f"FROM {SCHEMA}.providers WHERE slug = %s",
+                        (f'provider-{fid}',),
+                    )
+                    prov = cur.fetchone()
+                    dialogs.append({
+                        'userId': fid,
+                        'pairKey': pair_key,
+                        'name': {'ru': prov[0], 'en': prov[1]} if prov else None,
+                        'title': {'ru': prov[2], 'en': prov[3]} if prov else None,
+                        'avatar': prov[4] if prov else None,
+                        'lastText': decrypt_field(last[1]) if last else '',
+                        'lastFromMe': bool(last and last[0] == me),
+                        'lastAt': last[2].isoformat() if last and last[2] else None,
+                        'unread': unread,
+                    })
+                # Свежие переписки сверху; диалоги без сообщений — в конце.
+                dialogs.sort(key=lambda d: d['lastAt'] or '', reverse=True)
+                total_unread = sum(d['unread'] for d in dialogs)
+                return _resp(200, {'dialogs': dialogs, 'totalUnread': total_unread})
 
             return _resp(400, {'error': 'unknown kind'})
 

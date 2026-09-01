@@ -1388,6 +1388,8 @@ export const t: Dict = {
   pdAlreadyFriends: { ru: "Уже в друзьях", en: "Already friends" },
   pdRequestPending: { ru: "Заявка отправлена", en: "Request sent" },
   pdIncomingRequests: { ru: "Входящие заявки в друзья", en: "Incoming friend requests" },
+  pdDialogs: { ru: "Переписки", en: "Conversations" },
+  pdDialogYou: { ru: "Вы:", en: "You:" },
   pdMyFriends: { ru: "Мои друзья", en: "My friends" },
   pdNoFriends: { ru: "Пока никого нет. Найдите коллег по имени или специализации — после принятия заявки откроется личная переписка.", en: "Nobody here yet. Find colleagues by name or specialisation — private chat opens once the request is accepted." },
   pdReqIncoming: { ru: "Ждёт вашего ответа", en: "Awaiting your reply" },

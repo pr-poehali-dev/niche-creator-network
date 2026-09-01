@@ -339,6 +339,9 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
   type FriendReq = { requestId: number; userId: number; provider: FriendItem["provider"]; createdAt: string | null };
   const [friendsList, setFriendsList] = useState<FriendItem[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendReq[]>([]);
+  // Список переписок с последним сообщением и счётчиком непрочитанных.
+  type Dialog = { userId: number; pairKey: string; name: LS | null; title: LS | null; avatar: string | null; lastText: string; lastFromMe: boolean; lastAt: string | null; unread: number };
+  const [dialogs, setDialogs] = useState<Dialog[]>([]);
   const [searchPublicId, setSearchPublicId] = useState("");
   // Поиск коллег теперь по имени, специализации или номеру — результатов может
   // быть несколько, поэтому храним список, а не одну карточку.
@@ -354,6 +357,10 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
     fetch(`${func2url["friends"]}?action=requests`, { headers: authHeaders() })
       .then((r) => r.json())
       .then((d) => { if (Array.isArray(d.requests)) setFriendRequests(d.requests); })
+      .catch(() => {});
+    fetch(`${func2url["messages"]}?kind=dialogs`, { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d && Array.isArray(d.dialogs)) setDialogs(d.dialogs); })
       .catch(() => {});
   }, []);
 
@@ -464,10 +471,11 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                   className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(28,20%,7%)]" : tabLocked ? "text-muted-foreground/50 hover:bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                   <Icon name={tabLocked ? "Lock" : tb.icon} fallback="LayoutDashboard" size={15} />
                   {tr(tb.key)}
-                  {/* Счётчик заявок в друзья: иначе входящую заявку легко не заметить. */}
-                  {tb.id === "friends" && friendRequests.length > 0 && (
+                  {/* Счётчик заявок и непрочитанных сообщений: иначе входящее
+                      легко не заметить, вкладка выглядит одинаково. */}
+                  {tb.id === "friends" && friendRequests.length + dialogs.reduce((s, d) => s + d.unread, 0) > 0 && (
                     <span className={`ms-auto text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center ${tab === "friends" ? "bg-[hsl(28,20%,7%)] text-gold" : "bg-gold text-[hsl(28,20%,7%)]"}`}>
-                      {friendRequests.length}
+                      {friendRequests.length + dialogs.reduce((s, d) => s + d.unread, 0)}
                     </span>
                   )}
                 </button>
@@ -1272,6 +1280,53 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                         <button onClick={() => respondFriendRequest(r.requestId, true)} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90">{tr("pdAccept")}</button>
                         <button onClick={() => respondFriendRequest(r.requestId, false)} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-3 py-1.5 rounded-sm shrink-0">{tr("pdDecline")}</button>
                       </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Список переписок: показываем только когда общение уже началось —
+                  пустой блок над списком друзей был бы шумом. */}
+              {dialogs.some((d) => d.lastAt) && (
+                <div className="border border-border rounded-sm bg-card p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdDialogs")}</span>
+                    {dialogs.reduce((s, d) => s + d.unread, 0) > 0 && (
+                      <span className="text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1.5 flex items-center justify-center bg-gold text-[hsl(28,20%,7%)]">
+                        {dialogs.reduce((s, d) => s + d.unread, 0)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-2.5">
+                    {dialogs.filter((d) => d.lastAt).map((d) => (
+                      <button
+                        key={d.pairKey}
+                        onClick={() => openChat?.({ name: d.name ? L(d.name, lang) : `#${d.userId}`, title: d.title ? L(d.title, lang) : "", avatar: d.avatar, pairKey: d.pairKey })}
+                        className={`w-full flex items-center gap-3 p-3 border rounded-sm text-left transition-colors ${d.unread > 0 ? "border-gold/40 bg-gold/[0.04]" : "border-border hover:border-gold/30"}`}
+                      >
+                        <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
+                          {d.avatar ? <img src={d.avatar} alt="" loading="lazy" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(28,20%,7%)]" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className={`text-sm font-montserrat truncate ${d.unread > 0 ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>
+                            {d.name ? L(d.name, lang) : `#${d.userId}`}
+                          </div>
+                          <div className={`text-[11px] truncate ${d.unread > 0 ? "text-foreground/80" : "text-muted-foreground"}`}>
+                            {d.lastFromMe && <span className="text-muted-foreground">{tr("pdDialogYou")} </span>}
+                            {d.lastText}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <span className="text-[10px] text-muted-foreground">
+                            {d.lastAt ? new Date(d.lastAt).toLocaleDateString(lang === "ru" ? "ru-RU" : "en-US", { day: "numeric", month: "short" }) : ""}
+                          </span>
+                          {d.unread > 0 && (
+                            <span className="text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1.5 flex items-center justify-center bg-gold text-[hsl(28,20%,7%)]">
+                              {d.unread}
+                            </span>
+                          )}
+                        </div>
+                      </button>
                     ))}
                   </div>
                 </div>

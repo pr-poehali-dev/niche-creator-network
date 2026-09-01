@@ -6,6 +6,7 @@
     { "name": "Форум удалён: создание темы не поддерживается", "method": "POST", "path": "/", "body": { "action": "forum_create", "category": "polygraph", "title": "Тема" }, "expectedStatus": 400, "expectedBody": { "error": "unknown action" }, "bodyMatcher": "partial" },
     { "name": "Форум удалён: чтение тем не поддерживается", "method": "GET", "path": "/?kind=forum&category=polygraph", "expectedStatus": 400, "expectedBody": { "error": "unknown kind" }, "bodyMatcher": "partial" },
     { "name": "Личная переписка: чтение без токена запрещено", "method": "GET", "path": "/?kind=dm&pair=u1:u2", "expectedStatus": 403 },
-    { "name": "Личная переписка: отправка без токена запрещена", "method": "POST", "path": "/", "body": { "action": "dm_send", "pair": "u1:u2", "toId": "u2", "text": "secret" }, "expectedStatus": 403 }
+    { "name": "Личная переписка: отправка без токена запрещена", "method": "POST", "path": "/", "body": { "action": "dm_send", "pair": "u1:u2", "toId": "u2", "text": "secret" }, "expectedStatus": 403 },
+    { "name": "Список переписок без токена запрещён", "method": "GET", "path": "/?kind=dialogs", "expectedStatus": 401, "expectedBody": { "error": "unauthorized" }, "bodyMatcher": "partial" }
   ]
 }
