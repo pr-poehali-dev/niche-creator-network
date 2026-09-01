@@ -86,7 +86,7 @@ def handler(event: dict, context) -> dict:
                     f"WHERE room=%s ORDER BY created_at ASC LIMIT 200",
                     (room,),
                 )
-                msgs = [{'author': r[0], 'text': r[1], 'createdAt': r[2].isoformat() if r[2] else None} for r in cur.fetchall()]
+                msgs = [{'author': r[0], 'text': decrypt_field(r[1]), 'createdAt': r[2].isoformat() if r[2] else None} for r in cur.fetchall()]
                 return _resp(200, {'messages': msgs})
 
             if kind == 'forum':
@@ -135,7 +135,7 @@ def handler(event: dict, context) -> dict:
                     f"WHERE topic_id=%s ORDER BY created_at ASC LIMIT 500",
                     (topic_id,),
                 )
-                posts = [{'author': p[0], 'text': p[1], 'createdAt': p[2].isoformat() if p[2] else None} for p in cur.fetchall()]
+                posts = [{'author': p[0], 'text': decrypt_field(p[1]), 'createdAt': p[2].isoformat() if p[2] else None} for p in cur.fetchall()]
                 return _resp(200, {'topic': {'id': t[0], 'category': t[1], 'title': t[2], 'author': t[3], 'createdAt': t[4].isoformat() if t[4] else None}, 'posts': posts})
 
             if kind == 'dm':
@@ -159,25 +159,35 @@ def handler(event: dict, context) -> dict:
             action = esc(body.get('action'), 30)
 
             if action == 'chat_send':
+                # Автора определяем ТОЛЬКО по токену сессии. Раньше имя бралось
+                # из тела запроса — любой посторонний мог написать в общий чат
+                # от имени администратора или чужого специалиста.
+                user = auth_utils.get_auth_user(event)
+                if not user:
+                    return _resp(401, {'error': 'unauthorized'})
                 room = esc(body.get('room'), 40) or 'general'
-                author_id = esc(body.get('authorId'), 64)
-                author_name = esc(body.get('authorName'), 200)
+                author_id = auth_utils.user_dm_id(user)
+                author_name = esc(user.get('name'), 200)
                 text = clean_text(esc(body.get('text'), 2000))
                 if not text.strip():
                     return _resp(400, {'error': 'empty'})
                 cur.execute(
                     f"INSERT INTO {SCHEMA}.chat_messages (room, author_id, author_name, text) "
                     f"VALUES (%s, %s, %s, %s)",
-                    (room, author_id, author_name, text),
+                    (room, author_id, author_name, encrypt_field(text)),
                 )
                 conn.commit()
                 return _resp(200, {'success': True})
 
             if action == 'forum_create':
+                # Тему создаёт только авторизованный пользователь, имя — из базы.
+                user = auth_utils.get_auth_user(event)
+                if not user:
+                    return _resp(401, {'error': 'unauthorized'})
                 category = esc(body.get('category'), 40)
                 title = clean_text(esc(body.get('title'), 300))
-                author_id = esc(body.get('authorId'), 64)
-                author_name = esc(body.get('authorName'), 200)
+                author_id = auth_utils.user_dm_id(user)
+                author_name = esc(user.get('name'), 200)
                 if not title.strip():
                     return _resp(400, {'error': 'empty title'})
                 cur.execute(
@@ -194,15 +204,19 @@ def handler(event: dict, context) -> dict:
                     topic_id = int(body.get('topicId') or 0)
                 except (TypeError, ValueError):
                     topic_id = 0
-                author_id = esc(body.get('authorId'), 64)
-                author_name = esc(body.get('authorName'), 200)
+                # Ответ на форуме — тоже только от авторизованного, имя из базы.
+                user = auth_utils.get_auth_user(event)
+                if not user:
+                    return _resp(401, {'error': 'unauthorized'})
+                author_id = auth_utils.user_dm_id(user)
+                author_name = esc(user.get('name'), 200)
                 text = clean_text(esc(body.get('text'), 2000))
                 if not topic_id or not text.strip():
                     return _resp(400, {'error': 'empty'})
                 cur.execute(
                     f"INSERT INTO {SCHEMA}.forum_posts (topic_id, author_id, author_name, text) "
                     f"VALUES (%s, %s, %s, %s)",
-                    (topic_id, author_id, author_name, text),
+                    (topic_id, author_id, author_name, encrypt_field(text)),
                 )
                 conn.commit()
                 return _resp(200, {'success': True})

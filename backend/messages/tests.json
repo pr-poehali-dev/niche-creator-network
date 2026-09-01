@@ -1,9 +1,10 @@
 {
   "tests": [
     { "name": "CORS preflight", "method": "OPTIONS", "path": "/", "expectedStatus": 200 },
-    { "name": "Chat send", "method": "POST", "path": "/", "body": { "action": "chat_send", "room": "polygraph", "authorId": "morozov", "authorName": "A. Morozov", "text": "Привет коллеги" }, "expectedStatus": 200, "expectedBody": { "success": true }, "bodyMatcher": "partial" },
+    { "name": "Чат: отправка без токена запрещена", "method": "POST", "path": "/", "body": { "action": "chat_send", "room": "polygraph", "authorId": "admin", "authorName": "Администратор", "text": "подделка автора" }, "expectedStatus": 401, "expectedBody": { "error": "unauthorized" }, "bodyMatcher": "partial" },
     { "name": "Chat list", "method": "GET", "path": "/?kind=chat&room=polygraph", "expectedStatus": 200 },
-    { "name": "Forum create", "method": "POST", "path": "/", "body": { "action": "forum_create", "category": "polygraph", "title": "Тестовая тема", "authorId": "morozov", "authorName": "A. Morozov" }, "expectedStatus": 200, "expectedBody": { "success": true }, "bodyMatcher": "partial" },
+    { "name": "Форум: создание темы без токена запрещено", "method": "POST", "path": "/", "body": { "action": "forum_create", "category": "polygraph", "title": "Тестовая тема", "authorId": "admin", "authorName": "Администратор" }, "expectedStatus": 401, "expectedBody": { "error": "unauthorized" }, "bodyMatcher": "partial" },
+    { "name": "Форум: ответ без токена запрещён", "method": "POST", "path": "/", "body": { "action": "forum_reply", "topicId": 1, "authorId": "admin", "authorName": "Администратор", "text": "подделка" }, "expectedStatus": 401, "expectedBody": { "error": "unauthorized" }, "bodyMatcher": "partial" },
     { "name": "Forum list", "method": "GET", "path": "/?kind=forum&category=polygraph", "expectedStatus": 200 },
     { "name": "DM read without token forbidden", "method": "GET", "path": "/?kind=dm&pair=u1:u2", "expectedStatus": 403 },
     { "name": "DM send without token forbidden", "method": "POST", "path": "/", "body": { "action": "dm_send", "pair": "u1:u2", "toId": "u2", "text": "secret" }, "expectedStatus": 403 }

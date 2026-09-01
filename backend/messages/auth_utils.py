@@ -52,7 +52,7 @@ def get_auth_user(event: dict):
         cur = conn.cursor()
         cur.execute(
             f"SELECT u.id, u.email, u.role, s.expires_at, u.is_admin, "
-            f"s.revoked, s.last_seen_at, s.fingerprint, s.device_pubkey "
+            f"s.revoked, s.last_seen_at, s.fingerprint, s.device_pubkey, u.name "
             f"FROM {SCHEMA}.sessions s JOIN {SCHEMA}.users u ON u.id = s.user_id "
             f"WHERE s.token = %s",
             (token,),
@@ -95,7 +95,10 @@ def get_auth_user(event: dict):
     finally:
         conn.close()
     email = str(row[1] or '')
-    return {'id': int(row[0]), 'email': email, 'role': row[2], 'is_admin': bool(row[4])}
+    # Имя берём из базы, а не из тела запроса: иначе кто угодно мог бы
+    # подписаться «Администратор» в общем чате и на форуме.
+    name = str(row[9] or '').strip() or email.split('@')[0]
+    return {'id': int(row[0]), 'email': email, 'role': row[2], 'is_admin': bool(row[4]), 'name': name}
 
 
 def user_dm_id(user: dict) -> str:

@@ -134,12 +134,11 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
 
 export function ChatSection({ chatInput, setChatInput }: { chatInput: string; setChatInput: (v: string) => void }) {
   const { lang, tr } = useLang();
-  const { user } = useAuth();
   const rooms = [{ id: "general", title: { ru: "Общий чат", en: "General" } }, ...serviceCategories.map((c) => ({ id: c.id, title: c.title }))];
   const [room, setRoom] = useState("general");
   const [msgs, setMsgs] = useState<{ author: string; text: string; createdAt: string | null }[]>([]);
-  const me = user ? `user-${user.id}` : "guest";
-  const myName = user?.name || tr("chatGuestName");
+  // Имя автора больше не передаётся с фронтенда: сервер берёт его из сессии,
+  // иначе подпись в чате можно было подделать.
   const endRef = useRef<HTMLDivElement | null>(null);
   // Общий чат международный: сообщения переводятся на язык интерфейса,
   // включая языки, которых нет в списке сайта.
@@ -162,8 +161,8 @@ export function ChatSection({ chatInput, setChatInput }: { chatInput: string; se
     setChatInput("");
     await fetch(func2url["messages"], {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "chat_send", room, authorId: me, authorName: myName, text }),
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action: "chat_send", room, text }),
     });
     loadMsgs(room);
   };
@@ -249,8 +248,6 @@ type ForumPost = { author: string; text: string; createdAt: string | null };
 export function ForumSection() {
   const { lang, tr } = useLang();
   const { user } = useAuth();
-  const me = user ? `user-${user.id}` : "guest";
-  const myName = user?.name || tr("chatGuestName");
   const [cat, setCat] = useState("");
   const [topics, setTopics] = useState<ForumTopic[]>([]);
   const [newOpen, setNewOpen] = useState(false);
@@ -288,8 +285,8 @@ export function ForumSection() {
     const title = cleanText(newTitle.trim());
     if (!title) return;
     await fetch(func2url["messages"], {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "forum_create", category: newCat, title, authorId: me, authorName: myName }),
+      method: "POST", headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action: "forum_create", category: newCat, title }),
     });
     setNewTitle(""); setNewCat(""); setNewOpen(false);
     loadTopics(cat);
@@ -301,8 +298,8 @@ export function ForumSection() {
     if (!text) return;
     setReply("");
     await fetch(func2url["messages"], {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "forum_reply", topicId: openTopic.id, authorId: me, authorName: myName, text }),
+      method: "POST", headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action: "forum_reply", topicId: openTopic.id, text }),
     });
     fetch(`${func2url["messages"]}?kind=forum_topic&topicId=${openTopic.id}`)
       .then((r) => r.json())
