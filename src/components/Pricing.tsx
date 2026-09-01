@@ -17,6 +17,7 @@ const PLAN_KEY_MAP: Record<string, string> = {
   planProName: "pro",
   planPremiumName: "premium",
   planChopName: "chop",
+  planHrName: "hr",
 };
 
 export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { plan: PayPlan; onClose: () => void; defaultEmail?: string; slug?: string }) {
@@ -69,8 +70,10 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
   const yearlyDiscounted = Math.round(yearlyFull * 0.83);
   const yearlySaving = Math.round(yearlyFull - yearlyDiscounted);
 
-  // Промо-скидка 30% до 1 декабря 2026 (источник истины — бэкенд quote.promo)
-  const promoActive = quote ? !!quote.promo : (new Date() < new Date("2026-12-01T00:00:00Z"));
+  // Промо-скидка 30% до 1 декабря 2026 (источник истины — бэкенд quote.promo).
+  // На доступ работодателя к базе резюме акция не распространяется, поэтому
+  // зачёркнутой цены и плашки «−30%» там быть не должно.
+  const promoActive = quote ? !!quote.promo : (planKey !== "hr" && new Date() < new Date("2026-12-01T00:00:00Z"));
   const promoPct = quote && quote.promoDiscount ? quote.promoDiscount : 30;
   const promoFactor = (100 - promoPct) / 100;
 

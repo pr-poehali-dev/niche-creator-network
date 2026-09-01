@@ -1,0 +1,9 @@
+{
+  "tests": [
+    { "name": "CORS preflight", "method": "OPTIONS", "path": "/", "expectedStatus": 200 },
+    { "name": "Своё резюме без токена недоступно", "method": "GET", "path": "/?kind=my", "expectedStatus": 401, "expectedBody": {"error": "unauthorized"}, "bodyMatcher": "partial" },
+    { "name": "Поиск резюме без токена запрещён", "method": "GET", "path": "/?kind=search", "expectedStatus": 401, "expectedBody": {"error": "unauthorized"}, "bodyMatcher": "partial" },
+    { "name": "Полное резюме с контактами без токена запрещено", "method": "GET", "path": "/?kind=one&id=1", "expectedStatus": 401, "expectedBody": {"error": "unauthorized"}, "bodyMatcher": "partial" },
+    { "name": "Сохранение резюме без токена запрещено", "method": "POST", "path": "/", "body": {"action": "save", "position": "Полиграфолог"}, "expectedStatus": 401, "expectedBody": {"error": "unauthorized"}, "bodyMatcher": "partial" }
+  ]
+}

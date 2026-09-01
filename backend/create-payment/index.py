@@ -32,6 +32,22 @@ PLAN_PRICES_RUB = {
     'pro': 4490,
     'premium': 7990,
     'chop': 12990,
+    # Доступ HR к базе резюме. Покупает не специалист, а работодатель,
+    # поэтому этот тариф — единственный, доступный роли «клиент».
+    'hr': 9900,
+}
+
+# Тарифы, которые покупает работодатель, а не исполнитель.
+HR_PLANS = {'hr'}
+
+# Человеческие названия для кассового чека (54-ФЗ). Без них покупателю
+# приходил чек с технической строкой вида «Подписка «hr»».
+PLAN_TITLES_RU = {
+    'start': 'Старт',
+    'pro': 'Профи',
+    'premium': 'Премиум',
+    'chop': 'Для ЧОП',
+    'hr': 'Доступ к базе резюме',
 }
 
 # Валюта по коду страны (ISO 3166-1 alpha-2)
@@ -101,7 +117,7 @@ def _create_yookassa(amount_rub, plan, email, return_url, slug, period):
     receipt = {
         'customer': {'email': receipt_email},
         'items': [{
-            'description': f'Подписка «{plan}» на {period_ru}'[:128],
+            'description': f'Подписка «{PLAN_TITLES_RU.get(plan, plan)}» на {period_ru}'[:128],
             'quantity': '1.00',
             'amount': {'value': f'{amount_rub:.2f}', 'currency': 'RUB'},
             'vat_code': 1,
@@ -114,7 +130,7 @@ def _create_yookassa(amount_rub, plan, email, return_url, slug, period):
         'amount': {'value': f'{amount_rub:.2f}', 'currency': 'RUB'},
         'capture': True,
         'confirmation': {'type': 'redirect', 'return_url': return_url or 'https://example.com/return'},
-        'description': f'Подписка «{plan}»',
+        'description': f'Подписка «{PLAN_TITLES_RU.get(plan, plan)}»',
         'metadata': {'plan': plan, 'email': email, 'slug': slug, 'period': period},
         'receipt': receipt,
     }
@@ -214,7 +230,10 @@ def handler(event, context):
     # Год = 10 месяцев (2 в подарок)
     full_rub = PLAN_PRICES_RUB[plan] * (10 if months == 12 else 1)
 
-    promo = _promo_active()
+    # Промо-скидка — акция для специалистов, чтобы они заходили на площадку.
+    # На доступ работодателя к базе резюме она не распространяется: это не
+    # привлечение исполнителей, а продажа готовой базы по объявленной цене.
+    promo = _promo_active() and plan not in HR_PLANS
     base_rub = round(full_rub * (1 - PROMO_DISCOUNT)) if promo else full_rub
 
     cc = _country_code(event, body)
@@ -253,10 +272,18 @@ def handler(event, context):
     user = get_auth_user(event)
     if not user:
         return _resp(401, {'error': 'unauthorized', 'configured': False})
-    if user.get('role') != 'provider':
+    # Доступ к базе резюме покупает работодатель — это роль «клиент».
+    # Тарифы специалистов клиенту по-прежнему недоступны, и наоборот:
+    # исполнителю незачем платить за поиск самого себя.
+    if plan in HR_PLANS:
+        if user.get('role') != 'client':
+            return _resp(403, {'error': 'clients_only', 'configured': False})
+        slug = f"hr-{user['id']}"
+    elif user.get('role') != 'provider':
         # Подписка предназначена специалистам; клиентам оплачивать нечего.
         return _resp(403, {'error': 'providers_only', 'configured': False})
-    slug = provider_slug(user)
+    else:
+        slug = provider_slug(user)
 
     # Ограничение частоты: защита от перебора и наплыва платежей с одного адреса.
     if not check_and_count(event, 'create-payment', limit=10, window_sec=600):

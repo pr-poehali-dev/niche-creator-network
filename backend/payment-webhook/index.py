@@ -20,10 +20,12 @@ CORS = {
     'X-Frame-Options': 'DENY',
 }
 
-VALID_PLANS = ('start', 'pro', 'premium', 'chop')
+VALID_PLANS = ('start', 'pro', 'premium', 'chop', 'hr')
+# Тариф работодателя: открывает доступ к базе резюме, а не профиль специалиста.
+HR_PLANS = ('hr',)
 
 # Минимальные ожидаемые суммы в рублях (со скидкой 70% от полной цены — с запасом на промо и валютную конвертацию)
-PLAN_PRICES_RUB = {'start': 1990, 'pro': 4490, 'premium': 7990, 'chop': 12990}
+PLAN_PRICES_RUB = {'start': 1990, 'pro': 4490, 'premium': 7990, 'chop': 12990, 'hr': 9900}
 # Годовая подписка стоит как 10 месяцев (2 в подарок) — так же, как в create-payment.
 YEAR_MONTHS = 10
 # Максимальная законная скидка (промо). Ниже этой доли платёж считается поддельным.
@@ -39,7 +41,10 @@ def _expected_min_rub(plan: str, period: str) -> float:
     подписку можно было получить, заплатив за полмесяца.
     '''
     base = PLAN_PRICES_RUB[plan] * (YEAR_MONTHS if period == 'year' else 1)
-    return base * (1 - MAX_DISCOUNT) * (1 - ROUNDING_TOLERANCE)
+    # На доступ работодателя промо-скидка не действует, поэтому и «пола»
+    # в 70% для него быть не должно: иначе базу можно выкупить дешевле цены.
+    discount = 0.0 if plan in HR_PLANS else MAX_DISCOUNT
+    return base * (1 - discount) * (1 - ROUNDING_TOLERANCE)
 
 # URL функции отправки чека на почту (send-receipt). Берётся из переменной
 # окружения RECEIPT_FUNCTION_URL, чтобы не хардкодить адрес в коде и менять его
@@ -48,7 +53,8 @@ RECEIPT_URL = os.environ.get(
     'RECEIPT_FUNCTION_URL',
     'https://functions.poehali.dev/4a87b00b-70a2-4af4-846b-156ef2a08b97',
 )
-PLAN_TITLES = {'start': 'Старт', 'pro': 'Профи', 'premium': 'Премиум', 'chop': 'Для ЧОП'}
+PLAN_TITLES = {'start': 'Старт', 'pro': 'Профи', 'premium': 'Премиум', 'chop': 'Для ЧОП',
+               'hr': 'Доступ к базе резюме'}
 
 
 def _send_receipt(email, plan, period, amount, currency, payment_id):
@@ -95,6 +101,25 @@ def _activate(slug, plan, period):
     until = (datetime.utcnow() + timedelta(days=30 * months)).strftime('%Y-%m-%d')
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
+
+    # Работодатель: включаем доступ к базе резюме. Профиль специалиста при
+    # этом не трогаем — у HR его попросту нет, slug имеет вид 'hr-{id}'.
+    if plan in HR_PLANS:
+        if not slug.startswith('hr-') or not slug[3:].isdigit():
+            cur.close()
+            conn.close()
+            return False
+        cur.execute(
+            f"INSERT INTO {SCHEMA}.hr_access (user_id, active, until) VALUES (%s, true, %s) "
+            f"ON CONFLICT (user_id) DO UPDATE SET active = true, until = EXCLUDED.until, "
+            f"updated_at = now()",
+            (int(slug[3:]), until),
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        return True
+
     cur.execute(
         f"UPDATE {SCHEMA}.providers SET subscription_active=true, "
         f"subscription_until=%s, plan=%s WHERE slug=%s",
@@ -221,11 +246,13 @@ def handler(event, context):
         if etype in ('transaction.completed', 'transaction.paid'):
             data = body.get('data', {})
             payment_id = str(data.get('id') or '')
-            if _already_processed(payment_id, 'paddle'):
-                return _resp(200, {'ok': True, 'provider': 'paddle', 'duplicate': True})
             status = str(data.get('status') or '')
             if status not in ('completed', 'paid'):
                 return _resp(200, {'ok': False, 'error': 'not_paid'})
+            # Отметку об обработке ставим только для действительно оплаченного
+            # события — иначе неоплаченное уведомление «сжигает» номер платежа.
+            if _already_processed(payment_id, 'paddle'):
+                return _resp(200, {'ok': True, 'provider': 'paddle', 'duplicate': True})
             cd = data.get('custom_data') or {}
             p_plan = (cd.get('plan') or '').lower()
             p_period = cd.get('period', 'month')
@@ -250,12 +277,15 @@ def handler(event, context):
         if etype == 'payment.succeeded':
             obj = body.get('object', {})
             payment_id = str(obj.get('id') or '')
-            if _already_processed(payment_id, 'yookassa'):
-                return _resp(200, {'ok': True, 'provider': 'yookassa', 'duplicate': True})
-            # Не доверяем телу вебхука напрямую — перезапрашиваем платёж у ЮКассы по ID
+            # Сначала подлинность, потом отметка об обработке. Раньше платёж
+            # помечался обработанным ДО проверки: подделанный вебхук навсегда
+            # занимал этот номер, и настоящее уведомление от ЮКассы по нему
+            # отбрасывалось как дубль — оплата не активировала подписку.
             verified = _verify_yookassa_payment(payment_id)
             if not verified:
                 return _resp(403, {'error': 'verification_failed'})
+            if _already_processed(payment_id, 'yookassa'):
+                return _resp(200, {'ok': True, 'provider': 'yookassa', 'duplicate': True})
             if verified.get('status') != 'succeeded' or not verified.get('paid'):
                 return _resp(200, {'ok': False, 'error': 'not_paid'})
             md = verified.get('metadata') or {}

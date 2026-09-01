@@ -20,6 +20,7 @@ import { StarRating } from "@/components/SharedControls";
 const AdminPanel = lazy(() => import("@/components/AdminPanel"));
 const ClientDashboard = lazy(() => import("@/components/ClientDashboard"));
 const ProviderDashboard = lazy(() => import("@/components/ProviderDashboard"));
+const ResumeSearch = lazy(() => import("@/components/ResumeSearch"));
 // Разделы, которые открывают редко и не с первого экрана: грузим по требованию,
 // чтобы главная страница стартовала быстрее.
 const PricingSection = lazy(() => import("@/components/Pricing").then((m) => ({ default: m.PricingSection })));
@@ -430,6 +431,7 @@ const SECTION_CRUMB: Record<Section, keyof typeof t> = {
   specialists: "specialists",
   cases: "crumbCases",
   services: "crumbServices",
+  resumes: "navResumes",
   courses: "crumbCourses",
   guards: "crumbGuards",
   chat: "crumbChat",
@@ -812,6 +814,11 @@ export default function Index() {
       case "specialists": return <SpecialistsListSection setActive={go} openSpecialist={openSpecialist} />;
       case "cases": return <CasesSection />;
       case "services": return role === "client" ? <ClientServices setActive={go} openSpecialist={openSpecialist} /> : <ServicesSection />;
+      // База резюме: доступна работодателям (роль «клиент»). Специалисту
+      // искать самого себя незачем — его отправляем в кабинет, где резюме.
+      case "resumes": return role === "client"
+        ? <ResumeSearch />
+        : <ProviderDashboard setActive={go} openChat={openChat} />;
       case "courses": return <CoursesSection />;
       case "guards": return <GuardsSection />;
       case "chat": return chatTarget

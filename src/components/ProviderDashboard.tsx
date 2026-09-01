@@ -7,6 +7,7 @@ import { authHeaders } from "@/lib/authToken";
 import { downloadReceipt } from "@/lib/receipt";
 import { trackGoal, GOALS } from "@/lib/analytics";
 import { AvatarUploader, DocFileButton } from "@/components/SharedControls";
+import ResumeTab from "@/components/ResumeTab";
 import { serviceCategories, services } from "@/lib/servicesCatalog";
 import { L, resolveAvatar, shortName, type Section, type LS } from "@/lib/shared";
 import func2url from "../../backend/func2url.json";
@@ -28,7 +29,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
   };
   // Вкладка "verify" объединена со "stats" в единый раздел "Профиль и статистика" —
   // верификация, документы и метрики теперь показываются вместе, без переключения.
-  const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts" | "friends">(initialTab || "requests");
+  const [tab, setTab] = useState<"stats" | "plan" | "cases" | "requests" | "contacts" | "friends" | "resume">(initialTab || "requests");
 
   type DashCase = { title: LS; category: LS; views: number; published: boolean };
   const [myCases, setMyCases] = useState<DashCase[]>([]);
@@ -85,6 +86,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
     { id: "cases" as const, key: "pdTab3" as const, icon: "FolderOpen" },
     { id: "requests" as const, key: "pdTab4" as const, icon: "Inbox" },
     { id: "friends" as const, key: "pdTabFriends" as const, icon: "Users" },
+    { id: "resume" as const, key: "pdTabResume" as const, icon: "BriefcaseBusiness" },
     { id: "contacts" as const, key: "pdTabContacts" as const, icon: "Contact" },
   ];
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -135,7 +137,9 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
 
   // Админ в редакторе имеет полный доступ — как будто оплатил тариф и прошёл верификацию.
   const locked = sub !== null && !sub.active && !user?.isAdmin;
-  const ALLOWED_WHEN_LOCKED = ["stats", "plan"];
+  // Резюме доступно даже без активной подписки: чем больше кандидатов в базе,
+  // тем ценнее она для работодателей — это отдельный товар площадки.
+  const ALLOWED_WHEN_LOCKED = ["stats", "plan", "resume"];
 
   useEffect(() => {
     if (locked && !ALLOWED_WHEN_LOCKED.includes(tab)) setTab("stats");
@@ -1370,6 +1374,8 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
               </div>
             </div>
           )}
+
+          {tab === "resume" && <ResumeTab />}
 
           {tab === "contacts" && (
             <div className="space-y-5">

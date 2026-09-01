@@ -15,7 +15,7 @@ export type Section =
   | "home" | "profile" | "specialists" | "cases" | "services" | "courses" | "guards"
   | "chat" | "community" | "contacts" | "policy" | "pricing" | "dashboard" | "privacy"
   | "terms" | "agreement" | "offer" | "consent" | "admin" | "mobileapp" | "about"
-  | "blog" | "howitworks";
+  | "blog" | "howitworks" | "resumes";
 
 export type Role = "client" | "provider";
 
@@ -24,6 +24,9 @@ export type NavItem = { id: Section; key: keyof typeof t; icon: string };
 export const CLIENT_NAV: NavItem[] = [
   { id: "home", key: "navHome", icon: "Home" },
   { id: "services", key: "navSearch", icon: "Search" },
+  // База резюме для работодателей: HR — это обычный клиент, купивший доступ,
+  // поэтому отдельная роль при регистрации не нужна.
+  { id: "resumes", key: "navResumes", icon: "BriefcaseBusiness" },
   { id: "blog", key: "navBlog", icon: "BookOpen" },
   { id: "contacts", key: "navContacts", icon: "Mail" },
 ];
