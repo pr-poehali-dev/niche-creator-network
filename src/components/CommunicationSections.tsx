@@ -19,6 +19,11 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
   const [reportOpen, setReportOpen] = useState(false);
   // Переписка закрыта: дружба не подтверждена или её разорвали.
   const [blocked, setBlocked] = useState(false);
+  const dmEndRef = useRef<HTMLDivElement | null>(null);
+  // Ссылка на актуальный список — нужна опросу, чтобы понять, пришло ли
+  // что-то новое, не пересоздавая при этом сам цикл опроса.
+  const msgsRef = useRef(msgs);
+  useEffect(() => { msgsRef.current = msgs; }, [msgs]);
   // Автоперевод переписки: собеседники могут писать на разных языках, включая
   // те, которых нет в интерфейсе. Мемоизация обязательна — иначе новый массив
   // на каждый рендер зацикливает хук.
@@ -30,8 +35,8 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
   // Если есть pairKey (переписка с другом) — используем реальный backend DM,
   // иначе оставляем локальную демо-переписку (совместимость со старым поведением).
   const loadDm = useCallback(() => {
-    if (!target.pairKey) return;
-    fetch(`${func2url["messages"]}?kind=dm&pair=${encodeURIComponent(target.pairKey)}`, { headers: authHeaders() })
+    if (!target.pairKey) return Promise.resolve();
+    return fetch(`${func2url["messages"]}?kind=dm&pair=${encodeURIComponent(target.pairKey)}`, { headers: authHeaders() })
       .then((r) => r.json())
       .then((d) => {
         // Дружбу могли разорвать, пока окно было открыто — тогда сервер
@@ -39,17 +44,63 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
         if (d.error === "not_friends") { setBlocked(true); return; }
         setBlocked(false);
         if (Array.isArray(d.messages)) {
-          setMsgs(d.messages.map((m: { fromId: string; text: string; createdAt: string | null }) => ({
+          const next = d.messages.map((m: { fromId: string; text: string; createdAt: string | null }) => ({
             me: m.fromId === myDmId,
             text: m.text,
             time: m.createdAt ? new Date(m.createdAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" }) : "",
-          })));
+          }));
+          // Обновляем состояние только если переписка реально изменилась:
+          // иначе каждые несколько секунд пересоздавался бы список сообщений
+          // и перезапускался автоперевод — лишняя нагрузка на ровном месте.
+          setMsgs((prev) => (
+            prev.length === next.length && prev.every((p, i) => p.text === next[i].text && p.me === next[i].me)
+              ? prev
+              : next
+          ));
         }
       })
       .catch(() => {});
   }, [target.pairKey, myDmId, lang]);
 
   useEffect(() => { loadDm(); }, [loadDm]);
+
+  // Прокрутка к последнему сообщению: иначе новое пришедшее оказывается
+  // ниже видимой области и человек его не замечает.
+  useEffect(() => { dmEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
+
+  // Новые сообщения подтягиваются сами, пока окно чата открыто.
+  // Два правила экономии, без которых открытый чат жёг бы вызовы функции:
+  //  - вкладка не видна → опрос полностью остановлен;
+  //  - в переписке тишина → интервал растёт с 5 до 30 секунд, а на первое же
+  //    новое сообщение сбрасывается обратно, так что живой диалог остаётся
+  //    быстрым.
+  useEffect(() => {
+    if (!target.pairKey || blocked) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let delay = 5000;
+    let stopped = false;
+
+    const tick = async () => {
+      if (stopped) return;
+      const before = msgsRef.current;
+      await loadDm();
+      const changed = msgsRef.current !== before;
+      delay = changed ? 5000 : Math.min(delay * 1.5, 30000);
+      if (!stopped && !document.hidden) timer = setTimeout(tick, delay);
+    };
+    const stop = () => { stopped = true; if (timer) { clearTimeout(timer); timer = null; } };
+    const start = () => {
+      stopped = false;
+      if (!timer) timer = setTimeout(tick, delay);
+    };
+    const onVisibility = () => {
+      if (document.hidden) stop();
+      else { delay = 5000; loadDm(); start(); }
+    };
+    if (!document.hidden) start();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => { stop(); document.removeEventListener("visibilitychange", onVisibility); };
+  }, [target.pairKey, blocked, loadDm]);
 
   const send = async () => {
     const text = cleanText(chatInput.trim());
@@ -120,6 +171,7 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
               </div>
             </div>
           ))}
+          <div ref={dmEndRef} />
         </div>
 
         <div className="p-4 border-t border-border">
