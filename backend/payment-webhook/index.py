@@ -116,8 +116,10 @@ def _resp(status, body):
 def _activate(slug, plan, period):
     if not slug or plan not in VALID_PLANS:
         return False
-    months = 12 if period == 'year' else 1
-    until = (datetime.utcnow() + timedelta(days=30 * months)).strftime('%Y-%m-%d')
+    # Годовая подписка — ровно 365 дней, а не 12×30=360: иначе человек,
+    # заплативший за год, недополучал пять дней, а оферта обещала год.
+    days = 365 if period == 'year' else 30
+    until = (datetime.utcnow() + timedelta(days=days)).strftime('%Y-%m-%d')
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
 

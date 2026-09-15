@@ -37,4 +37,9 @@ export const GOALS = {
   contactProvider: "contact_provider",
   openContacts: "open_contacts",
   openBlog: "open_blog",
+  // Наём: отдельная воронка. Работодатель и соискатель ведут себя иначе,
+  // чем клиент с разовым заказом, и рекламу на них надо настраивать отдельно.
+  openResumes: "open_resumes",
+  resumePublished: "resume_published",
+  resumeUnlockAttempt: "resume_unlock_attempt",
 } as const;

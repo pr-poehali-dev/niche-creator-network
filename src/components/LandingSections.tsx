@@ -39,13 +39,20 @@ export function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; on
           <img src={HERO_IMAGE} alt="Security" className="w-full h-full object-cover opacity-20" />
         </div>
         <div className="absolute top-1/4 -left-40 w-[500px] h-[500px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.1) 0%, transparent 70%)" }} />
-        <div className="relative z-20 max-w-5xl mx-auto px-4 py-20 md:py-28">
-          <div className="max-w-2xl stagger">
+        {/* Сетка намеренно неровная: 7/5, а не половина на половину, и правая
+            колонка спущена ниже заголовка. Идеально симметричный разворот
+            выглядит как шаблон; смещение даёт живой ритм и ведёт взгляд
+            по диагонали — от заголовка к цифрам. */}
+        <div className="relative z-20 max-w-6xl mx-auto px-4 lg:px-8 py-20 md:py-28 grid lg:grid-cols-12 gap-x-8 xl:gap-x-12 items-start">
+          <div className="max-w-2xl stagger lg:col-span-7">
             <div className="tag-security inline-flex items-center gap-1.5 mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse-gold" />
               {tr("promoBadge")}
             </div>
-            <h1 className="font-montserrat font-extrabold text-4xl md:text-5xl lg:text-6xl text-foreground leading-[1.05] mb-6 tracking-tight">
+            {/* Размер подобран так, чтобы заголовок лёг ровно в две строки и
+                не наезжал на правую колонку: три строки капслока выглядят
+                тяжело, а перенос по словам — неряшливо. */}
+            <h1 className="font-montserrat font-extrabold text-4xl md:text-5xl lg:text-[3.25rem] text-foreground leading-[1.06] mb-6 tracking-tight">
               <span className="md:whitespace-nowrap">{tr("promoTitle1")}</span><br />
               <span className="gold-text-gradient md:whitespace-nowrap">{tr("promoTitle2")}</span>
             </h1>
@@ -92,6 +99,28 @@ export function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; on
               </button>
             </div>
           </div>
+
+          {/* Правая колонка: раньше треть первого экрана пустовала на широких
+              мониторах — страница выглядела оборванной. Здесь не цифры (каталог
+              молодой, хвастаться нечем и врать нельзя), а три причины, по
+              которым сюда приходят. Карточки намеренно разной глубины отступа:
+              ровная стопка читается как таблица, а не как рассказ. */}
+          <aside className="hidden lg:block lg:col-span-5 lg:pt-[15rem] space-y-3">
+            {([
+              { icon: "UserRoundCheck", k: "homeWhy1" as const, shift: "" },
+              { icon: "Lock", k: "homeWhy2" as const, shift: "xl:ms-6" },
+              { icon: "HandCoins", k: "homeWhy3" as const, shift: "xl:ms-3" },
+            ]).map((c, i) => (
+              <div
+                key={c.k}
+                className={`${c.shift} border border-border/80 rounded-sm bg-card/60 backdrop-blur-sm px-5 py-4 flex items-start gap-3.5 hover:border-gold/40 transition-colors`}
+                style={{ transform: i === 1 ? "rotate(-0.35deg)" : i === 2 ? "rotate(0.25deg)" : undefined }}
+              >
+                <Icon name={c.icon} size={18} className="text-gold shrink-0 mt-0.5" />
+                <span className="text-sm text-muted-foreground leading-relaxed">{tr(c.k)}</span>
+              </div>
+            ))}
+          </aside>
         </div>
       </section>
 

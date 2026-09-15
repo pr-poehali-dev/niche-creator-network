@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import Icon from "@/components/ui/icon";
 import { useLang } from "@/lib/i18n";
 import { authHeaders } from "@/lib/authToken";
+import { trackGoal, GOALS } from "@/lib/analytics";
 import func2url from "../../backend/func2url.json";
 
 type Resume = {
@@ -79,6 +80,7 @@ export default function ResumeTab() {
     const next = !data.isPublished;
     if (next && !data.position.trim()) return;
     setData((d) => ({ ...d, isPublished: next }));
+    if (next) trackGoal(GOALS.resumePublished);
     await save({ isPublished: next });
   };
 

@@ -4,6 +4,7 @@ import { useLang } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
 import { PaymentModal } from "@/components/Pricing";
+import { trackGoal, GOALS } from "@/lib/analytics";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { L, resolveAvatar, type LS } from "@/lib/shared";
 import func2url from "../../backend/func2url.json";
@@ -71,6 +72,7 @@ export default function ResumeSearch() {
   }, [q, city, remote, relocation]);
 
   useEffect(() => { search(); }, [search]);
+  useEffect(() => { trackGoal(GOALS.openResumes); }, []);
 
   useEffect(() => {
     fetch(`${func2url["resumes"]}?kind=access`, { headers: authHeaders() })
@@ -81,7 +83,7 @@ export default function ResumeSearch() {
 
   const openResume = async (id: number) => {
     const res = await fetch(`${func2url["resumes"]}?kind=one&id=${id}`, { headers: authHeaders() });
-    if (res.status === 402) { setPayOpen(true); return; }
+    if (res.status === 402) { trackGoal(GOALS.resumeUnlockAttempt); setPayOpen(true); return; }
     const d = await res.json().catch(() => null);
     if (d?.resume) setOpen(d.resume);
   };
@@ -223,7 +225,7 @@ export default function ResumeSearch() {
                   </div>
                 )}
 
-                <button onClick={() => (c.locked ? setPayOpen(true) : openResume(c.id))}
+                <button onClick={() => (c.locked ? (trackGoal(GOALS.resumeUnlockAttempt), setPayOpen(true)) : openResume(c.id))}
                   className={`mt-auto w-full py-2.5 text-xs font-montserrat font-bold rounded-sm transition-all flex items-center justify-center gap-2 ${c.locked ? "border border-gold text-gold hover:bg-gold hover:text-[hsl(28,20%,7%)]" : "gold-gradient text-[hsl(28,20%,7%)] hover:opacity-90"}`}>
                   <Icon name={c.locked ? "Lock" : "Eye"} size={14} />
                   {tr(c.locked ? "resUnlockCta" : "resOpenCta")}
