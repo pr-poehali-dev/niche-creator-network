@@ -996,6 +996,44 @@ export const t: Dict = {
   adminNoDocs: { ru: "Документы не загружены", en: "No documents uploaded" },
   adminOpenDoc: { ru: "Открыть документ", en: "Open document" },
 
+  // Карточка специалиста в каталоге
+  cardDocsChecked: { ru: "Документы проверены", en: "Documents verified" },
+  cardLicenseChecked: { ru: "Лицензия подтверждена", en: "License confirmed" },
+
+  // Пустые разделы
+  esReqTitle: { ru: "Заявок пока нет", en: "No requests yet" },
+  esReqText: { ru: "Клиенты видят вас в каталоге и оставляют заявки по вашей специализации. Чем полнее профиль, тем чаще выбирают — начните с документов и примера работы.", en: "Clients find you in the catalogue and send requests matching your specialty. The fuller your profile, the more often you are chosen — start with documents and a work sample." },
+  esReqCta: { ru: "Заполнить профиль", en: "Complete profile" },
+  esClientReqTitle: { ru: "У вас ещё нет заявок", en: "You have no requests yet" },
+  esClientReqText: { ru: "Опишите задачу — и подходящие специалисты откликнутся сами, с ценой и сроком. Выбирать будете вы, платить площадке ничего не нужно.", en: "Describe your task and matching specialists will respond themselves, with a price and timeline. The choice is yours, and the platform is free for you." },
+  esClientReqCta: { ru: "Создать заявку", en: "Create a request" },
+
+  // Блоки анкеты специалиста
+  pdSecPersonal: { ru: "Фото и основное", en: "Photo and basics" },
+  pdSecPersonalHint: { ru: "Фотография, пол, возраст", en: "Photo, gender, age" },
+  pdSecIdentity: { ru: "Имя и псевдоним", en: "Name and pseudonym" },
+  pdSecIdentityHint: { ru: "Как вас видят клиенты", en: "How clients see you" },
+  pdSecDocs: { ru: "Документы и статус", en: "Documents and status" },
+  pdSecDocsHint: { ru: "Лицензии, юридический статус, дипломы", en: "Licenses, legal status, diplomas" },
+  pdSecBio: { ru: "О себе", en: "About you" },
+  pdSecBioHint: { ru: "Короткий рассказ о вашем опыте", en: "A short story about your experience" },
+
+  // Чек-лист заполнения профиля
+  pcFill: { ru: "Заполнить", en: "Fill in" },
+  pcDoneAll: { ru: "Профиль заполнен полностью. Клиенты видят вас в каталоге со всеми данными — это заметно повышает шансы, что выберут именно вас.", en: "Your profile is complete. Clients see you in the catalogue with full details — that noticeably improves your chances." },
+  pcAvatar: { ru: "Фотография", en: "Photo" },
+  pcAvatarHint: { ru: "Карточки с живым фото открывают заметно чаще, чем с silhouette-заглушкой.", en: "Cards with a real photo get opened far more often than placeholder ones." },
+  pcName: { ru: "Имя или псевдоним", en: "Name or pseudonym" },
+  pcNameHint: { ru: "Как к вам обращаться клиенту. Если работа требует анонимности — включите псевдоним.", en: "How clients should address you. If your work requires anonymity, switch on a pseudonym." },
+  pcBio: { ru: "О себе", en: "About you" },
+  pcBioHint: { ru: "Пары предложений о специализации и опыте достаточно. Это первое, что читают.", en: "A couple of sentences about your specialty and experience is enough. This is what people read first." },
+  pcContacts: { ru: "Контакты", en: "Contacts" },
+  pcContactsHint: { ru: "Телефон или почта — без них клиент не сможет с вами связаться.", en: "A phone or email — without them a client simply cannot reach you." },
+  pcDocs: { ru: "Документы и лицензии", en: "Documents and licenses" },
+  pcDocsHint: { ru: "Проверенные документы дают отметку доверия рядом с именем.", en: "Verified documents earn a trust mark next to your name." },
+  pcCases: { ru: "Первый кейс", en: "First case" },
+  pcCasesHint: { ru: "Пример работы убеждает лучше любого описания.", en: "One example of your work convinces better than any description." },
+
   // Чат: вложения, геолокация, смайлики
   chatEmoji: { ru: "Смайлики", en: "Emoji" },
   chatPhoto: { ru: "Фото", en: "Photo" },

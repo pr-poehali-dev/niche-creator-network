@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Icon from "@/components/ui/icon";
 import SessionsLog from "@/components/SessionsLog";
 import { useLang } from "@/lib/i18n";
@@ -8,6 +8,9 @@ import { downloadReceipt } from "@/lib/receipt";
 import { trackGoal, GOALS } from "@/lib/analytics";
 import { AvatarUploader, DocFileButton } from "@/components/SharedControls";
 import ResumeTab from "@/components/ResumeTab";
+import ProfileChecklist from "@/components/ProfileChecklist";
+import EmptyState from "@/components/EmptyState";
+import FormSection from "@/components/FormSection";
 import { serviceCategories, services } from "@/lib/servicesCatalog";
 import { L, resolveAvatar, shortName, type Section, type LS } from "@/lib/shared";
 import func2url from "../../backend/func2url.json";
@@ -140,6 +143,23 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
   // Резюме доступно даже без активной подписки: чем больше кандидатов в базе,
   // тем ценнее она для работодателей — это отдельный товар площадки.
   const ALLOWED_WHEN_LOCKED = ["stats", "plan", "resume"];
+
+  // Шаги заполнения профиля. Порядок = порядок важности для клиента:
+  // сперва то, без чего заявку не получить, потом оформление.
+  const checklist = useMemo(() => ([
+    { key: "avatar", done: !!avatarUrl, weight: 2,
+      label: tr("pcAvatar"), hint: tr("pcAvatarHint"), icon: "Camera", goto: "stats" },
+    { key: "name", done: !!vf.fullName.trim() || !!(vf.usePseudonym && vf.pseudonym.trim()), weight: 3,
+      label: tr("pcName"), hint: tr("pcNameHint"), icon: "UserRound", goto: "stats" },
+    { key: "bio", done: vf.bio.trim().length >= 40, weight: 2,
+      label: tr("pcBio"), hint: tr("pcBioHint"), icon: "FileText", goto: "stats" },
+    { key: "contacts", done: !!contacts.phone.trim() || !!contacts.email.trim(), weight: 3,
+      label: tr("pcContacts"), hint: tr("pcContactsHint"), icon: "Phone", goto: "contacts" },
+    { key: "docs", done: vf.licenses.some((l) => l.number.trim()) || vf.documents.length > 0, weight: 3,
+      label: tr("pcDocs"), hint: tr("pcDocsHint"), icon: "BadgeCheck", goto: "stats" },
+    { key: "cases", done: myCases.length > 0, weight: 2,
+      label: tr("pcCases"), hint: tr("pcCasesHint"), icon: "FolderOpen", goto: "cases" },
+  ]), [avatarUrl, vf.fullName, vf.usePseudonym, vf.pseudonym, vf.bio, vf.licenses, vf.documents, contacts.phone, contacts.email, myCases.length, tr]);
 
   useEffect(() => {
     if (locked && !ALLOWED_WHEN_LOCKED.includes(tab)) setTab("stats");
@@ -532,19 +552,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                   <span>{tr("pdStatsEmpty")}</span>
                 </div>
               )}
-              <div className="border border-border rounded-sm bg-card p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("pdProfileFill")}</span>
-                  <span className="text-sm font-montserrat font-bold text-gold">85%</span>
-                </div>
-                <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                  <div className="h-full gold-gradient rounded-full" style={{ width: "85%" }} />
-                </div>
-                <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
-                  <Icon name="ShieldCheck" size={14} className="text-green-400" />
-                  {tr("pdVerified")}
-                </div>
-              </div>
+              <ProfileChecklist steps={checklist} onGo={(t) => handleTab(t as typeof tab)} />
             </>
           )}
 
@@ -884,7 +892,16 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
               <p className="text-[11px] text-muted-foreground mb-4">{tr("pdReqHint")}</p>
               <div className="space-y-3">
                 {visibleIncoming.length === 0 && (
-                  <div className="text-xs text-muted-foreground py-10 text-center border border-dashed border-border rounded-sm">{tr("pdReqEmpty")}</div>
+                  // Вместо серой строчки «нет заявок» — объяснение и путь
+                  // дальше: пустой раздел не должен выглядеть как тупик.
+                  <EmptyState
+                    icon="Inbox"
+                    title={tr("esReqTitle")}
+                    text={tr("esReqText")}
+                    actionLabel={tr("esReqCta")}
+                    onAction={() => handleTab("stats")}
+                    tone="gold"
+                  />
                 )}
                 {visibleIncoming.map((r) => {
                   const cat = serviceCategories.find((c) => c.id === r.category);
@@ -955,6 +972,16 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                 </div>
               )}
 
+              {/* Анкета разбита на сворачиваемые блоки: сплошное полотно из
+                  девяти групп полей отпугивало — не видно ни объёма, ни
+                  того, что уже сделано. */}
+              <FormSection
+                icon="UserRound"
+                title={tr("pdSecPersonal")}
+                hint={tr("pdSecPersonalHint")}
+                done={!!avatarUrl && !!vf.age}
+                defaultOpen
+              >
               {/* Avatar upload */}
               <AvatarUploader current={avatarUrl} gender={vf.gender} role="provider" recordId={slug} onUploaded={setAvatarUrl} />
 
@@ -983,9 +1010,15 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                   <input type="number" min={18} max={100} value={vf.age} onChange={(e) => { setVf({ ...vf, age: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfAge")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
                 </div>
               </div>
-              <div className="divider-gold" />
+              </FormSection>
 
               {/* Pseudonym */}
+              <FormSection
+                icon="VenetianMask"
+                title={tr("pdSecIdentity")}
+                hint={tr("pdSecIdentityHint")}
+                done={!!vf.fullName.trim() || !!(vf.usePseudonym && vf.pseudonym.trim())}
+              >
               <div className="border border-border rounded-sm bg-secondary/40 p-4 space-y-3">
                 <div>
                   <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-1"><Icon name="VenetianMask" size={13} className="text-gold" />{tr("pdVfPseudonym")}</label>
@@ -1005,9 +1038,16 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                 </button>
               </div>
 
-              {/* Страна верификации — определяет, какой документ ожидается ниже
-                  (лицензия ЧОП для РФ, State license для США, номер лицензии ЕС,
-                  для остальных стран — свободный ввод + ссылка в поддержку). */}
+              </FormSection>
+
+              {/* Страна, статус, лицензии и документы — один смысловой блок:
+                  всё, что нужно для проверки документов. */}
+              <FormSection
+                icon="BadgeCheck"
+                title={tr("pdSecDocs")}
+                hint={tr("pdSecDocsHint")}
+                done={vf.licenses.some((l) => l.number.trim()) || vf.documents.length > 0}
+              >
               <div>
                 <label className="text-xs font-montserrat font-semibold text-foreground block mb-2">{tr("pdVfCountry")}</label>
                 <div className="grid grid-cols-4 gap-2 mb-2">
@@ -1145,7 +1185,15 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                 )}
               </div>
 
+              </FormSection>
+
               {/* Bio */}
+              <FormSection
+                icon="FileText"
+                title={tr("pdSecBio")}
+                hint={tr("pdSecBioHint")}
+                done={vf.bio.trim().length >= 40}
+              >
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-montserrat font-semibold text-foreground">{tr("pdVfBio")}</label>
@@ -1160,11 +1208,15 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                 <textarea value={vf.bio} onChange={(e) => { setVf({ ...vf, bio: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfBioPh")} rows={4} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none" />
               </div>
 
+              </FormSection>
+
+              <FormSection
+                icon="Clock"
+                title={tr("pdAvailTitle")}
+                hint={tr("pdAvailHint")}
+                done={vf.alwaysAvailable || !!vf.timezone}
+              >
               <div className="border border-border rounded-sm bg-secondary/40 p-4 space-y-4">
-                <div>
-                  <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-1"><Icon name="Clock" size={13} className="text-gold" />{tr("pdAvailTitle")}</label>
-                  <p className="text-[11px] text-muted-foreground">{tr("pdAvailHint")}</p>
-                </div>
                 <button
                   onClick={() => { setVf({ ...vf, alwaysAvailable: !vf.alwaysAvailable }); setVfState("idle"); }}
                   role="switch"
@@ -1199,6 +1251,8 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                   <p className="text-[10px] text-muted-foreground/70 mt-1.5">{tr("pdTimezoneNote")}</p>
                 </div>
               </div>
+
+              </FormSection>
 
               {vfState === "saved" && <div className="flex items-center gap-2 text-sm text-green-400"><Icon name="CheckCircle2" size={16} />{tr("pdVfSaved")}</div>}
               {vfState === "error" && <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("pdVfSaveErr")}</div>}

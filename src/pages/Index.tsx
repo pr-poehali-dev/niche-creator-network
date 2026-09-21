@@ -2281,6 +2281,18 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
         {p.country && (p.country.ru || p.country.en) && (
           <div className="text-[11px] text-muted-foreground mb-3 flex items-center gap-1"><Icon name="Globe" size={11} className="text-gold" />{L(p.country, lang)}</div>
         )}
+        {/* Главный довод площадки — проверка документов. Раньше он был виден
+            только внутри профиля: в каталоге все карточки выглядели одинаково,
+            и клиент не понимал, чем проверенный специалист отличается от
+            только что зарегистрированного. */}
+        {!p.isDemo && (p.verified || p.licenseVerified) && (
+          <div className="flex items-center gap-1.5 mb-3 text-[11px] text-green-400">
+            <Icon name="ShieldCheck" size={12} className="shrink-0" />
+            <span className="font-montserrat font-semibold">
+              {tr(p.licenseVerified ? "cardLicenseChecked" : "cardDocsChecked")}
+            </span>
+          </div>
+        )}
         <div className="flex flex-wrap gap-1.5 mb-4">
           {tags.slice(0, 4).map((tg) => (<span key={tg} className="chip">{tg}</span>))}
         </div>

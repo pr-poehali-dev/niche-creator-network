@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Icon from "@/components/ui/icon";
 import SessionsLog from "@/components/SessionsLog";
+import EmptyState from "@/components/EmptyState";
 import { useLang } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { authHeaders } from "@/lib/authToken";
@@ -358,7 +359,16 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
 
               <div className="space-y-4">
                 {myReqs.length === 0 && (
-                  <div className="text-xs text-muted-foreground py-10 text-center border border-dashed border-border rounded-sm">{tr("reqEmpty")}</div>
+                  // Клиент с пустым списком должен понимать, что делать:
+                  // кнопка ведёт сразу к созданию заявки.
+                  <EmptyState
+                    icon="FilePlus2"
+                    title={tr("esClientReqTitle")}
+                    text={tr("esClientReqText")}
+                    actionLabel={tr("esClientReqCta")}
+                    onAction={() => setReqFormOpen(true)}
+                    tone="gold"
+                  />
                 )}
                 {myReqs.map((r) => {
                   const cat = serviceCategories.find((c) => c.id === r.category);
