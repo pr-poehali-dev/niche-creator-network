@@ -273,7 +273,7 @@ export default function ResumeTab() {
         {state === "error" && <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("cdClientSaveErr")}</div>}
 
         <button onClick={() => save()} disabled={state === "saving"}
-          className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+          className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-xs font-montserrat font-bold rounded-sm disabled:opacity-60 flex items-center justify-center gap-2">
           {state === "saving" ? <Icon name="Loader" size={15} className="animate-spin" /> : <Icon name="Save" size={15} />}
           {tr("dashSave")}
         </button>

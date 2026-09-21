@@ -130,7 +130,7 @@ function ContactButtons({ p, onChat, compact, onRequireAuth }: { p: Provider; on
         {!compact && <p className="text-[11px] text-muted-foreground mb-2 leading-snug">{tr("demoNoticeText")}</p>}
         <button
           onClick={() => window.dispatchEvent(new Event("shchit:new-request"))}
-          className="w-full gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-2 rounded-sm hover:opacity-90 transition-all"
+          className="w-full gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-2 rounded-sm transition-all"
         >
           {tr("demoNoticeBtn")}
         </button>
@@ -148,7 +148,7 @@ function ContactButtons({ p, onChat, compact, onRequireAuth }: { p: Provider; on
         {!compact && <p className="text-[11px] text-muted-foreground mb-2 leading-snug">{tr("contactsLockedNote")}</p>}
         <button
           onClick={() => (onRequireAuth ? onRequireAuth() : window.dispatchEvent(new Event("shchit:require-auth")))}
-          className="w-full gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-2 rounded-sm hover:opacity-90 transition-all"
+          className="w-full gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-2 rounded-sm transition-all"
         >
           {tr("contactsLockedBtn")}
         </button>
@@ -451,12 +451,12 @@ function CookieBanner({ go }: { go: (s: Section) => void }) {
               в одну строку с текстом, а промахи по ним исчезают. */}
           <div className="flex items-center gap-1 shrink-0 sm:hidden -my-1">
             <button onClick={() => decide("essential")} aria-label={tr("cookieDecline")} className="text-muted-foreground hover:text-foreground text-[11px] font-montserrat font-semibold px-2.5 min-h-[44px] rounded-sm transition-colors">{tr("cookieDeclineShort")}</button>
-            <button onClick={() => decide("accepted")} className="gold-gradient text-[hsl(28,20%,7%)] text-[11px] font-montserrat font-bold px-4 min-h-[44px] rounded-sm hover:opacity-90 transition-opacity">{tr("cookieAccept")}</button>
+            <button onClick={() => decide("accepted")} className="gold-gradient text-[hsl(28,20%,7%)] text-[11px] font-montserrat font-bold px-4 min-h-[44px] rounded-sm">{tr("cookieAccept")}</button>
           </div>
         </div>
         <div className="hidden sm:flex items-center gap-2 justify-end">
           <button onClick={() => decide("essential")} className="text-muted-foreground hover:text-foreground text-xs font-montserrat font-semibold px-3 py-2 rounded-sm transition-colors">{tr("cookieDecline")}</button>
-          <button onClick={() => decide("accepted")} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-5 py-2 rounded-sm hover:opacity-90 transition-opacity">{tr("cookieAccept")}</button>
+          <button onClick={() => decide("accepted")} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-5 py-2 rounded-sm">{tr("cookieAccept")}</button>
         </div>
       </div>
     </div>
@@ -798,10 +798,14 @@ export default function Index() {
       {/* Fixed security strip at the very top */}
       {secBannerOpen && (
         <div className="fixed top-0 left-0 right-0 z-[55] h-9 bg-gradient-to-r from-[hsl(220,20%,9%)] via-[hsl(220,18%,12%)] to-[hsl(220,20%,9%)] border-b border-gold/30">
-          <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-center gap-2 sm:gap-3">
+          {/* Три текста в одну строку не помещались: на планшете заголовок
+              обрезался многоточием, а крестик стоял поверх ссылки. Теперь
+              подпись показываем только на широких экранах, а для крестика
+              зарезервировано место — он больше ни на что не наезжает. */}
+          <div className="max-w-6xl mx-auto ps-4 pe-10 h-full flex items-center justify-center gap-2 lg:gap-3 min-w-0">
             <Icon name="ShieldCheck" size={14} className="text-gold shrink-0" />
             <span className="text-[11px] sm:text-xs font-montserrat font-semibold text-foreground truncate">{tr("secBanner")}</span>
-            <span className="hidden md:inline text-[11px] text-muted-foreground truncate">· {tr("secBannerSub")}</span>
+            <span className="hidden xl:inline text-[11px] text-muted-foreground truncate">· {tr("secBannerSub")}</span>
             <button
               onClick={() => go("policy")}
               className="hidden sm:inline-flex items-center gap-1 text-[11px] font-montserrat font-bold text-gold hover:underline shrink-0"
@@ -811,7 +815,7 @@ export default function Index() {
             </button>
             <button
               onClick={() => setSecBannerOpen(false)}
-              className="absolute end-3 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute end-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
               aria-label="close"
             >
               <Icon name="X" size={15} />
@@ -837,7 +841,11 @@ export default function Index() {
             </div>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-5 mx-4 flex-1 justify-center min-w-0">
+          {/* Меню было доступно только с 1024px — на планшете человек терял
+              навигацию целиком и мог ходить по сайту лишь через подвал.
+              Гостю здесь всего три пункта, они спокойно помещаются; отступы
+              на планшете чуть плотнее, чтобы ничего не наезжало. */}
+          <nav className="hidden md:flex items-center gap-3 lg:gap-5 mx-2 lg:mx-4 flex-1 justify-center min-w-0">
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
@@ -863,7 +871,7 @@ export default function Index() {
                     )}
                   </button>
                 )}
-                <button onClick={() => go("dashboard")} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(28,20%,7%)] px-3 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity shrink-0 whitespace-nowrap">
+                <button onClick={() => go("dashboard")} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(28,20%,7%)] px-3 py-2 text-sm font-montserrat font-bold rounded-sm shrink-0 whitespace-nowrap">
                   <Icon name="LayoutDashboard" size={15} />
                   {tr("authCabinet")}
                 </button>
@@ -872,7 +880,7 @@ export default function Index() {
                 </button>
               </>
             ) : (
-              <button onClick={openCabinet} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(28,20%,7%)] px-3 py-2 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity shrink-0 whitespace-nowrap">
+              <button onClick={openCabinet} className="hidden sm:flex items-center gap-1.5 gold-gradient text-[hsl(28,20%,7%)] px-3 py-2 text-sm font-montserrat font-bold rounded-sm shrink-0 whitespace-nowrap">
                 <Icon name="LogIn" size={15} />
                 {tr("authCabinet")}
               </button>
@@ -907,7 +915,7 @@ export default function Index() {
                       )}
                     </button>
                   )}
-                  <button onClick={() => go("dashboard")} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                  <button onClick={() => go("dashboard")} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm flex items-center justify-center gap-2">
                     <Icon name="LayoutDashboard" size={16} />
                     {tr("authCabinet")}
                   </button>
@@ -917,7 +925,7 @@ export default function Index() {
                   </button>
                 </>
               ) : (
-                <button onClick={openCabinet} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                <button onClick={openCabinet} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm flex items-center justify-center gap-2">
                   <Icon name="LogIn" size={16} />
                   {tr("authCabinet")}
                 </button>
@@ -1045,7 +1053,7 @@ export default function Index() {
             <h3 className="font-montserrat font-bold text-lg text-foreground mb-2">{tr("regRequiredTitle")}</h3>
             <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{tr("regRequiredText")}</p>
             <div className="flex flex-col gap-2">
-              <button onClick={() => { setRegGateOpen(false); go("dashboard"); }} className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+              <button onClick={() => { setRegGateOpen(false); go("dashboard"); }} className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm">
                 {tr("regRequiredBtn")}
               </button>
               <button onClick={() => setRegGateOpen(false)} className="text-xs text-muted-foreground hover:text-foreground font-montserrat py-2">
@@ -1064,7 +1072,7 @@ export default function Index() {
             </div>
             <h2 className="font-montserrat font-extrabold text-xl text-foreground mb-2">{tr("paywallTitle")}</h2>
             <p className="text-sm text-muted-foreground mb-6">{tr("paywallText")}</p>
-            <button onClick={() => { setPaywallOpen(false); setActive("dashboard"); window.scrollTo({ top: 0 }); }} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity mb-2">
+            <button onClick={() => { setPaywallOpen(false); setActive("dashboard"); window.scrollTo({ top: 0 }); }} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 font-montserrat font-bold text-sm rounded-sm mb-2">
               {tr("paywallBtn")}
             </button>
             <button onClick={() => setPaywallOpen(false)} className="w-full text-xs text-muted-foreground hover:text-foreground py-2 font-montserrat font-semibold">
@@ -1265,7 +1273,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
             <div className="flex flex-wrap gap-3 items-center">
               <button
                 onClick={() => setActive(isClient ? "services" : "dashboard")}
-                className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-6 sm:px-9 py-3.5 sm:py-4 font-montserrat font-extrabold text-sm sm:text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm flex items-center gap-2.5"
+                className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-6 sm:px-9 py-3.5 sm:py-4 font-montserrat font-extrabold text-sm sm:text-base tracking-wide rounded-sm glow-gold-sm flex items-center gap-2.5"
               >
                 <Icon name="Search" size={18} />
                 {tr(isClient ? "heroClientCta1" : "heroProviderFindOrders")}
@@ -1396,7 +1404,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               </div>
               <button
                 onClick={() => setActive("mobileapp")}
-                className="shrink-0 gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2 whitespace-nowrap"
+                className="shrink-0 gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 font-montserrat font-bold text-sm rounded-sm inline-flex items-center gap-2 whitespace-nowrap"
               >
                 <Icon name="Download" size={16} />
                 {tr("appBannerBtn")}
@@ -1431,7 +1439,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
               ))}
             </div>
             <div className="text-center mt-10">
-              <button onClick={() => setActive("dashboard")} className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-8 py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity glow-gold-sm inline-flex items-center gap-2">
+              <button onClick={() => setActive("dashboard")} className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-8 py-3.5 font-montserrat font-bold text-sm rounded-sm glow-gold-sm inline-flex items-center gap-2">
                 <Icon name="Search" size={16} />
                 {tr("heroProviderFindOrders")}
               </button>
@@ -1617,7 +1625,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 {tr("proCtaDesc")}
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3">
-                <button onClick={() => setActive("community")} className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm">
+                <button onClick={() => setActive("community")} className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-10 py-4 font-montserrat font-bold text-sm tracking-wide rounded-sm glow-gold-sm">
                   {tr("proOpenCommunity")}
                 </button>
                 <button onClick={() => setActive("contacts")} className="border border-border text-foreground px-8 py-4 font-montserrat font-semibold text-sm hover:border-gold hover:text-gold transition-all rounded-sm">
@@ -2400,14 +2408,14 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
             )}
             <button
               onClick={() => window.dispatchEvent(new CustomEvent("shchit:new-request"))}
-              className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2"
+              className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm inline-flex items-center gap-2"
             >
               <Icon name="Send" size={14} />{tr("noResultsCta")}
             </button>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
           {results.map((p) => (
             <ProviderResultCard key={p.slug} p={p} onOpen={() => (openSpecialist ? openSpecialist(p) : setActive("profile"))} />
           ))}
@@ -2483,7 +2491,7 @@ function SpecialistsListSection({ setActive, openSpecialist }: { setActive: (s: 
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">{tr("catalogEarlyNote")}</p>
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("shchit:new-request"))}
-                className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2"
+                className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 text-xs font-montserrat font-bold rounded-sm inline-flex items-center gap-2"
               >
                 <Icon name="Send" size={14} />{tr("noResultsCta")}
               </button>
@@ -2498,7 +2506,7 @@ function SpecialistsListSection({ setActive, openSpecialist }: { setActive: (s: 
           <span className="text-sm text-muted-foreground">{tr("filterNoResults")}</span>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
           {list.map((p) => (
             <ProviderResultCard key={p.slug} p={p} onOpen={() => (openSpecialist ? openSpecialist(p) : setActive("profile"))} />
           ))}
@@ -2821,7 +2829,7 @@ function GuardsSection() {
       </div>
 
       {companies.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
           {companies.map((g) => (
             <ProviderResultCard key={g.slug} p={g} onOpen={() => { /* профиль откроется из каталога */ }} />
           ))}
@@ -3038,7 +3046,7 @@ function LegalDocSection({ doc, setActive, showFaq }: { doc: LegalDoc; setActive
             <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-6">{tr("polContactText")}</p>
             <button
               onClick={() => setActive("contacts")}
-              className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+              className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm"
             >
               {tr("polContactBtn")}
             </button>

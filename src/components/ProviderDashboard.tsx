@@ -479,7 +479,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
             <div className="font-montserrat font-bold text-sm text-foreground">{tr("paywallTitle")}</div>
             <div className="text-xs text-muted-foreground">{tr("paywallText")}</div>
           </div>
-          <button onClick={() => setTab("plan")} className="shrink-0 gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+          <button onClick={() => setTab("plan")} className="shrink-0 gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm">
             {tr("paywallBtn")}
           </button>
         </div>
@@ -597,7 +597,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                         {tr("pdNoSub")}
                       </div>
                     )}
-                    <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{active ? tr("pdChangePlan") : tr("choosePlan")}</button>
+                    <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm">{active ? tr("pdChangePlan") : tr("choosePlan")}</button>
                   </div>
                 );
               })()}
@@ -629,7 +629,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                       </div>
                     ))}
                   </div>
-                  <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity glow-gold-sm inline-flex items-center gap-2">
+                  <button onClick={() => setActive("pricing")} className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-2.5 text-xs font-montserrat font-bold rounded-sm glow-gold-sm inline-flex items-center gap-2">
                     <Icon name="Crown" size={14} />{tr("pdUpgradePremium")}
                   </button>
                 </div>
@@ -874,7 +874,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                       <button
                         onClick={() => markTaskDone(t.id)}
                         disabled={markingDone === t.id}
-                        className="w-full gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-1.5"
+                        className="w-full gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold py-2 rounded-sm disabled:opacity-60 flex items-center justify-center gap-1.5"
                       >
                         {markingDone === t.id ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="CheckCircle2" size={14} />}
                         {tr("pdMarkDone")}
@@ -940,12 +940,12 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                             <input value={draft.price} onChange={(e) => setRespDraft({ ...respDraft, [r.id]: { ...draft, price: e.target.value } })} placeholder={tr("pdOfferPrice")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
                             <textarea value={draft.message} onChange={(e) => setRespDraft({ ...respDraft, [r.id]: { ...draft, message: e.target.value } })} rows={2} placeholder={tr("pdOfferMsg")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold resize-none" />
                             <div className="flex gap-2">
-                              <button onClick={() => sendResponse(r.id)} className="flex-1 gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90">{tr("pdSendOffer")}</button>
+                              <button onClick={() => sendResponse(r.id)} className="flex-1 gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold py-2 rounded-sm">{tr("pdSendOffer")}</button>
                               <button onClick={() => setRespOpen(null)} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm">{tr("cancel")}</button>
                             </div>
                           </div>
                         ) : (
-                          <button onClick={() => setRespOpen(r.id)} className="w-full gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold py-2 rounded-sm hover:opacity-90 transition-opacity">{responded ? tr("pdEditOffer") : tr("pdRespond")}</button>
+                          <button onClick={() => setRespOpen(r.id)} className="w-full gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold py-2 rounded-sm">{responded ? tr("pdEditOffer") : tr("pdRespond")}</button>
                         )
                       )}
                     </div>
@@ -1256,7 +1256,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
 
               {vfState === "saved" && <div className="flex items-center gap-2 text-sm text-green-400"><Icon name="CheckCircle2" size={16} />{tr("pdVfSaved")}</div>}
               {vfState === "error" && <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("pdVfSaveErr")}</div>}
-              <button onClick={saveVerification} disabled={vfState === "saving"} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+              <button onClick={saveVerification} disabled={vfState === "saving"} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm disabled:opacity-60 flex items-center justify-center gap-2">
                 {vfState === "saving" ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Save" size={16} />}
                 {tr("dashSave")}
               </button>
@@ -1313,7 +1313,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                         ) : p.friendStatus === "pending" ? (
                           <span className="tag-security shrink-0 text-gold border-gold/40">{tr(p.incoming ? "pdReqIncoming" : "pdRequestPending")}</span>
                         ) : (
-                          <button onClick={() => sendFriendRequest(p.userId)} disabled={friendBusy} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5">
+                          <button onClick={() => sendFriendRequest(p.userId)} disabled={friendBusy} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 disabled:opacity-50 flex items-center gap-1.5">
                             <Icon name="UserPlus" size={13} />{tr("pdAddFriend")}
                           </button>
                         )}
@@ -1335,7 +1335,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-montserrat font-semibold text-foreground truncate">{r.provider ? L(r.provider.name, lang) : `#${r.userId}`}</div>
                         </div>
-                        <button onClick={() => respondFriendRequest(r.requestId, true)} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0 hover:opacity-90">{tr("pdAccept")}</button>
+                        <button onClick={() => respondFriendRequest(r.requestId, true)} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-3 py-1.5 rounded-sm shrink-0">{tr("pdAccept")}</button>
                         <button onClick={() => respondFriendRequest(r.requestId, false)} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-3 py-1.5 rounded-sm shrink-0">{tr("pdDecline")}</button>
                       </div>
                     ))}
@@ -1497,7 +1497,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
               <button
                 onClick={saveContacts}
                 disabled={saveState === "saving"}
-                className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2"
+                className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 {saveState === "saving" ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Save" size={16} />}
                 {tr("dashSave")}
@@ -1516,7 +1516,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
             </div>
             <h2 className="font-montserrat font-extrabold text-xl text-foreground mb-2">{tr("paywallTitle")}</h2>
             <p className="text-sm text-muted-foreground mb-6">{tr("paywallText")}</p>
-            <button onClick={() => { setPaywallOpen(false); setTab("plan"); }} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity mb-2">
+            <button onClick={() => { setPaywallOpen(false); setTab("plan"); }} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 font-montserrat font-bold text-sm rounded-sm mb-2">
               {tr("paywallBtn")}
             </button>
             <button onClick={() => setPaywallOpen(false)} className="w-full text-xs text-muted-foreground hover:text-foreground py-2 font-montserrat font-semibold">

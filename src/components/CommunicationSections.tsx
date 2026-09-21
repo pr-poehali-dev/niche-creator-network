@@ -589,7 +589,7 @@ export function ContactsSection() {
               {fbState === "error" && (
                 <div className="flex items-center gap-2 text-sm text-destructive"><Icon name="CircleAlert" size={16} />{tr("feedbackError")}</div>
               )}
-              <button onClick={sendFeedback} disabled={!canSend} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
+              <button onClick={sendFeedback} disabled={!canSend} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3.5 font-montserrat font-bold text-sm rounded-sm disabled:opacity-50 flex items-center justify-center gap-2">
                 {fbState === "sending" ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Send" size={16} />}
                 {tr("sendMessage")}
               </button>

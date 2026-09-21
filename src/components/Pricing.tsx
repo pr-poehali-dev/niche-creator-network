@@ -191,7 +191,7 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
                     <button
                       onClick={sendEmail}
                       disabled={emailState === "sending" || !email.includes("@")}
-                      className="shrink-0 gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-1.5"
+                      className="shrink-0 gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50 flex items-center gap-1.5"
                     >
                       {emailState === "sending" ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="Send" size={14} />}
                       <span className="hidden sm:inline">{tr(emailState === "sending" ? "payEmailSending" : "payEmailSend")}</span>
@@ -206,7 +206,7 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
               <Icon name="Download" size={15} />
               {tr("payDownloadPdf")}
             </button>
-            <button onClick={onClose} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">{tr("payDone")}</button>
+            <button onClick={onClose} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm">{tr("payDone")}</button>
           </div>
         ) : (
           <div className="p-6">
@@ -321,7 +321,7 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
             )}
 
             <button onClick={pay} disabled={status === "processing"}
-              className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3.5 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+              className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3.5 text-sm font-montserrat font-bold rounded-sm disabled:opacity-60 flex items-center justify-center gap-2">
               {status === "processing" ? (
                 <><Icon name="Loader" size={16} className="animate-spin" /> {tr("payProcessing")}</>
               ) : (

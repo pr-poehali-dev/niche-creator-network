@@ -119,7 +119,7 @@ export default function ResumeSearch() {
           <div className="font-montserrat font-bold text-lg text-foreground mb-2">{tr("resNeedAuthTitle")}</div>
           <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto leading-relaxed">{tr("resNeedAuthDesc")}</p>
           <button onClick={() => window.dispatchEvent(new CustomEvent("shchit:require-auth"))}
-            className="gold-gradient text-[hsl(28,20%,7%)] px-7 py-3 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity">
+            className="gold-gradient text-[hsl(28,20%,7%)] px-7 py-3 text-xs font-montserrat font-bold rounded-sm">
             {tr("authCabinet")}
           </button>
         </div>
@@ -136,7 +136,7 @@ export default function ResumeSearch() {
             <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl">{tr("resPaywallDesc")}</p>
           </div>
           <button onClick={() => setPayOpen(true)}
-            className="shrink-0 gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center gap-2">
+            className="shrink-0 gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-xs font-montserrat font-bold rounded-sm flex items-center gap-2">
             <Icon name="Wallet" size={15} />{tr("resPaywallCta")}
           </button>
         </div>

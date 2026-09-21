@@ -347,7 +347,7 @@ export function Composer({ value, onChange, onSend, replyTo, onCancelReply, disa
           onClick={fire}
           disabled={!canSend}
           aria-label={tr("writeMessage")}
-          className="w-10 h-10 shrink-0 gold-gradient text-[hsl(28,20%,7%)] rounded-sm flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-40"
+          className="w-10 h-10 shrink-0 gold-gradient text-[hsl(28,20%,7%)] rounded-sm flex items-center justify-center disabled:opacity-40"
         >
           <Icon name="Send" size={17} />
         </button>

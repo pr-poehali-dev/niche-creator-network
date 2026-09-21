@@ -94,7 +94,7 @@ export function InstallPromptBanner({ setActive }: { setActive: (s: Section) => 
         <div className="flex flex-col gap-1.5 shrink-0">
           <button
             onClick={install}
-            className="gold-gradient text-[hsl(28,20%,7%)] px-3.5 py-2 font-montserrat font-bold text-xs rounded-sm hover:opacity-90 transition-opacity whitespace-nowrap"
+            className="gold-gradient text-[hsl(28,20%,7%)] px-3.5 py-2 font-montserrat font-bold text-xs rounded-sm whitespace-nowrap"
           >
             {tr("installBannerBtn")}
           </button>
@@ -230,7 +230,7 @@ export function MobileAppSection({ setActive }: { setActive: (s: Section) => voi
           <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">{installEvt ? tr("maQuickText") : tr("maQuickTextManual")}</p>
           <button aria-label="Скачать"
             onClick={doInstall}
-            className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3.5 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2 glow-gold-sm"
+            className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3.5 font-montserrat font-bold text-sm rounded-sm inline-flex items-center gap-2 glow-gold-sm"
           >
             <Icon name="Download" size={16} />
             {tr("maQuickBtn")}
@@ -306,7 +306,7 @@ export function MobileAppSection({ setActive }: { setActive: (s: Section) => voi
         <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-6">{tr("maHelpText")}</p>
         <button
           onClick={() => setActive("contacts")}
-          className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+          className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm"
         >
           {tr("maHelpBtn")}
         </button>
@@ -366,7 +366,7 @@ export function HowItWorksSection({ setActive }: { setActive: (s: Section) => vo
         </div>
         <button
           onClick={() => setActive("dashboard")}
-          className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity"
+          className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm"
         >
           {tr("earlyBtn")}
         </button>
@@ -391,7 +391,7 @@ export function HowItWorksSection({ setActive }: { setActive: (s: Section) => vo
         <h2 className="font-montserrat font-bold text-xl text-foreground mb-2">{tr("hiwCtaTitle")}</h2>
         <button
           onClick={() => setActive("dashboard")}
-          className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+          className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm"
         >
           {tr("hiwCtaBtn")}
         </button>
@@ -523,7 +523,7 @@ export function AboutSection({ setActive }: { setActive: (s: Section) => void })
         <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-6">{tr("aboutCtaText")}</p>
         <button
           onClick={() => setActive("contacts")}
-          className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+          className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm"
         >
           {tr("aboutCtaBtn")}
         </button>
@@ -692,7 +692,7 @@ function BlogArticle({ post, allPosts, onBack, onOpenPost, onOpenCat, onOpenPric
         <a
           href={forProvider ? "/?section=pricing" : `/?section=services&cat=${catId}`}
           onClick={(e) => { e.preventDefault(); if (forProvider) onOpenPricing(); else onOpenCat(catId); }}
-          className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2 mt-4"
+          className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm inline-flex items-center gap-2 mt-4"
         >
           <Icon name={forProvider ? "BadgeCheck" : "Search"} size={16} />
           {forProvider ? tr("blogGoPricing") : tr("blogGoCat")}
@@ -940,7 +940,7 @@ export function SecurityPolicySection({ setActive }: { setActive: (s: Section) =
             <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-6">{tr("polContactText")}</p>
             <button
               onClick={() => setActive("contacts")}
-              className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm hover:opacity-90 transition-opacity"
+              className="gold-gradient text-[hsl(28,20%,7%)] px-8 py-3 font-montserrat font-bold text-sm rounded-sm"
             >
               {tr("polContactBtn")}
             </button>

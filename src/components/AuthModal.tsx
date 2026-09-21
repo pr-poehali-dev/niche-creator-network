@@ -125,7 +125,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
             <>
               <h3 className="font-montserrat font-bold text-lg text-foreground mb-1">{tr("authResetDoneTitle")}</h3>
               <p className="text-xs text-muted-foreground mb-5">{tr("authResetDoneDesc")}</p>
-              <button onClick={backToLogin} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+              <button onClick={backToLogin} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm flex items-center justify-center gap-2">
                 <Icon name="LogIn" size={16} />{tr("authTabLogin")}
               </button>
             </>
@@ -149,7 +149,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
                   <Icon name="CircleAlert" size={14} className="shrink-0" />{error}
                 </div>
               )}
-              <button onClick={doResetRequest} disabled={busy || !email.trim()} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
+              <button onClick={doResetRequest} disabled={busy || !email.trim()} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm disabled:opacity-50 flex items-center justify-center gap-2">
                 {busy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Send" size={16} />}
                 {tr("authForgotSend")}
               </button>
@@ -182,7 +182,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
                   <Icon name="CircleAlert" size={14} className="shrink-0" />{error}
                 </div>
               )}
-              <button onClick={doResetConfirm} disabled={busy || resetCode.length !== 6 || !newPass} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
+              <button onClick={doResetConfirm} disabled={busy || resetCode.length !== 6 || !newPass} className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm disabled:opacity-50 flex items-center justify-center gap-2">
                 {busy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="ShieldCheck" size={16} />}
                 {tr("authResetConfirm")}
               </button>
@@ -231,7 +231,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
           <button
             onClick={submitCode}
             disabled={busy || code.length !== 6}
-            className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {busy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="LogIn" size={16} />}
             {tr("auth2faConfirm")}
@@ -296,7 +296,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
               <button
                 onClick={submit}
                 disabled={busy}
-                className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60"
+                className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {busy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="LogIn" size={16} />}
                 {busy ? tr("authBusy") : tr("authAdminBtn")}
@@ -425,7 +425,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
             <button
               onClick={submit}
               disabled={busy}
-              className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full gold-gradient text-[hsl(28,20%,7%)] py-3 text-sm font-montserrat font-bold rounded-sm flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {busy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name={mode === "login" ? "LogIn" : "UserPlus"} size={16} />}
               {busy ? tr("authBusy") : tr(mode === "login" ? "authLoginBtn" : "authRegisterBtn")}

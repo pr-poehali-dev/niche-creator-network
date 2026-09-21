@@ -32,7 +32,7 @@ export default function EmptyState({
       {actionLabel && onAction && (
         <button
           onClick={onAction}
-          className="mt-5 gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity"
+          className="mt-5 gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm"
         >
           {actionLabel}
         </button>
