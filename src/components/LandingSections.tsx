@@ -276,7 +276,9 @@ export function LandingStats() {
   // скорость отклика. Все цифры настоящие, из базы.
   const stats = [
     { value: real ? String(real.cities) : "—", key: "lpStat1" as const, icon: "MapPin" },
-    { value: "5", key: "lpStat2" as const, icon: "LayoutGrid" },
+    // В каталоге четыре направления — цифра должна совпадать с тем, что
+    // человек увидит, перейдя в каталог. Раньше здесь стояло «5».
+    { value: "4", key: "lpStat2" as const, icon: "LayoutGrid" },
     { value: "7", key: "lpStat3" as const, icon: "Languages" },
     { value: real ? String(real.countries) : "—", key: "lpStat4" as const, icon: "Globe" },
   ];

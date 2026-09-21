@@ -45,7 +45,7 @@ const ChatSection = lazy(() => import("@/components/CommunicationSections").then
 import func2url from "../../backend/func2url.json";
 
 import {
-  HERO_IMAGE, POLYGRAPH_IMAGE, DETECTIVE_IMAGE, GUARDS_IMAGE, HERO_BG, GUARDS_BG,
+  HERO_IMAGE, POLYGRAPH_IMAGE, DETECTIVE_IMAGE, HERO_BG, GUARDS_BG,
   CLIENT_NAV, PROVIDER_NAV, GUEST_NAV,
   L, resolveAvatar, isImageUrl,
   type Section, type Role,
@@ -315,116 +315,13 @@ function LangSwitcher({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => voi
   );
 }
 
-const specialists = [
-  {
-    name: { ru: "Александр Морозов", en: "Alexander Morozov" },
-    title: { ru: "Полиграфолог", en: "Polygraph examiner" },
-    rating: 4.9,
-    reviews: 134,
-    cases: 312,
-    experience: 12,
-    city: { ru: "Москва", en: "Moscow" },
-    lat: 55.7558,
-    lon: 37.6173,
-    price: { ru: "от 8 000 ₽", en: "from $90" },
-    verified: true,
-    tags: [
-      { ru: "Полиграф", en: "Polygraph" },
-      { ru: "HR-проверки", en: "HR screening" },
-      { ru: "Корпоративная безопасность", en: "Corporate security" },
-    ],
-    img: DETECTIVE_IMAGE,
-  },
-  {
-    name: { ru: "Елена Власова", en: "Elena Vlasova" },
-    title: { ru: "Частный детектив", en: "Private investigator" },
-    rating: 4.8,
-    reviews: 87,
-    cases: 198,
-    experience: 9,
-    city: { ru: "Лондон", en: "London" },
-    lat: 51.5074,
-    lon: -0.1278,
-    price: { ru: "от 12 000 ₽", en: "from $140" },
-    verified: true,
-    tags: [
-      { ru: "Розыск", en: "Tracing" },
-      { ru: "Наружное наблюдение", en: "Surveillance" },
-      { ru: "Сбор доказательств", en: "Evidence gathering" },
-    ],
-    img: HERO_IMAGE,
-  },
-  {
-    name: { ru: "Игорь Семёнов", en: "Igor Semenov" },
-    title: { ru: "Специалист по TSCM", en: "TSCM specialist" },
-    rating: 5.0,
-    reviews: 62,
-    cases: 145,
-    experience: 15,
-    city: { ru: "Дубай", en: "Dubai" },
-    lat: 25.2048,
-    lon: 55.2708,
-    price: { ru: "от 25 000 ₽", en: "from $280" },
-    verified: true,
-    tags: [
-      { ru: "Поиск жучков", en: "Bug sweeping" },
-      { ru: "Контрразведка", en: "Counterintelligence" },
-      { ru: "Защита переговоров", en: "Meeting protection" },
-    ],
-    img: POLYGRAPH_IMAGE,
-  },
-];
+// Демо-список выдуманных специалистов удалён: он подставлял чужие имена,
+// рейтинги и «312 кейсов» в профиль реального человека.
 
-const guards = [
-  {
-    name: { ru: "ЧОО «Легион Секьюрити»", en: "Legion Security Ltd." },
-    type: { ru: "Физическая охрана · Москва", en: "Physical security · Moscow" },
-    rating: 4.9,
-    reviews: 210,
-    employees: 480,
-    objects: 320,
-    founded: 2008,
-    price: { ru: "от 180 ₽/час", en: "from $2/hour" },
-    tags: [
-      { ru: "Охрана объектов", en: "Site guarding" },
-      { ru: "Пультовая охрана", en: "Alarm monitoring" },
-      { ru: "Инкассация", en: "Cash-in-transit" },
-    ],
-    img: GUARDS_IMAGE,
-  },
-  {
-    name: { ru: "Global Shield Group", en: "Global Shield Group" },
-    type: { ru: "Личная охрана · Дубай", en: "Close protection · Dubai" },
-    rating: 5.0,
-    reviews: 96,
-    employees: 260,
-    objects: 140,
-    founded: 2012,
-    price: { ru: "от 9 000 ₽/смена", en: "from $100/shift" },
-    tags: [
-      { ru: "Телохранители", en: "Bodyguards" },
-      { ru: "VIP-сопровождение", en: "VIP escort" },
-      { ru: "Анализ угроз", en: "Threat analysis" },
-    ],
-    img: HERO_IMAGE,
-  },
-  {
-    name: { ru: "Sentinel Protective Services", en: "Sentinel Protective Services" },
-    type: { ru: "Корпоративная охрана · Лондон", en: "Corporate security · London" },
-    rating: 4.8,
-    reviews: 154,
-    employees: 620,
-    objects: 410,
-    founded: 2005,
-    price: { ru: "от 220 ₽/час", en: "from $2.5/hour" },
-    tags: [
-      { ru: "Бизнес-центры", en: "Business centres" },
-      { ru: "Видеонаблюдение", en: "CCTV monitoring" },
-      { ru: "Контроль доступа", en: "Access control" },
-    ],
-    img: GUARDS_IMAGE,
-  },
-];
+
+// Список выдуманных охранных компаний удалён: показываем только реальные,
+// прошедшие проверку документов.
+
 
 const guardServices = [
   { icon: "Building2", title: { ru: "Охрана объектов", en: "Site security" }, desc: { ru: "Круглосуточная физическая охрана офисов, складов, ТЦ и промышленных объектов", en: "24/7 physical security for offices, warehouses, malls and industrial sites" } },
@@ -836,6 +733,14 @@ export default function Index() {
       // База резюме показывает гостю приглашение войти, а не пустую главную:
       // по ссылке «ищу сотрудника» должен открываться понятный экран.
       if (active === "resumes") return <ResumeSearch />;
+      // Контакты, охранные предприятия, кейсы и курсы — тоже публичные
+      // страницы: они есть в меню, в подвале и в карте сайта. Гость по
+      // ссылке на них молча получал главную — и человек, и поисковый робот
+      // видели дубль вместо обещанной страницы.
+      if (active === "contacts") return <ContactsSection />;
+      if (active === "guards") return <GuardsSection />;
+      if (active === "cases") return <CasesSection />;
+      if (active === "courses") return <CoursesSection />;
       if (active === "profile" && selectedProvider) return <SpecialistProfileSection provider={selectedProvider} onBack={goBack} openChat={openChat} />;
       return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} onBrowse={() => go("services")} />;
     }
@@ -1971,7 +1876,11 @@ function ProfileSection({ setActive, openChat }: { setActive: (s: Section) => vo
                 <img src={DETECTIVE_IMAGE} alt="Аватар" loading="lazy" className="w-full h-full object-cover" />
               </div>
               <div className="flex items-center gap-2 mb-1">
-                <div className="font-montserrat font-bold text-lg text-foreground">{L(specialists[0].name, lang)}</div>
+                {/* Имя и данные берём из анкеты самого специалиста. Раньше
+                    здесь стояло имя выдуманного «Александра Морозова» с его
+                    рейтингом и «312 кейсами» — человек открывал свой профиль
+                    и видел чужую карточку с накрученными цифрами. */}
+                <div className="font-montserrat font-bold text-lg text-foreground">{provider ? L(provider.name, lang) : tr("profileNoData")}</div>
                 {provider && isLicensed(provider) && (
                   <span className="flex items-center gap-1 bg-gold/10 border border-gold/40 px-2 py-0.5 rounded-sm" title={tr("licenseBadge")}>
                     <Icon name="BadgeCheck" size={13} className="text-gold" />
@@ -1979,18 +1888,20 @@ function ProfileSection({ setActive, openChat }: { setActive: (s: Section) => vo
                   </span>
                 )}
               </div>
-              <div className="text-gold text-xs font-montserrat font-medium mb-1">{L(specialists[0].title, lang)} · 12 {tr("yearsShort")}</div>
-              <div className="text-xs text-muted-foreground mb-4">{L(specialists[0].city, lang)}</div>
-              <div className="flex items-center gap-2 mb-4">
-                <StarRating rating={4.9} />
-                <span className="text-xs text-muted-foreground">4.9 (134 отзыва)</span>
-              </div>
+              <div className="text-gold text-xs font-montserrat font-medium mb-1">{provider ? L(provider.title, lang) : ""}</div>
+              <div className="text-xs text-muted-foreground mb-4">{provider ? L(provider.city, lang) : ""}</div>
+              {/* Рейтинг и счётчики показываем только когда за ними стоят
+                  реальные сделки. Пока отзывов нет — честная подпись вместо
+                  нарисованных «4.9» и «98% успеха». */}
+              {provider && provider.reviews > 0 ? (
+                <div className="flex items-center gap-2 mb-4">
+                  <StarRating rating={provider.rating} />
+                  <span className="text-xs text-muted-foreground">{provider.rating} ({provider.reviews})</span>
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground mb-4">{tr("profileNoReviews")}</div>
+              )}
               <div className="divider-gold mb-4" />
-              <div className="grid grid-cols-3 text-center gap-2 mb-4">
-                <div><div className="stat-number stat-appear text-xl" data-reveal-delay={0}>312</div><div className="text-[10px] text-muted-foreground">{tr("casesCount")}</div></div>
-                <div><div className="stat-number stat-appear text-xl" data-reveal-delay={90}>134</div><div className="text-[10px] text-muted-foreground">{tr("reviewsCount")}</div></div>
-                <div><div className="stat-number stat-appear text-xl" data-reveal-delay={180}>98%</div><div className="text-[10px] text-muted-foreground">{tr("success")}</div></div>
-              </div>
               <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-montserrat font-semibold mb-2">{tr("contactTitle")}</div>
               {provider && <AvailabilityNote p={provider} />}
               {provider && <ContactButtons p={provider} onChat={() => openChat({ name: L(provider.name, lang), title: L(provider.title, lang), avatar: provider.img })} />}
@@ -2136,76 +2047,48 @@ function CasesSection() {
     { ru: "Корпоративная безопасность", en: "Corporate security" },
   ];
 
+  // Раньше здесь висели три «кейса» от несуществующих людей — с фамилиями,
+  // просмотрами, лайками и рейтингом авторов («312 кейсов»). При 17
+  // зарегистрированных пользователях и пустой таблице отзывов это заметная
+  // подделка, а на платформе, которая продаёт доверие, подделка стоит
+  // дороже, чем пустой раздел. Настоящих кейсов пока нет: показываем
+  // разборы типовых задач без вымышленных авторов и накрученных счётчиков.
+  const visible = filter === "All" ? cases : cases.filter((c) => c.category.en === filter);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-        <div>
-          <div className="tag-security mb-3 inline-block">{tr("knowledgeBase")}</div>
-          <h2 className="font-montserrat font-bold text-3xl text-foreground">{tr("proCases")}</h2>
-        </div>
-        <button className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm self-start md:self-auto">
-          {tr("publishCase")}
-        </button>
+    <div className="max-w-4xl mx-auto px-4 py-10">
+      <div className="mb-6">
+        <div className="tag-security mb-3 inline-block">{tr("knowledgeBase")}</div>
+        <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">{tr("proCases")}</h2>
+        <p className="text-sm text-muted-foreground max-w-2xl">{tr("casesIntro")}</p>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-8">
+      <div className="flex flex-wrap gap-2 mb-6">
         {cats.map((c) => (
           <button key={c.en} onClick={() => setFilter(c.en)}
-            className={`px-4 py-1.5 text-xs font-montserrat font-semibold rounded-sm border transition-all ${filter === c.en ? "border-gold bg-gold/10 text-gold" : "border-border text-muted-foreground hover:border-gold/40"}`}>
+            className={`px-4 py-2 text-xs font-montserrat font-semibold rounded-sm border transition-all ${filter === c.en ? "border-gold bg-gold/10 text-gold" : "border-border text-muted-foreground hover:border-gold/40"}`}>
             {L(c, lang)}
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 space-y-4 stagger">
-          {cases.map((c) => (
-            <div key={c.title.en} className="border border-border rounded-sm bg-card p-6 card-lift shine-on-hover cursor-pointer">
-              <div className="flex items-start gap-3 mb-3">
-                <span className="chip">{L(c.category, lang)}</span>
-                <span className="text-[10px] text-muted-foreground ml-auto">{L(c.date, lang)}</span>
-              </div>
-              <h3 className="font-montserrat font-bold text-base text-foreground mb-2 leading-snug">{L(c.title, lang)}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-4">{L(c.summary, lang)}</p>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-5 h-5 gold-gradient rounded-sm flex items-center justify-center">
-                    <Icon name="User" size={10} className="text-[hsl(28,20%,7%)]" />
-                  </div>
-                  <span className="text-xs text-muted-foreground">{L(c.author, lang)}</span>
-                </div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground ml-auto"><Icon name="Eye" size={12} /><span>{c.views}</span></div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground"><Icon name="Heart" size={12} /><span>{c.likes}</span></div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground"><Icon name="MessageSquare" size={12} /><span>12</span></div>
-              </div>
+      <div className="space-y-4">
+        {visible.map((c) => (
+          <div key={c.title.en} className="border border-border rounded-sm bg-card p-5 md:p-6">
+            <div className="flex items-start gap-3 mb-3">
+              <span className="chip">{L(c.category, lang)}</span>
             </div>
-          ))}
-        </div>
+            <h3 className="font-montserrat font-bold text-base text-foreground mb-2 leading-snug">{L(c.title, lang)}</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">{L(c.summary, lang)}</p>
+          </div>
+        ))}
+      </div>
 
-        <div className="space-y-5">
-          <div className="border border-border rounded-sm bg-card p-5">
-            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("topAuthors")}</div>
-            {specialists.map((s, i) => (
-              <div key={s.name.en} className="flex items-center gap-3 py-2.5 border-b border-border last:border-0">
-                <div className="font-montserrat font-bold text-xs text-gold w-4">{i + 1}</div>
-                <div className="w-7 h-7 rounded-sm overflow-hidden">
-                  <img src={s.img} alt={L(s.name, lang)} loading="lazy" className="w-full h-full object-cover" />
-                </div>
-                <div>
-                  <div className="text-xs font-montserrat font-semibold text-foreground">{L(s.name, lang)}</div>
-                  <div className="text-[10px] text-muted-foreground">{s.cases} {tr("navCases")}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="border border-border rounded-sm bg-card p-5">
-            <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("popularTags")}</div>
-            <div className="flex flex-wrap gap-2">
-              {(["popTag1", "popTag2", "popTag3", "popTag4", "popTag5", "popTag6", "popTag7", "popTag8"] as const).map((k) => (
-                <span key={k} className="tag-security cursor-pointer hover:bg-gold/10 transition-colors">{tr(k)}</span>
-              ))}
-            </div>
-          </div>
+      {/* Честная рамка: объясняем, почему здесь пока нет имён и цифр. */}
+      <div className="border border-gold/30 rounded-sm glass-card p-6 mt-8">
+        <div className="flex items-start gap-3">
+          <Icon name="Info" size={18} className="text-gold shrink-0 mt-0.5" />
+          <p className="text-sm text-muted-foreground leading-relaxed">{tr("casesNote")}</p>
         </div>
       </div>
     </div>
@@ -2821,69 +2704,65 @@ function CoursesSection() {
 
 function GuardsSection() {
   const { lang, tr } = useLang();
+  const { providers } = useProviders();
+  const [q, setQ] = useState("");
+
+  // Раньше здесь висели три несуществующие компании — «ЧОО Легион
+  // Секьюрити» с рейтингом 4.9, «480 сотрудниками» и 210 отзывами. При
+  // четырёх реальных исполнителях в базе это заметная подделка, а на
+  // платформе, которая проверяет чужие лицензии, собственная выдумка
+  // обесценивает всю проверку. Показываем настоящие охранные компании;
+  // пока их нет — честно говорим об этом и зовём зарегистрироваться.
+  const companies = providers.filter((p) => {
+    const tags = (lang === "ru" ? p.tags.ru : p.tags.en).join(" ").toLowerCase();
+    const title = L(p.title, lang).toLowerCase();
+    const isGuard = /охран|guard|чоп|чоо|secur/.test(title + " " + tags);
+    if (!isGuard) return false;
+    if (!q.trim()) return true;
+    return (L(p.name, lang) + " " + title).toLowerCase().includes(q.trim().toLowerCase());
+  });
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="mb-10">
+      <div className="mb-8">
         <div className="tag-security mb-3 inline-block">{tr("guardsTag")}</div>
         <h2 className="font-montserrat font-bold text-3xl text-foreground mb-2">{tr("guardsTitle")}</h2>
-        <p className="text-muted-foreground text-sm">{tr("guardsDesc")}</p>
+        <p className="text-muted-foreground text-sm max-w-2xl">{tr("guardsDesc")}</p>
       </div>
 
-      <div className="flex gap-3 mb-10">
+      <div className="flex gap-3 mb-8">
         <div className="flex-1 flex items-center gap-3 border border-border bg-card rounded-sm px-4">
           <Icon name="Search" size={16} className="text-muted-foreground" />
-          <input placeholder={tr("searchGuards")} className="flex-1 bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={tr("searchGuards")}
+            className="flex-1 bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none"
+          />
         </div>
-        <button className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-xs font-montserrat font-bold rounded-sm">{tr("search")}</button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
-        {guards.map((g) => (
-          <div key={g.name.en} className="card-lift shine-on-hover border border-border rounded-sm bg-card overflow-hidden cursor-pointer group">
-            <div className="h-48 overflow-hidden relative">
-              <img src={g.img} alt={L(g.name, lang)} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
-              <div className="absolute top-3 end-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-gold/40 px-2 py-1 rounded-sm">
-                <Icon name="BadgeCheck" size={12} className="text-gold" />
-                <span className="text-[10px] font-montserrat font-semibold text-gold">{tr("licensed")}</span>
-              </div>
-              <div className="absolute bottom-3 start-4 end-4">
-                <div className="font-montserrat font-bold text-base text-foreground">{L(g.name, lang)}</div>
-                <div className="text-xs text-gold font-montserrat font-medium">{L(g.type, lang)}</div>
-              </div>
-            </div>
-            <div className="p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <StarRating rating={g.rating} />
-                <span className="text-xs text-muted-foreground">{g.rating} ({g.reviews})</span>
-              </div>
-              <div className="flex items-center gap-3 mb-4 text-[10px] text-muted-foreground">
-                <span className="flex items-center gap-1"><Icon name="Users" size={11} />{g.employees} {tr("employees")}</span>
-                <span className="flex items-center gap-1"><Icon name="Building2" size={11} />{g.objects} {tr("objects")}</span>
-                <span className="flex items-center gap-1"><Icon name="Calendar" size={11} />{tr("founded")} {g.founded}</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mb-4">
-                {g.tags.map((tag) => (
-                  <span key={tag.en} className="chip">{L(tag, lang)}</span>
-                ))}
-              </div>
-              <div className="divider-gold mb-4" />
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("cost")}</div>
-                  <div className="font-montserrat font-bold text-sm text-gold">{L(g.price, lang)}</div>
-                </div>
-                <button className="border border-gold text-gold text-xs font-montserrat font-semibold px-4 py-2 hover:bg-gold hover:text-[hsl(28,20%,7%)] transition-all rounded-sm">
-                  {tr("requestQuote")}
-                </button>
-              </div>
+      {companies.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
+          {companies.map((g) => (
+            <ProviderResultCard key={g.slug} p={g} onOpen={() => { /* профиль откроется из каталога */ }} />
+          ))}
+        </div>
+      ) : (
+        <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8">
+          <div className="flex items-start gap-3">
+            <Icon name="Building2" size={20} className="text-gold shrink-0 mt-0.5" />
+            <div>
+              <div className="font-montserrat font-bold text-base text-foreground mb-2">{tr("guardsEmptyTitle")}</div>
+              <p className="text-sm text-muted-foreground leading-relaxed">{tr("guardsEmptyText")}</p>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
-      <div className="mt-14">
-        <h3 className="font-montserrat font-bold text-2xl text-foreground mb-6">{tr("guardServices")}</h3>
+      <div className="mt-12">
+        <h3 className="font-montserrat font-bold text-2xl text-foreground mb-2">{tr("guardServices")}</h3>
+        <p className="text-sm text-muted-foreground mb-6 max-w-2xl">{tr("guardServicesNote")}</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {guardServices.map((x) => (
             <div key={x.title.en} className="group border border-border rounded-sm bg-card p-6 card-lift shine-on-hover cursor-default">
