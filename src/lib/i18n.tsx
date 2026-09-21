@@ -996,6 +996,14 @@ export const t: Dict = {
   adminNoDocs: { ru: "Документы не загружены", en: "No documents uploaded" },
   adminOpenDoc: { ru: "Открыть документ", en: "Open document" },
 
+  // Поиск по житейским задачам
+  ltTitle: { ru: "С чем нужна помощь?", en: "What do you need help with?" },
+  ltFound: { ru: "Похоже, вам нужно это", en: "This looks like what you need" },
+  ltOrBrowse: { ru: "Не нашли свою ситуацию? Ниже — полный список специальностей.", en: "Don't see your situation? The full list of specialties is below." },
+  ltNothingHint: { ru: "Попробуйте описать проще — например «прослушка», «найти человека» или «проверить фирму».", en: "Try simpler words — for example «bug sweep», «find a person» or «check a company»." },
+  ltShowAll: { ru: "Показать все услуги", en: "Show all services" },
+  searchServicesPlain: { ru: "Опишите задачу своими словами…", en: "Describe your problem in your own words…" },
+
   // Сводка в кабинете клиента
   cdSumOpen: { ru: "Задач открыто", en: "Open tasks" },
   cdSumResponses: { ru: "Откликов ждут ответа", en: "Responses awaiting you" },

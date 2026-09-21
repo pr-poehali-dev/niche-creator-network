@@ -16,6 +16,7 @@ import UrgencyBanner from "@/components/UrgencyBanner";
 import NotificationBell from "@/components/NotificationBell";
 import LocationAutocomplete, { type LocationSuggestion } from "@/components/LocationAutocomplete";
 import { serviceCategories, services } from "@/lib/servicesCatalog";
+import { lifeTasks, matchLifeTasks } from "@/lib/lifeTasks";
 import { StarRating } from "@/components/SharedControls";
 const AdminPanel = lazy(() => import("@/components/AdminPanel"));
 const ClientDashboard = lazy(() => import("@/components/ClientDashboard"));
@@ -2575,6 +2576,12 @@ function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTi
     if (q && !L(s.title, lang).toLowerCase().includes(q) && !L(s.desc, lang).toLowerCase().includes(q)) return false;
     return true;
   });
+
+  // Без запроса показываем частые задачи, с запросом — подходящие под него.
+  // Так человек либо узнаёт свою ситуацию в списке, либо находит её словами.
+  const matchedTasks = q
+    ? matchLifeTasks(q, lang === "en" ? "en" : "ru")
+    : (onOrder ? lifeTasks : []);
   const shownCats = serviceCategories.filter((c) => filtered.some((s) => s.cat === c.id));
 
   // При поиске текстом сразу разворачиваем категории, где есть совпадения.
@@ -2589,16 +2596,62 @@ function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTi
         <p className="text-muted-foreground text-sm">{tr("servicesDesc")}</p>
       </div>
 
-      <div className="flex gap-3 mb-8">
+      <div className="flex gap-3 mb-6">
         <div className="flex-1 flex items-center gap-3 border border-border bg-card rounded-sm px-4">
           <Icon name="Search" size={16} className="text-muted-foreground" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr("searchServices")} className="flex-1 bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr("searchServicesPlain")} className="flex-1 bg-transparent py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
           {query && <button onClick={() => setQuery("")} aria-label={tr("clearSearch")} className="text-muted-foreground hover:text-foreground"><Icon name="X" size={15} /></button>}
         </div>
       </div>
 
-      {shownCats.length === 0 && (
-        <div className="text-center text-muted-foreground text-sm py-16 border border-dashed border-border rounded-sm">{tr("searchNoResults")}</div>
+      {/* Поиск по задачам, а не по названиям профессий. Человек приходит с
+          бедой — «пропал родственник», «взломали почту» — и не обязан знать,
+          что ему нужен «OSINT-аналитик» или «полиграфолог». Отраслевой
+          каталог остаётся ниже для тех, кто знает, что ищет. */}
+      {matchedTasks.length > 0 && (
+        <div className="mb-8">
+          <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-3">
+            {query ? tr("ltFound") : tr("ltTitle")}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {matchedTasks.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => onOrder?.(t.cat)}
+                className="flex items-start gap-3 border border-border rounded-sm bg-card p-3.5 text-start hover:border-gold/50 hover:bg-secondary/30 transition-all card-lift"
+              >
+                <div className="w-9 h-9 rounded-sm bg-secondary flex items-center justify-center shrink-0">
+                  <Icon name={t.icon} fallback="Search" size={17} className="text-gold" />
+                </div>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs font-montserrat font-bold text-foreground">{L(t.title, lang)}</span>
+                  <span className="block text-[11px] text-muted-foreground leading-snug mt-0.5">{L(t.hint, lang)}</span>
+                </span>
+                <Icon name="ArrowRight" size={14} className="text-muted-foreground shrink-0 mt-1" />
+              </button>
+            ))}
+          </div>
+          {!query && (
+            <div className="text-[11px] text-muted-foreground mt-3 flex items-center gap-1.5">
+              <Icon name="Info" size={12} className="text-gold shrink-0" />
+              {tr("ltOrBrowse")}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* «Ничего не найдено» показываем, только если не подошла ни одна
+          житейская задача. Иначе по запросу «прослушка» человек видел бы
+          и подходящую карточку, и надпись, что ничего не найдено. */}
+      {shownCats.length === 0 && matchedTasks.length === 0 && (
+        <div className="border border-dashed border-border rounded-sm py-14 px-6 text-center">
+          <Icon name="SearchX" size={34} className="text-muted-foreground/30 mx-auto mb-3" />
+          <div className="text-sm text-foreground font-montserrat font-semibold mb-1.5">{tr("searchNoResults")}</div>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">{tr("ltNothingHint")}</p>
+          <button onClick={() => setQuery("")} className="mt-4 border border-gold text-gold text-xs font-montserrat font-bold px-4 py-2 rounded-sm hover:bg-gold hover:text-[hsl(28,20%,7%)] transition-all">
+            {tr("ltShowAll")}
+          </button>
+        </div>
       )}
 
       {/* Вертикальный список категорий-глав: клик раскрывает специальности внутри. */}

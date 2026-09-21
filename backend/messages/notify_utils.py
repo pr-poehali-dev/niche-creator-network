@@ -38,6 +38,9 @@ def _send_email(to_addr: str, title: str, body: str) -> bool:
     password = os.environ.get('SMTP_PASSWORD')
     if not all([host, user, password, to_addr]):
         return False
+    # Кнопка возврата на сайт. Без неё человек прочитывал письмо и закрывал:
+    # чтобы ответить специалисту, нужно было вспомнить адрес и зайти самому.
+    link_url = 'https://shieldpspl.ru/?section=dashboard'
     html = (
         '<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto">'
         '<div style="background:#0d1117;padding:20px;border-radius:8px 8px 0 0">'
@@ -45,6 +48,10 @@ def _send_email(to_addr: str, title: str, body: str) -> bool:
         f'<div style="padding:24px;border:1px solid #eee;border-top:0;border-radius:0 0 8px 8px">'
         f'<h2 style="color:#111;font-size:18px;margin:0 0 12px">{title}</h2>'
         f'<p style="color:#444;font-size:14px;line-height:1.6">{body}</p>'
+        f'<p style="margin:22px 0 4px"><a href="{link_url}" '
+        'style="display:inline-block;background:#e6b34d;color:#1a1408;text-decoration:none;'
+        'font-weight:bold;font-size:14px;padding:12px 26px;border-radius:4px">'
+        'Открыть в кабинете</a></p>'
         '<p style="color:#999;font-size:12px;margin-top:24px">Вы получили это письмо, потому что включено '
         'дублирование уведомлений на почту. Отключить можно в личном кабинете.</p>'
         '</div></div>'

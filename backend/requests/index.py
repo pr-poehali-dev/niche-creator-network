@@ -234,7 +234,12 @@ def handler(event: dict, context) -> dict:
                     client_uid = notify_utils.id_from_slug(rq[0])
                     svc = rq[1] or ''
                     title = 'Новый отклик на вашу задачу'
-                    text = f'Специалист {provider_name} откликнулся на задачу «{svc}». Цена: {price or "по договорённости"}.'
+                    # В письме сразу видно главное: кто, на что и за сколько.
+                    # Раньше приходилось открывать кабинет, чтобы узнать цену.
+                    price_txt = price.strip() if (price or '').strip() else 'по договорённости'
+                    text = (f'{provider_name} готов взяться за задачу «{svc}». '
+                            f'Цена: {price_txt}. Откройте кабинет, чтобы прочитать отклик целиком '
+                            f'и выбрать исполнителя.')
                     notify_utils.push(cur, client_uid, 'task', title, text, 'dashboard')
                 conn.commit()
                 return _resp(200, {'success': True})
