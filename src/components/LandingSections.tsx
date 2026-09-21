@@ -8,8 +8,8 @@ import { L, HERO_BG } from "@/lib/shared";
 export function TrustBadges() {
   const { tr } = useLang();
   return (
-    <section className="border-t border-border bg-card/30">
-      <div className="max-w-7xl mx-auto px-4 py-10">
+    <section className="section-reveal edge-fade bg-card/30">
+      <div className="max-w-6xl mx-auto px-4 py-10">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {([
             ["BadgeCheck", "aboutTrust1"],
@@ -36,7 +36,7 @@ export function MinimalHome({ onCabinet, onPolicy, onBrowse }: { onCabinet: () =
           центрированием давала ~700px пустоты над заголовком — человек
           открывал сайт и видел почти пустой экран, а суть предложения
           начиналась ниже линии сгиба. */}
-      <section className="relative overflow-hidden grid-line-bg vignette w-full flex items-center md:min-h-[80vh]">
+      <section className="relative overflow-hidden grid-line-bg vignette ambient-depth w-full">
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/60 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
         <div className="absolute inset-0">
@@ -80,7 +80,7 @@ export function MinimalHome({ onCabinet, onPolicy, onBrowse }: { onCabinet: () =
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={onBrowse}
-                className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-8 py-4 font-montserrat font-extrabold text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm inline-flex items-center gap-2.5"
+                className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-8 py-4 font-montserrat font-extrabold text-base tracking-wide rounded-sm inline-flex items-center gap-2.5"
               >
                 <Icon name="Search" size={18} />
                 {tr("homeFindSpecialist")}
@@ -88,7 +88,7 @@ export function MinimalHome({ onCabinet, onPolicy, onBrowse }: { onCabinet: () =
               </button>
               <button
                 onClick={onCabinet}
-                className="border border-border text-muted-foreground px-6 py-4 font-montserrat font-bold text-sm rounded-sm hover:border-gold hover:text-gold transition-all inline-flex items-center gap-2"
+                className="btn-ghost border border-border text-muted-foreground px-6 py-4 font-montserrat font-bold text-sm rounded-sm hover:text-gold inline-flex items-center gap-2"
               >
                 <Icon name="LogIn" size={16} />
                 {tr("homeOpenCabinet")}
@@ -122,19 +122,28 @@ export function MinimalHome({ onCabinet, onPolicy, onBrowse }: { onCabinet: () =
               молодой, хвастаться нечем и врать нельзя), а три причины, по
               которым сюда приходят. Карточки намеренно разной глубины отступа:
               ровная стопка читается как таблица, а не как рассказ. */}
-          <aside className="hidden lg:block lg:col-span-5 lg:pt-[15rem] space-y-3">
+          {/* Правая колонка: три причины, по которым сюда приходят.
+              Раньше карточки были намеренно перекошены и сдвинуты вбок —
+              задумывался живой ритм, а читалось как съехавшая вёрстка.
+              Теперь ровная колонка с единым левым краем: спокойная сетка
+              выглядит дороже трюков, а взгляд не спотыкается. */}
+          <aside className="hidden lg:flex lg:col-span-5 lg:mt-[11.5rem] xl:mt-[12.5rem] flex-col gap-3 self-start">
             {([
-              { icon: "UserRoundCheck", k: "homeWhy1" as const, shift: "" },
-              { icon: "Lock", k: "homeWhy2" as const, shift: "xl:ms-6" },
-              { icon: "HandCoins", k: "homeWhy3" as const, shift: "xl:ms-3" },
-            ]).map((c, i) => (
+              { icon: "UserRoundCheck", k: "homeWhy1" as const },
+              { icon: "Lock", k: "homeWhy2" as const },
+              { icon: "HandCoins", k: "homeWhy3" as const },
+            ]).map((c) => (
               <div
                 key={c.k}
-                className={`${c.shift} border border-border/80 rounded-sm bg-card/60 backdrop-blur-sm px-5 py-4 flex items-start gap-3.5 hover:border-gold/40 transition-colors`}
-                style={{ transform: i === 1 ? "rotate(-0.35deg)" : i === 2 ? "rotate(0.25deg)" : undefined }}
+                className="group relative border border-border/70 rounded-md bg-card/50 backdrop-blur-sm ps-5 pe-5 py-4 flex items-start gap-3.5 transition-all duration-300 hover:border-gold/40 hover:bg-card/80"
               >
-                <Icon name={c.icon} size={18} className="text-gold shrink-0 mt-0.5" />
-                <span className="text-sm text-muted-foreground leading-relaxed">{tr(c.k)}</span>
+                {/* Тонкая золотая грань слева проявляется при наведении —
+                    подсказывает, что блок живой, без резкого скачка. */}
+                <span className="absolute inset-y-0 start-0 w-px bg-gold/0 group-hover:bg-gold/60 transition-colors duration-300" />
+                <span className="w-9 h-9 rounded-md bg-gold/10 border border-gold/20 flex items-center justify-center shrink-0 transition-colors duration-300 group-hover:bg-gold/15">
+                  <Icon name={c.icon} size={17} className="text-gold" />
+                </span>
+                <span className="text-sm text-muted-foreground leading-relaxed pt-1">{tr(c.k)}</span>
               </div>
             ))}
           </aside>
@@ -203,7 +212,7 @@ export function LandingFaq() {
     { q: "lpFaq6Q" as const, a: "lpFaq6A" as const },
   ];
   return (
-    <section className="border-t border-border bg-card/30">
+    <section className="section-reveal edge-fade bg-card/30">
       <div className="max-w-3xl mx-auto px-4 py-10 md:py-16">
         <div className="text-center mb-10">
           <div className="tag-security inline-block mb-3">{tr("lpFaqTag")}</div>
@@ -244,7 +253,7 @@ export function LandingWhyUs() {
     { icon: "Users", title: "whyUs4Title" as const, desc: "whyUs4Desc" as const, accent: false },
   ];
   return (
-    <section className="max-w-7xl mx-auto px-4 py-10 md:py-20">
+    <section className="section-reveal max-w-6xl mx-auto px-4 py-10 md:py-20">
       <div className="text-center mb-12 max-w-2xl mx-auto">
         <div className="tag-security inline-block mb-3">{tr("whyUsTag")}</div>
         <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-3">{tr("whyUsTitle")}</h2>
@@ -283,8 +292,8 @@ export function LandingStats() {
     { value: real ? String(real.countries) : "—", key: "lpStat4" as const, icon: "Globe" },
   ];
   return (
-    <section className="border-y border-border bg-card/40">
-      <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-6">
+    <section className="section-reveal edge-fade bg-card/40">
+      <div className="max-w-6xl mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-6">
         {stats.map((s) => (
           <div key={s.key} className="group text-center">
             <div className="w-11 h-11 icon-tile rounded-full flex items-center justify-center mx-auto mb-3">
@@ -308,7 +317,7 @@ export function LandingHowItWorks() {
     { icon: "CircleCheck", title: "lpHow4Title" as const, desc: "lpHow4Desc" as const },
   ];
   return (
-    <section className="max-w-7xl mx-auto px-4 py-10 md:py-16">
+    <section className="section-reveal max-w-6xl mx-auto px-4 py-10 md:py-16">
       <div className="text-center mb-12">
         <div className="tag-security inline-block mb-3">{tr("lpHowTag")}</div>
         <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground">{tr("lpHowTitle")}</h2>
@@ -337,8 +346,8 @@ export function LandingValue() {
     { tag: "lpValProTag" as const, title: "lpValProTitle" as const, icon: "Briefcase", items: ["lpValPro1", "lpValPro2", "lpValPro3", "lpValPro4"] as const, accent: true },
   ];
   return (
-    <section className="border-y border-border bg-card/30">
-      <div className="max-w-7xl mx-auto px-4 py-10 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-6">
+    <section className="section-reveal edge-fade bg-card/30">
+      <div className="max-w-6xl mx-auto px-4 py-10 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-6">
         {cards.map((c) => (
           <div key={c.title} className="group rounded-sm p-7 md:p-8 border border-border bg-card card-lift">
             <div className="flex items-center gap-3 mb-5">
@@ -369,7 +378,7 @@ export function LandingServices() {
   const { lang, tr } = useLang();
   const { servicePrices } = useProviders();
   return (
-    <section className="max-w-7xl mx-auto px-4 py-10 md:py-16">
+    <section className="section-reveal max-w-6xl mx-auto px-4 py-10 md:py-16">
       <div className="text-center mb-12">
         <div className="tag-security inline-block mb-3">{tr("lpServicesTag")}</div>
         <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground">{tr("lpServicesTitle")}</h2>
@@ -412,8 +421,8 @@ export function LandingTestimonials() {
   ];
 
   return (
-    <section className="border-y border-border bg-card/30">
-      <div className="max-w-7xl mx-auto px-4 py-10 md:py-16">
+    <section className="section-reveal edge-fade bg-card/30">
+      <div className="max-w-6xl mx-auto px-4 py-10 md:py-16">
         <div className="text-center mb-12">
           <div className="tag-security inline-block mb-3">{tr("lpRevTag")}</div>
           <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground">
@@ -467,7 +476,7 @@ export function LandingTestimonials() {
 export function LandingFinalCta({ onCabinet }: { onCabinet: () => void }) {
   const { tr } = useLang();
   return (
-    <section className="max-w-7xl mx-auto px-4 py-12 md:py-20">
+    <section className="section-reveal max-w-6xl mx-auto px-4 py-12 md:py-20">
       <div className="relative overflow-hidden rounded-sm border border-gold/40 glass-card security-glow ambient-gold p-10 md:p-14 text-center">
         <div className="absolute inset-0 grid-line-bg opacity-30" />
         <div className="relative z-10">

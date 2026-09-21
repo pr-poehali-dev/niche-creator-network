@@ -1158,3 +1158,115 @@ html[lang="he"] .tag-security {
     font-size: 16px !important;
   }
 }
+
+/* ===== Глубина тёмного фона =====
+   Сплошная заливка на больших экранах выглядит дёшево и плоско: взгляду
+   не за что зацепиться, секции сливаются в один тёмный лист. Современные
+   тёмные интерфейсы решают это мягкими световыми пятнами — фон перестаёт
+   быть «чёрным прямоугольником» и получает объём.
+   Пятна неяркие (3-4% непрозрачности) и лежат за контентом, поэтому не
+   мешают читать и не спорят с золотым акцентом. */
+.ambient-depth {
+  position: relative;
+  isolation: isolate;
+}
+.ambient-depth::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 78% -10%, hsla(43, 80%, 52%, 0.05), transparent 60%),
+    radial-gradient(45rem 35rem at 8% 40%, hsla(43, 70%, 45%, 0.035), transparent 65%);
+}
+
+/* Разделитель секций: вместо жёсткой линии во всю ширину — градиент,
+   который тает по краям. Граница чувствуется, но не режет страницу. */
+.edge-fade {
+  position: relative;
+}
+.edge-fade::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--border)) 18%, hsl(var(--border)) 82%, transparent);
+}
+
+/* ===== Появление секций при прокрутке =====
+   Раньше блоки главной уже стояли на местах к моменту, когда человек до
+   них долистывал: анимация отыгрывала при загрузке, вхолостую. Страница
+   от этого казалась статичной картинкой.
+   Теперь каждая секция мягко проявляется, когда входит в кадр. Сдвиг
+   маленький (14px) и медленный — эффект чувствуется, но не отвлекает от
+   чтения и не создаёт ощущения «прыгающей» вёрстки. */
+.section-reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.section-reveal.stat-reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Уважаем системную настройку «меньше движения»: людям с вестибулярной
+   чувствительностью анимация прокрутки вызывает физическое недомогание. */
+@media (prefers-reduced-motion: reduce) {
+  .section-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ===== Главная кнопка: объём и отклик =====
+   Золотой градиент был плоским: ни тени, ни реакции на курсор — кнопка
+   выглядела нарисованной, а не нажимаемой. Это главный элемент, по
+   которому человек начинает работу с сайтом, и он должен звать.
+   Мягкое свечение снизу даёт объём, при наведении оно усиливается,
+   при нажатии кнопка чуть проседает — как настоящая клавиша. */
+.gold-gradient {
+  box-shadow:
+    0 1px 0 hsl(43 90% 70% / 0.35) inset,
+    0 8px 20px -10px hsl(43 80% 52% / 0.55);
+  transition:
+    box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.16s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.28s ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+  button.gold-gradient:hover,
+  a.gold-gradient:hover {
+    box-shadow:
+      0 1px 0 hsl(43 90% 75% / 0.45) inset,
+      0 12px 28px -10px hsl(43 80% 52% / 0.7);
+    filter: brightness(1.04);
+  }
+  button.gold-gradient:active,
+  a.gold-gradient:active {
+    transform: translateY(1px);
+    box-shadow:
+      0 1px 0 hsl(43 90% 70% / 0.3) inset,
+      0 4px 12px -8px hsl(43 80% 52% / 0.5);
+  }
+}
+
+/* Вторая кнопка («Войти в кабинет») — спокойная рамка, которая теплеет
+   при наведении. Раньше она никак не отзывалась и выглядела неактивной. */
+.btn-ghost {
+  transition:
+    border-color 0.28s ease,
+    background-color 0.28s ease,
+    color 0.28s ease;
+}
+.btn-ghost:hover {
+  border-color: hsl(var(--gold) / 0.5);
+  background-color: hsl(var(--gold) / 0.06);
+}
