@@ -996,6 +996,13 @@ export const t: Dict = {
   adminNoDocs: { ru: "Документы не загружены", en: "No documents uploaded" },
   adminOpenDoc: { ru: "Открыть документ", en: "Open document" },
 
+  // Сводка в кабинете клиента
+  cdSumOpen: { ru: "Задач открыто", en: "Open tasks" },
+  cdSumResponses: { ru: "Откликов ждут ответа", en: "Responses awaiting you" },
+  cdSumInWork: { ru: "В работе", en: "In progress" },
+  cdAddPhoneTitle: { ru: "Добавьте телефон", en: "Add your phone number" },
+  cdAddPhoneText: { ru: "Без него специалист не сможет связаться с вами напрямую — только через чат на площадке.", en: "Without it a specialist can only reach you via the platform chat, not directly." },
+
   // Карточка специалиста в каталоге
   cardDocsChecked: { ru: "Документы проверены", en: "Documents verified" },
   cardLicenseChecked: { ru: "Лицензия подтверждена", en: "License confirmed" },
@@ -1007,6 +1014,8 @@ export const t: Dict = {
   esClientReqTitle: { ru: "У вас ещё нет заявок", en: "You have no requests yet" },
   esClientReqText: { ru: "Опишите задачу — и подходящие специалисты откликнутся сами, с ценой и сроком. Выбирать будете вы, платить площадке ничего не нужно.", en: "Describe your task and matching specialists will respond themselves, with a price and timeline. The choice is yours, and the platform is free for you." },
   esClientReqCta: { ru: "Создать заявку", en: "Create a request" },
+  esFavTitle: { ru: "В избранном пусто", en: "Nothing saved yet" },
+  esFavText: { ru: "Отмечайте сердечком тех, к кому планируете вернуться. Так специалист не потеряется среди десятков карточек, а вы сравните кандидатов спокойно.", en: "Tap the heart on specialists you may want to return to. That way nobody gets lost among dozens of cards and you can compare candidates calmly." },
 
   // Блоки анкеты специалиста
   pdSecPersonal: { ru: "Фото и основное", en: "Photo and basics" },

@@ -32,12 +32,15 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
   const wantNewTask = (() => {
     try { return sessionStorage.getItem("open_new_task") === "1"; } catch { return false; }
   })();
-  const [tab, setTab] = useState<"profile" | "requests" | "favorites" | "settings">(wantNewTask ? "requests" : "profile");
+  // Клиент приходит с одной задачей — найти исполнителя и следить за
+  // откликами. Раньше кабинет открывался на анкете: человек упирался в
+  // форму с ФИО и телефоном вместо своих заявок.
+  const [tab, setTab] = useState<"profile" | "requests" | "favorites" | "settings">("requests");
 
   const tabs = [
-    { id: "profile" as const, key: "cdTab1" as const, icon: "User" },
     { id: "requests" as const, key: "cdTab2" as const, icon: "Inbox" },
     { id: "favorites" as const, key: "cdTab3" as const, icon: "Heart" },
+    { id: "profile" as const, key: "cdTab1" as const, icon: "User" },
     { id: "settings" as const, key: "cdTab4" as const, icon: "Settings" },
   ];
 
@@ -115,6 +118,15 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
   type ReqResponse = { providerSlug: string; providerName: string; message: string; price: string; status: string };
   type ClientReq = { id: number; category: string; service: string; description: string; budget: string; city: string; status: string; chosenProvider: string; createdAt: string | null; responses: ReqResponse[]; views?: number; neededDate?: string; neededTime?: string; providerMarkedDone?: boolean; canReview?: boolean };
   const [myReqs, setMyReqs] = useState<ClientReq[]>([]);
+
+  // Сводка по задачам. Считаем на месте: данные уже загружены, лишний
+  // запрос к серверу ради трёх чисел не нужен.
+  const openReqs = myReqs.filter((r) => r.status === "open").length;
+  const inWork = myReqs.filter((r) => r.status === "assigned").length;
+  // Отклики без решения — то, что требует внимания клиента прямо сейчас.
+  const newResponses = myReqs
+    .filter((r) => r.status === "open")
+    .reduce((sum, r) => sum + r.responses.filter((x) => x.status !== "declined").length, 0);
   const [reviewModal, setReviewModal] = useState<{ requestId: number; providerSlug: string } | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
@@ -243,6 +255,13 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
                 className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(28,20%,7%)]" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                 <Icon name={tb.icon} size={15} />
                 {tr(tb.key)}
+                {/* Счётчик новых откликов виден из любого раздела: иначе
+                    ответ специалиста легко пропустить. */}
+                {tb.id === "requests" && newResponses > 0 && (
+                  <span className={`ms-auto min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center ${tab === tb.id ? "bg-[hsl(28,20%,7%)] text-gold" : "gold-gradient text-[hsl(28,20%,7%)]"}`}>
+                    {newResponses}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -307,6 +326,42 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
           )}
 
           {tab === "requests" && (
+            <>
+            {/* Без телефона специалист не сможет связаться напрямую.
+                Не блокируем создание заявки — просто подсказываем один раз,
+                пока контакт не заполнен. */}
+            {!clientData.phone.trim() && (
+              <button
+                onClick={() => setTab("profile")}
+                className="w-full flex items-center gap-3 border border-gold/40 bg-gold/[0.05] rounded-sm px-4 py-3 mb-5 text-start hover:bg-gold/10 transition-colors"
+              >
+                <Icon name="Phone" size={16} className="text-gold shrink-0" />
+                <span className="flex-1 min-w-0">
+                  <span className="block text-xs font-montserrat font-bold text-foreground">{tr("cdAddPhoneTitle")}</span>
+                  <span className="block text-[11px] text-muted-foreground mt-0.5">{tr("cdAddPhoneText")}</span>
+                </span>
+                <Icon name="ArrowRight" size={15} className="text-gold shrink-0" />
+              </button>
+            )}
+
+            {/* Сводка одной строкой: сколько задач открыто и сколько
+                откликов ждут решения. Раньше эти цифры приходилось
+                выискивать, раскрывая каждую заявку по очереди. */}
+            {myReqs.length > 0 && (
+              <div className="grid grid-cols-3 gap-3 mb-5">
+                {([
+                  { n: openReqs, l: "cdSumOpen" as const, icon: "Inbox", accent: false },
+                  { n: newResponses, l: "cdSumResponses" as const, icon: "MessageSquare", accent: newResponses > 0 },
+                  { n: inWork, l: "cdSumInWork" as const, icon: "Handshake", accent: false },
+                ]).map((s) => (
+                  <div key={s.l} className={`border rounded-sm p-4 ${s.accent ? "border-gold/50 bg-gold/[0.06]" : "border-border bg-card"}`}>
+                    <Icon name={s.icon} size={15} className={s.accent ? "text-gold mb-2" : "text-muted-foreground mb-2"} />
+                    <div className={`stat-number text-xl ${s.accent ? "text-gold" : ""}`}>{s.n}</div>
+                    <div className="text-[10px] text-muted-foreground leading-tight mt-0.5">{tr(s.l)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="border border-border rounded-sm bg-card p-6">
               <div className="flex items-center justify-between mb-4 gap-2">
                 <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest">{tr("cdReqTitle")}</div>
@@ -459,17 +514,20 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
                 })}
               </div>
             </div>
+            </>
           )}
 
           {tab === "favorites" && (() => {
             const favProviders = providers.filter((p) => favorites.includes(p.slug));
             if (favProviders.length === 0) {
               return (
-                <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
-                  <Icon name="HeartOff" size={40} className="text-muted-foreground/30" />
-                  <span className="text-sm text-muted-foreground max-w-xs">{tr("favEmpty")}</span>
-                  <button onClick={() => setActive("specialists")} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-4 py-2 rounded-sm mt-1">{tr("heroClientCta2")}</button>
-                </div>
+                <EmptyState
+                  icon="Heart"
+                  title={tr("esFavTitle")}
+                  text={tr("esFavText")}
+                  actionLabel={tr("heroClientCta2")}
+                  onAction={() => setActive("specialists")}
+                />
               );
             }
             return (
