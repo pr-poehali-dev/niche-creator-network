@@ -7,6 +7,8 @@ import func2url from "../../backend/func2url.json";
 type AdminProvider = { slug: string; name: { ru: string; en: string }; legalStatus: string; verified: boolean; licenseVerified: boolean; licenses: (string | { number?: string; date?: string; authority?: string })[]; active: boolean; documents: { title: string; url: string }[]; fullName: string; registry: string };
 
 type AdminComplaint = { id: number; reporterUserId: number; reporterRole: string; targetType: string; targetId: string; reason: string; details: string; status: string; createdAt: string | null };
+type DocFinding = { level: "ok" | "warn" | "fail"; text: string };
+type DocCheck = { verdict: "clean" | "review" | "risk"; score: number; findings: DocFinding[]; aiUsed?: boolean; aiSummary?: string; checkedAt?: string | null };
 
 export default function AdminPanel() {
   const { lang, tr } = useLang();
@@ -16,6 +18,9 @@ export default function AdminPanel() {
   const [savingSlug, setSavingSlug] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [openSlug, setOpenSlug] = useState<string | null>(null);
+
+  const [checks, setChecks] = useState<Record<string, DocCheck>>({});
+  const [checkingSlug, setCheckingSlug] = useState<string | null>(null);
 
   const [complaints, setComplaints] = useState<AdminComplaint[] | null>(null);
   const [complaintsError, setComplaintsError] = useState(false);
@@ -39,6 +44,41 @@ export default function AdminPanel() {
       .catch(() => { setError(true); setItems([]); });
   }, []);
 
+  // Заключения ИИ-администратора: подсказка перед тем, как ставить галочку.
+  const loadChecks = useCallback(() => {
+    fetch(func2url["doc-check"], { headers: { "X-Auth-Token": token() } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.checks) setChecks(d.checks); })
+      .catch(() => {});
+  }, []);
+
+  const runCheck = async (slug: string) => {
+    setCheckingSlug(slug);
+    try {
+      const res = await fetch(func2url["doc-check"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Auth-Token": token() },
+        body: JSON.stringify({ action: "check", slug }),
+      });
+      const d = await res.json().catch(() => null);
+      if (res.ok && d) setChecks((c) => ({ ...c, [slug]: d }));
+    } catch { /* сеть недоступна — молча, кнопка вернётся в исходное */ }
+    setCheckingSlug(null);
+  };
+
+  const runCheckAll = async () => {
+    setCheckingSlug("*");
+    try {
+      await fetch(func2url["doc-check"], {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Auth-Token": token() },
+        body: JSON.stringify({ action: "check_all" }),
+      });
+      loadChecks();
+    } catch { /* сеть недоступна */ }
+    setCheckingSlug(null);
+  };
+
   const loadComplaints = useCallback(() => {
     setComplaintsError(false);
     fetch(func2url["complaints"], { headers: { "X-Auth-Token": token() } })
@@ -47,7 +87,7 @@ export default function AdminPanel() {
       .catch(() => { setComplaintsError(true); setComplaints([]); });
   }, []);
 
-  useEffect(() => { load(); loadComplaints(); }, [load, loadComplaints]);
+  useEffect(() => { load(); loadComplaints(); loadChecks(); }, [load, loadComplaints, loadChecks]);
 
   const newComplaintsCount = (complaints || []).filter((c) => c.status === "new").length;
 
@@ -143,6 +183,15 @@ export default function AdminPanel() {
           <Icon name="Search" size={15} className="text-muted-foreground" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr("adminSearch")} className="flex-1 bg-transparent py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none" />
         </div>
+        <button
+          aria-label={tr("acCheckAll")}
+          onClick={runCheckAll}
+          disabled={checkingSlug === "*"}
+          className="flex items-center gap-1.5 border border-gold/50 text-gold px-3 py-2.5 text-xs font-montserrat font-semibold rounded-sm hover:bg-gold hover:text-[hsl(28,20%,7%)] transition-all disabled:opacity-50"
+        >
+          {checkingSlug === "*" ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="Bot" size={14} />}
+          {tr("acCheckAll")}
+        </button>
         <button aria-label="Обновить" onClick={load} className="flex items-center gap-1.5 border border-border text-muted-foreground px-3 py-2.5 text-xs font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">
           <Icon name="RefreshCw" size={14} />{tr("adminRefresh")}
         </button>
@@ -171,6 +220,18 @@ export default function AdminPanel() {
                     {!eligible && (
                       <div className="text-[10px] text-amber-400/80 mt-1 flex items-center gap-1"><Icon name="TriangleAlert" size={10} />{tr("adminNotEligible")}</div>
                     )}
+                    {/* Заключение ИИ-администратора. Цветная метка сразу
+                        показывает, на что смотреть в первую очередь. */}
+                    {checks[p.slug] && (
+                      <div className={`text-[10px] mt-1.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-sm border ${
+                        checks[p.slug].verdict === "risk" ? "border-destructive/50 bg-destructive/10 text-destructive"
+                        : checks[p.slug].verdict === "clean" ? "border-green-500/40 bg-green-500/10 text-green-400"
+                        : "border-amber-500/40 bg-amber-500/10 text-amber-400"}`}>
+                        <Icon name={checks[p.slug].verdict === "risk" ? "ShieldAlert" : checks[p.slug].verdict === "clean" ? "ShieldCheck" : "ShieldQuestion"} size={11} />
+                        {tr(checks[p.slug].verdict === "risk" ? "acVerdictRisk" : checks[p.slug].verdict === "clean" ? "acVerdictClean" : "acVerdictReview")}
+                        <span className="opacity-70">· {checks[p.slug].score}/100</span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0 flex-wrap">
                     <button
@@ -180,6 +241,14 @@ export default function AdminPanel() {
                       <Icon name="FileText" size={14} />
                       {tr("adminDocs")} ({docCount})
                       <Icon name={open ? "ChevronUp" : "ChevronDown"} size={13} />
+                    </button>
+                    <button
+                      onClick={() => runCheck(p.slug)}
+                      disabled={checkingSlug === p.slug}
+                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-montserrat font-semibold rounded-sm border border-border text-muted-foreground hover:border-gold hover:text-gold transition-all disabled:opacity-50"
+                    >
+                      {checkingSlug === p.slug ? <Icon name="Loader" size={14} className="animate-spin" /> : <Icon name="ScanSearch" size={14} />}
+                      {tr("acRunCheck")}
                     </button>
                     <button
                       onClick={() => toggle(p, "verified")}
@@ -202,6 +271,38 @@ export default function AdminPanel() {
                 {open && (
                   <div className="px-4 pb-4 -mt-1 animate-fade-in">
                     <div className="border border-border rounded-sm bg-secondary/40 p-4 space-y-3">
+                      {/* Разбор от ИИ-администратора: что сошлось, что нет.
+                          Решение остаётся за человеком — это только сводка. */}
+                      {checks[p.slug] && (
+                        <div className="border border-border rounded-sm bg-card p-3">
+                          <div className="text-[10px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                            <Icon name="Bot" size={12} className="text-gold" />
+                            {tr("acTitle")}
+                            {checks[p.slug].aiUsed && <span className="text-gold normal-case tracking-normal">· {tr("acAiOn")}</span>}
+                          </div>
+                          <div className="space-y-1.5">
+                            {checks[p.slug].findings.map((f, i) => (
+                              <div key={i} className="flex items-start gap-2 text-[11px] leading-snug">
+                                <Icon
+                                  name={f.level === "fail" ? "CircleX" : f.level === "ok" ? "CircleCheck" : "CircleAlert"}
+                                  size={12}
+                                  className={`shrink-0 mt-0.5 ${f.level === "fail" ? "text-destructive" : f.level === "ok" ? "text-green-400" : "text-amber-400"}`}
+                                />
+                                <span className={f.level === "fail" ? "text-destructive" : "text-muted-foreground"}>{f.text}</span>
+                              </div>
+                            ))}
+                          </div>
+                          {checks[p.slug].aiSummary && (
+                            <div className="mt-2.5 pt-2.5 border-t border-border text-[11px] text-muted-foreground leading-relaxed">
+                              {checks[p.slug].aiSummary}
+                            </div>
+                          )}
+                          <div className="mt-2.5 text-[10px] text-muted-foreground/70 flex items-start gap-1.5">
+                            <Icon name="Info" size={11} className="text-gold shrink-0 mt-0.5" />
+                            {tr("acHumanNote")}
+                          </div>
+                        </div>
+                      )}
                       {(p.fullName || p.registry) && (
                         <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px]">
                           {p.fullName && <div><span className="text-muted-foreground">{tr("adminFullName")}: </span><span className="text-foreground font-semibold">{p.fullName}</span></div>}

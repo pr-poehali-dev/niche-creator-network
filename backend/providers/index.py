@@ -80,7 +80,12 @@ def handler(event: dict, context) -> dict:
         # клиент видит «пустой каталог» и уходит, а платящий специалист
         # всё равно не получает заказ. Внутри заполненных приоритет платных
         # тарифов сохраняется полностью.
-        f"FROM {SCHEMA}.providers ORDER BY "
+        # Анкеты без имени в каталог не попадают. Пустая карточка «Профиль
+        # скрыт» ничего не даёт клиенту, но раздувает счётчик «найдено» —
+        # человек видит цифру 24, а реальных специалистов меньше.
+        f"FROM {SCHEMA}.providers "
+        f"WHERE COALESCE(name_ru,'') <> '' OR COALESCE(name_en,'') <> '' "
+        f"ORDER BY "
         f"(CASE WHEN COALESCE(title_ru,'') <> '' AND COALESCE(price_ru,'') <> '' THEN 0 ELSE 1 END), "
         f"pin_priority DESC, subscription_active DESC, "
         f"(CASE WHEN plan='chop' THEN 0 WHEN plan='premium' THEN 1 WHEN plan='pro' THEN 2 ELSE 3 END), rating DESC, reviews DESC"

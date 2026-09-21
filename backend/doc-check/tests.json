@@ -1,0 +1,8 @@
+{
+  "tests": [
+    { "name": "CORS preflight", "method": "OPTIONS", "path": "/", "expectedStatus": 200 },
+    { "name": "Проверка документов без прав админа запрещена", "method": "POST", "path": "/", "body": {"action": "check", "slug": "morozov"}, "expectedStatus": 403, "expectedBody": {"error": "forbidden"}, "bodyMatcher": "partial" },
+    { "name": "Список заключений без прав админа запрещён", "method": "GET", "path": "/", "expectedStatus": 403, "expectedBody": {"error": "forbidden"}, "bodyMatcher": "partial" },
+    { "name": "Массовая проверка без прав админа запрещена", "method": "POST", "path": "/", "body": {"action": "check_all"}, "expectedStatus": 403, "expectedBody": {"error": "forbidden"}, "bodyMatcher": "partial" }
+  ]
+}

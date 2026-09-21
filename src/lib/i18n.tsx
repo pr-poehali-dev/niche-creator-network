@@ -996,6 +996,16 @@ export const t: Dict = {
   adminNoDocs: { ru: "Документы не загружены", en: "No documents uploaded" },
   adminOpenDoc: { ru: "Открыть документ", en: "Open document" },
 
+  // ИИ-администратор: разбор документов
+  acTitle: { ru: "Разбор документов", en: "Document review" },
+  acRunCheck: { ru: "Проверить", en: "Review" },
+  acCheckAll: { ru: "Проверить всех", en: "Review all" },
+  acVerdictClean: { ru: "Замечаний нет", en: "No issues" },
+  acVerdictReview: { ru: "Нужен просмотр", en: "Needs a look" },
+  acVerdictRisk: { ru: "Есть риск", en: "Risk found" },
+  acAiOn: { ru: "с участием ИИ", en: "AI-assisted" },
+  acHumanNote: { ru: "Это подсказка, а не решение. Статус «проверен» ставите вы — автоматически он не выдаётся.", en: "This is a hint, not a decision. You grant the verified status — it is never set automatically." },
+
   // Client search & premium
   navSearch: { ru: "Поиск", en: "Search" },
   navResumes: { ru: "Резюме", en: "Resumes" },
