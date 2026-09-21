@@ -265,7 +265,122 @@
   </head>
 
 <body>
-<div id="root"></div>
+<!-- Текст для поисковых роботов и посетителей с медленным интернетом.
+     Раньше робот Яндекса и Google получал пустой <div id="root"> — весь
+     текст рисовался уже в браузере, и в индекс не попадало ни одного
+     заголовка, ни одной ссылки. Отсюда нулевой органический трафик.
+     Этот блок лежит прямо в HTML: робот читает его сразу, без JavaScript.
+     Как только приложение запускается, React заменяет содержимое #root
+     своей версией — человек этот текст практически не видит. -->
+<style>
+  /* Блок для поисковых роботов оформлен в тон сайта: на медленном
+     интернете человек успевает его увидеть до запуска приложения,
+     и белая страница с голым текстом выглядела бы поломкой. */
+  #seo-fallback {
+    max-width: 44rem; margin: 0 auto; padding: 3rem 1.25rem;
+    font-family: "Montserrat", "Segoe UI", Roboto, Arial, sans-serif;
+    color: #d9d4cb; background: #14110d; line-height: 1.65;
+  }
+  #seo-fallback h1 { font-size: 1.7rem; line-height: 1.25; color: #f2eee7; margin: 0 0 1rem; }
+  #seo-fallback h2 { font-size: 1.05rem; color: #e6b34d; margin: 2rem 0 .6rem; }
+  #seo-fallback a { color: #e6b34d; }
+  #seo-fallback ul, #seo-fallback ol { padding-inline-start: 1.1rem; }
+  #seo-fallback li { margin-bottom: .35rem; }
+  #seo-fallback footer { margin-top: 2.5rem; font-size: .8rem; color: #8b8377; }
+  #seo-fallback header { margin-bottom: 2rem; font-size: .85rem; }
+  #seo-fallback header a { text-decoration: none; }
+</style>
+<div id="root"><div id="seo-fallback">
+  <header>
+    <a href="/" aria-label="ЩИТ — на главную"><strong>ЩИТ</strong> — международная платформа специалистов по безопасности</a>
+  </header>
+
+  <main>
+    <h1>Проверенные специалисты по безопасности: детективы, охрана, полиграф</h1>
+    <p>ЩИТ — каталог специалистов по безопасности с проверкой документов и лицензий.
+      Частные детективы, телохранители, полиграфологи, эксперты по кибербезопасности
+      и охранные предприятия в одном месте. Поиск и связь со специалистом для клиентов
+      бесплатны, комиссии со сделок нет.</p>
+
+    <h2>С какими задачами к нам приходят</h2>
+    <ul>
+      <li><a href="/?section=services">Найти человека</a> — пропал родственник, скрывается должник, потеряна связь.</li>
+      <li><a href="/?section=services">Проверить партнёра или фирму</a> перед сделкой, договором, крупной покупкой.</li>
+      <li><a href="/?section=services">Проверка сотрудника на полиграфе</a> — при найме или если пропали деньги и документы.</li>
+      <li><a href="/?section=services">Личная охрана и сопровождение</a> — угрозы, поездки, публичные мероприятия.</li>
+      <li><a href="/?section=services">Проверка помещения на прослушку</a> — поиск скрытых камер и закладок (TSCM).</li>
+      <li><a href="/?section=services">Взломали почту или аккаунт</a> — расследование инцидента, сбор цифровых улик.</li>
+      <li><a href="/?section=services">Защита бизнеса от утечек</a> — сотрудник унёс базу, утекла коммерческая тайна.</li>
+      <li><a href="/?section=services">Охрана объекта</a> — офис, склад, стройка, магазин, мероприятие.</li>
+    </ul>
+
+    <h2>Специалисты платформы</h2>
+    <p>В каталоге 48 специальностей в четырёх направлениях:
+      <a href="/?section=services">физическая безопасность и личная охрана</a>,
+      <a href="/?section=services">информационная и кибербезопасность</a>,
+      <a href="/?section=services">экономическая безопасность и расследования</a>,
+      <a href="/?section=services">антикризисное управление</a>.
+      Частный детектив — от 12 000 ₽ в день, телохранитель — от 9 000 ₽ за смену,
+      проверка на полиграфе — от 8 000 ₽, поиск прослушки — от 25 000 ₽.</p>
+
+    <h2>Как это работает</h2>
+    <ol>
+      <li>Вы описываете задачу своими словами — без профессиональных терминов.</li>
+      <li>Подходящие специалисты откликаются сами, с ценой и сроком.</li>
+      <li>Вы выбираете исполнителя и общаетесь с ним напрямую, без посредников.</li>
+    </ol>
+    <p><a href="/?section=howitworks">Подробнее о порядке работы</a></p>
+
+    <h2>Почему документы проверены</h2>
+    <p>Лицензии и документы смотрит человек, а не робот по шаблону. Отказываем тем,
+      у кого документы не сошлись: каталог растёт медленнее, зато без случайных людей.
+      Переписка и контакты хранятся в базе в зашифрованном виде.
+      <a href="/?section=policy">Политика безопасности платформы</a>.</p>
+
+    <h2>Специалистам</h2>
+    <p>Клиенты находят вас сами — не нужно вкладываться в рекламу. Фиксированная
+      подписка, комиссии со сделок нет: весь доход с заказов остаётся у вас.
+      <a href="/?section=pricing">Тарифы и условия</a>.</p>
+
+    <h2>Статьи и разборы</h2>
+    <ul>
+      <li><a href="/?section=blog&amp;post=how-to-choose-private-detective">Как выбрать частного детектива: полное руководство</a></li>
+      <li><a href="/?section=blog&amp;post=how-much-bodyguard-costs">Сколько стоит телохранитель и от чего зависит цена</a></li>
+      <li><a href="/?section=blog&amp;post=how-polygraph-test-works">Как проходит проверка на полиграфе (детекторе лжи)</a></li>
+      <li><a href="/?section=blog&amp;post=how-to-verify-security-specialist">Как проверить специалиста по безопасности перед заказом</a></li>
+      <li><a href="/?section=blog&amp;post=what-is-tscm-bug-sweeping">Что такое поиск прослушки (TSCM) и когда он нужен</a></li>
+      <li><a href="/?section=blog&amp;post=how-to-check-counterparty-before-deal">Как проверить контрагента перед сделкой</a></li>
+      <li><a href="/?section=blog&amp;post=how-to-find-missing-person-legally">Как законно найти пропавшего человека или родственника</a></li>
+      <li><a href="/?section=blog&amp;post=employee-background-check">Проверка сотрудника при приёме на работу</a></li>
+      <li><a href="/?section=blog&amp;post=how-to-protect-home-from-burglary">Как защитить дом и квартиру от взлома</a></li>
+      <li><a href="/?section=blog&amp;post=personal-cybersecurity-basics">Основы личной кибербезопасности: защита данных и денег</a></li>
+      <li><a href="/?section=blog&amp;post=how-to-recognize-phone-scam">Как распознать телефонных и онлайн-мошенников</a></li>
+      <li><a href="/?section=blog&amp;post=corporate-security-audit">Аудит безопасности бизнеса: зачем и как проводится</a></li>
+    </ul>
+    <p><a href="/?section=blog">Все материалы блога</a></p>
+
+    <nav aria-label="Разделы сайта">
+      <h2>Разделы</h2>
+      <ul>
+        <li><a href="/?section=services">Каталог услуг</a></li>
+        <li><a href="/?section=specialists">Специалисты</a></li>
+        <li><a href="/?section=pricing">Тарифы</a></li>
+        <li><a href="/?section=howitworks">Как это работает</a></li>
+        <li><a href="/?section=blog">Блог и полезные материалы</a></li>
+        <li><a href="/?section=about">О компании</a></li>
+        <li><a href="/?section=contacts">Контакты</a></li>
+        <li><a href="/?section=privacy">Политика конфиденциальности</a></li>
+        <li><a href="/?section=offer">Публичная оферта</a></li>
+      </ul>
+    </nav>
+  </main>
+
+  <footer>
+    <p>ЩИТ — платформа проверенных специалистов по безопасности.
+      Платформа является информационным посредником и не выступает стороной сделки
+      между клиентом и исполнителем.</p>
+  </footer>
+</div></div>
 <script type="module" src="/src/main.tsx"></script>
 
 <!-- Yandex.Metrika counter -->
