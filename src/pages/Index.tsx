@@ -44,7 +44,7 @@ const ChatSection = lazy(() => import("@/components/CommunicationSections").then
 import func2url from "../../backend/func2url.json";
 
 import {
-  HERO_IMAGE, POLYGRAPH_IMAGE, DETECTIVE_IMAGE, GUARDS_IMAGE,
+  HERO_IMAGE, POLYGRAPH_IMAGE, DETECTIVE_IMAGE, GUARDS_IMAGE, HERO_BG, GUARDS_BG,
   CLIENT_NAV, PROVIDER_NAV, GUEST_NAV,
   L, resolveAvatar, isImageUrl,
   type Section, type Role,
@@ -1295,7 +1295,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/40 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
         <div className="absolute inset-0">
-          <img src={isClient ? HERO_IMAGE : GUARDS_IMAGE} alt="Security" decoding="async" className="w-full h-full object-cover opacity-25" />
+          <img src={isClient ? HERO_BG : GUARDS_BG} alt="" aria-hidden="true" decoding="async" className="w-full h-full object-cover opacity-25" />
         </div>
         <div className="absolute top-1/4 -left-40 w-[500px] h-[500px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.1) 0%, transparent 70%)" }} />
         <div className="aurora-bg z-0" />

@@ -220,7 +220,37 @@
     <!-- display=optional вместо swap: не даём шрифту "подгрузиться и переключиться" после
          первой отрисовки — это устраняло скачок вёрстки (заголовок на секунду показывался
          в 2 строки на системном шрифте, а затем "разъезжался" на 5 строк после подгрузки Montserrat). -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+Arabic:wght@400;500;700&family=Noto+Sans+Hebrew:wght@400;500;700&display=optional" rel="stylesheet">
+    <!-- В первой загрузке только те шрифты, что нужны всем: Montserrat для
+         заголовков и IBM Plex Sans для текста. Японский, арабский и иврит
+         раньше скачивались каждому посетителю — сотни килобайт ради языков,
+         которыми пользуются единицы. Теперь они подгружаются по требованию,
+         когда человек реально переключает язык (см. loadLangFont ниже). -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600&display=optional" rel="stylesheet">
+    <script>
+      // Догружает шрифт нужной письменности при первом обращении к языку.
+      window.__shchitLoadLangFont = function (lang) {
+        var map = { ja: "Noto+Sans+JP:wght@400;500;700",
+                    ar: "Noto+Sans+Arabic:wght@400;500;700",
+                    he: "Noto+Sans+Hebrew:wght@400;500;700" };
+        var f = map[lang];
+        if (!f) return;
+        var id = "lang-font-" + lang;
+        if (document.getElementById(id)) return;
+        var l = document.createElement("link");
+        l.id = id; l.rel = "stylesheet";
+        l.href = "https://fonts.googleapis.com/css2?family=" + f + "&display=swap";
+        document.head.appendChild(l);
+      };
+      try {
+        var saved = localStorage.getItem("lang");
+        if (saved) window.__shchitLoadLangFont(saved.replace(/"/g, ""));
+      } catch (e) { /* приватный режим */ }
+    </script>
+
+    <!-- Space Grotesk используется только в декоративных цифрах статистики.
+         Грузим отложенно: ради него незачем задерживать первый экран. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=optional"
+          onload="this.onload=null;this.rel='stylesheet'">
 
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS COMMENT! -->
 

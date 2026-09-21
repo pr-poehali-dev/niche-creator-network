@@ -2,6 +2,11 @@ import { type Lang, type t } from "@/lib/i18n";
 import { dataExtra } from "@/lib/i18n-extra";
 
 export const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/92040949-913f-4126-80f9-fa681d96ea82.jpg";
+// Фон первого экрана. Та же картинка, но сжатая до 23 КБ вместо 135: она
+// лежит под прозрачностью 20% и работает как тёмная текстура — разницы не
+// видно, а на мобильном интернете это заметно быстрее.
+export const HERO_BG = "/hero.webp";
+export const GUARDS_BG = "/guards.webp";  // 42 КБ вместо 173 КБ
 export const POLYGRAPH_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/7ad3b230-2fec-4347-a4a7-4c4670578fee.jpg";
 export const DETECTIVE_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/fc0c15b9-2bf3-4932-b821-d76b3c5a8c55.jpg";
 export const GUARDS_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/3ab23f4f-4190-41a8-a1f3-206d541e0669.jpg";

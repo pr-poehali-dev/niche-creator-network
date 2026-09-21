@@ -925,6 +925,8 @@ img {
    шрифтом, а не «квадратиками» — текст останется читаемым в любом случае. */
 html[lang="ja"] body,
 html[lang="ja"] .font-montserrat,
+html[lang="ja"] .tag-security,
+html[lang="ja"] .stat-number,
 html[lang="ja"] .font-ibm {
   font-family:
     "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic",
@@ -932,6 +934,8 @@ html[lang="ja"] .font-ibm {
 }
 html[lang="ar"] body,
 html[lang="ar"] .font-montserrat,
+html[lang="ar"] .tag-security,
+html[lang="ar"] .stat-number,
 html[lang="ar"] .font-ibm {
   font-family:
     "Noto Sans Arabic", "Geeza Pro", "Segoe UI", Tahoma, Arial, "Montserrat",
@@ -939,6 +943,8 @@ html[lang="ar"] .font-ibm {
 }
 html[lang="he"] body,
 html[lang="he"] .font-montserrat,
+html[lang="he"] .tag-security,
+html[lang="he"] .stat-number,
 html[lang="he"] .font-ibm {
   font-family:
     "Noto Sans Hebrew", "Arial Hebrew", "Segoe UI", Arial, "Montserrat",
@@ -1125,4 +1131,13 @@ p {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Арабский и иврит: отключаем uppercase и разрядку букв. В этих
+   письменностях нет заглавных, а letter-spacing разрывает вязь —
+   слово распадается на несвязанные символы. */
+html[lang="ar"] .tag-security,
+html[lang="he"] .tag-security {
+  text-transform: none;
+  letter-spacing: 0;
 }

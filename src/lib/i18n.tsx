@@ -1835,6 +1835,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [dictReady, setDictReady] = useState(0);
   const rtl = RTL_LANGS.includes(lang);
 
+  // Шрифт письменности догружаем при ЛЮБОЙ смене языка, а не только при
+  // ручном выборе: язык приходит ещё и из ссылки (?lang=ja) и из геолокации.
+  // Иначе японский или арабский текст показывался квадратами — шрифта нет.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    (window as unknown as { __shchitLoadLangFont?: (l: string) => void }).__shchitLoadLangFont?.(lang);
+  }, [lang]);
+
   // Подгружаем тяжёлый словарь только для fr/de/ja/ar/he. До его готовности
   // показывается английский fallback, затем интерфейс мягко обновляется.
   useEffect(() => {
