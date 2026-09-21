@@ -5,7 +5,8 @@ import { trackGoal, GOALS } from "@/lib/analytics";
 import ShareButtons from "@/components/ShareButtons";
 import { type BlogPost } from "@/lib/blog";
 import { useAutoTranslate } from "@/lib/autotranslate";
-import { type Section } from "@/lib/shared";
+import { type Section, L } from "@/lib/shared";
+import { BLOG_LINKS, CAT_LABEL, type CatId } from "@/lib/blogLinks";
 import { canonicalFor } from "@/lib/seoMeta";
 
 type MobilePlatform = "ios" | "android" | "desktop";
@@ -531,8 +532,26 @@ export function AboutSection({ setActive }: { setActive: (s: Section) => void })
   );
 }
 
-function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (s: Section) => void; onBack: () => void }) {
+function BlogArticle({ post, allPosts, onBack, onOpenPost, onOpenCat, onOpenPricing }: {
+  post: BlogPost;
+  allPosts: BlogPost[];
+  onBack: () => void;
+  onOpenPost: (slug: string) => void;
+  onOpenCat: (cat: CatId) => void;
+  onOpenPricing: () => void;
+}) {
   const { tr, lang } = useLang();
+
+  // Направление каталога и похожие материалы для этой статьи.
+  const link = BLOG_LINKS[post.slug];
+  const catId: CatId = link?.cat || "physical";
+  // Статьи для специалистов: человек здесь исполнитель, а не заказчик —
+  // каталог услуг ему не нужен, ему нужны условия работы и тарифы.
+  const forProvider = post.audience === "provider";
+  const related = (link?.related || [])
+    .map((slug) => allPosts.find((p) => p.slug === slug))
+    .filter((p): p is BlogPost => Boolean(p))
+    .slice(0, 3);
 
   // Собираем все английские строки статьи для автоперевода на fr/de/ja/ar/he.
   // Для ru/en перевод не нужен — берём готовый текст.
@@ -633,13 +652,51 @@ function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (
         />
       </div>
 
-      {/* CTA to catalog */}
-      <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mt-10 text-center security-glow">
-        <h2 className="font-montserrat font-bold text-lg text-foreground mb-2">{tr("blogCtaTitle")}</h2>
-        <p className="text-sm text-muted-foreground mb-5 max-w-xl mx-auto">{tr("blogCtaText")}</p>
-        <button onClick={() => setActive("specialists")} className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2">
-          <Icon name="Search" size={16} />{tr("blogCtaBtn")}
-        </button>
+      {/* Похожие материалы: следующий вопрос, который реально возникает
+          после этой статьи. Раньше человек дочитывал разбор и упирался в
+          тупик — оставалась только общая кнопка «каталог». */}
+      {related.length > 0 && (
+        <div className="border-t border-border mt-10 pt-6">
+          <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("blogRelated")}</div>
+          <div className="grid gap-2">
+            {related.map((r) => (
+              <a
+                key={r.slug}
+                href={`/?section=blog&post=${r.slug}`}
+                onClick={(e) => { e.preventDefault(); onOpenPost(r.slug); }}
+                className="flex items-start gap-3 p-3 border border-border rounded-sm bg-card hover:border-gold/40 transition-colors group"
+              >
+                <div className="w-8 h-8 icon-tile flex items-center justify-center shrink-0 mt-0.5">
+                  <Icon name={r.icon} fallback="FileText" size={15} className="text-gold" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm text-foreground font-montserrat font-semibold leading-snug group-hover:text-gold transition-colors">{loc(r.title)}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">{r.readMin} {tr("blogMinRead")}</div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Переход в каталог — сразу в нужное направление, а не в общий
+          список из 48 специальностей. */}
+      <div className="border border-gold/30 rounded-sm glass-card p-6 md:p-8 mt-8 text-center security-glow">
+        <h2 className="font-montserrat font-bold text-lg text-foreground mb-2">{forProvider ? tr("blogCtaProvTitle") : tr("blogCtaTitle")}</h2>
+        <p className="text-sm text-muted-foreground mb-1 max-w-xl mx-auto">{forProvider ? tr("blogCtaProvText") : tr("blogCtaText")}</p>
+        {!forProvider && (
+          <p className="text-xs text-muted-foreground mb-5">
+            {tr("blogCatIntro")} — <span className="text-gold">{L(CAT_LABEL[catId], lang)}</span>
+          </p>
+        )}
+        <a
+          href={forProvider ? "/?section=pricing" : `/?section=services&cat=${catId}`}
+          onClick={(e) => { e.preventDefault(); if (forProvider) onOpenPricing(); else onOpenCat(catId); }}
+          className="gold-gradient text-[hsl(28,20%,7%)] px-6 py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2 mt-4"
+        >
+          <Icon name={forProvider ? "BadgeCheck" : "Search"} size={16} />
+          {forProvider ? tr("blogGoPricing") : tr("blogGoCat")}
+        </a>
       </div>
     </div>
   );
@@ -704,7 +761,29 @@ export function BlogSection({ setActive }: { setActive: (s: Section) => void }) 
   const openPost = posts.find((p) => p.slug === openSlug) || null;
 
   if (openPost) {
-    return <BlogArticle post={openPost} setActive={setActive} onBack={() => { setOpenSlug(null); window.scrollTo({ top: 0 }); }} />;
+    return (
+      <BlogArticle
+        post={openPost}
+        allPosts={posts}
+        onBack={() => { setOpenSlug(null); window.scrollTo({ top: 0 }); }}
+        onOpenPost={(slug) => {
+          setOpenSlug(slug);
+          window.history.replaceState(null, "", `/?section=blog&post=${slug}`);
+          window.scrollTo({ top: 0 });
+        }}
+        onOpenPricing={() => {
+          window.history.replaceState(null, "", "/?section=pricing");
+          setActive("pricing");
+          window.scrollTo({ top: 0 });
+        }}
+        onOpenCat={(cat) => {
+          // Уходим в каталог сразу в нужное направление.
+          window.history.replaceState(null, "", `/?section=services&cat=${cat}`);
+          setActive("services");
+          window.scrollTo({ top: 0 });
+        }}
+      />
+    );
   }
 
   const visiblePosts = posts.filter((p) => p.audience === tab);

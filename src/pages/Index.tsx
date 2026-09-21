@@ -539,17 +539,25 @@ function CookieBanner({ go }: { go: (s: Section) => void }) {
        он не должен закрывать первый экран и мешать читать предложение. */
     <div className="fixed inset-x-0 bottom-0 z-[90] p-2 sm:p-4 pointer-events-none">
       <div role="region" aria-label={tr("cookieTitle")} className="max-w-md ms-auto me-0 bg-card/95 backdrop-blur-md border border-border rounded-sm shadow-2xl p-3 sm:p-4 flex flex-col gap-2 pointer-events-auto">
-        <div className="flex items-start gap-2.5 flex-1 min-w-0">
-          <Icon name="Cookie" size={18} className="text-gold shrink-0 mt-0.5" />
-          {/* На телефоне текст сжат до двух строк: раньше баннер занимал
-              треть экрана и наглухо закрывал главную кнопку на первом
-              экране — человек не мог начать, не разобравшись с cookie. */}
-          <p className="text-[11px] sm:text-xs text-muted-foreground leading-snug sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
+        {/* На телефоне — одна строка и кнопки рядом. Согласие на cookie
+            это формальность, а баннер закрывал главную кнопку первого
+            экрана: человек не мог начать, не разобравшись с ним.
+            На широком экране места хватает — там текст полный. */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Icon name="Cookie" size={16} className="text-gold shrink-0 hidden sm:block" />
+          <p className="text-[11px] sm:text-xs text-muted-foreground leading-snug flex-1 min-w-0 line-clamp-1 sm:line-clamp-none">
             {tr("cookieText")}{" "}
             <button onClick={() => go("privacy")} className="text-gold hover:underline font-semibold whitespace-nowrap">{tr("cookieMore")}</button>
           </p>
+          {/* min-h-[44px] — минимальная зона касания пальцем (стандарт Apple
+              и Google). Сам баннер от этого не растёт: кнопки и так стоят
+              в одну строку с текстом, а промахи по ним исчезают. */}
+          <div className="flex items-center gap-1 shrink-0 sm:hidden -my-1">
+            <button onClick={() => decide("essential")} aria-label={tr("cookieDecline")} className="text-muted-foreground hover:text-foreground text-[11px] font-montserrat font-semibold px-2.5 min-h-[44px] rounded-sm transition-colors">{tr("cookieDeclineShort")}</button>
+            <button onClick={() => decide("accepted")} className="gold-gradient text-[hsl(28,20%,7%)] text-[11px] font-montserrat font-bold px-4 min-h-[44px] rounded-sm hover:opacity-90 transition-opacity">{tr("cookieAccept")}</button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 justify-end">
+        <div className="hidden sm:flex items-center gap-2 justify-end">
           <button onClick={() => decide("essential")} className="text-muted-foreground hover:text-foreground text-xs font-montserrat font-semibold px-3 py-2 rounded-sm transition-colors">{tr("cookieDecline")}</button>
           <button onClick={() => decide("accepted")} className="gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold px-5 py-2 rounded-sm hover:opacity-90 transition-opacity">{tr("cookieAccept")}</button>
         </div>

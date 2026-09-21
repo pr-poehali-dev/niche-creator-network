@@ -32,7 +32,11 @@ export function MinimalHome({ onCabinet, onPolicy, onBrowse }: { onCabinet: () =
   const { tr } = useLang();
   return (
     <>
-      <section className="relative overflow-hidden grid-line-bg vignette w-full flex items-center min-h-[80vh]">
+      {/* min-h только на широких экранах. На телефоне высота 80vh вместе с
+          центрированием давала ~700px пустоты над заголовком — человек
+          открывал сайт и видел почти пустой экран, а суть предложения
+          начиналась ниже линии сгиба. */}
+      <section className="relative overflow-hidden grid-line-bg vignette w-full flex items-center md:min-h-[80vh]">
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/60 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
         <div className="absolute inset-0">
@@ -43,7 +47,7 @@ export function MinimalHome({ onCabinet, onPolicy, onBrowse }: { onCabinet: () =
             колонка спущена ниже заголовка. Идеально симметричный разворот
             выглядит как шаблон; смещение даёт живой ритм и ведёт взгляд
             по диагонали — от заголовка к цифрам. */}
-        <div className="relative z-20 max-w-6xl mx-auto px-4 lg:px-8 py-20 md:py-28 grid lg:grid-cols-12 gap-x-8 xl:gap-x-12 items-start">
+        <div className="relative z-20 max-w-6xl mx-auto px-4 lg:px-8 py-12 md:py-28 grid lg:grid-cols-12 gap-x-8 xl:gap-x-12 items-start">
           <div className="max-w-2xl stagger lg:col-span-7">
             <div className="tag-security inline-flex items-center gap-1.5 mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse-gold" />
@@ -200,7 +204,7 @@ export function LandingFaq() {
   ];
   return (
     <section className="border-t border-border bg-card/30">
-      <div className="max-w-3xl mx-auto px-4 py-16">
+      <div className="max-w-3xl mx-auto px-4 py-10 md:py-16">
         <div className="text-center mb-10">
           <div className="tag-security inline-block mb-3">{tr("lpFaqTag")}</div>
           <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground">{tr("lpFaqTitle")}</h2>
@@ -240,7 +244,7 @@ export function LandingWhyUs() {
     { icon: "Users", title: "whyUs4Title" as const, desc: "whyUs4Desc" as const, accent: false },
   ];
   return (
-    <section className="max-w-7xl mx-auto px-4 py-16 md:py-20">
+    <section className="max-w-7xl mx-auto px-4 py-10 md:py-20">
       <div className="text-center mb-12 max-w-2xl mx-auto">
         <div className="tag-security inline-block mb-3">{tr("whyUsTag")}</div>
         <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-3">{tr("whyUsTitle")}</h2>
@@ -302,7 +306,7 @@ export function LandingHowItWorks() {
     { icon: "CircleCheck", title: "lpHow4Title" as const, desc: "lpHow4Desc" as const },
   ];
   return (
-    <section className="max-w-7xl mx-auto px-4 py-16">
+    <section className="max-w-7xl mx-auto px-4 py-10 md:py-16">
       <div className="text-center mb-12">
         <div className="tag-security inline-block mb-3">{tr("lpHowTag")}</div>
         <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground">{tr("lpHowTitle")}</h2>
@@ -332,7 +336,7 @@ export function LandingValue() {
   ];
   return (
     <section className="border-y border-border bg-card/30">
-      <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="max-w-7xl mx-auto px-4 py-10 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-6">
         {cards.map((c) => (
           <div key={c.title} className="group rounded-sm p-7 md:p-8 border border-border bg-card card-lift">
             <div className="flex items-center gap-3 mb-5">
@@ -363,7 +367,7 @@ export function LandingServices() {
   const { lang, tr } = useLang();
   const { servicePrices } = useProviders();
   return (
-    <section className="max-w-7xl mx-auto px-4 py-16">
+    <section className="max-w-7xl mx-auto px-4 py-10 md:py-16">
       <div className="text-center mb-12">
         <div className="tag-security inline-block mb-3">{tr("lpServicesTag")}</div>
         <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground">{tr("lpServicesTitle")}</h2>
@@ -407,7 +411,7 @@ export function LandingTestimonials() {
 
   return (
     <section className="border-y border-border bg-card/30">
-      <div className="max-w-7xl mx-auto px-4 py-16">
+      <div className="max-w-7xl mx-auto px-4 py-10 md:py-16">
         <div className="text-center mb-12">
           <div className="tag-security inline-block mb-3">{tr("lpRevTag")}</div>
           <h2 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground">
@@ -461,7 +465,7 @@ export function LandingTestimonials() {
 export function LandingFinalCta({ onCabinet }: { onCabinet: () => void }) {
   const { tr } = useLang();
   return (
-    <section className="max-w-7xl mx-auto px-4 py-20">
+    <section className="max-w-7xl mx-auto px-4 py-12 md:py-20">
       <div className="relative overflow-hidden rounded-sm border border-gold/40 glass-card security-glow ambient-gold p-10 md:p-14 text-center">
         <div className="absolute inset-0 grid-line-bg opacity-30" />
         <div className="relative z-10">
