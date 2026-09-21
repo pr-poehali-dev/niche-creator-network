@@ -25,6 +25,11 @@ type ChatMsg = {
   replyTo?: { name: string; text: string } | null;
   removed?: boolean;
   reactions: Record<string, number[]>;
+  // Когда собеседник открыл сообщение. null — ещё не читал.
+  readAt?: string | null;
+  // Сообщение отправляется прямо сейчас: показываем часы вместо галочки,
+  // чтобы человек видел, что оно не потерялось.
+  pending?: boolean;
 };
 
 /** Быстрые реакции: то, что ставят в 90% случаев. */
@@ -68,7 +73,7 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
             id: number; fromId: string; fromName: string; text: string; createdAt: string | null;
             attachments?: Attachment[]; geo?: GeoPoint | null;
             replyTo?: { name: string; text: string } | null; removed?: boolean;
-            reactions?: Record<string, number[]>;
+            reactions?: Record<string, number[]>; readAt?: string | null;
           }) => ({
             id: m.id,
             me: m.fromId === myDmId,
@@ -80,6 +85,7 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
             replyTo: m.replyTo || null,
             removed: !!m.removed,
             reactions: m.reactions || {},
+            readAt: m.readAt || null,
           }));
           // Обновляем состояние только если переписка реально изменилась:
           // иначе каждые несколько секунд пересоздавался бы список сообщений
@@ -88,6 +94,9 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
             prev.length === next.length && prev.every((p, i) =>
               p.text === next[i].text && p.me === next[i].me && p.id === next[i].id
               && p.removed === next[i].removed
+              // Без сверки readAt галочка «прочитано» не обновлялась бы:
+              // список считался неизменным, и отметка не доезжала до экрана.
+              && p.readAt === next[i].readAt
               && JSON.stringify(p.reactions) === JSON.stringify(next[i].reactions))
               ? prev
               : next
@@ -143,6 +152,20 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
     if ((!text && !attachments.length && !geo) || blocked) return;
     if (target.pairKey) {
       const toId = target.pairKey.split(":").find((p) => p !== myDmId) || "";
+      // Показываем сообщение сразу, не дожидаясь сервера. Раньше между
+      // нажатием и появлением текста была заметная пауза — казалось, что
+      // отправка не сработала, и люди жали кнопку повторно.
+      const draftId = -Date.now();
+      const draft: ChatMsg = {
+        id: draftId, me: true, text,
+        time: new Date().toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" }),
+        attachments, geo, reactions: {}, pending: true,
+        replyTo: replyTo ? { name: replyTo.name, text: replyTo.text } : null,
+      };
+      setMsgs((m) => [...m, draft]);
+      setChatInput("");
+      setReplyTo(null);
+
       const res = await fetch(func2url["messages"], {
         method: "POST",
         headers: authHeaders({ "Content-Type": "application/json" }),
@@ -154,9 +177,18 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
       }).catch(() => null);
       // Дружбу разорвали между открытием окна и отправкой — показываем причину,
       // а не молча теряем сообщение.
-      if (res && res.status === 403) { setBlocked(true); return; }
-      setChatInput("");
-      setReplyTo(null);
+      if (res && res.status === 403) {
+        setMsgs((m) => m.filter((x) => x.id !== draftId));
+        setBlocked(true);
+        return;
+      }
+      if (!res || !res.ok) {
+        // Сообщение не ушло — убираем черновик и возвращаем текст в поле,
+        // чтобы человек не потерял написанное.
+        setMsgs((m) => m.filter((x) => x.id !== draftId));
+        setChatInput(raw);
+        return;
+      }
       loadDm();
       return;
     }
@@ -242,6 +274,18 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
                         <span className="inline-flex items-center gap-1" title={tr("autoTranslated")}>
                           <Icon name="Languages" size={10} />
                           {tr("autoTranslated")}
+                        </span>
+                      )}
+                      {/* Статус только у своих сообщений: часы — уходит,
+                          одна галочка — доставлено, две — собеседник прочитал. */}
+                      {m.me && (
+                        <span
+                          className="inline-flex items-center ms-auto ps-1"
+                          title={tr(m.pending ? "chatSending" : m.readAt ? "chatRead" : "chatDelivered")}
+                        >
+                          {m.pending
+                            ? <Icon name="Clock3" size={11} />
+                            : <Icon name={m.readAt ? "CheckCheck" : "Check"} size={12} className={m.readAt ? "text-[hsl(28,20%,7%)]" : undefined} />}
                         </span>
                       )}
                     </div>
