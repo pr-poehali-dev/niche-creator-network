@@ -17,6 +17,7 @@ import NotificationBell from "@/components/NotificationBell";
 import LocationAutocomplete, { type LocationSuggestion } from "@/components/LocationAutocomplete";
 import { serviceCategories, services } from "@/lib/servicesCatalog";
 import { lifeTasks, matchLifeTasks } from "@/lib/lifeTasks";
+import { applySeo } from "@/lib/seoMeta";
 import { StarRating } from "@/components/SharedControls";
 const AdminPanel = lazy(() => import("@/components/AdminPanel"));
 const ClientDashboard = lazy(() => import("@/components/ClientDashboard"));
@@ -608,6 +609,15 @@ export default function Index() {
     window.addEventListener("shchit:require-auth", openAuth);
     return () => window.removeEventListener("shchit:require-auth", openAuth);
   }, []);
+  // Мета-теги под каждый раздел. Раньше в HTML был жёстко прописан
+  // canonical на главную — для поисковика это прямое указание «все адреса
+  // сайта суть одна страница, склей их». Блог, тарифы и каталог просто не
+  // попадали в индекс как самостоятельные страницы. Теперь при переходе
+  // подставляются свой адрес, заголовок и описание.
+  useEffect(() => {
+    applySeo(active as string);
+  }, [active]);
+
   const { geo } = useGeo();
   const historyRef = useRef<{ section: Section; provider: Provider | null }[]>([{ section: active, provider: null }]);
 

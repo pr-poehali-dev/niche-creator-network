@@ -36,9 +36,9 @@ type Dict = Record<string, { ru: string; en: string }>;
 
 export const t: Dict = {
   // Mobile App (PWA) page
-  navMobileApp: { ru: "Мобильное приложение", en: "Mobile app" },
+  navMobileApp: { ru: "Установить на телефон", en: "Mobile app" },
   maTag: { ru: "Приложение", en: "App" },
-  maTitle: { ru: "Мобильное приложение ЩИТ", en: "SHCHIT Mobile App" },
+  maTitle: { ru: "ЩИТ на телефоне — как приложение", en: "SHCHIT Mobile App" },
   maSubtitle: { ru: "Установите ЩИТ на телефон как обычное приложение — с иконкой на экране, полноэкранным режимом и быстрым запуском. Бесплатно, за 15 секунд.", en: "Install SHCHIT on your phone like a regular app — with an icon on your home screen, full-screen mode and instant launch. Free, in 15 seconds." },
   maWhatTitle: { ru: "Что это за приложение", en: "What kind of app is this" },
   maWhatText: { ru: "Это не отдельное приложение из App Store или Google Play, а современная веб-технология (PWA). Вы добавляете сайт ЩИТ на главный экран телефона — и он открывается как настоящее приложение: на весь экран, без адресной строки браузера, с собственной иконкой. При этом вам не нужно ничего скачивать из магазинов и оно не занимает много памяти. Все обновления приходят автоматически.", en: "This is not a separate app from the App Store or Google Play, but a modern web technology (PWA). You add the SHCHIT website to your phone's home screen — and it opens like a real app: full-screen, without the browser address bar, with its own icon. You don't need to download anything from the stores and it takes almost no memory. All updates come automatically." },
@@ -870,7 +870,7 @@ export const t: Dict = {
   pdPremB4: { ru: "Знак доверия рядом с именем.", en: "A trust mark next to your name." },
 
   // Payment (YooKassa + Paddle + currency)
-  payForeignNote: { ru: "Оплата проходит банковской картой через защищённый сервис ЮKassa. Принимаются карты Visa, Mastercard и «Мир». После нажатия вы перейдёте на безопасную страницу оплаты. Списание производится в рублях (₽); сумма в вашей валюте показана справочно по текущему курсу.", en: "Payment is made by bank card via the secure YooKassa service, which accepts Visa, Mastercard and Mir. After clicking, you'll be redirected to a secure checkout. The charge is made in Russian rubles (₽); the amount in your currency is shown for reference at the current rate." },
+  payForeignNote: { ru: "Оплата банковской картой через защищённый сервис ЮKassa. Принимаются карты «Мир», а также Visa и Mastercard, выпущенные российскими банками. Карты, выпущенные за пределами России, к оплате сейчас не принимаются — это ограничение платёжных систем, а не платформы. Списание в рублях (₽); сумма в вашей валюте показана справочно по курсу.", en: "Payment by bank card via the secure YooKassa service. Mir cards are accepted, as well as Visa and Mastercard issued by Russian banks. Cards issued outside Russia are currently not accepted — this is a payment-system restriction, not ours. The charge is in Russian rubles (₽); the amount in your currency is shown for reference." },
   payApproxInCurrency: { ru: "≈ в вашей валюте:", en: "≈ in your currency:" },
   payNotConfigured: { ru: "Оплата временно недоступна — идут технические работы. Деньги не списаны. Попробуйте позже или напишите нам, мы поможем оформить подписку.", en: "Payment is temporarily unavailable due to maintenance. You have not been charged. Please try later or contact us and we will help you subscribe." },
   payNeedLogin: { ru: "Войдите в аккаунт, чтобы оформить подписку — так оплата точно поступит на ваш профиль.", en: "Sign in to subscribe — this ensures the payment is applied to your account." },
@@ -1897,17 +1897,25 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         he: { title: "SHCHIT — פלטפורמה בינלאומית למומחי אבטחה", desc: "מומחי אבטחה מאומתים מרחבי העולם במדריך אחד: חוקרים, מאבטחים אישיים, בודקי פוליגרף, מומחי סייבר וחברות אבטחה.", locale: "he_IL" },
       };
       const seo = SEO[lang] ?? SEO.ru;
-      document.title = seo.title;
+      // Заголовок вкладки для русского задаёт раздел сайта (applySeo):
+      // у каталога, блога и тарифов он свой, иначе все страницы выглядели
+      // бы в поиске одинаково. Для остальных языков разделы не переведены,
+      // поэтому ставим общий заголовок платформы.
+      if (lang !== "ru") document.title = seo.title;
 
       const setMeta = (selector: string, attr: string, value: string) => {
         const el = document.querySelector(selector);
         if (el) el.setAttribute(attr, value);
       };
-      setMeta('meta[name="description"]', "content", seo.desc);
-      setMeta('meta[property="og:title"]', "content", seo.title);
-      setMeta('meta[property="og:description"]', "content", seo.desc);
+      // Локаль выставляем всегда, а тексты — только для неруских языков:
+      // в русской версии описание страницы задаёт раздел сайта.
       setMeta('meta[property="og:locale"]', "content", seo.locale);
-      setMeta('meta[name="twitter:title"]', "content", seo.title);
+      if (lang !== "ru") {
+        setMeta('meta[name="description"]', "content", seo.desc);
+        setMeta('meta[property="og:title"]', "content", seo.title);
+        setMeta('meta[property="og:description"]', "content", seo.desc);
+        setMeta('meta[name="twitter:title"]', "content", seo.title);
+      }
       setMeta('meta[name="twitter:description"]', "content", seo.desc);
     }
   }, [lang, rtl]);

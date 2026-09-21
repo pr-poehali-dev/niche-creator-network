@@ -6,6 +6,7 @@ import ShareButtons from "@/components/ShareButtons";
 import { type BlogPost } from "@/lib/blog";
 import { useAutoTranslate } from "@/lib/autotranslate";
 import { type Section } from "@/lib/shared";
+import { canonicalFor } from "@/lib/seoMeta";
 
 type MobilePlatform = "ios" | "android" | "desktop";
 
@@ -559,6 +560,14 @@ function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (
     const prevDesc = metaDesc?.getAttribute("content") || "";
     if (metaDesc) metaDesc.setAttribute("content", loc(post.metaDescription));
 
+    // Канонический адрес статьи. Без него все 35 материалов указывали на
+    // общую страницу блога, и поисковик считал их одной страницей —
+    // в индекс попадал только блог целиком, а не каждый разбор.
+    const canon = document.head.querySelector('link[rel="canonical"]');
+    const prevCanon = canon?.getAttribute("href") || "";
+    const articleUrl = canonicalFor("blog", { post: post.slug });
+    if (canon) canon.setAttribute("href", articleUrl);
+
     const ld = document.createElement("script");
     ld.type = "application/ld+json";
     ld.setAttribute("data-blog-article", "1");
@@ -571,13 +580,14 @@ function BlogArticle({ post, setActive, onBack }: { post: BlogPost; setActive: (
       datePublished: post.date,
       author: { "@type": "Organization", name: "ЩИТ" },
       publisher: { "@type": "Organization", name: "ЩИТ", url: "https://shieldpspl.ru/" },
-      mainEntityOfPage: "https://shieldpspl.ru/?section=blog",
+      mainEntityOfPage: articleUrl,
     });
     document.head.appendChild(ld);
 
     return () => {
       document.title = prevTitle;
       if (metaDesc) metaDesc.setAttribute("content", prevDesc);
+      if (canon && prevCanon) canon.setAttribute("href", prevCanon);
       ld.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
