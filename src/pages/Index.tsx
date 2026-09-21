@@ -2220,7 +2220,14 @@ function ProviderResultCard({ p, onOpen }: { p: Provider; onOpen: () => void }) 
 function SearchSection({ setActive, initialCategory = "", initialService = "", openSpecialist }: { setActive: (s: Section) => void; initialCategory?: string; initialService?: string; openSpecialist?: (p: Provider) => void }) {
   const { lang, tr } = useLang();
   const { providers, failed } = useProviders();
-  const [query, setQuery] = useState(initialService);
+  // Название услуги приходит на английском (так устроен каталог), а искать
+  // надо на языке интерфейса — иначе русскому человеку ничего не найдётся.
+  const localizeService = (titleEn: string) => {
+    if (!titleEn) return "";
+    const svc = services.find((x) => x.title.en === titleEn);
+    return svc ? L(svc.title, lang) : titleEn;
+  };
+  const [query, setQuery] = useState(() => localizeService(initialService));
   const [category, setCategory] = useState(initialCategory);
   const [licensedOnly, setLicensedOnly] = useState(false);
   const [cityInput, setCityInput] = useState("");
@@ -2372,10 +2379,29 @@ function SearchSection({ setActive, initialCategory = "", initialService = "", o
           </button>
         </div>
       ) : results.length === 0 ? (
-        <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
-          <Icon name="SearchX" size={40} className="text-muted-foreground/30" />
-          <span className="text-sm text-muted-foreground">{tr("filterNoResults")}</span>
-          {hasFilters && <button onClick={reset} className="text-xs font-montserrat font-semibold text-gold hover:underline">{tr("searchReset")}</button>}
+        /* Пустой результат был тупиком: «ничего не найдено» — и всё.
+           Каталог молодой, совпадений часто нет, и человек просто уходил.
+           Теперь предлагаем конкретный следующий шаг: снять фильтры или
+           оставить задачу, чтобы специалисты откликнулись сами. */
+        <div className="border border-dashed border-border rounded-sm bg-card/50 p-8 md:p-10 flex flex-col items-center gap-4 text-center">
+          <Icon name="SearchX" size={36} className="text-muted-foreground/30" />
+          <div>
+            <div className="font-montserrat font-bold text-base text-foreground mb-1.5">{tr("filterNoResults")}</div>
+            <p className="text-sm text-muted-foreground max-w-md leading-relaxed">{tr("noResultsHint")}</p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center gap-2.5 mt-1">
+            {hasFilters && (
+              <button onClick={reset} className="border border-border text-foreground px-5 py-2.5 text-xs font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">
+                {tr("searchReset")}
+              </button>
+            )}
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("shchit:new-request"))}
+              className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2"
+            >
+              <Icon name="Send" size={14} />{tr("noResultsCta")}
+            </button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 stagger">
@@ -2393,9 +2419,17 @@ function SpecialistsListSection({ setActive, openSpecialist }: { setActive: (s: 
   const { providers } = useProviders();
   const [verifiedOnly, setVerifiedOnly] = useState(false);
 
+  // Порядок: сначала заполненные анкеты, потом образцы, в самом конце —
+  // пустые профили. Незаполненная карточка («Специализация не указана»,
+  // цена «по запросу») не помогает выбрать и отпугивает сильнее, чем
+  // честно помеченный образец, поэтому наверх её пускать нельзя.
+  const isFilled = (p: Provider) => Boolean(L(p.title, "ru")?.trim());
+  const rank = (p: Provider) => (isFilled(p) && !p.isDemo ? 0 : p.isDemo ? 1 : 2);
   const list = providers
     .filter((p) => p.active)
-    .filter((p) => !verifiedOnly || isLicensed(p));
+    .filter((p) => !verifiedOnly || isLicensed(p))
+    .slice()
+    .sort((a, b) => rank(a) - rank(b));
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
@@ -2420,8 +2454,40 @@ function SpecialistsListSection({ setActive, openSpecialist }: { setActive: (s: 
           <Icon name="Search" size={14} />
           {tr("heroClientCta1")}
         </button>
-        <span className="text-xs text-muted-foreground ms-auto">{tr("searchFound")}: <span className="text-gold font-bold">{list.length}</span></span>
+        {/* Считаем реальные анкеты отдельно от образцов. «Найдено: 19» при
+            четырёх живых специалистах вводило в заблуждение: человек ждал
+            выбора из девятнадцати, а находил четверых и пятнадцать примеров. */}
+        {/* Счётчик показываем, только когда есть что считать: «Найдено: 0»
+            рядом с пояснением дублирует мысль и выглядит как ошибка. */}
+        {list.filter((p) => !p.isDemo && isFilled(p)).length > 0 && (
+          <span className="text-xs text-muted-foreground ms-auto">
+            {tr("searchFound")}: <span className="text-gold font-bold">{list.filter((p) => !p.isDemo && isFilled(p)).length}</span>
+            {list.some((p) => p.isDemo) && (
+              <span className="text-muted-foreground"> · {list.filter((p) => p.isDemo).length} {tr("demoSamples")}</span>
+            )}
+          </span>
+        )}
       </div>
+
+      {/* Пока нет ни одной заполненной анкеты — честно объясняем, что
+          человек видит примеры, и предлагаем оставить задачу. Голый
+          счётчик «0» без объяснения выглядит как сломанный сайт. */}
+      {list.filter((p) => !p.isDemo && isFilled(p)).length === 0 && list.length > 0 && (
+        <div className="border border-gold/30 rounded-sm glass-card p-5 mb-6">
+          <div className="flex items-start gap-3">
+            <Icon name="Info" size={18} className="text-gold shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-sm text-muted-foreground leading-relaxed mb-3">{tr("catalogEarlyNote")}</p>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("shchit:new-request"))}
+                className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 text-xs font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2"
+              >
+                <Icon name="Send" size={14} />{tr("noResultsCta")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {list.length === 0 ? (
         <div className="border border-dashed border-border rounded-sm bg-card/50 py-16 flex flex-col items-center gap-3 text-center">
@@ -2442,6 +2508,7 @@ function SpecialistsListSection({ setActive, openSpecialist }: { setActive: (s: 
 function ClientServices({ setActive, openSpecialist }: { setActive: (s: Section) => void; openSpecialist?: (p: Provider) => void }) {
   const [mode, setMode] = useState<"catalog" | "search">("catalog");
   const [prefillCat, setPrefillCat] = useState("");
+  const [prefillService, setPrefillService] = useState("");
   const { tr } = useLang();
 
   if (mode === "search") {
@@ -2455,14 +2522,22 @@ function ClientServices({ setActive, openSpecialist }: { setActive: (s: Section)
             <Icon name="ArrowLeft" size={14} />{tr("catBackToCatalog")}
           </button>
         </div>
-        <SearchSection setActive={setActive} initialCategory={prefillCat} openSpecialist={openSpecialist} />
+        <SearchSection setActive={setActive} initialCategory={prefillCat} initialService={prefillService} openSpecialist={openSpecialist} />
       </div>
     );
   }
 
   return (
     <ServicesSection
-      onOrder={(catId) => { setPrefillCat(catId); setMode("search"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+      onOrder={(catId, serviceTitleEn) => {
+        setPrefillCat(catId);
+        // Название услуги раньше терялось: человек выбирал «Найти человека»,
+        // а попадал в раздел из девяти специальностей и искал заново.
+        // Теперь запрос уходит в поиск вместе с задачей.
+        setPrefillService(serviceTitleEn || "");
+        setMode("search");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }}
     />
   );
 }
@@ -2554,7 +2629,7 @@ function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTi
             {matchedTasks.map((t) => (
               <button
                 key={t.id}
-                onClick={() => onOrder?.(t.cat)}
+                onClick={() => onOrder?.(t.cat, t.services[0])}
                 className="flex items-start gap-3 border border-border rounded-sm bg-card p-3.5 text-start hover:border-gold/50 hover:bg-secondary/30 transition-all card-lift"
               >
                 <div className="w-9 h-9 rounded-sm bg-secondary flex items-center justify-center shrink-0">

@@ -139,6 +139,8 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
                 onChange={(e) => { setEmail(e.target.value); setError(""); }}
                 onKeyDown={(e) => { if (e.key === "Enter" && email.trim() && !busy) doResetRequest(); }}
                 autoFocus
+                autoComplete="email"
+                inputMode="email"
                 placeholder="your@email.com"
                 className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors mb-3"
               />
@@ -160,6 +162,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
                 value={resetCode}
                 onChange={(e) => { setResetCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }}
                 inputMode="numeric"
+                autoComplete="one-time-code"
                 autoFocus
                 placeholder="••••••"
                 className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-center text-2xl tracking-[0.5em] font-montserrat font-bold text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors mb-3"
@@ -169,6 +172,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
                 value={newPass}
                 onChange={(e) => { setNewPass(e.target.value); setError(""); }}
                 onKeyDown={(e) => { if (e.key === "Enter" && resetCode.length === 6 && newPass && !busy) doResetConfirm(); }}
+                autoComplete="new-password"
                 placeholder={tr("authResetNewPass")}
                 className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors mb-1"
               />
@@ -214,6 +218,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
             onChange={(e) => { setCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }}
             onKeyDown={(e) => { if (e.key === "Enter" && code.length === 6 && !busy) submitCode(); }}
             inputMode="numeric"
+            autoComplete="one-time-code"
             autoFocus
             placeholder="••••••"
             className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-center text-2xl tracking-[0.5em] font-montserrat font-bold text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors my-4"
@@ -357,6 +362,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={tr("authNamePh")}
+                  autoComplete="name"
                   className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
                 />
               </>

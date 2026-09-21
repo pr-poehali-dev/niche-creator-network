@@ -1175,6 +1175,8 @@ export const t: Dict = {
   searchAnyCountry: { ru: "Любая страна", en: "Any country" },
   searchAnyRating: { ru: "Любой рейтинг", en: "Any rating" },
   searchFound: { ru: "Найдено", en: "Found" },
+  demoSamples: { ru: "образцов анкет", en: "sample profiles" },
+  catalogEarlyNote: { ru: "Каталог только наполняется: сейчас здесь образцы анкет — они показывают, как будет выглядеть профиль специалиста. Опишите задачу: мы передадим её проверенным исполнителям, и они свяжутся с вами напрямую.", en: "The catalogue is just filling up: what you see now are sample profiles showing how a specialist's page will look. Describe your task — we will pass it to verified providers and they will contact you directly." },
   searchReset: { ru: "Сбросить фильтры", en: "Reset filters" },
   premiumBadge: { ru: "Премиум", en: "Premium" },
   openProfile: { ru: "Открыть профиль", en: "Open profile" },
@@ -1677,6 +1679,8 @@ export const t: Dict = {
   verifyDocsConfirmed: { ru: "Документы подтверждены", en: "Documents verified" },
   filterVerifiedOnly: { ru: "Только с подтверждёнными документами", en: "Verified documents only" },
   filterNoResults: { ru: "Нет исполнителей с подтверждёнными документами", en: "No providers with verified documents" },
+  noResultsHint: { ru: "Каталог пополняется: по этому запросу пока никого нет. Опишите задачу — подходящие специалисты откликнутся сами, с ценой и сроком.", en: "The catalogue is still growing: no one matches this query yet. Describe your task — suitable specialists will respond themselves, with a price and a timeline." },
+  noResultsCta: { ru: "Описать задачу", en: "Describe the task" },
 
   // Client data
   cdClientData: { ru: "Ваши данные", en: "Your details" },

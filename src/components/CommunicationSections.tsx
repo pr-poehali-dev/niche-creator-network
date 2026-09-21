@@ -570,11 +570,11 @@ export function ContactsSection() {
             <div className="space-y-4">
               <div>
                 <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("name")}</label>
-                <input value={fbName} onChange={(e) => { setFbName(e.target.value); setFbState("idle"); }} placeholder={tr("yourName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                <input value={fbName} onChange={(e) => { setFbName(e.target.value); setFbState("idle"); }} placeholder={tr("yourName")} autoComplete="name" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
               </div>
               <div>
                 <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">Email</label>
-                <input type="email" value={fbEmail} onChange={(e) => { setFbEmail(e.target.value); setFbState("idle"); }} placeholder="your@email.com" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                <input type="email" autoComplete="email" inputMode="email" value={fbEmail} onChange={(e) => { setFbEmail(e.target.value); setFbState("idle"); }} placeholder="your@email.com" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
               </div>
               <div>
                 <label className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest block mb-2">{tr("subject")}</label>
