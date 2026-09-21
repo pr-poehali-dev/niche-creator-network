@@ -10,13 +10,33 @@ import { ReportModal } from "@/components/ReviewsAndReports";
 import { FaqAccordion } from "@/components/LandingSections";
 import { L, shortName } from "@/lib/shared";
 import { serviceCategories } from "@/lib/servicesCatalog";
+import { Composer, AttachmentView, GeoView, Reactions, type Attachment, type GeoPoint } from "@/components/chat/ChatKit";
 import func2url from "../../backend/func2url.json";
+
+/** Сообщение переписки: текст плюс вложения, точка на карте и реакции. */
+type ChatMsg = {
+  id: number;
+  me: boolean;
+  text: string;
+  time: string;
+  author?: string;
+  attachments: Attachment[];
+  geo: GeoPoint | null;
+  replyTo?: { name: string; text: string } | null;
+  removed?: boolean;
+  reactions: Record<string, number[]>;
+};
+
+/** Быстрые реакции: то, что ставят в 90% случаев. */
+const QUICK_REACTIONS = ["👍", "🔥", "❤️", "😊", "🤝", "✅"];
 
 export function DirectChatSection({ target, chatInput, setChatInput, onBack }: { target: { name: string; title: string; avatar?: string | null; pairKey?: string }; chatInput: string; setChatInput: (v: string) => void; onBack: () => void }) {
   const { lang, tr } = useLang();
   const { user } = useAuth();
-  const [msgs, setMsgs] = useState<{ me: boolean; text: string; time: string }[]>([]);
+  const [msgs, setMsgs] = useState<ChatMsg[]>([]);
   const [reportOpen, setReportOpen] = useState(false);
+  const [replyTo, setReplyTo] = useState<{ id: number; name: string; text: string } | null>(null);
+  const [menuFor, setMenuFor] = useState<number | null>(null);
   // Переписка закрыта: дружба не подтверждена или её разорвали.
   const [blocked, setBlocked] = useState(false);
   const dmEndRef = useRef<HTMLDivElement | null>(null);
@@ -44,16 +64,31 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
         if (d.error === "not_friends") { setBlocked(true); return; }
         setBlocked(false);
         if (Array.isArray(d.messages)) {
-          const next = d.messages.map((m: { fromId: string; text: string; createdAt: string | null }) => ({
+          const next: ChatMsg[] = d.messages.map((m: {
+            id: number; fromId: string; fromName: string; text: string; createdAt: string | null;
+            attachments?: Attachment[]; geo?: GeoPoint | null;
+            replyTo?: { name: string; text: string } | null; removed?: boolean;
+            reactions?: Record<string, number[]>;
+          }) => ({
+            id: m.id,
             me: m.fromId === myDmId,
+            author: m.fromName,
             text: m.text,
             time: m.createdAt ? new Date(m.createdAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" }) : "",
+            attachments: m.attachments || [],
+            geo: m.geo || null,
+            replyTo: m.replyTo || null,
+            removed: !!m.removed,
+            reactions: m.reactions || {},
           }));
           // Обновляем состояние только если переписка реально изменилась:
           // иначе каждые несколько секунд пересоздавался бы список сообщений
           // и перезапускался автоперевод — лишняя нагрузка на ровном месте.
           setMsgs((prev) => (
-            prev.length === next.length && prev.every((p, i) => p.text === next[i].text && p.me === next[i].me)
+            prev.length === next.length && prev.every((p, i) =>
+              p.text === next[i].text && p.me === next[i].me && p.id === next[i].id
+              && p.removed === next[i].removed
+              && JSON.stringify(p.reactions) === JSON.stringify(next[i].reactions))
               ? prev
               : next
           ));
@@ -102,26 +137,52 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
     return () => { stop(); document.removeEventListener("visibilitychange", onVisibility); };
   }, [target.pairKey, blocked, loadDm]);
 
-  const send = async () => {
-    const text = cleanText(chatInput.trim());
-    if (!text || blocked) return;
+  const send = async ({ text: raw, attachments, geo }: { text: string; attachments: Attachment[]; geo: GeoPoint | null }) => {
+    const text = cleanText(raw.trim());
+    // Фото или точка на карте — самостоятельное сообщение, текст не обязателен.
+    if ((!text && !attachments.length && !geo) || blocked) return;
     if (target.pairKey) {
       const toId = target.pairKey.split(":").find((p) => p !== myDmId) || "";
       const res = await fetch(func2url["messages"], {
         method: "POST",
         headers: authHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ action: "dm_send", pair: target.pairKey, toId, text }),
+        body: JSON.stringify({
+          action: "dm_send", pair: target.pairKey, toId, text,
+          attachments, geoLat: geo?.lat, geoLon: geo?.lon, geoLabel: geo?.label,
+          replyTo: replyTo?.id,
+        }),
       }).catch(() => null);
       // Дружбу разорвали между открытием окна и отправкой — показываем причину,
       // а не молча теряем сообщение.
       if (res && res.status === 403) { setBlocked(true); return; }
       setChatInput("");
+      setReplyTo(null);
       loadDm();
       return;
     }
     const time = new Date().toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
-    setMsgs((m) => [...m, { me: true, text, time }]);
+    setMsgs((m) => [...m, { id: Date.now(), me: true, text, time, attachments, geo, reactions: {} }]);
     setChatInput("");
+  };
+
+  const react = async (messageId: number, emoji: string) => {
+    await fetch(func2url["messages"], {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action: "react", scope: "dm", messageId, emoji }),
+    }).catch(() => null);
+    setMenuFor(null);
+    loadDm();
+  };
+
+  const removeMsg = async (messageId: number) => {
+    await fetch(func2url["messages"], {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action: "remove", scope: "dm", messageId }),
+    }).catch(() => null);
+    setMenuFor(null);
+    loadDm();
   };
 
   return (
@@ -156,45 +217,92 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
             <div className="h-full flex items-center justify-center text-center text-sm text-muted-foreground">{tr("dcEmpty")}</div>
           )}
           {msgs.map((m, i) => (
-            <div key={i} className={`flex ${m.me ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[75%] rounded-sm px-3.5 py-2 ${m.me ? "gold-gradient text-[hsl(28,20%,7%)]" : "bg-secondary text-foreground"}`}>
-                <div className="text-sm leading-relaxed">{m.me ? m.text : trMsg(m.text)}</div>
-                <div className={`text-[10px] mt-1 flex items-center gap-1.5 ${m.me ? "text-[hsl(28,20%,7%)]/70" : "text-muted-foreground"}`}>
-                  {m.time}
-                  {!m.me && isTranslated(m.text) && (
-                    <span className="inline-flex items-center gap-1" title={tr("autoTranslated")}>
-                      <Icon name="Languages" size={10} />
-                      {tr("autoTranslated")}
-                    </span>
-                  )}
-                </div>
+            <div key={m.id || i} className={`group flex ${m.me ? "justify-end" : "justify-start"}`}>
+              <div className="max-w-[78%] relative">
+                {/* Удалённое сообщение остаётся в ленте серой пометкой:
+                    так видно, что в разговоре был пропуск. */}
+                {m.removed ? (
+                  <div className="rounded-sm px-3.5 py-2 border border-dashed border-border text-xs text-muted-foreground italic">
+                    {tr("chatRemoved")}
+                  </div>
+                ) : (
+                  <div className={`rounded-sm px-3 py-2 ${m.me ? "gold-gradient text-[hsl(28,20%,7%)]" : "bg-secondary text-foreground"}`}>
+                    {m.replyTo && (
+                      <div className={`text-[11px] mb-1.5 ps-2 border-s-2 ${m.me ? "border-black/30" : "border-gold"}`}>
+                        <span className="font-semibold block truncate">{shortName(m.replyTo.name)}</span>
+                        <span className="opacity-75 block truncate">{m.replyTo.text}</span>
+                      </div>
+                    )}
+                    <AttachmentView items={m.attachments} mine={m.me} />
+                    {m.geo && <GeoView geo={m.geo} mine={m.me} />}
+                    {m.text && <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">{m.me ? m.text : trMsg(m.text)}</div>}
+                    <div className={`text-[10px] mt-1 flex items-center gap-1.5 ${m.me ? "text-[hsl(28,20%,7%)]/70" : "text-muted-foreground"}`}>
+                      {m.time}
+                      {!m.me && m.text && isTranslated(m.text) && (
+                        <span className="inline-flex items-center gap-1" title={tr("autoTranslated")}>
+                          <Icon name="Languages" size={10} />
+                          {tr("autoTranslated")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {!m.removed && <Reactions data={m.reactions} onToggle={(e) => react(m.id, e)} />}
+
+                {/* Кнопка действий появляется при наведении, чтобы не
+                    загромождать переписку постоянными иконками. */}
+                {!m.removed && m.id > 0 && (
+                  <button
+                    aria-label={tr("chatActions")}
+                    onClick={() => setMenuFor(menuFor === m.id ? null : m.id)}
+                    className={`absolute top-1 ${m.me ? "-start-7" : "-end-7"} w-6 h-6 rounded-full bg-card border border-border text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-gold transition-opacity flex items-center justify-center`}
+                  >
+                    <Icon name="Ellipsis" size={13} />
+                  </button>
+                )}
+
+                {menuFor === m.id && (
+                  <div className={`absolute z-30 top-8 ${m.me ? "end-0" : "start-0"} bg-card border border-border rounded-sm shadow-2xl p-1.5 animate-fade-in`}>
+                    <div className="flex gap-0.5 mb-1">
+                      {QUICK_REACTIONS.map((e) => (
+                        <button key={e} onClick={() => react(m.id, e)} className="text-base w-7 h-7 rounded-sm hover:bg-secondary transition-colors">{e}</button>
+                      ))}
+                    </div>
+                    <button onClick={() => { setReplyTo({ id: m.id, name: m.me ? tr("chatYou") : shortName(target.name), text: m.text || tr("chatAttachment") }); setMenuFor(null); }}
+                      className="w-full text-start text-xs px-2 py-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center gap-2">
+                      <Icon name="Reply" size={13} />{tr("chatReply")}
+                    </button>
+                    {m.me && (
+                      <button onClick={() => removeMsg(m.id)}
+                        className="w-full text-start text-xs px-2 py-1.5 rounded-sm text-muted-foreground hover:text-destructive hover:bg-secondary transition-colors flex items-center gap-2">
+                        <Icon name="Trash2" size={13} />{tr("chatDelete")}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ))}
           <div ref={dmEndRef} />
         </div>
 
-        <div className="p-4 border-t border-border">
-          {blocked ? (
+        {blocked ? (
+          <div className="p-4 border-t border-border">
             <div className="flex items-center gap-2.5 text-xs text-muted-foreground bg-secondary/50 border border-border rounded-sm px-3.5 py-3">
               <Icon name="Lock" size={15} className="text-gold shrink-0" />
               <span className="leading-relaxed">{tr("dcNotFriends")}</span>
             </div>
-          ) : (
-            <div className="flex gap-3">
-              <input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") send(); }}
-                placeholder={tr("writeMessage")}
-                className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
-              />
-              <button aria-label={tr("writeMessage")} onClick={send} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
-                <Icon name="Send" size={16} />
-              </button>
-            </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <Composer
+            value={chatInput}
+            onChange={setChatInput}
+            onSend={send}
+            replyTo={replyTo ? { name: replyTo.name, text: replyTo.text } : null}
+            onCancelReply={() => setReplyTo(null)}
+          />
+        )}
       </div>
     </div>
   );
@@ -204,7 +312,8 @@ export function ChatSection({ chatInput, setChatInput }: { chatInput: string; se
   const { lang, tr } = useLang();
   const rooms = [{ id: "general", title: { ru: "Общий чат", en: "General" } }, ...serviceCategories.map((c) => ({ id: c.id, title: c.title }))];
   const [room, setRoom] = useState("general");
-  const [msgs, setMsgs] = useState<{ author: string; text: string; createdAt: string | null }[]>([]);
+  const [msgs, setMsgs] = useState<ChatMsg[]>([]);
+  const [menuFor, setMenuFor] = useState<number | null>(null);
   // Имя автора больше не передаётся с фронтенда: сервер берёт его из сессии,
   // иначе подпись в чате можно было подделать.
   const endRef = useRef<HTMLDivElement | null>(null);
@@ -214,28 +323,56 @@ export function ChatSection({ chatInput, setChatInput }: { chatInput: string; se
   const { resolve: trMsg, isTranslated } = useAutoTranslate(chatTexts);
 
   const loadMsgs = useCallback((r: string) => {
-    fetch(`${func2url["messages"]}?kind=chat&room=${r}`)
+    fetch(`${func2url["messages"]}?kind=chat&room=${r}`, { headers: authHeaders() })
       .then((res) => res.json())
-      .then((d) => { if (Array.isArray(d.messages)) setMsgs(d.messages); })
+      .then((d) => {
+        if (!Array.isArray(d.messages)) return;
+        setMsgs(d.messages.map((m: {
+          id: number; author: string; authorId?: string; text: string; createdAt: string | null;
+          attachments?: Attachment[]; geo?: GeoPoint | null; removed?: boolean;
+          reactions?: Record<string, number[]>;
+        }) => ({
+          id: m.id,
+          me: false,
+          author: m.author,
+          text: m.text,
+          time: m.createdAt ? new Date(m.createdAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" }) : "",
+          attachments: m.attachments || [],
+          geo: m.geo || null,
+          removed: !!m.removed,
+          reactions: m.reactions || {},
+        })));
+      })
       .catch(() => {});
-  }, []);
+  }, [lang]);
 
   useEffect(() => { loadMsgs(room); }, [room, loadMsgs]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
-  const send = async () => {
-    const text = cleanText(chatInput.trim());
-    if (!text) return;
+  const send = async ({ text: raw, attachments, geo }: { text: string; attachments: Attachment[]; geo: GeoPoint | null }) => {
+    const text = cleanText(raw.trim());
+    if (!text && !attachments.length && !geo) return;
     setChatInput("");
     await fetch(func2url["messages"], {
       method: "POST",
       headers: authHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ action: "chat_send", room, text }),
-    });
+      body: JSON.stringify({
+        action: "chat_send", room, text, attachments,
+        geoLat: geo?.lat, geoLon: geo?.lon, geoLabel: geo?.label,
+      }),
+    }).catch(() => null);
     loadMsgs(room);
   };
 
-  const fmtTime = (iso: string | null) => iso ? new Date(iso).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" }) : "";
+  const react = async (messageId: number, emoji: string) => {
+    await fetch(func2url["messages"], {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action: "react", scope: "chat", messageId, emoji }),
+    }).catch(() => null);
+    setMenuFor(null);
+    loadMsgs(room);
+  };
   const activeRoom = rooms.find((r) => r.id === room) || rooms[0];
 
   return (
@@ -267,20 +404,46 @@ export function ChatSection({ chatInput, setChatInput }: { chatInput: string; se
             <div className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-thin">
               {msgs.length === 0 && <div className="text-sm text-muted-foreground text-center py-10">{tr("chatEmpty")}</div>}
               {msgs.map((m, i) => (
-                <div key={i} className="flex gap-3">
+                <div key={m.id || i} className="group flex gap-3">
                   <div className="w-8 h-8 gold-gradient rounded-sm flex items-center justify-center shrink-0 font-montserrat font-bold text-xs text-[hsl(28,20%,7%)]">
                     {(m.author || "?")[0]}
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1 relative">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-montserrat font-semibold text-foreground">{m.author}</span>
-                      <span className="text-[10px] text-muted-foreground">{fmtTime(m.createdAt)}</span>
+                      <span className="text-[10px] text-muted-foreground">{m.time}</span>
                     </div>
-                    <div className="text-sm text-muted-foreground leading-relaxed">{trMsg(m.text)}</div>
-                    {isTranslated(m.text) && (
-                      <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-muted-foreground/70">
-                        <Icon name="Languages" size={10} />
-                        {tr("autoTranslated")}
+                    {m.removed ? (
+                      <div className="text-xs text-muted-foreground italic">{tr("chatRemoved")}</div>
+                    ) : (
+                      <div className="max-w-md">
+                        <AttachmentView items={m.attachments} mine={false} />
+                        {m.geo && <GeoView geo={m.geo} mine={false} />}
+                        {m.text && <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">{trMsg(m.text)}</div>}
+                        {m.text && isTranslated(m.text) && (
+                          <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-muted-foreground/70">
+                            <Icon name="Languages" size={10} />
+                            {tr("autoTranslated")}
+                          </div>
+                        )}
+                        <Reactions data={m.reactions} onToggle={(e) => react(m.id, e)} />
+                      </div>
+                    )}
+
+                    {!m.removed && m.id > 0 && (
+                      <button
+                        aria-label={tr("chatActions")}
+                        onClick={() => setMenuFor(menuFor === m.id ? null : m.id)}
+                        className="absolute top-0 end-0 w-6 h-6 rounded-full bg-card border border-border text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-gold transition-opacity flex items-center justify-center"
+                      >
+                        <Icon name="Smile" size={13} />
+                      </button>
+                    )}
+                    {menuFor === m.id && (
+                      <div className="absolute z-30 top-7 end-0 bg-card border border-border rounded-sm shadow-2xl p-1.5 flex gap-0.5 animate-fade-in">
+                        {QUICK_REACTIONS.map((e) => (
+                          <button key={e} onClick={() => react(m.id, e)} className="text-base w-7 h-7 rounded-sm hover:bg-secondary transition-colors">{e}</button>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -289,20 +452,7 @@ export function ChatSection({ chatInput, setChatInput }: { chatInput: string; se
               <div ref={endRef} />
             </div>
 
-            <div className="p-4 border-t border-border">
-              <div className="flex gap-3">
-                <input
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") send(); }}
-                  placeholder={tr("writeMessage")}
-                  className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
-                />
-                <button aria-label="Отправить" onClick={send} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2.5 rounded-sm hover:opacity-90 transition-opacity">
-                  <Icon name="Send" size={16} />
-                </button>
-              </div>
-            </div>
+            <Composer value={chatInput} onChange={setChatInput} onSend={send} />
           </div>
         </div>
       </div>

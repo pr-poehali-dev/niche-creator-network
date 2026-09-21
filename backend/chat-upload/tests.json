@@ -1,0 +1,7 @@
+{
+  "tests": [
+    { "name": "CORS preflight", "method": "OPTIONS", "path": "/", "expectedStatus": 200 },
+    { "name": "Загрузка без входа запрещена", "method": "POST", "path": "/", "body": {"ext": "png", "fileBase64": "iVBORw0KGgo="}, "expectedStatus": 401, "expectedBody": {"error": "unauthorized"}, "bodyMatcher": "partial" },
+    { "name": "Метод GET не поддерживается", "method": "GET", "path": "/", "expectedStatus": 405, "expectedBody": {"error": "method_not_allowed"}, "bodyMatcher": "partial" }
+  ]
+}

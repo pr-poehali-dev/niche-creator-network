@@ -996,6 +996,24 @@ export const t: Dict = {
   adminNoDocs: { ru: "Документы не загружены", en: "No documents uploaded" },
   adminOpenDoc: { ru: "Открыть документ", en: "Open document" },
 
+  // Чат: вложения, геолокация, смайлики
+  chatEmoji: { ru: "Смайлики", en: "Emoji" },
+  chatPhoto: { ru: "Фото", en: "Photo" },
+  chatFile: { ru: "Документ", en: "Document" },
+  chatGeo: { ru: "Геолокация", en: "Location" },
+  chatGeoReady: { ru: "Моё местоположение", en: "My location" },
+  chatGeoPoint: { ru: "Точка на карте", en: "Location" },
+  chatAttachment: { ru: "Вложение", en: "Attachment" },
+  chatReply: { ru: "Ответить", en: "Reply" },
+  chatDelete: { ru: "Удалить", en: "Delete" },
+  chatActions: { ru: "Действия", en: "Actions" },
+  chatRemoved: { ru: "Сообщение удалено", en: "Message deleted" },
+  chatYou: { ru: "Вы", en: "You" },
+  chatErrTooLarge: { ru: "Файл слишком большой — до 2 МБ. Фото сжимаются автоматически.", en: "File is too large — up to 2 MB. Photos are compressed automatically." },
+  chatErrType: { ru: "Такой тип файла отправить нельзя. Доступны фото, PDF, Word, Excel и текст.", en: "This file type cannot be sent. Photos, PDF, Word, Excel and text are allowed." },
+  chatErrUpload: { ru: "Не удалось загрузить файл. Попробуйте ещё раз.", en: "Could not upload the file. Please try again." },
+  chatErrGeo: { ru: "Не удалось определить местоположение. Разрешите доступ к геолокации в браузере.", en: "Could not get your location. Allow location access in your browser." },
+
   // ИИ-администратор: разбор документов
   acTitle: { ru: "Разбор документов", en: "Document review" },
   acRunCheck: { ru: "Проверить", en: "Review" },
