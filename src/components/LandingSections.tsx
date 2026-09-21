@@ -36,7 +36,7 @@ export function MinimalHome({ onCabinet, onPolicy, onBrowse }: { onCabinet: () =
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/60 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60 z-10" />
         <div className="absolute inset-0">
-          <img src={HERO_BG} alt="" aria-hidden="true" fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-20" />
+          <img src={HERO_BG} alt="" aria-hidden="true" decoding="async" className="w-full h-full object-cover opacity-20" />
         </div>
         <div className="absolute top-1/4 -left-40 w-[500px] h-[500px] rounded-full z-0" style={{ background: "radial-gradient(circle, hsla(43,80%,52%,0.1) 0%, transparent 70%)" }} />
         {/* Сетка намеренно неровная: 7/5, а не половина на половину, и правая

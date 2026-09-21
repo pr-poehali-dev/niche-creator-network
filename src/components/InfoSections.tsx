@@ -767,6 +767,11 @@ export function SecurityPolicySection({ setActive }: { setActive: (s: Section) =
     { icon: "BadgeCheck", title: "pol6Title" as const, text: "pol6Text" as const },
     { icon: "Server", title: "pol7Title" as const, text: "pol7Text" as const },
     { icon: "Scale", title: "pol8Title" as const, text: "pol8Text" as const },
+    // Честные границы. Корпоративный клиент первым делом ищет, чего в защите
+    // НЕТ: обещание «мы защищаем всё» читается как реклама и вызывает
+    // недоверие. Прямо названные ограничения работают наоборот.
+    { icon: "TriangleAlert", title: "pol9Title" as const, text: "pol9Text" as const },
+    { icon: "Bug", title: "pol10Title" as const, text: "pol10Text" as const },
   ];
 
   return (
