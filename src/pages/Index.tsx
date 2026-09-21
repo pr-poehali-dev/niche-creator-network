@@ -815,7 +815,7 @@ export default function Index() {
       // по ссылке «ищу сотрудника» должен открываться понятный экран.
       if (active === "resumes") return <ResumeSearch />;
       if (active === "profile" && selectedProvider) return <SpecialistProfileSection provider={selectedProvider} onBack={goBack} openChat={openChat} />;
-      return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} />;
+      return <MinimalHome onCabinet={() => setAuthOpen(true)} onPolicy={() => go("policy")} onBrowse={() => go("services")} />;
     }
     if (isLocked && LOCKED_SECTIONS.includes(active)) {
       return <ProviderDashboard setActive={go} openChat={openChat} />;

@@ -74,7 +74,9 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: "IBM Plex Sans", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-family:
+      "IBM Plex Sans", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+      sans-serif;
     overflow-x: hidden;
     /* Более чёткий рендеринг шрифтов (Apple-grade сглаживание) */
     -webkit-font-smoothing: antialiased;
@@ -101,6 +103,31 @@
   /* Убираем стандартный синий outline там, где есть focus-visible */
   :focus:not(:focus-visible) {
     outline: none;
+  }
+
+  /* Тактильный отклик на нажатие. Кнопка на долю секунды проседает —
+     палец на телефоне получает подтверждение, что нажатие засчитано.
+     Без этого человек не понимает, сработало ли, и жмёт повторно:
+     отсюда дубли заявок и двойные отправки сообщений. */
+  @media (prefers-reduced-motion: no-preference) {
+    button:not(:disabled),
+    a[role="button"],
+    [role="switch"] {
+      transition: transform 0.12s cubic-bezier(0.2, 0, 0.2, 1);
+    }
+    button:not(:disabled):active,
+    a[role="button"]:active,
+    [role="switch"]:active {
+      transform: scale(0.97);
+    }
+  }
+
+  /* Убираем серую вспышку при тапе на мобильных: она выглядит
+     неряшливо поверх собственных состояний кнопок. */
+  button,
+  a,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Тактильность: лёгкое «нажатие» интерактивных элементов */
@@ -144,7 +171,9 @@
   h4,
   h5,
   h6 {
-    font-family: "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-family:
+      "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+      sans-serif;
     /* Крупный текст на широких экранах смотрится рыхлым при обычных
        межбуквенных расстояниях. Слегка сжимаем — заголовок читается как
        единый блок, а не как набор букв. Так набирают в хороших изданиях. */
@@ -162,10 +191,14 @@
 
 @layer utilities {
   .font-montserrat {
-    font-family: "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-family:
+      "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+      sans-serif;
   }
   .font-ibm {
-    font-family: "IBM Plex Sans", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-family:
+      "IBM Plex Sans", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+      sans-serif;
   }
 
   .text-gold {
@@ -612,7 +645,9 @@
   .badge-pro {
     background: linear-gradient(135deg, hsl(43, 80%, 52%), hsl(38, 70%, 40%));
     color: hsl(28, 20%, 7%);
-    font-family: "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-family:
+      "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+      sans-serif;
     font-weight: 700;
     font-size: 0.6rem;
     letter-spacing: 0.08em;
@@ -622,7 +657,9 @@
   }
 
   .stat-number {
-    font-family: "Space Grotesk", "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-family:
+      "Space Grotesk", "Montserrat", "Segoe UI", Roboto, "Helvetica Neue",
+      Arial, "Noto Sans", sans-serif;
     font-weight: 700;
     letter-spacing: -0.02em;
     color: hsl(var(--gold));
@@ -645,7 +682,9 @@
      сначала читает заголовок, а метка лишь подсказывает контекст. */
   .tag-security {
     font-size: 0.68rem;
-    font-family: "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-family:
+      "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+      sans-serif;
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -671,7 +710,9 @@
     display: inline-flex;
     align-items: center;
     font-size: 0.68rem;
-    font-family: "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-family:
+      "Montserrat", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+      sans-serif;
     font-weight: 600;
     letter-spacing: 0.02em;
     padding: 3px 9px;
@@ -716,7 +757,9 @@
     );
     border: 1px solid hsl(var(--gold) / 0.28);
     color: hsl(var(--gold));
-    transition: background 0.28s ease, border-color 0.28s ease;
+    transition:
+      background 0.28s ease,
+      border-color 0.28s ease;
   }
   .card-lift:hover .icon-tile {
     background: linear-gradient(
@@ -883,20 +926,23 @@ img {
 html[lang="ja"] body,
 html[lang="ja"] .font-montserrat,
 html[lang="ja"] .font-ibm {
-  font-family: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
-    "Yu Gothic", "Meiryo", "MS PGothic", "Montserrat", sans-serif;
+  font-family:
+    "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic",
+    "Meiryo", "MS PGothic", "Montserrat", sans-serif;
 }
 html[lang="ar"] body,
 html[lang="ar"] .font-montserrat,
 html[lang="ar"] .font-ibm {
-  font-family: "Noto Sans Arabic", "Geeza Pro", "Segoe UI", Tahoma, Arial,
-    "Montserrat", sans-serif;
+  font-family:
+    "Noto Sans Arabic", "Geeza Pro", "Segoe UI", Tahoma, Arial, "Montserrat",
+    sans-serif;
 }
 html[lang="he"] body,
 html[lang="he"] .font-montserrat,
 html[lang="he"] .font-ibm {
-  font-family: "Noto Sans Hebrew", "Arial Hebrew", "Segoe UI", Arial,
-    "Montserrat", sans-serif;
+  font-family:
+    "Noto Sans Hebrew", "Arial Hebrew", "Segoe UI", Arial, "Montserrat",
+    sans-serif;
 }
 
 /* ===== Global RTL logical-flip for common Tailwind utilities =====

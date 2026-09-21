@@ -175,9 +175,12 @@ export const t: Dict = {
 
   // Minimal home / promo
   promoBadge: { ru: "Международная платформа безопасности", en: "International security platform" },
-  promoTitle1: { ru: "Специалисты по безопасности", en: "Security specialists" },
-  promoTitle2: { ru: "с проверкой документов", en: "with verified documents" },
-  promoDesc: { ru: "Детективы, телохранители, полиграфологи, специалисты по кибербезопасности и охранные агентства — в одном каталоге. Документы проверяет человек, переписка шифруется.", en: "Detectives, bodyguards, polygraph examiners, cybersecurity experts and security agencies — in one catalogue. Documents are checked by a person, messages are encrypted." },
+  // Заголовок говорит о задаче человека, а не о том, что мы каталог.
+  // «Специалисты по безопасности с проверкой документов» описывало нас;
+  // посетителю важнее понять, что здесь решат его проблему.
+  promoTitle1: { ru: "Нужен детектив, охрана", en: "Need a detective, a guard" },
+  promoTitle2: { ru: "или проверка на полиграфе?", en: "or a polygraph test?" },
+  promoDesc: { ru: "Найдём специалиста под вашу задачу — от поиска человека до защиты переговоров от прослушки. Документы и лицензии каждого проверяет живой человек, а не робот.", en: "We'll find a specialist for your case — from locating a person to protecting meetings from eavesdropping. Every document and licence is checked by a real person, not a bot." },
   promoForClients: { ru: "Клиентам — поиск и связь со специалистом бесплатно", en: "For clients — free search and contact with a specialist" },
   promoForProviders: { ru: "Специалистам — фиксированная подписка, без комиссии со сделок", en: "For specialists — a fixed subscription, no commission on deals" },
   homeSecTitle: { ru: "Безопасность платформы", en: "Platform security" },
@@ -185,6 +188,7 @@ export const t: Dict = {
   homeSec2: { ru: "Шифрование данных и защита переписки", en: "Data encryption and message protection" },
   homeSec3: { ru: "Конфиденциальность и право на псевдоним", en: "Confidentiality and the right to an alias" },
   homeOpenCabinet: { ru: "Войти в кабинет", en: "Sign in" },
+  homeFindSpecialist: { ru: "Подобрать специалиста", en: "Find a specialist" },
   homeReadPolicy: { ru: "Подробнее о безопасности", en: "More about security" },
 
   // Why us
@@ -397,7 +401,7 @@ export const t: Dict = {
   profileLicensePending: { ru: "Лицензия не проверена", en: "Licence not verified" },
   profileDocsPending: { ru: "Документы не загружены", en: "Documents not uploaded" },
   profileNotVerified: { ru: "Не подтверждено", en: "Not verified" },
-  profileAliasNote: { ru: "Работает под псевдонимом в целях безопасности", en: "Works under an alias for safety reasons" },
+  profileAliasNote: { ru: "Работает под псевдонимом — этого требует профессия", en: "Works under an alias — the job demands it" },
 
   // Notifications (колокольчик)
   notifTitle: { ru: "Уведомления", en: "Notifications" },
@@ -720,11 +724,12 @@ export const t: Dict = {
   // Provider hero
   heroProviderTitle1: { ru: "Заказы без затрат", en: "Orders without" },
   heroProviderTitle2: { ru: "на рекламу", en: "ad spend" },
-  heroProviderDesc: { ru: "Клиенты находят вас сами — не нужно тратить бюджет на рекламу на других площадках. А ещё: живое общение с коллегами со всего мира и актуальные курсы для повышения квалификации. Всё на одной платформе.", en: "Clients find you on their own — no need to spend budget on ads elsewhere. Plus: live communication with colleagues worldwide and up-to-date courses for professional growth. All on one platform." },
+  heroProviderDesc: { ru: "Клиенты приходят сами — не нужно жечь бюджет на рекламу. Рядом коллеги со всего мира и курсы, чтобы не отставать от профессии.", en: "Clients come to you — no ad budget to burn. Alongside: colleagues from around the world and courses to keep your skills sharp." },
   heroProviderCta1: { ru: "Выбрать тариф", en: "Choose a plan" },
   heroProviderCta2: { ru: "Как это работает", en: "How it works" },
+  hiwTag: { ru: "Порядок работы", en: "How we work" },
   hiwTitle: { ru: "Как это работает", en: "How it works" },
-  hiwSubtitle: { ru: "Пошаговый разбор того, как платформа приносит вам заказы — от регистрации до оплаты за услугу.", en: "A step-by-step breakdown of how the platform brings you orders — from sign-up to getting paid." },
+  hiwSubtitle: { ru: "Клиент описывает задачу, специалисты откликаются с ценой, вы выбираете. Ниже — тот же путь, но подробно, глазами специалиста.", en: "A client describes the task, specialists respond with a price, the client picks one. Below — the same path in detail, from the specialist's side." },
   hiwStep1Title: { ru: "1. Заполните профиль и пройдите верификацию", en: "1. Fill in your profile and get verified" },
   hiwStep1Text: { ru: "Укажите специализацию, документы и лицензии. После проверки администрацией на вашем профиле появится значок «Проверено» — клиенты доверяют таким специалистам в первую очередь.", en: "Add your specialty, documents and licenses. Once our team reviews them, your profile gets a «Verified» badge — clients trust verified specialists first." },
   hiwStep2Title: { ru: "2. Клиенты находят вас через поиск", en: "2. Clients find you through search" },
@@ -1207,7 +1212,7 @@ export const t: Dict = {
   lpFaq1Q: { ru: "Сколько стоит использование платформы?", en: "How much does the platform cost?" },
   lpFaq1A: { ru: "Для клиентов платформа полностью бесплатна — вы ищете специалистов и связываетесь с ними без оплаты. Исполнители платят только за подписку, без комиссии с заказов.", en: "The platform is completely free for clients — you search for specialists and contact them at no cost. Providers pay only for a subscription, with no commission on orders." },
   lpFaq2Q: { ru: "Как вы проверяете специалистов?", en: "How do you verify specialists?" },
-  lpFaq2A: { ru: "Каждый исполнитель проходит проверку документов и квалификации. Значок «Лицензия» появляется только после подтверждения лицензии, статуса ИП/ООО и полной верификации модератором.", en: "Each provider undergoes verification of documents and qualifications. The 'License' badge appears only after the license, IP/LLC status and full moderator verification are confirmed." },
+  lpFaq2A: { ru: "Документы и квалификацию смотрит человек, а не робот по шаблону. Значок «Лицензия» появится только когда сойдётся всё: сама лицензия, статус ИП или ООО и проверка администратором.", en: "Each provider undergoes verification of documents and qualifications. The 'License' badge appears only after the license, IP/LLC status and full moderator verification are confirmed." },
   lpFaq3Q: { ru: "Безопасно ли передавать данные?", en: "Is it safe to share my data?" },
   lpFaq3A: { ru: "Да. Мы используем шифрование, защищённый чат и соблюдаем требования GDPR и 152-ФЗ. Платёжные данные обрабатываются сертифицированными провайдерами — мы не храним номера карт.", en: "Yes. We use encryption, a secure chat and comply with GDPR and Russian law. Payment data is processed by certified providers — we do not store card numbers." },
   lpFaq4Q: { ru: "Как происходит оплата услуг исполнителя?", en: "How is the provider's service paid for?" },
@@ -1247,7 +1252,7 @@ export const t: Dict = {
   dashSave: { ru: "Сохранить", en: "Save" },
   dashLogout: { ru: "Выйти", en: "Log out" },
   dashLogoutAll: { ru: "Выйти везде", en: "Log out everywhere" },
-  homeWhy1: { ru: "Лицензии и документы смотрит живой человек, а не робот по шаблону.", en: "Licenses and documents are reviewed by a person, not a template-matching bot." },
+  homeWhy1: { ru: "Отказываем тем, у кого документы не сошлись. Каталог растёт медленнее — зато без случайных людей.", en: "We turn away anyone whose documents don't add up. The catalogue grows slower — but without random people." },
   homeWhy2: { ru: "Переписка и контакты лежат в базе зашифрованными. Открытым текстом — нигде.", en: "Messages and contacts are stored encrypted. Nowhere in plain text." },
   homeWhy3: { ru: "Комиссии со сделок нет. Специалист платит подписку, клиент — ничего.", en: "No commission on deals. Specialists pay a subscription, clients pay nothing." },
   earlyTitle: { ru: "Ранний доступ для специалистов", en: "Early access for specialists" },
@@ -1398,7 +1403,7 @@ export const t: Dict = {
   paySuccess: { ru: "Оплата прошла успешно!", en: "Payment successful!" },
   paySuccessDesc: { ru: "Тариф активирован. Ваш профиль теперь виден клиентам.", en: "Plan activated. Your profile is now visible to clients." },
   payDone: { ru: "Готово", en: "Done" },
-  payDemo: { ru: "Демо-режим: реальное списание не производится", en: "Demo mode: no real charge is made" },
+  payDemo: { ru: "Пробный режим — деньги не списываются", en: "Demo mode: no real charge is made" },
 
   // Payment history
   pdHistoryTitle: { ru: "История оплат", en: "Payment history" },
@@ -1454,11 +1459,11 @@ export const t: Dict = {
   // About page
   aboutTag: { ru: "О компании", en: "About company" },
   aboutPageTitle: { ru: "О ЩИТ", en: "About SHCHIT" },
-  aboutIntro: { ru: "Международная платформа, объединяющая проверенных специалистов по безопасности и клиентов со всего мира — в одном защищённом пространстве.", en: "An international platform connecting verified security specialists with clients worldwide — in one secure space." },
+  aboutIntro: { ru: "Место, где детектива или охрану ищут не по знакомым и форумам, а по проверенным документам.", en: "An international platform connecting verified security specialists with clients worldwide — in one secure space." },
   aboutMissionTitle: { ru: "Наша миссия", en: "Our mission" },
-  aboutMissionText: { ru: "Мы делаем поиск специалистов по безопасности простым и безопасным процессом. Детективы, телохранители, полиграфологи, эксперты по кибербезопасности и охранные агентства — раньше их искали по разным сайтам и знакомым. ЩИТ собрал их в одном месте, с проверкой документов и защищённой связью, чтобы клиенты могли довериться профессионалу, а специалисты — получать заказы без затрат на рекламу.", en: "We make finding security specialists simple and safe. Detectives, bodyguards, polygraph examiners, cybersecurity experts and security agencies used to be scattered across different sites and personal contacts. SHCHIT brings them together in one place, with document verification and secure communication, so clients can trust a professional and specialists can get orders without ad spend." },
+  aboutMissionText: { ru: "Детектива раньше искали через знакомых, охрану — по объявлениям, полиграфолога — наугад. Проверить, настоящая ли у человека лицензия, было почти невозможно. Мы собрали таких специалистов в одном месте и сами смотрим их документы. Клиент видит, что перед ним не самозванец. Специалист получает заказы, не тратясь на рекламу.", en: "We make finding security specialists simple and safe. Detectives, bodyguards, polygraph examiners, cybersecurity experts and security agencies used to be scattered across different sites and personal contacts. SHCHIT brings them together in one place, with document verification and secure communication, so clients can trust a professional and specialists can get orders without ad spend." },
   aboutStoryTitle: { ru: "Как всё начиналось", en: "How it started" },
-  aboutStoryText: { ru: "Платформа ЩИТ создана как ответ на запрос рынка: клиентам было сложно найти проверенного специалиста по безопасности, а специалистам — выйти на клиентов без посредников и дорогой рекламы. Мы объединили разрозненный рынок в единую международную сеть с проверкой лицензий, репутацией и закрытым сообществом профессионалов.", en: "SHCHIT was created in response to a market need: clients struggled to find a verified security specialist, while specialists struggled to reach clients without intermediaries and expensive advertising. We united a fragmented market into a single international network with license verification, reputation tracking and a private professional community." },
+  aboutStoryText: { ru: "Рынок держался на сарафанном радио. Клиент не мог проверить, настоящая ли лицензия, а хороший специалист сидел без заказов, потому что не умел или не хотел вкладываться в рекламу. Мы сделали место, где документы проверены заранее, посредников нет, а репутация видна всем.", en: "SHCHIT was created in response to a market need: clients struggled to find a verified security specialist, while specialists struggled to reach clients without intermediaries and expensive advertising. We united a fragmented market into a single international network with license verification, reputation tracking and a private professional community." },
   aboutTrustTitle: { ru: "Нам доверяют", en: "Trusted by" },
   aboutTrust1: { ru: "Лицензированные специалисты", en: "Licensed specialists" },
   aboutTrust2: { ru: "Проверка документов", en: "Document verification" },

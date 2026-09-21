@@ -28,7 +28,7 @@ export function TrustBadges() {
   );
 }
 
-export function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; onPolicy: () => void }) {
+export function MinimalHome({ onCabinet, onPolicy, onBrowse }: { onCabinet: () => void; onPolicy: () => void; onBrowse: () => void }) {
   const { tr } = useLang();
   return (
     <>
@@ -69,14 +69,27 @@ export function MinimalHome({ onCabinet, onPolicy }: { onCabinet: () => void; on
               ))}
             </div>
 
-            <button
-              onClick={onCabinet}
-              className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-9 py-4 font-montserrat font-extrabold text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm inline-flex items-center gap-2.5"
-            >
-              <Icon name="LogIn" size={18} />
-              {tr("homeOpenCabinet")}
-              <Icon name="ArrowRight" size={18} />
-            </button>
+            {/* Два действия вместо одного. Раньше с первого экрана вёл
+                единственный путь — «Войти в кабинет»: человек пришёл
+                посмотреть специалистов, а упирался в форму входа и уходил.
+                Теперь главная кнопка открывает каталог, вход — рядом. */}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={onBrowse}
+                className="shine-on-hover gold-gradient text-[hsl(28,20%,7%)] px-8 py-4 font-montserrat font-extrabold text-base tracking-wide hover:opacity-90 transition-opacity rounded-sm glow-gold-sm inline-flex items-center gap-2.5"
+              >
+                <Icon name="Search" size={18} />
+                {tr("homeFindSpecialist")}
+                <Icon name="ArrowRight" size={18} />
+              </button>
+              <button
+                onClick={onCabinet}
+                className="border border-border text-muted-foreground px-6 py-4 font-montserrat font-bold text-sm rounded-sm hover:border-gold hover:text-gold transition-all inline-flex items-center gap-2"
+              >
+                <Icon name="LogIn" size={16} />
+                {tr("homeOpenCabinet")}
+              </button>
+            </div>
 
             <div className="mt-12 border border-gold/30 rounded-sm glass-card p-6 max-w-xl">
               <div className="flex items-center gap-2 mb-4">

@@ -332,7 +332,10 @@ export function HowItWorksSection({ setActive }: { setActive: (s: Section) => vo
             <Icon name="Compass" size={30} className="text-[hsl(28,20%,7%)]" />
           </div>
           <div>
-            <div className="tag-security mb-3 inline-block">{tr("providerActiveTag")}</div>
+            {/* Раньше здесь стояла метка «Ваш кабинет исполнителя», хотя
+                на эту страницу заходят и клиенты: человек видел чужой
+                раздел и уходил, не дочитав. */}
+            <div className="tag-security mb-3 inline-block">{tr("hiwTag")}</div>
             <h1 className="font-montserrat font-extrabold text-3xl md:text-4xl text-foreground mb-2">{tr("hiwTitle")}</h1>
             <p className="text-sm text-muted-foreground max-w-2xl">{tr("hiwSubtitle")}</p>
           </div>

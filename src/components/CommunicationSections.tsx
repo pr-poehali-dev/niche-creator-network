@@ -294,15 +294,17 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
 
                 {!m.removed && <Reactions data={m.reactions} onToggle={(e) => react(m.id, e)} />}
 
-                {/* Кнопка действий появляется при наведении, чтобы не
-                    загромождать переписку постоянными иконками. */}
+                {/* На компьютере кнопка проявляется при наведении, на
+                    телефоне видна всегда: наведения там нет, и реакции с
+                    ответом были попросту недоступны. Размер 32px — минимум,
+                    чтобы попадать пальцем без промахов. */}
                 {!m.removed && m.id > 0 && (
                   <button
                     aria-label={tr("chatActions")}
                     onClick={() => setMenuFor(menuFor === m.id ? null : m.id)}
-                    className={`absolute top-1 ${m.me ? "-start-7" : "-end-7"} w-6 h-6 rounded-full bg-card border border-border text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-gold transition-opacity flex items-center justify-center`}
+                    className={`absolute top-0.5 ${m.me ? "-start-9" : "-end-9"} w-8 h-8 rounded-full bg-card border border-border text-muted-foreground opacity-70 lg:opacity-0 lg:group-hover:opacity-100 focus:opacity-100 hover:text-gold transition-opacity flex items-center justify-center`}
                   >
-                    <Icon name="Ellipsis" size={13} />
+                    <Icon name="Ellipsis" size={14} />
                   </button>
                 )}
 
@@ -478,9 +480,9 @@ export function ChatSection({ chatInput, setChatInput }: { chatInput: string; se
                       <button
                         aria-label={tr("chatActions")}
                         onClick={() => setMenuFor(menuFor === m.id ? null : m.id)}
-                        className="absolute top-0 end-0 w-6 h-6 rounded-full bg-card border border-border text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-gold transition-opacity flex items-center justify-center"
+                        className="absolute top-0 end-0 w-8 h-8 rounded-full bg-card border border-border text-muted-foreground opacity-70 lg:opacity-0 lg:group-hover:opacity-100 focus:opacity-100 hover:text-gold transition-opacity flex items-center justify-center"
                       >
-                        <Icon name="Smile" size={13} />
+                        <Icon name="Smile" size={14} />
                       </button>
                     )}
                     {menuFor === m.id && (
