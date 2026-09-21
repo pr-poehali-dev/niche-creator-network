@@ -17,7 +17,7 @@ import NotificationBell from "@/components/NotificationBell";
 import LocationAutocomplete, { type LocationSuggestion } from "@/components/LocationAutocomplete";
 import { serviceCategories, services } from "@/lib/servicesCatalog";
 import { lifeTasks, matchLifeTasks } from "@/lib/lifeTasks";
-import { applySeo } from "@/lib/seoMeta";
+import { applySeo, catSeo } from "@/lib/seoMeta";
 import { StarRating } from "@/components/SharedControls";
 const AdminPanel = lazy(() => import("@/components/AdminPanel"));
 const ClientDashboard = lazy(() => import("@/components/ClientDashboard"));
@@ -615,7 +615,11 @@ export default function Index() {
   // попадали в индекс как самостоятельные страницы. Теперь при переходе
   // подставляются свой адрес, заголовок и описание.
   useEffect(() => {
-    applySeo(active as string);
+    const cat = typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("cat")
+      : null;
+    if (active === "services" && cat) applySeo("services", catSeo(cat));
+    else applySeo(active as string);
   }, [active]);
 
   const { geo } = useGeo();
@@ -2576,7 +2580,15 @@ function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTi
   const { lang, tr } = useLang();
   const { servicePrices } = useProviders();
   const [query, setQuery] = useState("");
-  const [openCat, setOpenCat] = useState("");
+  // Категорию можно открыть прямой ссылкой (?section=services&cat=physical).
+  // Без этого все четыре направления жили по одному адресу: и человек по
+  // ссылке из поиска попадал в общий каталог и искал нужное заново, и
+  // поисковик видел одну страницу вместо четырёх.
+  const [openCat, setOpenCat] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const c = new URLSearchParams(window.location.search).get("cat") || "";
+    return serviceCategories.some((x) => x.id === c) ? c : "";
+  });
   const [openService, setOpenService] = useState<string | null>(null);
   const priceFor = (s: { title: { en: string }; price: { ru: string; en: string } }) =>
     servicePrices[s.title.en] ? `${tr("priceFrom")} ${servicePrices[s.title.en]}` : L(s.price, lang);
@@ -2596,7 +2608,31 @@ function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTi
 
   // При поиске текстом сразу разворачиваем категории, где есть совпадения.
   const catIsOpen = (catId: string) => (q ? filtered.some((s) => s.cat === catId) : openCat === catId);
-  const toggleCat = (catId: string) => { setOpenCat((cur) => (cur === catId ? "" : catId)); setOpenService(null); };
+  // Человек, пришедший по ссылке на категорию, должен сразу увидеть её, а
+  // не начало каталога. Прокручиваем после отрисовки списка.
+  useEffect(() => {
+    if (!openCat) return;
+    const el = document.getElementById(`cat-${openCat}`);
+    if (el) el.scrollIntoView({ block: "start", behavior: "smooth" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggleCat = (catId: string) => {
+    const next = openCat === catId ? "" : catId;
+    setOpenCat(next);
+    setOpenService(null);
+    // Адрес в строке браузера держим в соответствии с открытой категорией:
+    // ссылку можно скопировать и отправить, а поисковик видит отдельную
+    // страницу. Обновление адреса вынесено из функции пересчёта состояния —
+    // React может вызывать её повторно, и тогда история ломается.
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search);
+      if (next) p.set("cat", next); else p.delete("cat");
+      const q = p.toString();
+      window.history.replaceState(null, "", q ? `/?${q}` : "/");
+      applySeo("services", next ? catSeo(next) : undefined);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -2670,7 +2706,7 @@ function ServicesSection({ onOrder }: { onOrder?: (categoryId: string, serviceTi
           const catServices = filtered.filter((s) => s.cat === cat.id);
           const isOpen = catIsOpen(cat.id);
           return (
-            <div key={cat.id} className="border border-border rounded-sm bg-card overflow-hidden">
+            <div key={cat.id} id={`cat-${cat.id}`} className="border border-border rounded-sm bg-card overflow-hidden">
               <button
                 onClick={() => toggleCat(cat.id)}
                 className="w-full flex items-center gap-4 p-4 sm:p-5 text-start hover:bg-secondary/40 transition-colors"
