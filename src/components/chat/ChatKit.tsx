@@ -269,7 +269,7 @@ export function Composer({ value, onChange, onSend, replyTo, onCancelReply, disa
             <div className="text-[11px] font-semibold text-gold">{replyTo.name}</div>
             <div className="text-[11px] text-muted-foreground truncate">{replyTo.text}</div>
           </div>
-          <button aria-label={tr("cancel")} onClick={onCancelReply} className="text-muted-foreground hover:text-foreground shrink-0">
+          <button aria-label={tr("cancel")} onClick={onCancelReply} className="tap-target text-muted-foreground hover:text-foreground shrink-0">
             <Icon name="X" size={14} />
           </button>
         </div>
@@ -340,7 +340,7 @@ export function Composer({ value, onChange, onSend, replyTo, onCancelReply, disa
           }}
           placeholder={tr("writeMessage")}
           disabled={disabled}
-          className="flex-1 resize-none bg-secondary border border-border rounded-sm px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors leading-snug"
+          className="flex-1 resize-none bg-secondary border border-input rounded-sm px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors leading-snug"
         />
 
         <button

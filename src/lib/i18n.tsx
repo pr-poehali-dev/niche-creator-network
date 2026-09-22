@@ -1,21 +1,55 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { extra, type ExtraLang } from "./i18n-extra";
+import type { ExtraLang } from "./i18n-extra";
 
-// Тяжёлый словарь переводов (fr/de/ja/ar/he, ~5000 строк) грузится лениво —
-// только когда пользователь выбирает один из этих языков. Для ru/en он не нужен,
-// поэтому не попадает в первичный бандл и сайт открывается быстрее.
-type FullDict = Record<string, Record<string, string>>;
-let full: FullDict = {};
-let fullPromise: Promise<FullDict> | null = null;
-
-function loadFull(): Promise<FullDict> {
-  if (!fullPromise) {
-    fullPromise = import("./i18n-full").then((m) => {
-      full = m.full as FullDict;
-      return full;
-    });
+// Запасной словарь на 75 КБ (короткие подписи для fr/de/ja/ar/he) раньше
+// попадал в главный бандл и скачивался каждым посетителем, включая
+// русскоязычных, которым он не нужен никогда. Теперь грузится вместе с
+// выбранным языком.
+let extra: Partial<Record<ExtraLang, Record<string, string>>> = {};
+let extraPromise: Promise<void> | null = null;
+function loadExtra(): Promise<void> {
+  if (!extraPromise) {
+    extraPromise = import("./i18n-extra")
+      .then((m) => {
+        extra = m.extra;
+      })
+      .catch(() => {});
   }
-  return fullPromise;
+  return extraPromise;
+}
+
+// Переводы для fr/de/ja/ar/he грузятся лениво и ПОКАЖДУНО: каждый язык
+// лежит в своём файле. Раньше все пять были в одном модуле на 462 КБ —
+// человек, выбравший французский, скачивал вместе с ним японский, арабский
+// и иврит. Теперь приходит только выбранный словарь (~90 КБ), а для ru/en
+// не грузится ничего.
+type FullDict = Record<string, Record<string, string>>;
+const full: FullDict = {};
+const langPromises: Partial<Record<string, Promise<FullDict>>> = {};
+
+// Явная таблица импортов: сборщику нужны статически видимые пути, иначе
+// он не сможет разделить файлы на отдельные части.
+const LANG_LOADERS: Record<string, () => Promise<{ default: Record<string, string> }>> = {
+  fr: () => import("./i18n-fr"),
+  de: () => import("./i18n-de"),
+  ja: () => import("./i18n-ja"),
+  ar: () => import("./i18n-ar"),
+  he: () => import("./i18n-he"),
+};
+
+function loadFull(lang?: string): Promise<FullDict> {
+  const code = lang && LANG_LOADERS[lang] ? lang : "";
+  if (!code) return Promise.resolve(full);
+  const cached = langPromises[code];
+  if (cached) return cached;
+  const p = Promise.all([LANG_LOADERS[code](), loadExtra()])
+    .then(([m]) => {
+      full[code] = m.default;
+      return full;
+    })
+    .catch(() => full);
+  langPromises[code] = p;
+  return p;
 }
 
 export type Lang = "ru" | "en" | "fr" | "de" | "ja" | "ar" | "he";
@@ -1890,7 +1924,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (lang !== "ru" && lang !== "en" && !full[lang as ExtraLang]) {
       let alive = true;
-      loadFull().then(() => {
+      loadFull(lang).then(() => {
         if (alive) setDictReady((v) => v + 1);
       });
       return () => {

@@ -735,11 +735,11 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                   <div className="border border-gold/30 rounded-sm bg-secondary/40 p-4 mb-4 space-y-3">
                     <div>
                       <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("pdCaseTitle")}</label>
-                      <input value={caseTitle} onChange={(e) => setCaseTitle(e.target.value)} placeholder={tr("pdCaseTitlePh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
+                      <input value={caseTitle} onChange={(e) => setCaseTitle(e.target.value)} placeholder={tr("pdCaseTitlePh")} className="w-full bg-secondary border border-input rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
                     </div>
                     <div>
                       <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("pdCaseCat")}</label>
-                      <select value={caseCategory} onChange={(e) => setCaseCategory(e.target.value)} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold">
+                      <select value={caseCategory} onChange={(e) => setCaseCategory(e.target.value)} className="w-full bg-secondary border border-input rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold">
                         <option value="">{tr("pdCaseDefaultCat")}</option>
                         {serviceCategories.map((c) => <option key={c.id} value={L(c.title, lang)}>{L(c.title, lang)}</option>)}
                       </select>
@@ -835,7 +835,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                                       onChange={(e) => setServicePrice(s.title.en, e.target.value)}
                                       inputMode="numeric"
                                       placeholder={tr("pricePlaceholder")}
-                                      className="flex-1 bg-secondary border border-border rounded-sm px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold"
+                                      className="flex-1 bg-secondary border border-input rounded-sm px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold"
                                     />
                                   </div>
                                 )}
@@ -937,8 +937,8 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                       {!accepted && !declined && (
                         respOpen === r.id ? (
                           <div className="space-y-2">
-                            <input value={draft.price} onChange={(e) => setRespDraft({ ...respDraft, [r.id]: { ...draft, price: e.target.value } })} placeholder={tr("pdOfferPrice")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
-                            <textarea value={draft.message} onChange={(e) => setRespDraft({ ...respDraft, [r.id]: { ...draft, message: e.target.value } })} rows={2} placeholder={tr("pdOfferMsg")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold resize-none" />
+                            <input value={draft.price} onChange={(e) => setRespDraft({ ...respDraft, [r.id]: { ...draft, price: e.target.value } })} placeholder={tr("pdOfferPrice")} className="w-full bg-secondary border border-input rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
+                            <textarea value={draft.message} onChange={(e) => setRespDraft({ ...respDraft, [r.id]: { ...draft, message: e.target.value } })} rows={2} placeholder={tr("pdOfferMsg")} className="w-full bg-secondary border border-input rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold resize-none" />
                             <div className="flex gap-2">
                               <button onClick={() => sendResponse(r.id)} className="flex-1 gold-gradient text-[hsl(28,20%,7%)] text-xs font-montserrat font-bold py-2 rounded-sm">{tr("pdSendOffer")}</button>
                               <button onClick={() => setRespOpen(null)} className="border border-border text-muted-foreground text-xs font-montserrat font-semibold px-4 py-2 rounded-sm">{tr("cancel")}</button>
@@ -1007,7 +1007,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                       {tr(vf.showAge ? "pdVfShow" : "pdVfHidden")}
                     </button>
                   </div>
-                  <input type="number" min={18} max={100} value={vf.age} onChange={(e) => { setVf({ ...vf, age: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfAge")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                  <input type="number" min={18} max={100} value={vf.age} onChange={(e) => { setVf({ ...vf, age: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfAge")} className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
                 </div>
               </div>
               </FormSection>
@@ -1023,7 +1023,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                 <div>
                   <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-1"><Icon name="VenetianMask" size={13} className="text-gold" />{tr("pdVfPseudonym")}</label>
                   <p className="text-[11px] text-muted-foreground mb-2">{tr("pdVfPseudonymHint")}</p>
-                  <input value={vf.pseudonym} onChange={(e) => { setVf({ ...vf, pseudonym: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfPseudonym")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                  <input value={vf.pseudonym} onChange={(e) => { setVf({ ...vf, pseudonym: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfPseudonym")} className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
                 </div>
                 <button
                   onClick={() => { setVf({ ...vf, usePseudonym: !vf.usePseudonym }); setVfState("idle"); }}
@@ -1128,15 +1128,15 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                           <Icon name="Trash2" size={13} />
                         </button>
                       )}
-                      <input value={lic.number} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], number: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr(vf.verificationCountry === "US" ? "pdVfLicensePhUS" : vf.verificationCountry === "EU" ? "pdVfLicensePhEU" : vf.verificationCountry === "OTHER" ? "pdVfLicensePhOther" : "pdVfLicensePh")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
+                      <input value={lic.number} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], number: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr(vf.verificationCountry === "US" ? "pdVfLicensePhUS" : vf.verificationCountry === "EU" ? "pdVfLicensePhEU" : vf.verificationCountry === "OTHER" ? "pdVfLicensePhOther" : "pdVfLicensePh")} className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                           <label className="text-[10px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1">{tr("pdVfLicenseDate")}</label>
-                          <input type="date" value={lic.date} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], date: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
+                          <input type="date" value={lic.date} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], date: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} className="w-full bg-secondary border border-input rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
                         </div>
                         <div>
                           <label className="text-[10px] font-montserrat font-bold text-muted-foreground uppercase tracking-widest block mb-1">{tr("pdVfLicenseAuthority")}</label>
-                          <input value={lic.authority} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], authority: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr("pdVfLicenseAuthorityPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
+                          <input value={lic.authority} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.licenses]; arr[i] = { ...arr[i], authority: e.target.value }; setVf({ ...vf, licenses: arr }); setVfState("idle"); }} placeholder={tr("pdVfLicenseAuthorityPh")} className="w-full bg-secondary border border-input rounded-sm px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
                         </div>
                       </div>
                     </div>
@@ -1166,7 +1166,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                   {vf.documents.map((doc, i) => (
                     <div key={i} className="border border-border rounded-sm bg-secondary/30 p-3">
                       <div className="flex gap-2">
-                        <input value={doc.title} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.documents]; arr[i] = { ...arr[i], title: e.target.value }; setVf({ ...vf, documents: arr }); setVfState("idle"); }} placeholder={tr("pdVfDocTitlePh")} className="flex-1 min-w-0 bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
+                        <input value={doc.title} readOnly={vfLocked} onChange={(e) => { const arr = [...vf.documents]; arr[i] = { ...arr[i], title: e.target.value }; setVf({ ...vf, documents: arr }); setVfState("idle"); }} placeholder={tr("pdVfDocTitlePh")} className="flex-1 min-w-0 bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
                         {!vfLocked && (
                           <button onClick={() => { setVf({ ...vf, documents: vf.documents.filter((_, idx) => idx !== i) }); setVfState("idle"); }} className="shrink-0 px-3 border border-border rounded-sm text-muted-foreground hover:border-destructive hover:text-destructive transition-colors" aria-label={tr("remove")}>
                             <Icon name="Trash2" size={14} />
@@ -1205,7 +1205,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                     {tr(vf.showBio ? "pdVfShow" : "pdVfHidden")}
                   </button>
                 </div>
-                <textarea value={vf.bio} onChange={(e) => { setVf({ ...vf, bio: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfBioPh")} rows={4} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none" />
+                <textarea value={vf.bio} onChange={(e) => { setVf({ ...vf, bio: e.target.value }); setVfState("idle"); }} placeholder={tr("pdVfBioPh")} rows={4} className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none" />
               </div>
 
               </FormSection>
@@ -1232,17 +1232,17 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-[11px] font-montserrat font-semibold text-muted-foreground block mb-1.5">{tr("pdQuietFrom")}</label>
-                      <input type="time" value={vf.quietStart} onChange={(e) => { setVf({ ...vf, quietStart: e.target.value }); setVfState("idle"); }} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+                      <input type="time" value={vf.quietStart} onChange={(e) => { setVf({ ...vf, quietStart: e.target.value }); setVfState("idle"); }} className="w-full bg-secondary border border-input rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors" />
                     </div>
                     <div>
                       <label className="text-[11px] font-montserrat font-semibold text-muted-foreground block mb-1.5">{tr("pdQuietTo")}</label>
-                      <input type="time" value={vf.quietEnd} onChange={(e) => { setVf({ ...vf, quietEnd: e.target.value }); setVfState("idle"); }} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors" />
+                      <input type="time" value={vf.quietEnd} onChange={(e) => { setVf({ ...vf, quietEnd: e.target.value }); setVfState("idle"); }} className="w-full bg-secondary border border-input rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors" />
                     </div>
                   </div>
                 )}
                 <div>
                   <label className="text-[11px] font-montserrat font-semibold text-muted-foreground block mb-1.5">{tr("pdTimezone")}</label>
-                  <select value={vf.timezone} onChange={(e) => { setVf({ ...vf, timezone: e.target.value }); setVfState("idle"); }} className="w-full bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors">
+                  <select value={vf.timezone} onChange={(e) => { setVf({ ...vf, timezone: e.target.value }); setVfState("idle"); }} className="w-full bg-secondary border border-input rounded-sm px-3 py-2.5 text-sm text-foreground outline-none focus:border-gold transition-colors">
                     <option value="">{tr("pdTimezoneAuto")}</option>
                     {["Europe/Kaliningrad","Europe/Moscow","Europe/Samara","Asia/Yekaterinburg","Asia/Omsk","Asia/Krasnoyarsk","Asia/Irkutsk","Asia/Yakutsk","Asia/Vladivostok","Asia/Magadan","Asia/Kamchatka","Europe/Kyiv","Europe/Minsk","Asia/Almaty","Europe/London","Europe/Berlin","America/New_York","America/Los_Angeles","Asia/Dubai"].map((z) => (
                       <option key={z} value={z}>{z}</option>
@@ -1283,7 +1283,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                     onChange={(e) => setSearchPublicId(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter" && searchPublicId.trim().length >= 2 && !friendBusy) searchFriendById(); }}
                     placeholder={tr("pdFindFriendPh")}
-                    className="flex-1 bg-secondary border border-border rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+                    className="flex-1 bg-secondary border border-input rounded-sm px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
                   />
                   <button aria-label={tr("pdFindFriendBtn")} onClick={searchFriendById} disabled={friendBusy || searchPublicId.trim().length < 2} className="gold-gradient text-[hsl(28,20%,7%)] px-5 py-2.5 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50 flex items-center gap-1.5">
                     <Icon name={friendBusy ? "Loader" : "Search"} size={14} className={friendBusy ? "animate-spin" : ""} />{tr("pdFindFriendBtn")}
@@ -1457,7 +1457,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                       value={contacts[f.key]}
                       onChange={(e) => { setContacts({ ...contacts, [f.key]: e.target.value }); setSaveState("idle"); }}
                       placeholder={f.ph}
-                      className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+                      className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
                     />
                   </div>
                 ))}
@@ -1482,7 +1482,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                       value={contacts[f.key as keyof typeof contacts]}
                       onChange={(e) => { setContacts({ ...contacts, [f.key]: e.target.value }); setSaveState("idle"); }}
                       placeholder={f.ph}
-                      className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+                      className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
                     />
                   </div>
                 ))}

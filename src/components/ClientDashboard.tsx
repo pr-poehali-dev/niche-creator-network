@@ -302,16 +302,16 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
 
               <div>
                 <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2"><Icon name="User" size={13} className="text-gold" />{tr("cdClientName")}</label>
-                <input value={clientData.fullName} readOnly={profileLocked} onChange={(e) => { setClientData({ ...clientData, fullName: e.target.value }); setClientState("idle"); }} placeholder={tr("cdClientName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
+                <input value={clientData.fullName} readOnly={profileLocked} onChange={(e) => { setClientData({ ...clientData, fullName: e.target.value }); setClientState("idle"); }} placeholder={tr("cdClientName")} className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2"><Icon name="Phone" size={13} className="text-gold" />{tr("cdClientPhone")}</label>
-                  <input type="tel" value={clientData.phone} readOnly={profileLocked} onChange={(e) => { setClientData({ ...clientData, phone: e.target.value }); setClientState("idle"); }} placeholder="+7 999 000-00-00" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
+                  <input type="tel" value={clientData.phone} readOnly={profileLocked} onChange={(e) => { setClientData({ ...clientData, phone: e.target.value }); setClientState("idle"); }} placeholder="+7 999 000-00-00" className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
                 </div>
                 <div>
                   <label className="text-xs font-montserrat font-semibold text-foreground flex items-center gap-1.5 mb-2"><Icon name="Mail" size={13} className="text-gold" />Email</label>
-                  <input type="email" value={clientData.email} readOnly={profileLocked} onChange={(e) => { setClientData({ ...clientData, email: e.target.value }); setClientState("idle"); }} placeholder="you@email.com" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
+                  <input type="email" value={clientData.email} readOnly={profileLocked} onChange={(e) => { setClientData({ ...clientData, email: e.target.value }); setClientState("idle"); }} placeholder="you@email.com" className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors read-only:opacity-70 read-only:cursor-not-allowed" />
                 </div>
               </div>
               {clientState === "saved" && <div className="flex items-center gap-2 text-sm text-green-400"><Icon name="CheckCircle2" size={16} />{tr("cdClientSaved")}</div>}
@@ -375,37 +375,37 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
                   <p className="text-[11px] text-muted-foreground flex items-start gap-2"><Icon name="Info" size={14} className="text-gold shrink-0 mt-0.5" />{tr("reqBroadcastHint")}</p>
                   <div>
                     <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqCategory")}</label>
-                    <select value={newReq.category} onChange={(e) => setNewReq({ ...newReq, category: e.target.value })} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold">
+                    <select value={newReq.category} onChange={(e) => setNewReq({ ...newReq, category: e.target.value })} className="w-full bg-secondary border border-input rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold">
                       <option value="">{tr("searchAnyCategory")}</option>
                       {serviceCategories.map((c) => <option key={c.id} value={c.id}>{L(c.title, lang)}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqService")}</label>
-                    <input value={newReq.service} onChange={(e) => setNewReq({ ...newReq, service: e.target.value })} placeholder={tr("reqServicePh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
+                    <input value={newReq.service} onChange={(e) => setNewReq({ ...newReq, service: e.target.value })} placeholder={tr("reqServicePh")} className="w-full bg-secondary border border-input rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
                   </div>
                   <div>
                     <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqDesc")}</label>
-                    <textarea value={newReq.description} onChange={(e) => setNewReq({ ...newReq, description: e.target.value })} rows={3} placeholder={tr("reqDescPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold resize-none" />
+                    <textarea value={newReq.description} onChange={(e) => setNewReq({ ...newReq, description: e.target.value })} rows={3} placeholder={tr("reqDescPh")} className="w-full bg-secondary border border-input rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold resize-none" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqBudget")}</label>
-                      <input value={newReq.budget} onChange={(e) => setNewReq({ ...newReq, budget: e.target.value })} placeholder={tr("reqBudgetPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
+                      <input value={newReq.budget} onChange={(e) => setNewReq({ ...newReq, budget: e.target.value })} placeholder={tr("reqBudgetPh")} className="w-full bg-secondary border border-input rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
                     </div>
                     <div>
                       <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqCity")}</label>
-                      <input value={newReq.city} onChange={(e) => setNewReq({ ...newReq, city: e.target.value })} placeholder={tr("reqCityPh")} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
+                      <input value={newReq.city} onChange={(e) => setNewReq({ ...newReq, city: e.target.value })} placeholder={tr("reqCityPh")} className="w-full bg-secondary border border-input rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqNeededDate")}</label>
-                      <input type="date" value={newReq.neededDate} onChange={(e) => setNewReq({ ...newReq, neededDate: e.target.value })} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold" />
+                      <input type="date" value={newReq.neededDate} onChange={(e) => setNewReq({ ...newReq, neededDate: e.target.value })} className="w-full bg-secondary border border-input rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold" />
                     </div>
                     <div>
                       <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("reqNeededTime")}</label>
-                      <input type="time" value={newReq.neededTime} onChange={(e) => setNewReq({ ...newReq, neededTime: e.target.value })} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold" />
+                      <input type="time" value={newReq.neededTime} onChange={(e) => setNewReq({ ...newReq, neededTime: e.target.value })} className="w-full bg-secondary border border-input rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold" />
                     </div>
                   </div>
                   <button onClick={createReq} disabled={reqBusy || (!newReq.category && !newReq.service.trim())} className="gold-gradient text-[hsl(28,20%,7%)] px-4 py-2 text-xs font-montserrat font-bold rounded-sm disabled:opacity-50">{reqBusy ? tr("pdSaving") : tr("reqPublish")}</button>
@@ -593,11 +593,11 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
                 <div className="grid grid-cols-2 gap-4 max-w-sm">
                   <div>
                     <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("setQuietFrom")}</label>
-                    <input type="time" value={quietStart} onChange={(e) => saveQuiet(e.target.value, quietEnd)} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold" />
+                    <input type="time" value={quietStart} onChange={(e) => saveQuiet(e.target.value, quietEnd)} className="w-full bg-secondary border border-input rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold" />
                   </div>
                   <div>
                     <label className="text-[10px] text-muted-foreground uppercase tracking-wide block mb-1">{tr("setQuietTo")}</label>
-                    <input type="time" value={quietEnd} onChange={(e) => saveQuiet(quietStart, e.target.value)} className="w-full bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold" />
+                    <input type="time" value={quietEnd} onChange={(e) => saveQuiet(quietStart, e.target.value)} className="w-full bg-secondary border border-input rounded-sm px-3 py-2 text-sm text-foreground outline-none focus:border-gold" />
                   </div>
                 </div>
                 {(quietStart || quietEnd) && (
@@ -633,7 +633,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
               onChange={(e) => setReviewText(e.target.value)}
               rows={3}
               placeholder={tr("reviewModalPh")}
-              className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none mb-4"
+              className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none mb-4"
             />
             <div className="flex gap-2">
               <button onClick={() => setReviewModal(null)} className="flex-1 border border-border text-muted-foreground py-3 text-sm font-montserrat font-semibold rounded-sm hover:border-destructive hover:text-destructive transition-all">

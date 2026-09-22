@@ -186,7 +186,7 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); setEmailState("idle"); }}
                       placeholder={tr("payEmailPlaceholder")}
-                      className="flex-1 min-w-0 bg-secondary border border-border rounded-sm px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+                      className="flex-1 min-w-0 bg-secondary border border-input rounded-sm px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
                     />
                     <button
                       onClick={sendEmail}
@@ -215,7 +215,7 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
                 <h3 className="font-montserrat font-bold text-lg text-foreground">{tr("payTitle")}</h3>
                 <p className="text-xs text-muted-foreground">{tr("paySubtitle")}</p>
               </div>
-              <button aria-label="Закрыть" onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors"><Icon name="X" size={20} /></button>
+              <button aria-label="Закрыть" onClick={onClose} className="tap-target text-muted-foreground hover:text-foreground transition-colors"><Icon name="X" size={20} /></button>
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-4 p-1 bg-secondary rounded-sm">
@@ -296,12 +296,12 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
 
             {method === "card" ? (
               <div className="space-y-3 mb-5">
-                <input placeholder="0000 0000 0000 0000" inputMode="numeric" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                <input placeholder="0000 0000 0000 0000" inputMode="numeric" className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
                 <div className="grid grid-cols-2 gap-3">
-                  <input placeholder="MM / YY" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
-                  <input placeholder="CVC" inputMode="numeric" className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                  <input placeholder="MM / YY" className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                  <input placeholder="CVC" inputMode="numeric" className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
                 </div>
-                <input placeholder={tr("payCardName")} className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
+                <input placeholder={tr("payCardName")} className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors" />
               </div>
             ) : (
               <div className="flex flex-col items-center gap-3 mb-5 py-4">

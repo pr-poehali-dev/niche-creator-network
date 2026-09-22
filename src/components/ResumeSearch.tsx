@@ -147,7 +147,7 @@ export default function ResumeSearch() {
           <Icon name="ShieldCheck" size={18} className="text-green-400 shrink-0" />
           <span className="text-xs text-foreground flex-1">{tr("resAccessActive")}</span>
           <input value={company} onChange={(e) => saveCompany(e.target.value)} placeholder={tr("resCompanyPh")}
-            className="bg-secondary border border-border rounded-sm px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-gold sm:max-w-[240px]" />
+            className="bg-secondary border border-input rounded-sm px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-gold sm:max-w-[240px]" />
         </div>
       )}
 

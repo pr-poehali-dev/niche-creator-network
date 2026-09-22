@@ -32,8 +32,8 @@ const BlogSection = lazy(() => import("@/components/InfoSections").then((m) => (
 const SecurityPolicySection = lazy(() => import("@/components/InfoSections").then((m) => ({ default: m.SecurityPolicySection })));
 const ContactsSection = lazy(() => import("@/components/CommunicationSections").then((m) => ({ default: m.ContactsSection })));
 import { TrustBadges, MinimalHome, FaqAccordion } from "@/components/LandingSections";
-import AuthModal from "@/components/AuthModal";
-import { InstallPromptBanner } from "@/components/InfoSections";
+const AuthModal = lazy(() => import("@/components/AuthModal"));
+const InstallPromptBanner = lazy(() => import("@/components/InstallPromptBanner"));
 // Чат, отзывы и «как это работает» не нужны на первом экране: раньше они
 // грузились вместе с главной и утяжеляли её почти на треть. Теперь
 // подгружаются в момент открытия — сайт быстрее стартует на телефоне.
@@ -85,7 +85,7 @@ function Lightbox({ src, title, onClose }: { src: string; title?: string; onClos
           </button>
         </div>
       </div>
-      <button onClick={onClose} className="absolute top-4 end-4 z-20 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
+      <button onClick={onClose} className="tap-target absolute top-4 end-4 z-20 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
         <Icon name="X" size={26} />
       </button>
     </div>
@@ -1396,7 +1396,7 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
             <div className="relative flex flex-col sm:flex-row items-center gap-4 sm:gap-5 border border-gold/30 rounded-sm glass-card p-5 sm:p-6 security-glow">
               <button
                 onClick={dismissAppBanner}
-                className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors"
+                className="tap-target absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="close"
               >
                 <Icon name="X" size={16} />

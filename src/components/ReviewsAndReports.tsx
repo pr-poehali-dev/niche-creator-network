@@ -98,7 +98,7 @@ export function ReportModal({ targetType, targetId, onClose }: { targetType: "pr
               onChange={(e) => setDetails(e.target.value)}
               rows={3}
               placeholder={tr("reportModalPh")}
-              className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none mb-4"
+              className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors resize-none mb-4"
             />
             <div className="flex gap-2">
               <button onClick={onClose} className="flex-1 border border-border text-muted-foreground py-3 text-sm font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">

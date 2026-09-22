@@ -114,7 +114,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
       <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in overflow-y-auto overscroll-contain" onClick={onClose}>
         <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
         <div role="dialog" aria-modal="true" aria-label={tr("authForgotTitle")} className="relative z-10 w-full max-w-md my-auto max-h-[calc(100dvh-2rem)] overflow-y-auto bg-card border border-gold/40 rounded-sm shadow-2xl security-glow p-7" onClick={(e) => e.stopPropagation()}>
-          <button onClick={onClose} className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
+          <button onClick={onClose} className="tap-target absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
             <Icon name="X" size={20} />
           </button>
           <div className="w-12 h-12 icon-tile rounded-full flex items-center justify-center mb-4">
@@ -142,7 +142,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
                 autoComplete="email"
                 inputMode="email"
                 placeholder="your@email.com"
-                className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors mb-3"
+                className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors mb-3"
               />
               {error && (
                 <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-sm px-3 py-2 mb-3">
@@ -165,7 +165,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
                 autoComplete="one-time-code"
                 autoFocus
                 placeholder="••••••"
-                className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-center text-2xl tracking-[0.5em] font-montserrat font-bold text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors mb-3"
+                className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-center text-2xl tracking-[0.5em] font-montserrat font-bold text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors mb-3"
               />
               <input
                 type="password"
@@ -174,7 +174,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
                 onKeyDown={(e) => { if (e.key === "Enter" && resetCode.length === 6 && newPass && !busy) doResetConfirm(); }}
                 autoComplete="new-password"
                 placeholder={tr("authResetNewPass")}
-                className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors mb-1"
+                className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors mb-1"
               />
               <p className="text-[11px] text-muted-foreground mb-3">{tr("authPassHint")}</p>
               {error && (
@@ -204,7 +204,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
       <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in overflow-y-auto overscroll-contain" onClick={onClose}>
         <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
         <div className="relative z-10 w-full max-w-md my-auto max-h-[calc(100dvh-2rem)] overflow-y-auto bg-card border border-gold/40 rounded-sm shadow-2xl security-glow p-7" onClick={(e) => e.stopPropagation()}>
-          <button onClick={onClose} className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
+          <button onClick={onClose} className="tap-target absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
             <Icon name="X" size={20} />
           </button>
           <div className="w-12 h-12 icon-tile rounded-full flex items-center justify-center mb-4">
@@ -221,7 +221,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
             autoComplete="one-time-code"
             autoFocus
             placeholder="••••••"
-            className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-center text-2xl tracking-[0.5em] font-montserrat font-bold text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors my-4"
+            className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-center text-2xl tracking-[0.5em] font-montserrat font-bold text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors my-4"
           />
           {error && (
             <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-sm px-3 py-2 mb-3">
@@ -250,7 +250,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
       <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in overflow-y-auto overscroll-contain" onClick={onClose}>
         <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
         <div className="relative z-10 w-full max-w-md my-auto max-h-[calc(100dvh-2rem)] overflow-y-auto bg-card border border-gold/40 rounded-sm shadow-2xl security-glow" onClick={(e) => e.stopPropagation()}>
-          <button onClick={onClose} className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
+          <button onClick={onClose} className="tap-target absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
             <Icon name="X" size={20} />
           </button>
           <div className="p-6 sm:p-8">
@@ -284,7 +284,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
                 placeholder={tr("authAdminPassword")}
                 autoComplete="off"
                 autoFocus
-                className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+                className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
               />
 
               {error && (
@@ -318,7 +318,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in overflow-y-auto overscroll-contain" onClick={onClose}>
       <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
       <div role="dialog" aria-modal="true" aria-label={tr(mode === "login" ? "authTabLogin" : "authTabRegister")} className="relative z-10 w-full max-w-md my-auto max-h-[calc(100dvh-2rem)] overflow-y-auto bg-card border border-border rounded-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
+        <button onClick={onClose} className="tap-target absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
           <Icon name="X" size={20} />
         </button>
         <div className="p-6 sm:p-8">
@@ -363,7 +363,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
                   onChange={(e) => setName(e.target.value)}
                   placeholder={tr("authNamePh")}
                   autoComplete="name"
-                  className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+                  className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
                 />
               </>
             )}
@@ -373,7 +373,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
               onChange={(e) => setEmail(e.target.value)}
               placeholder={tr("authEmail")}
               autoComplete="email"
-              className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+              className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
             />
             <input
               type="password"
@@ -382,7 +382,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
               onKeyDown={(e) => { if (e.key === "Enter" && !busy) submit(); }}
               placeholder={tr("authPassword")}
               autoComplete={mode === "login" ? "current-password" : "new-password"}
-              className="w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
+              className="w-full bg-secondary border border-input rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-gold transition-colors"
             />
 
             {/* Без этой ссылки забытый пароль означал потерю аккаунта навсегда. */}

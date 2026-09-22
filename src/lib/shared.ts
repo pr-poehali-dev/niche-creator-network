@@ -1,5 +1,5 @@
 import { type Lang, type t } from "@/lib/i18n";
-import { dataExtra } from "@/lib/i18n-extra";
+import { dataExtra } from "@/lib/dataExtra";
 
 export const HERO_IMAGE = "https://cdn.poehali.dev/projects/cdac7d00-bd0a-4bb7-a1b1-237a7708c061/files/92040949-913f-4126-80f9-fa681d96ea82.jpg";
 // Фон первого экрана. Та же картинка, но сжатая до 23 КБ вместо 135: она
