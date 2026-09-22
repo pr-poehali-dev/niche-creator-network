@@ -1270,3 +1270,33 @@ html[lang="he"] .tag-security {
   border-color: hsl(var(--gold) / 0.5);
   background-color: hsl(var(--gold) / 0.06);
 }
+
+/* ===== Горизонтальные вкладки на телефоне =====
+   В кабинете семь вкладок общей шириной около 900px — на экране 390px
+   помещается треть. Прокрутка работала, но выглядела как обрезанный
+   список: последняя вкладка рубилась ровно по краю, и человек не
+   догадывался, что список продолжается.
+   Плавное затухание у правого края показывает: дальше что-то есть.
+   Полоса прокрутки при этом остаётся скрытой, чтобы не спорить с
+   аккуратной вёрсткой карточки. */
+.tabs-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x proximity;
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+}
+.tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+.tabs-scroll > * {
+  scroll-snap-align: start;
+}
+/* На широком экране вкладки стоят колонкой — затухание там не нужно. */
+@media (min-width: 1024px) {
+  .tabs-scroll {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}

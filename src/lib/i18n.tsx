@@ -561,7 +561,7 @@ export const t: Dict = {
   sec6Desc: { ru: "Обработка данных соответствует требованиям GDPR и 152-ФЗ «О персональных данных»", en: "Data processing complies with GDPR and personal data protection regulations" },
   secBadge1: { ru: "Шифрование AES", en: "AES encryption" },
   secBadge2: { ru: "TLS / HTTPS", en: "TLS / HTTPS" },
-  secBadge3: { ru: "GDPR-совместимость", en: "GDPR compliant" },
+  secBadge3: { ru: "По принципам GDPR", en: "GDPR principles" },
   secBadge4: { ru: "Двухфакторная защита", en: "Two-factor security" },
   secStat1: { ru: "Шифрование данных", en: "Data encryption" },
   secStat2: { ru: "Утечек данных", en: "Data breaches" },
@@ -1845,8 +1845,29 @@ function getInitialLang(): Lang {
   }
   const saved = window.localStorage.getItem("lang") as Lang | null;
   if (saved && LANGS.some((l) => l.code === saved)) return saved;
-  const browser = window.navigator.language.slice(0, 2) as Lang;
-  if (LANGS.some((l) => l.code === browser)) return browser;
+
+  // Язык браузера как подсказка — но осторожно. Раньше сайт открывался на
+  // языке системы: у множества российских пользователей интерфейс Windows
+  // и Chrome стоит английский, и русский по происхождению человек попадал
+  // на английскую версию. Для платформы с русской аудиторией, ИП в
+  // Московской области и ценами в рублях это неверное первое впечатление.
+  //
+  // Поэтому язык браузера учитываем, только если он вместе со страной явно
+  // указывает на другой регион. Русскоязычные локали и любая неясность —
+  // это русский.
+  try {
+    const full = (window.navigator.language || "").toLowerCase();
+    const base = full.slice(0, 2) as Lang;
+    // Русский, украинский, белорусский, казахский — регион, где ожидают русский.
+    if (["ru", "uk", "be", "kk", "ky", "uz", "hy", "az", "tg", "mo"].includes(base)) return "ru";
+    // Английский слишком часто стоит «по умолчанию» в системе, а не по
+    // осознанному выбору, поэтому сам по себе он не повод уводить с русского.
+    if (base === "en") return "ru";
+    // Остальные языки переключаем, только если мы их действительно поддерживаем.
+    if (LANGS.some((l) => l.code === base)) return base;
+  } catch {
+    // navigator недоступен — остаёмся на русском.
+  }
   return "ru";
 }
 

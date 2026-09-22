@@ -71,7 +71,7 @@ function Lightbox({ src, title, onClose }: { src: string; title?: string; onClos
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in overflow-y-auto overscroll-contain" onClick={onClose}>
       <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
       <div className="relative z-10 max-w-3xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         {title && <div className="text-sm font-montserrat font-semibold text-foreground mb-3 text-center">{title}</div>}
@@ -598,7 +598,13 @@ export default function Index() {
   }, [isClientRole, user?.id, user?.isAdmin]);
 
   // Разделы, закрытые для исполнителя без оплаченного тарифа
-  const LOCKED_SECTIONS: Section[] = ["chat", "community", "courses", "services", "cases", "guards"];
+  // Разделы, закрытые специалисту без подписки. Каталог услуг, кейсы,
+  // охранные предприятия и курсы отсюда убраны намеренно: эти страницы
+  // открыты любому гостю, и человек, который зарегистрировался и ждёт
+  // оплаты, видел МЕНЬШЕ случайного посетителя — регистрация выглядела
+  // наказанием. Закрываем только то, что действительно входит в подписку:
+  // общение с клиентами и профессиональное сообщество.
+  const LOCKED_SECTIONS: Section[] = ["chat", "community"];
 
   useEffect(() => {
     if (!isProvider || !providerSlug) { setSubActive(null); return; }
@@ -1045,7 +1051,7 @@ export default function Index() {
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onOpenDoc={(s) => { setAuthOpen(false); go(s); }} />}
 
       {regGateOpen && (
-        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setRegGateOpen(false)}>
+        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto overscroll-contain" onClick={() => setRegGateOpen(false)}>
           <div className="bg-card border border-gold/40 rounded-sm max-w-md w-full p-8 text-center security-glow" onClick={(e) => e.stopPropagation()}>
             <div className="w-14 h-14 gold-gradient rounded-sm flex items-center justify-center mx-auto mb-5 glow-gold-sm">
               <Icon name="UserCheck" size={26} className="text-[hsl(28,20%,7%)]" />
@@ -1065,7 +1071,7 @@ export default function Index() {
       )}
 
       {paywallOpen && (
-        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPaywallOpen(false)}>
+        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto overscroll-contain" onClick={() => setPaywallOpen(false)}>
           <div className="bg-card border border-gold/40 rounded-sm max-w-md w-full p-8 text-center security-glow" onClick={(e) => e.stopPropagation()}>
             <div className="w-14 h-14 gold-gradient rounded-sm flex items-center justify-center mx-auto mb-5 glow-gold-sm">
               <Icon name="Lock" size={26} className="text-[hsl(28,20%,7%)]" />

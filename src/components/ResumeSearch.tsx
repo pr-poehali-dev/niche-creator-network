@@ -238,7 +238,7 @@ export default function ResumeSearch() {
       </>)}
 
       {open && (
-        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setOpen(null)}>
+        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto overscroll-contain" onClick={() => setOpen(null)}>
           <div className="bg-card border border-gold/40 rounded-sm max-w-2xl w-full max-h-[90vh] overflow-y-auto p-7 security-glow" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start gap-4 mb-5">
               <div className="w-16 h-16 rounded-sm overflow-hidden shrink-0">

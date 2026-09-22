@@ -126,7 +126,7 @@ export function AttachmentView({ items, mine }: { items: Attachment[]; mine: boo
         </a>
       ))}
       {zoom && (
-        <div className="fixed inset-0 z-[95] bg-black/90 flex items-center justify-center p-4" onClick={() => setZoom(null)}>
+        <div className="fixed inset-0 z-[95] bg-black/90 flex items-center justify-center p-4 overflow-y-auto overscroll-contain" onClick={() => setZoom(null)}>
           <img src={zoom} alt="" className="max-w-full max-h-full object-contain" />
           <button aria-label="Закрыть" onClick={() => setZoom(null)}
             className="absolute top-4 end-4 text-white/80 hover:text-white">

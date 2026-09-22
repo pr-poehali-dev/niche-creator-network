@@ -62,7 +62,7 @@ export function ReportModal({ targetType, targetId, onClose }: { targetType: "pr
   };
 
   return (
-    <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto overscroll-contain" onClick={onClose}>
       <div className="bg-card border border-destructive/40 rounded-sm max-w-md w-full p-8 security-glow" onClick={(e) => e.stopPropagation()}>
         {done ? (
           <div className="text-center">

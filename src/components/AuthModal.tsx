@@ -111,9 +111,9 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
   if (reset) {
     const backToLogin = () => { setReset(null); setResetCode(""); setNewPass(""); setError(""); };
     return (
-      <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+      <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in overflow-y-auto overscroll-contain" onClick={onClose}>
         <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
-        <div role="dialog" aria-modal="true" aria-label={tr("authForgotTitle")} className="relative z-10 w-full max-w-md bg-card border border-gold/40 rounded-sm shadow-2xl security-glow p-7" onClick={(e) => e.stopPropagation()}>
+        <div role="dialog" aria-modal="true" aria-label={tr("authForgotTitle")} className="relative z-10 w-full max-w-md my-auto max-h-[calc(100dvh-2rem)] overflow-y-auto bg-card border border-gold/40 rounded-sm shadow-2xl security-glow p-7" onClick={(e) => e.stopPropagation()}>
           <button onClick={onClose} className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
             <Icon name="X" size={20} />
           </button>
@@ -201,9 +201,9 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
 
   if (twofa) {
     return (
-      <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+      <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in overflow-y-auto overscroll-contain" onClick={onClose}>
         <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
-        <div className="relative z-10 w-full max-w-md bg-card border border-gold/40 rounded-sm shadow-2xl security-glow p-7" onClick={(e) => e.stopPropagation()}>
+        <div className="relative z-10 w-full max-w-md my-auto max-h-[calc(100dvh-2rem)] overflow-y-auto bg-card border border-gold/40 rounded-sm shadow-2xl security-glow p-7" onClick={(e) => e.stopPropagation()}>
           <button onClick={onClose} className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
             <Icon name="X" size={20} />
           </button>
@@ -247,9 +247,9 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
 
   if (mode === "admin") {
     return (
-      <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+      <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in overflow-y-auto overscroll-contain" onClick={onClose}>
         <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
-        <div className="relative z-10 w-full max-w-md bg-card border border-gold/40 rounded-sm shadow-2xl security-glow" onClick={(e) => e.stopPropagation()}>
+        <div className="relative z-10 w-full max-w-md my-auto max-h-[calc(100dvh-2rem)] overflow-y-auto bg-card border border-gold/40 rounded-sm shadow-2xl security-glow" onClick={(e) => e.stopPropagation()}>
           <button onClick={onClose} className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
             <Icon name="X" size={20} />
           </button>
@@ -315,9 +315,9 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-fade-in overflow-y-auto overscroll-contain" onClick={onClose}>
       <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
-      <div role="dialog" aria-modal="true" aria-label={tr(mode === "login" ? "authTabLogin" : "authTabRegister")} className="relative z-10 w-full max-w-md bg-card border border-border rounded-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-label={tr(mode === "login" ? "authTabLogin" : "authTabRegister")} className="relative z-10 w-full max-w-md my-auto max-h-[calc(100dvh-2rem)] overflow-y-auto bg-card border border-border rounded-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-3 end-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={tr("lightboxClose")}>
           <Icon name="X" size={20} />
         </button>

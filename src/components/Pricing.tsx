@@ -148,7 +148,7 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
   const sendEmail = () => sendTo(email);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-fade-in overflow-y-auto overscroll-contain">
       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-md border border-gold/40 rounded-sm glass-card security-glow max-h-[90vh] overflow-y-auto">
         {status === "success" ? (

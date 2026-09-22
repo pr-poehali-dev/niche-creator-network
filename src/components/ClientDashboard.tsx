@@ -249,7 +249,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Tabs sidebar */}
         <aside className="lg:col-span-1">
-          <div className="border border-border rounded-sm bg-card p-2 lg:sticky lg:top-24 flex lg:flex-col gap-1 overflow-x-auto">
+          <div className="border border-border rounded-sm bg-card p-2 lg:sticky lg:top-24 tabs-scroll flex lg:flex-col gap-1 overflow-x-auto">
             {tabs.map((tb) => (
               <button key={tb.id} onClick={() => setTab(tb.id)}
                 className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(28,20%,7%)]" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
@@ -610,7 +610,7 @@ export default function ClientDashboard({ setActive }: { setActive: (s: Section)
       </div>
 
       {reviewModal && (
-        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setReviewModal(null)}>
+        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto overscroll-contain" onClick={() => setReviewModal(null)}>
           <div className="bg-card border border-gold/40 rounded-sm max-w-md w-full p-8 security-glow" onClick={(e) => e.stopPropagation()}>
             <div className="w-14 h-14 gold-gradient rounded-sm flex items-center justify-center mx-auto mb-5 glow-gold-sm">
               <Icon name="Star" size={26} className="text-[hsl(28,20%,7%)]" />

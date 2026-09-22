@@ -487,7 +487,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <aside className="lg:col-span-1">
-          <div className="border border-border rounded-sm bg-card p-2 lg:sticky lg:top-24 flex lg:flex-col gap-1 overflow-x-auto">
+          <div className="border border-border rounded-sm bg-card p-2 lg:sticky lg:top-24 tabs-scroll flex lg:flex-col gap-1 overflow-x-auto">
             {tabs.map((tb) => {
               const tabLocked = locked && !ALLOWED_WHEN_LOCKED.includes(tb.id);
               return (
@@ -1509,7 +1509,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
       </div>
 
       {paywallOpen && (
-        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPaywallOpen(false)}>
+        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto overscroll-contain" onClick={() => setPaywallOpen(false)}>
           <div className="bg-card border border-gold/40 rounded-sm max-w-md w-full p-8 text-center security-glow" onClick={(e) => e.stopPropagation()}>
             <div className="w-14 h-14 gold-gradient rounded-sm flex items-center justify-center mx-auto mb-5 glow-gold-sm">
               <Icon name="Lock" size={26} className="text-[hsl(28,20%,7%)]" />
