@@ -2,9 +2,8 @@ import json
 import os
 import re
 import html
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+
+from mail_utils import send_mail
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
@@ -53,8 +52,8 @@ def handler(event: dict, context) -> dict:
     if lang == 'en':
         subject = f'SHCHIT — Payment receipt {receipt_no}'
         labels = {
-            'title': 'Payment receipt', 'company': 'SHCHIT LLC',
-            'req': 'VAT 7701234567 · 1 Tverskaya St., Moscow, 125009',
+            'title': 'Payment receipt', 'company': 'Sole proprietor Aleksey V. Davydov',
+            'req': 'OGRNIP 320222500068242 · TIN 222111361597 · Moscow Region, Elektrostal, Vsevolodovo',
             'no': 'Receipt No.', 'date': 'Payment date', 'payer': 'Payer',
             'service': 'Payment purpose', 'serviceVal': 'Membership fee (plan)',
             'plan': 'Plan', 'period': 'Period', 'method': 'Payment method',
@@ -63,8 +62,8 @@ def handler(event: dict, context) -> dict:
     else:
         subject = f'ЩИТ — Чек об оплате {receipt_no}'
         labels = {
-            'title': 'Чек об оплате', 'company': 'ООО «ЩИТ»',
-            'req': 'ИНН 7701234567 · 125009, Москва, ул. Тверская, д. 1',
+            'title': 'Чек об оплате', 'company': 'ИП Давыдов Алексей Владимирович',
+            'req': 'ОГРНИП 320222500068242 · ИНН 222111361597 · Московская обл., г. Электросталь, пос. Всеволодово',
             'no': 'Чек №', 'date': 'Дата оплаты', 'payer': 'Плательщик',
             'service': 'Назначение платежа', 'serviceVal': 'Членский взнос (тариф)',
             'plan': 'Тариф', 'period': 'Период', 'method': 'Способ оплаты',
@@ -102,33 +101,14 @@ def handler(event: dict, context) -> dict:
   </div>
 </div></body></html>'''
 
-    smtp_host = os.environ.get('SMTP_HOST')
-    smtp_port = int(os.environ.get('SMTP_PORT', '465'))
-    smtp_user = os.environ.get('SMTP_USER')
-    smtp_password = os.environ.get('SMTP_PASSWORD')
-
-    if not all([smtp_host, smtp_user, smtp_password]):
+    if not os.environ.get('SMTP_HOST') or not os.environ.get('SMTP_USER'):
         return {'statusCode': 500, 'headers': cors, 'body': json.dumps({'error': 'SMTP is not configured'})}
 
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = smtp_user
-    msg['To'] = email
-    msg.attach(MIMEText(html, 'html', 'utf-8'))
-
-    try:
-        if smtp_port == 465:
-            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=20)
-        else:
-            server = smtplib.SMTP(smtp_host, smtp_port, timeout=20)
-            server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.sendmail(smtp_user, [email], msg.as_string())
-        server.quit()
-    except smtplib.SMTPAuthenticationError:
-        return {'statusCode': 500, 'headers': cors, 'body': json.dumps({'error': 'smtp_auth'})}
-    except Exception as e:
-        print(f"[send-receipt] SMTP ERROR: {type(e).__name__}: {e}")
+    # Чек — транзакционный документ: без заголовков отписки, их наличие на
+    # платёжном документе выглядит неуместно и сбивает с толку.
+    sent = send_mail(email, subject, html, log_tag='send-receipt')
+    if not sent:
         return {'statusCode': 500, 'headers': cors, 'body': json.dumps({'error': 'smtp_send'})}
 
     return {'statusCode': 200, 'headers': cors, 'body': json.dumps({'success': True, 'sent_to': email})}
+# Письма этой функции переведены на общий модуль mail_utils.

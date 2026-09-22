@@ -2,11 +2,10 @@ import json
 import os
 import re
 import html
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 from rate_limit import check_and_count
+
+from mail_utils import render_email, send_mail
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
@@ -62,62 +61,38 @@ def handler(event: dict, context) -> dict:
         if not message:
             return _resp(400, {'error': 'Empty message'})
 
-    smtp_host = os.environ.get('SMTP_HOST')
-    smtp_port = int(os.environ.get('SMTP_PORT', '465'))
-    smtp_user = os.environ.get('SMTP_USER')
-    smtp_password = os.environ.get('SMTP_PASSWORD')
-
-    if not all([smtp_host, smtp_user, smtp_password]):
+    if not os.environ.get('SMTP_HOST') or not os.environ.get('SMTP_USER'):
         return _resp(500, {'error': 'SMTP is not configured', 'code': 'smtp_missing'})
 
-    to_addr = smtp_user
+    to_addr = os.environ.get('SMTP_USER')
 
     if is_test:
         subject = 'ЩИТ — Тест почты (проверка настроек)'
-        html_body = (
-            '<div style="font-family:Arial,sans-serif;color:#1a1d24;padding:24px;">'
-            '<h2 style="color:#1a1d24;">Почта настроена верно ✅</h2>'
-            '<p>Это тестовое письмо от вашего сайта <b>ЩИТ</b>. '
-            'Если вы его получили — отправка писем работает: коды входа, чеки и обращения с формы обратной связи будут доходить.</p>'
-            '</div>'
+        html_body = render_email(
+            'Почта настроена верно',
+            '<p style="margin:0;">Это тестовое письмо от вашего сайта <b>ЩИТ</b>. '
+            'Если вы его получили — отправка писем работает: коды входа, чеки '
+            'и обращения с формы обратной связи будут доходить.</p>',
+            preheader='Проверка настроек почты прошла успешно',
         )
     else:
         subject = f'ЩИТ — Обращение: {_esc(subj, 120)}'
-        html_body = (
-            '<div style="font-family:Arial,sans-serif;color:#1a1d24;padding:24px;max-width:600px;">'
-            '<div style="background:#1a1d24;color:#fff;padding:18px 22px;border-radius:8px 8px 0 0;">'
-            '<b style="letter-spacing:.2em;">Щ<span style="color:#d4af37;">ИТ</span></b>'
-            '<div style="font-size:13px;opacity:.7;margin-top:4px;">Новое обращение с формы обратной связи</div></div>'
-            '<div style="border:1px solid #e4e6eb;border-top:none;border-radius:0 0 8px 8px;padding:22px;">'
-            f'<p style="margin:0 0 10px;"><b>Имя:</b> {_esc(name, 200) or "—"}</p>'
-            f'<p style="margin:0 0 10px;"><b>Email:</b> {_esc(from_email, 200)}</p>'
-            f'<p style="margin:0 0 10px;"><b>Тема:</b> {_esc(subj, 200)}</p>'
-            f'<p style="margin:16px 0 6px;"><b>Сообщение:</b></p>'
-            f'<div style="background:#f4f5f7;border-radius:6px;padding:14px;white-space:pre-wrap;">{_esc(message, 5000)}</div>'
-            '</div></div>'
+        html_body = render_email(
+            'Новое обращение с формы обратной связи',
+            (
+                f'<p style="margin:0 0 10px;"><b>Имя:</b> {_esc(name, 200) or "—"}</p>'
+                f'<p style="margin:0 0 10px;"><b>Email:</b> {_esc(from_email, 200)}</p>'
+                f'<p style="margin:0 0 10px;"><b>Тема:</b> {_esc(subj, 200)}</p>'
+                f'<p style="margin:16px 0 6px;"><b>Сообщение:</b></p>'
+                f'<div style="background:#f4f5f7;border-radius:6px;padding:14px;white-space:pre-wrap;">{_esc(message, 5000)}</div>'
+            ),
+            preheader=f'{_esc(name, 60) or "Без имени"}: {_esc(subj, 80)}',
         )
 
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = smtp_user
-    msg['To'] = to_addr
-    if not is_test and body.get('email'):
-        msg['Reply-To'] = (body.get('email') or '').strip()[:200]
-    msg.attach(MIMEText(html_body, 'html', 'utf-8'))
-
-    try:
-        if smtp_port == 465:
-            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=20)
-        else:
-            server = smtplib.SMTP(smtp_host, smtp_port, timeout=20)
-            server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.sendmail(smtp_user, [to_addr], msg.as_string())
-        server.quit()
-    except smtplib.SMTPAuthenticationError:
-        return _resp(500, {'error': 'SMTP auth failed', 'code': 'smtp_auth'})
-    except Exception as e:
-        print(f"[feedback] SMTP ERROR: {type(e).__name__}: {e}")
+    # Reply-To на адрес обратившегося: владелец отвечает прямо из почты,
+    # не копируя адрес руками.
+    reply_to = '' if is_test else (body.get('email') or '').strip()[:200]
+    if not send_mail(to_addr, subject, html_body, reply_to=reply_to, log_tag='feedback'):
         return _resp(500, {'error': 'Send failed', 'code': 'smtp_send'})
 
     # Адрес получателя наружу не отдаём: раньше любой мог отправить пустую

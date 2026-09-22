@@ -1,11 +1,10 @@
 import os
 import json
-import smtplib
 from datetime import datetime, timedelta
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 import psycopg2
+
+from mail_utils import render_email, send_mail, esc, SITE_URL
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -25,7 +24,6 @@ QUIET_HOURS = 3
 # отправляли, либо новость перестала быть срочной.
 MAX_AGE_HOURS = 72
 
-SITE_URL = 'https://shieldpspl.ru/'
 
 
 def _resp(status, body):
@@ -35,14 +33,7 @@ def _resp(status, body):
 def _send_email(to_email: str, name: str, count: int, senders: list) -> bool:
     '''Письмо о непрочитанных сообщениях. Текст сообщений НЕ включаем —
     переписка приватна, в письме только факт и имена отправителей.'''
-    host = os.environ.get('SMTP_HOST')
-    port = int(os.environ.get('SMTP_PORT', '465'))
-    user = os.environ.get('SMTP_USER')
-    password = os.environ.get('SMTP_PASSWORD')
-    if not all([host, user, password]):
-        return False
-
-    greeting = f'Здравствуйте, {name}!' if name else 'Здравствуйте!'
+    greeting = f'Здравствуйте, {esc(name)}!' if name else 'Здравствуйте!'
     if count == 1:
         headline = 'У вас 1 непрочитанное сообщение'
     elif 2 <= count <= 4:
@@ -51,45 +42,31 @@ def _send_email(to_email: str, name: str, count: int, senders: list) -> bool:
         headline = f'У вас {count} непрочитанных сообщений'
     from_line = ''
     if senders:
-        names = ', '.join(senders[:3])
+        names = ', '.join(esc(x) for x in senders[:3])
         more = f' и ещё {len(senders) - 3}' if len(senders) > 3 else ''
         from_line = f'<p style="margin:0 0 14px;">От: <b>{names}</b>{more}.</p>'
 
-    html = (
-        '<div style="font-family:Arial,sans-serif;color:#1a1d24;padding:24px;max-width:600px;margin:0 auto;">'
-        '<div style="background:#1a1d24;color:#fff;padding:20px 24px;border-radius:8px 8px 0 0;">'
-        '<b style="letter-spacing:.2em;font-size:18px;">Щ<span style="color:#d4af37;">ИТ</span></b>'
-        '<div style="font-size:13px;opacity:.7;margin-top:4px;">Новые сообщения</div></div>'
-        '<div style="border:1px solid #e4e6eb;border-top:none;border-radius:0 0 8px 8px;padding:24px;">'
+    body = (
         f'<p style="margin:0 0 14px;">{greeting}</p>'
         f'<p style="margin:0 0 14px;"><b>{headline}</b> в сообществе специалистов.</p>'
         f'{from_line}'
-        f'<a href="{SITE_URL}" style="display:inline-block;background:#d4af37;color:#1a1d24;'
-        'text-decoration:none;font-weight:bold;padding:12px 26px;border-radius:6px;margin:6px 0 4px;">'
-        'Открыть переписку</a>'
-        '<p style="margin:18px 0 0;font-size:12px;color:#9aa0ab;">Текст сообщений мы не пересылаем — '
-        'переписка доступна только вам. Отключить такие письма можно в уведомлениях на сайте.</p>'
-        '</div></div>'
     )
-
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = f'ЩИТ — {headline.lower()}'
-    msg['From'] = user
-    msg['To'] = to_email
-    msg.attach(MIMEText(html, 'html', 'utf-8'))
-    try:
-        if port == 465:
-            server = smtplib.SMTP_SSL(host, port, timeout=20)
-        else:
-            server = smtplib.SMTP(host, port, timeout=20)
-            server.starttls()
-        server.login(user, password)
-        server.sendmail(user, [to_email], msg.as_string())
-        server.quit()
-        return True
-    except (smtplib.SMTPException, OSError) as e:
-        print(f'[message-digest] send failed: {e}')
-        return False
+    html = render_email(
+        'Новые сообщения',
+        body,
+        button_text='Открыть переписку',
+        button_url=f'{SITE_URL}/?section=chat',
+        footer_note=('Текст сообщений мы не пересылаем — переписка доступна только вам. '
+                     'Отключить такие письма можно в уведомлениях на сайте.'),
+        preheader=headline,
+    )
+    return send_mail(
+        to_email,
+        f'ЩИТ — {headline.lower()}',
+        html,
+        bulk=True,
+        log_tag='message-digest',
+    )
 
 
 def handler(event, context):

@@ -246,3 +246,6 @@ def handler(event: dict, context) -> dict:
     finally:
         cur.close()
         conn.close()
+# Письма этой функции переведены на общий модуль mail_utils.
+
+# Повторная отправка: письма переведены на общий модуль mail_utils.

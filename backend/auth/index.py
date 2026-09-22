@@ -4,11 +4,10 @@ import re
 import hashlib
 import hmac
 import device_sig
-import smtplib
 import secrets as pysecrets
 from datetime import datetime, timedelta
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+
+from mail_utils import render_code_email, render_table_email, send_mail, esc
 
 import psycopg2
 
@@ -65,17 +64,10 @@ def _send_password_changed_email(to_email: str, ip_masked: str, when: datetime, 
     запросил не владелец, только такое письмо даст ему шанс среагировать
     сразу, а не когда аккаунт уже используют чужие руки.
     '''
-    host = os.environ.get('SMTP_HOST')
-    port = int(os.environ.get('SMTP_PORT', '465'))
-    user = os.environ.get('SMTP_USER')
-    password = os.environ.get('SMTP_PASSWORD')
-    if not all([host, user, password]):
-        return False
-
     when_str = when.strftime('%d.%m.%Y %H:%M') + ' UTC'
     # Отдельного адреса поддержки в секретах нет — обратный контакт даём
     # по почте-роботу: на неё письмо гарантированно дойдёт.
-    support = os.environ.get('SUPPORT_EMAIL', '') or (user or '')
+    support = os.environ.get('SUPPORT_EMAIL', '') or os.environ.get('SMTP_USER', '')
     if lang == 'en':
         subject = 'SHCHIT — your password was changed'
         title = 'Password changed'
@@ -83,6 +75,7 @@ def _send_password_changed_email(to_email: str, ip_masked: str, when: datetime, 
         l_when, l_ip = 'Time', 'Network'
         note = ('If this was you, no action is needed. If you did NOT change your password, '
                 'your account may be compromised — request a new reset immediately and contact support.')
+        contact_label = 'Support: '
     else:
         subject = 'ЩИТ — пароль от аккаунта изменён'
         title = 'Пароль изменён'
@@ -90,56 +83,21 @@ def _send_password_changed_email(to_email: str, ip_masked: str, when: datetime, 
         l_when, l_ip = 'Время', 'Сеть'
         note = ('Если это были вы — ничего делать не нужно. Если пароль меняли НЕ вы, '
                 'аккаунтом мог завладеть посторонний: сразу запросите восстановление ещё раз и напишите в поддержку.')
+        contact_label = 'Поддержка: '
 
-    rows = ''.join(
-        f'<tr><td style="padding:6px 0;color:#9aa0ab;font-size:12px;">{k}</td>'
-        f'<td style="padding:6px 0;font-size:13px;font-weight:600;text-align:right;">{v}</td></tr>'
-        for k, v in ((l_when, when_str), (l_ip, ip_masked or '—'))
+    full_note = note + (f'<br>{contact_label}{esc(support)}' if support else '')
+    html = render_table_email(
+        title, intro,
+        [(l_when, when_str), (l_ip, ip_masked or '—')],
+        full_note, lang=lang,
     )
-    contact_label = 'Support: ' if lang == 'en' else 'Поддержка: '
-    support_row = (f'<div style="margin-top:14px;font-size:12px;color:#9aa0ab;">{contact_label}{support}</div>'
-                   if support else '')
-    html = f'''<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#f4f5f7;font-family:Arial,sans-serif;color:#1a1d24;">
-<div style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #e4e6eb;border-radius:10px;overflow:hidden;">
-  <div style="padding:24px 30px;background:#1a1d24;color:#fff;">
-    <div style="font-weight:800;font-size:20px;letter-spacing:0.2em;">Щ<span style="color:#d4af37;">ИТ</span></div>
-  </div>
-  <div style="padding:28px 30px;">
-    <div style="font-size:15px;font-weight:700;margin-bottom:10px;">{title}</div>
-    <div style="font-size:13px;color:#5b616e;line-height:1.6;margin-bottom:18px;">{intro}</div>
-    <table style="width:100%;border-collapse:collapse;border-top:1px solid #e4e6eb;border-bottom:1px solid #e4e6eb;">{rows}</table>
-    <div style="margin-top:18px;font-size:12px;color:#9aa0ab;line-height:1.6;">{note}</div>
-    {support_row}
-  </div>
-</div></body></html>'''
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = user
-    msg['To'] = to_email
-    msg.attach(MIMEText(html, 'html', 'utf-8'))
-    try:
-        if port == 465:
-            server = smtplib.SMTP_SSL(host, port, timeout=4)
-        else:
-            server = smtplib.SMTP(host, port, timeout=4)
-            server.starttls()
-        server.login(user, password)
-        server.sendmail(user, [to_email], msg.as_string())
-        server.quit()
-        return True
-    except (smtplib.SMTPException, OSError) as e:
-        print(f'[auth] password-changed email failed: {e}')
-        return False
+    # Транзакционное письмо: без заголовков отписки. Короткий тайм-аут —
+    # смена пароля не должна ждать почтовый сервер.
+    return send_mail(to_email, subject, html, timeout=8, log_tag='auth')
 
 
 def _send_reset_email(to_email: str, code: str, lang: str = 'ru') -> bool:
     '''Письмо с кодом восстановления пароля.'''
-    host = os.environ.get('SMTP_HOST')
-    port = int(os.environ.get('SMTP_PORT', '465'))
-    user = os.environ.get('SMTP_USER')
-    password = os.environ.get('SMTP_PASSWORD')
-    if not all([host, user, password]):
-        return False
     if lang == 'en':
         subject = 'SHCHIT — password reset code'
         title = 'Password reset code'
@@ -150,30 +108,8 @@ def _send_reset_email(to_email: str, code: str, lang: str = 'ru') -> bool:
         title = 'Код для смены пароля'
         note = ('Введите этот код на сайте, чтобы задать новый пароль. Код действует 30 минут. '
                 'Если вы не запрашивали восстановление — просто проигнорируйте письмо, пароль останется прежним.')
-    html = f'''<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#f4f5f7;font-family:Arial,sans-serif;color:#1a1d24;">
-<div style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #e4e6eb;border-radius:10px;overflow:hidden;">
-  <div style="padding:24px 30px;background:#1a1d24;color:#fff;">
-    <div style="font-weight:800;font-size:20px;letter-spacing:0.2em;">Щ<span style="color:#d4af37;">ИТ</span></div>
-  </div>
-  <div style="padding:28px 30px;text-align:center;">
-    <div style="font-size:15px;font-weight:700;margin-bottom:18px;">{title}</div>
-    <div style="font-size:38px;font-weight:800;letter-spacing:10px;color:#b8901f;background:#faf7ec;border:1px solid #ecdfb0;border-radius:8px;padding:16px;">{code}</div>
-    <div style="margin-top:20px;font-size:12px;color:#9aa0ab;line-height:1.5;">{note}</div>
-  </div>
-</div></body></html>'''
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = user
-    msg['To'] = to_email
-    msg.attach(MIMEText(html, 'html', 'utf-8'))
-    try:
-        with smtplib.SMTP_SSL(host, port, timeout=10) as server:
-            server.login(user, password)
-            server.sendmail(user, [to_email], msg.as_string())
-        return True
-    except Exception as e:  # noqa: BLE001 — письмо не должно ронять запрос
-        print(f'[auth] reset email failed: {e}')
-        return False
+    html = render_code_email(title, code, note, lang=lang)
+    return send_mail(to_email, subject, html, timeout=10, log_tag='auth')
 
 
 def _mask_email(email: str) -> str:
@@ -189,12 +125,6 @@ def _mask_email(email: str) -> str:
 
 
 def _send_2fa_email(to_email: str, code: str, lang: str = 'ru') -> bool:
-    host = os.environ.get('SMTP_HOST')
-    port = int(os.environ.get('SMTP_PORT', '465'))
-    user = os.environ.get('SMTP_USER')
-    password = os.environ.get('SMTP_PASSWORD')
-    if not all([host, user, password]):
-        return False
     if lang == 'en':
         subject = 'SHCHIT — your login code'
         title = 'Your verification code'
@@ -203,34 +133,8 @@ def _send_2fa_email(to_email: str, code: str, lang: str = 'ru') -> bool:
         subject = 'ЩИТ — код для входа'
         title = 'Ваш код подтверждения'
         note = 'Введите этот код, чтобы завершить вход. Код действует 10 минут. Если это были не вы — проигнорируйте письмо.'
-    html = f'''<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#f4f5f7;font-family:Arial,sans-serif;color:#1a1d24;">
-<div style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #e4e6eb;border-radius:10px;overflow:hidden;">
-  <div style="padding:24px 30px;background:#1a1d24;color:#fff;">
-    <div style="font-weight:800;font-size:20px;letter-spacing:0.2em;">Щ<span style="color:#d4af37;">ИТ</span></div>
-  </div>
-  <div style="padding:28px 30px;text-align:center;">
-    <div style="font-size:15px;font-weight:700;margin-bottom:18px;">{title}</div>
-    <div style="font-size:38px;font-weight:800;letter-spacing:10px;color:#b8901f;background:#faf7ec;border:1px solid #ecdfb0;border-radius:8px;padding:16px;">{code}</div>
-    <div style="margin-top:20px;font-size:12px;color:#9aa0ab;line-height:1.5;">{note}</div>
-  </div>
-</div></body></html>'''
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = user
-    msg['To'] = to_email
-    msg.attach(MIMEText(html, 'html', 'utf-8'))
-    try:
-        if port == 465:
-            server = smtplib.SMTP_SSL(host, port, timeout=20)
-        else:
-            server = smtplib.SMTP(host, port, timeout=20)
-            server.starttls()
-        server.login(user, password)
-        server.sendmail(user, [to_email], msg.as_string())
-        server.quit()
-        return True
-    except (smtplib.SMTPException, OSError):
-        return False
+    html = render_code_email(title, code, note, lang=lang)
+    return send_mail(to_email, subject, html, log_tag='auth')
 
 
 def _send_new_device_email(to_email: str, device: str, ip_masked: str, when: datetime, lang: str = 'ru') -> bool:
@@ -239,15 +143,8 @@ def _send_new_device_email(to_email: str, device: str, ip_masked: str, when: dat
     владельца вовремя узнать, что паролем завладели: подпись устройства не
     спасает, если злоумышленник знает логин и пароль.
 
-    Таймаут намеренно короткий: вход не должен ждать почтовый сервер.
+    Тайм-аут намеренно короткий: вход не должен ждать почтовый сервер.
     '''
-    host = os.environ.get('SMTP_HOST')
-    port = int(os.environ.get('SMTP_PORT', '465'))
-    user = os.environ.get('SMTP_USER')
-    password = os.environ.get('SMTP_PASSWORD')
-    if not all([host, user, password]):
-        return False
-
     when_str = when.strftime('%d.%m.%Y %H:%M') + ' UTC'
     if lang == 'en':
         subject = 'SHCHIT — new sign-in to your account'
@@ -262,42 +159,12 @@ def _send_new_device_email(to_email: str, device: str, ip_masked: str, when: dat
         l_device, l_when, l_ip = 'Устройство', 'Время', 'Сеть'
         note = 'Если это были вы — ничего делать не нужно. Если нет — срочно смените пароль и завершите все сеансы в настройках аккаунта.'
 
-    rows = ''.join(
-        f'<tr><td style="padding:6px 0;color:#9aa0ab;font-size:12px;">{k}</td>'
-        f'<td style="padding:6px 0;font-size:13px;font-weight:600;text-align:right;">{v}</td></tr>'
-        for k, v in ((l_device, device or '—'), (l_when, when_str), (l_ip, ip_masked or '—'))
+    html = render_table_email(
+        title, intro,
+        [(l_device, device or '—'), (l_when, when_str), (l_ip, ip_masked or '—')],
+        note, lang=lang,
     )
-    html = f'''<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#f4f5f7;font-family:Arial,sans-serif;color:#1a1d24;">
-<div style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #e4e6eb;border-radius:10px;overflow:hidden;">
-  <div style="padding:24px 30px;background:#1a1d24;color:#fff;">
-    <div style="font-weight:800;font-size:20px;letter-spacing:0.2em;">Щ<span style="color:#d4af37;">ИТ</span></div>
-  </div>
-  <div style="padding:28px 30px;">
-    <div style="font-size:15px;font-weight:700;margin-bottom:10px;">{title}</div>
-    <div style="font-size:13px;color:#5b616e;line-height:1.6;margin-bottom:18px;">{intro}</div>
-    <table style="width:100%;border-collapse:collapse;border-top:1px solid #e4e6eb;border-bottom:1px solid #e4e6eb;">{rows}</table>
-    <div style="margin-top:18px;font-size:12px;color:#9aa0ab;line-height:1.6;">{note}</div>
-  </div>
-</div></body></html>'''
-
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = user
-    msg['To'] = to_email
-    msg.attach(MIMEText(html, 'html', 'utf-8'))
-    try:
-        if port == 465:
-            server = smtplib.SMTP_SSL(host, port, timeout=4)
-        else:
-            server = smtplib.SMTP(host, port, timeout=4)
-            server.starttls()
-        server.login(user, password)
-        server.sendmail(user, [to_email], msg.as_string())
-        server.quit()
-        return True
-    except (smtplib.SMTPException, OSError):
-        # Уведомление не критично: вход не должен падать из-за почты.
-        return False
+    return send_mail(to_email, subject, html, timeout=8, log_tag='auth')
 
 
 def _notify_if_new_device(cur, user_id: int, email: str, fingerprint: str,

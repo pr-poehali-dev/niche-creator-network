@@ -1,12 +1,11 @@
 import os
 import json
-import smtplib
 from datetime import datetime, timedelta
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 import psycopg2
 from crypto_utils import decrypt_field
+
+from mail_utils import render_email, send_mail, esc, SITE_URL
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -30,51 +29,41 @@ def _resp(status, body):
 
 
 def _send_email(to_email, name, plan, until_str):
-    smtp_host = os.environ.get('SMTP_HOST')
-    smtp_port = int(os.environ.get('SMTP_PORT', '465'))
-    smtp_user = os.environ.get('SMTP_USER')
-    smtp_password = os.environ.get('SMTP_PASSWORD')
-    if not all([smtp_host, smtp_user, smtp_password]):
+    """Напоминание о скором окончании подписки.
+
+    Рассылочное письмо (bulk): получает заголовки отписки. Человек, который
+    уже не работает на платформе, должен иметь возможность отписаться одним
+    нажатием — иначе он нажмёт «спам», и это ударит по доставляемости всех
+    остальных писем, включая коды входа.
+    """
+    if not os.environ.get('SMTP_HOST') or not os.environ.get('SMTP_USER'):
         return False, 'smtp_not_configured'
 
     plan_ru = PLAN_TITLES.get(plan, plan)
-    greeting = f'Здравствуйте, {name}!' if name else 'Здравствуйте!'
-    html = (
-        '<div style="font-family:Arial,sans-serif;color:#1a1d24;padding:24px;max-width:600px;margin:0 auto;">'
-        '<div style="background:#1a1d24;color:#fff;padding:20px 24px;border-radius:8px 8px 0 0;">'
-        '<b style="letter-spacing:.2em;font-size:18px;">Щ<span style="color:#d4af37;">ИТ</span></b>'
-        '<div style="font-size:13px;opacity:.7;margin-top:4px;">Напоминание о подписке</div></div>'
-        '<div style="border:1px solid #e4e6eb;border-top:none;border-radius:0 0 8px 8px;padding:24px;">'
+    greeting = f'Здравствуйте, {esc(name)}!' if name else 'Здравствуйте!'
+    body = (
         f'<p style="margin:0 0 14px;">{greeting}</p>'
-        f'<p style="margin:0 0 14px;">Ваш тариф <b>«{plan_ru}»</b> на платформе ЩИТ '
-        f'заканчивается <b>{until_str}</b> — осталось около {REMIND_DAYS} дней.</p>'
-        '<p style="margin:0 0 14px;">Чтобы ваш профиль оставался видимым для клиентов и вы '
+        f'<p style="margin:0 0 14px;">Ваш тариф <b>«{esc(plan_ru)}»</b> на платформе ЩИТ '
+        f'заканчивается <b>{esc(until_str)}</b> — осталось около {REMIND_DAYS} дней.</p>'
+        '<p style="margin:0;">Чтобы ваш профиль оставался видимым для клиентов и вы '
         'продолжали получать заказы, продлите подписку в личном кабинете.</p>'
-        '<a href="https://shieldpspl.ru/" '
-        'style="display:inline-block;background:#d4af37;color:#1a1d24;text-decoration:none;'
-        'font-weight:bold;padding:12px 26px;border-radius:6px;margin:6px 0 4px;">Продлить подписку</a>'
-        '<p style="margin:18px 0 0;font-size:12px;color:#9aa0ab;">Если вы уже продлили тариф — '
-        'просто проигнорируйте это письмо.</p>'
-        '</div></div>'
     )
-
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = f'ЩИТ — подписка заканчивается {until_str}'
-    msg['From'] = smtp_user
-    msg['To'] = to_email
-    msg.attach(MIMEText(html, 'html', 'utf-8'))
-    try:
-        if smtp_port == 465:
-            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=20)
-        else:
-            server = smtplib.SMTP(smtp_host, smtp_port, timeout=20)
-            server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.sendmail(smtp_user, [to_email], msg.as_string())
-        server.quit()
-        return True, None
-    except Exception as e:
-        return False, str(e)[:200]
+    html = render_email(
+        'Напоминание о подписке',
+        body,
+        button_text='Продлить подписку',
+        button_url=f'{SITE_URL}/?section=pricing',
+        footer_note='Если вы уже продлили тариф — просто проигнорируйте это письмо.',
+        preheader=f'Тариф «{plan_ru}» заканчивается {until_str}',
+    )
+    ok = send_mail(
+        to_email,
+        f'ЩИТ — подписка заканчивается {until_str}',
+        html,
+        bulk=True,
+        log_tag='subscription-reminder',
+    )
+    return (True, None) if ok else (False, 'smtp_send_failed')
 
 
 def handler(event, context):

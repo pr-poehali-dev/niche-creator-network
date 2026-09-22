@@ -1,7 +1,6 @@
 import os
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+
+from mail_utils import render_email, send_mail, esc, SITE_URL
 
 SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
@@ -32,48 +31,34 @@ def _user_email(cur, user_id: int):
 
 
 def _send_email(to_addr: str, title: str, body: str) -> bool:
-    host = os.environ.get('SMTP_HOST')
-    port = int(os.environ.get('SMTP_PORT', '465'))
-    user = os.environ.get('SMTP_USER')
-    password = os.environ.get('SMTP_PASSWORD')
-    if not all([host, user, password, to_addr]):
+    """Уведомление на почту: единый шаблон из mail_utils.
+
+    Кнопка возврата на сайт обязательна. Без неё человек прочитывал письмо
+    и закрывал: чтобы ответить специалисту, нужно было вспомнить адрес и
+    зайти самому.
+
+    bulk=True — письмо рассылочного характера, получает заголовки отписки.
+    """
+    if not to_addr:
         return False
-    # Кнопка возврата на сайт. Без неё человек прочитывал письмо и закрывал:
-    # чтобы ответить специалисту, нужно было вспомнить адрес и зайти самому.
-    link_url = 'https://shieldpspl.ru/?section=dashboard'
-    html = (
-        '<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto">'
-        '<div style="background:#0d1117;padding:20px;border-radius:8px 8px 0 0">'
-        '<span style="color:#e6b34d;font-weight:bold;font-size:18px">ЩИТ</span></div>'
-        f'<div style="padding:24px;border:1px solid #eee;border-top:0;border-radius:0 0 8px 8px">'
-        f'<h2 style="color:#111;font-size:18px;margin:0 0 12px">{title}</h2>'
-        f'<p style="color:#444;font-size:14px;line-height:1.6">{body}</p>'
-        f'<p style="margin:22px 0 4px"><a href="{link_url}" '
-        'style="display:inline-block;background:#e6b34d;color:#1a1408;text-decoration:none;'
-        'font-weight:bold;font-size:14px;padding:12px 26px;border-radius:4px">'
-        'Открыть в кабинете</a></p>'
-        '<p style="color:#999;font-size:12px;margin-top:24px">Вы получили это письмо, потому что включено '
-        'дублирование уведомлений на почту. Отключить можно в личном кабинете.</p>'
-        '</div></div>'
+    html = render_email(
+        title,
+        esc(body),
+        button_text='Открыть в кабинете',
+        button_url=f'{SITE_URL}/?section=dashboard',
+        footer_note=(
+            'Вы получили это письмо, потому что включено дублирование '
+            'уведомлений на почту. Отключить можно в личном кабинете.'
+        ),
+        preheader=str(body)[:120],
     )
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = f'ЩИТ · {title}'
-    msg['From'] = user
-    msg['To'] = to_addr
-    msg.attach(MIMEText(html, 'html', 'utf-8'))
-    try:
-        if port == 465:
-            server = smtplib.SMTP_SSL(host, port, timeout=20)
-        else:
-            server = smtplib.SMTP(host, port, timeout=20)
-            server.starttls()
-        server.login(user, password)
-        server.sendmail(user, [to_addr], msg.as_string())
-        server.quit()
-        return True
-    except Exception as e:
-        print(f"[notify] SMTP ERROR: {type(e).__name__}: {e}")
-        return False
+    return send_mail(
+        to_addr,
+        f'ЩИТ · {title}',
+        html,
+        bulk=True,
+        log_tag='notify',
+    )
 
 
 def id_from_slug(slug: str):
