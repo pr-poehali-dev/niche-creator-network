@@ -187,6 +187,7 @@ export const t: Dict = {
   auth2faWrong: { ru: "Неверный код. Попробуйте ещё раз", en: "Wrong code. Try again" },
   auth2faExpired: { ru: "Код истёк. Запросите новый", en: "Code expired. Request a new one" },
   auth2faTooMany: { ru: "Слишком много попыток. Войдите заново", en: "Too many attempts. Sign in again" },
+  authErrAdmin2fa: { ru: "Вход администратора требует подтверждения по почте, но почта платформы не настроена. Обратитесь к техническому специалисту.", en: "Administrator sign-in requires email confirmation, but platform email is not configured. Contact your technical specialist." },
   auth2faNotConfigured: { ru: "Email-рассылка ещё настраивается. Обратитесь к администратору.", en: "Email delivery is being set up. Contact the administrator." },
 
   authAdminLink: { ru: "Вход для администратора", en: "Administrator login" },

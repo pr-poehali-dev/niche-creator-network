@@ -2,6 +2,8 @@ import json
 import urllib.request
 import urllib.error
 
+from rate_limit import check_and_count
+
 
 def handler(event: dict, context) -> dict:
     '''
@@ -22,6 +24,13 @@ def handler(event: dict, context) -> dict:
 
     if method == 'OPTIONS':
         return {'statusCode': 200, 'headers': cors, 'body': ''}
+
+    # Функция открыта без авторизации и ходит во внешний сервис.
+    # Без лимита её можно использовать как бесплатный прокси:
+    # внешний сервис забанит наш адрес, и подсказки отвалятся
+    # у всех посетителей. Живому человеку порог недостижим.
+    if not check_and_count(event, 'geolocate', limit=30, window_sec=60):
+        return {'statusCode': 429, 'headers': cors, 'body': json.dumps({'error': 'too_many_requests'})}
 
     ip = ''
     rc = event.get('requestContext') or {}

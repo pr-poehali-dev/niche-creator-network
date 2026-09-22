@@ -3,6 +3,8 @@ import urllib.request
 import urllib.parse
 import urllib.error
 
+from rate_limit import check_and_count
+
 CORS = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -52,6 +54,13 @@ def handler(event: dict, context) -> dict:
     method = event.get('httpMethod', 'GET')
     if method == 'OPTIONS':
         return {'statusCode': 200, 'headers': CORS, 'body': ''}
+
+    # Функция открыта без авторизации и ходит во внешний сервис.
+    # Без лимита её можно использовать как бесплатный прокси:
+    # внешний сервис забанит наш адрес, и подсказки отвалятся
+    # у всех посетителей. Живому человеку порог недостижим.
+    if not check_and_count(event, 'geocode', limit=40, window_sec=60):
+        return {'statusCode': 429, 'headers': CORS, 'body': json.dumps({'error': 'too_many_requests'})}
     if method != 'GET':
         return _resp(405, {'error': 'Method not allowed'})
 

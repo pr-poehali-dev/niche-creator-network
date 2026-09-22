@@ -40,6 +40,9 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
     if (code === "wrong_code") return tr("auth2faWrong");
     if (code === "code_expired") return tr("auth2faExpired");
     if (code === "too_many_attempts") return tr("auth2faTooMany");
+    // Вход владельца без второго фактора запрещён: если почта не настроена,
+    // войти нельзя вовсе — иначе один пароль снова открывал бы всю базу.
+    if (code === "admin_2fa_unavailable") return tr("authErrAdmin2fa");
     return tr("authErrGeneric");
   };
 
@@ -50,7 +53,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
     const res = mode === "login"
       ? await login(email.trim(), password, lang)
       : mode === "admin"
-        ? await adminLogin(password, role)
+        ? await adminLogin(password, role, lang)
         : await register(email.trim(), password, role, name.trim());
     setBusy(false);
     if (res.need2fa && res.challengeId) {

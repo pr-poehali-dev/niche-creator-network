@@ -28,6 +28,14 @@ MAX_2FA_ATTEMPTS = 5
 LOGIN_WINDOW_MIN = 15
 MAX_ATTEMPTS_PER_IDENTIFIER = 8
 MAX_ATTEMPTS_PER_IP = 20
+# Вход владельца: пароль один на всю платформу и открывает персональные
+# данные всех специалистов. Три попытки за 15 минут — человеку, который
+# знает свой пароль, этого достаточно; перебору — нет.
+ADMIN_MAX_ATTEMPTS = 3
+# Срок жизни сессии владельца намеренно короткий: админ-панель отдаёт
+# расшифрованные персональные данные, и токен к ней не должен лежать
+# в браузере неделю.
+ADMIN_SESSION_HOURS = 8
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
@@ -319,15 +327,21 @@ def _client_ip(event: dict) -> str:
     return str(ip)[:64]
 
 
-def _too_many_attempts(cur, identifier: str, ip: str) -> bool:
-    '''Rate limiting: считаем неудачные попытки входа за последние LOGIN_WINDOW_MIN минут.'''
+def _too_many_attempts(cur, identifier: str, ip: str, limit: int = None) -> bool:
+    '''Rate limiting: считаем неудачные попытки входа за последние LOGIN_WINDOW_MIN минут.
+
+    limit — необязательный более строгий порог. Нужен для входа владельца:
+    там пароль один на всю платформу, и давать по нему столько же попыток,
+    сколько обычному пользователю, нельзя.
+    '''
     since = datetime.utcnow() - timedelta(minutes=LOGIN_WINDOW_MIN)
+    max_by_id = limit if limit is not None else MAX_ATTEMPTS_PER_IDENTIFIER
     cur.execute(
         f"SELECT COUNT(*) FROM {SCHEMA}.login_attempts WHERE identifier = %s AND created_at > %s",
         (identifier, since),
     )
     by_id = cur.fetchone()[0]
-    if by_id >= MAX_ATTEMPTS_PER_IDENTIFIER:
+    if by_id >= max_by_id:
         return True
     if ip:
         cur.execute(
@@ -419,10 +433,22 @@ def handler(event: dict, context) -> dict:
         cur = conn.cursor()
 
         if action == 'admin_login':
+            # Вход владельца площадки. Раньше здесь хватало одного пароля —
+            # и это был самый опасный участок системы: админ-панель отдаёт
+            # расшифрованные ФИО, паспортные данные и документы ВСЕХ
+            # специалистов. Один подобранный или подсмотренный пароль
+            # означал утечку всей базы персональных данных, то есть
+            # оборотный штраф по 152-ФЗ и конец платформы.
+            #
+            # Теперь пароль — только первый шаг. Второй обязателен: код
+            # уходит на почту-робота владельца. Чтобы войти, нужно
+            # одновременно знать пароль И иметь доступ к почте.
             password = body.get('password') or ''
             admin_pwd = os.environ.get('ADMIN_PASSWORD', '')
             identifier = f'admin:{client_ip}'
-            if _too_many_attempts(cur, identifier, client_ip):
+            # Лимит на админ-вход жёстче обычного: пароль здесь один на всю
+            # платформу, перебирать его не должны даже медленно.
+            if _too_many_attempts(cur, identifier, client_ip, limit=ADMIN_MAX_ATTEMPTS):
                 return _resp(429, {'error': 'too_many_attempts'}, event)
             if not admin_pwd or not hmac.compare_digest(password, admin_pwd):
                 _record_attempt(cur, identifier, client_ip)
@@ -442,8 +468,28 @@ def handler(event: dict, context) -> dict:
                     (admin_email, placeholder, role, 'Администратор'),
                 )
                 user_id = cur.fetchone()[0]
-            new_token = _create_session(cur, user_id, fingerprint, device_label, ip_masked, device_pubkey)
-            return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': admin_email, 'role': role, 'name': 'Администратор', 'isAdmin': True}}, event)
+
+            # Код подтверждения уходит на реальную почту владельца
+            # (SUPPORT_EMAIL или почта-робот). Адрес admin+client@shchit.local
+            # служебный, писем не принимает.
+            owner_email = os.environ.get('SUPPORT_EMAIL', '') or os.environ.get('SMTP_USER', '')
+            lang = body.get('lang') if body.get('lang') in ('ru', 'en') else 'ru'
+            if not owner_email:
+                # Почта не настроена — второй фактор невозможен. Пускать
+                # по одному паролю нельзя: это ровно та дыра, которую
+                # закрываем. Честно сообщаем, что вход недоступен.
+                return _resp(503, {'error': 'admin_2fa_unavailable'}, event)
+
+            conn.commit()  # фиксируем создание/обновление админ-записи
+            ch = _start_2fa(cur, user_id, owner_email, lang)
+            conn.commit()
+            return _resp(200, {
+                'twoFactor': True,
+                'challengeId': ch['challengeId'],
+                'sent': ch['sent'],
+                'emailHint': _mask_email(owner_email),
+                'isAdmin': True,
+            }, event)
 
         if action == 'register':
             email = (body.get('email') or '').strip().lower()[:200]
@@ -540,14 +586,22 @@ def handler(event: dict, context) -> dict:
                 _record_attempt(cur, identifier, client_ip)
                 return _resp(401, {'error': 'wrong_code'}, event)
             cur.execute(f"DELETE FROM {SCHEMA}.two_factor_codes WHERE id = %s", (rec_id,))
-            cur.execute(f"SELECT id, email, role, name FROM {SCHEMA}.users WHERE id = %s", (uid,))
+            # is_admin забираем из базы: после входа владельца через код
+            # фронтенд обязан получить признак прав, иначе админ-панель
+            # не откроется и человек решит, что вход не сработал.
+            cur.execute(f"SELECT id, email, role, name, is_admin FROM {SCHEMA}.users WHERE id = %s", (uid,))
             u = cur.fetchone()
             if not u:
                 return _resp(401, {'error': 'invalid_session'}, event)
-            new_token = _create_session(cur, u[0], fingerprint, device_label, ip_masked, device_pubkey)
-            _notify_if_new_device(cur, u[0], u[1], fingerprint, device_label, ip_masked,
-                                  body.get('lang') if body.get('lang') in ('ru', 'en') else 'ru')
-            return _resp(200, {'token': new_token, 'user': {'id': u[0], 'email': u[1], 'role': u[2], 'name': u[3]}}, event)
+            is_admin = bool(u[4])
+            new_token = _create_session(cur, u[0], fingerprint, device_label, ip_masked, device_pubkey, is_admin=is_admin)
+            # Письмо о новом устройстве шлём обычным пользователям. Владельцу
+            # оно бессмысленно: код подтверждения и так пришёл на его почту,
+            # второе письмо о том же входе — лишний шум.
+            if not is_admin:
+                _notify_if_new_device(cur, u[0], u[1], fingerprint, device_label, ip_masked,
+                                      body.get('lang') if body.get('lang') in ('ru', 'en') else 'ru')
+            return _resp(200, {'token': new_token, 'user': {'id': u[0], 'email': u[1], 'role': u[2], 'name': u[3], 'isAdmin': is_admin}}, event)
 
         if action == 'resend_2fa':
             challenge = (body.get('challengeId') or '').strip()[:64]
@@ -759,9 +813,15 @@ def handler(event: dict, context) -> dict:
         conn.close()
 
 
-def _create_session(cur, user_id: int, fingerprint: str = '', device: str = '', ip_masked: str = '', pubkey: str = '') -> str:
+def _create_session(cur, user_id: int, fingerprint: str = '', device: str = '', ip_masked: str = '',
+                    pubkey: str = '', is_admin: bool = False) -> str:
     token = pysecrets.token_hex(32)
-    expires = datetime.utcnow() + timedelta(days=SESSION_DAYS)
+    # Сессия владельца живёт часы, а не дни. Обычному человеку неудобно
+    # входить заново каждый день — админ-панель открывают редко и под
+    # конкретную задачу, зато украденный токен перестаёт работать до
+    # конца рабочего дня, а не через неделю.
+    lifetime = timedelta(hours=ADMIN_SESSION_HOURS) if is_admin else timedelta(days=SESSION_DAYS)
+    expires = datetime.utcnow() + lifetime
     cur.execute(
         f"INSERT INTO {SCHEMA}.sessions (token, user_id, expires_at, fingerprint, device_label, ip_masked, device_pubkey) "
         f"VALUES (%s, %s, %s, %s, %s, %s, %s)",

@@ -4,6 +4,8 @@ import urllib.request
 import urllib.parse
 import urllib.error
 
+from rate_limit import check_and_count
+
 CORS = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -73,6 +75,15 @@ def handler(event: dict, context) -> dict:
         return {'statusCode': 200, 'headers': CORS, 'body': ''}
     if method != 'POST':
         return _resp(405, {'error': 'Method not allowed'})
+
+    # Ограничение частоты. Функция открыта без авторизации — иначе перевод
+    # не работал бы для гостя в публичном чате, — и ходит во внешний сервис
+    # на каждый вызов. Без лимита любой желающий мог гонять через неё свой
+    # трафик: чужой сервис забанил бы наш адрес, и перевод отвалился бы у
+    # всех. Живому человеку 40 запросов в минуту недостижимы: интерфейс
+    # переводит экран одним пакетом до 50 строк.
+    if not check_and_count(event, 'translate', limit=40, window_sec=60):
+        return _resp(429, {'error': 'too_many_requests'})
 
     body = json.loads(event.get('body') or '{}')
     texts = body.get('texts') or []

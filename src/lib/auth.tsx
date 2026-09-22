@@ -15,7 +15,7 @@ type AuthContextValue = {
   verify2fa: (challengeId: string, code: string) => Promise<AuthResult>;
   resend2fa: (challengeId: string, lang?: string) => Promise<AuthResult>;
   register: (email: string, password: string, role: AuthRole, name: string) => Promise<AuthResult>;
-  adminLogin: (password: string, role: AuthRole) => Promise<AuthResult>;
+  adminLogin: (password: string, role: AuthRole, lang?: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
   resetRequest: (email: string, lang?: string) => Promise<AuthResult>;
@@ -111,8 +111,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  const adminLogin = useCallback(async (password: string, role: AuthRole): Promise<AuthResult> => {
-    const { res, data } = await callAuth({ action: "admin_login", password, role });
+  const adminLogin = useCallback(async (password: string, role: AuthRole, lang = "ru"): Promise<AuthResult> => {
+    const { res, data } = await callAuth({ action: "admin_login", password, role, lang });
+    // Вход владельца теперь всегда двухшаговый: пароль — первый шаг,
+    // код с почты — второй. Раньше здесь сразу возвращался токен, и один
+    // подсмотренный пароль открывал персональные данные всех специалистов.
+    if (res.ok && data.twoFactor && data.challengeId) {
+      return { ok: false, need2fa: true, challengeId: data.challengeId, emailHint: data.emailHint, sent: data.sent };
+    }
     if (res.ok && data.token) {
       localStorage.setItem(TOKEN_KEY, data.token);
       setUser(data.user);
