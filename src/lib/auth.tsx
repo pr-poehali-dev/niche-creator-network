@@ -14,7 +14,7 @@ type AuthContextValue = {
   login: (email: string, password: string, lang?: string) => Promise<AuthResult>;
   verify2fa: (challengeId: string, code: string) => Promise<AuthResult>;
   resend2fa: (challengeId: string, lang?: string) => Promise<AuthResult>;
-  register: (email: string, password: string, role: AuthRole, name: string) => Promise<AuthResult>;
+  register: (email: string, password: string, role: AuthRole, name: string, pdConsent?: boolean) => Promise<AuthResult>;
   adminLogin: (password: string, role: AuthRole, lang?: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
@@ -99,8 +99,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(
-    async (email: string, password: string, role: AuthRole, name: string): Promise<AuthResult> => {
-      const { res, data } = await callAuth({ action: "register", email, password, role, name, consent: true, consentVersion: "1.0" });
+    async (email: string, password: string, role: AuthRole, name: string, pdConsent = false): Promise<AuthResult> => {
+      const { res, data } = await callAuth({ action: "register", email, password, role, name, consent: true, pdConsent, consentVersion: "2.0" });
       if (res.ok && data.token) {
         localStorage.setItem(TOKEN_KEY, data.token);
         setUser(data.user);

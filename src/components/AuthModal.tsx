@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import Icon from "@/components/ui/icon";
 import { useLang } from "@/lib/i18n";
 import { useAuth, type AuthRole } from "@/lib/auth";
@@ -14,7 +14,14 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState<AuthRole>("client");
+  // Два независимых согласия. С 1 сентября 2025 года (ред. 152-ФЗ, ст. 9)
+  // согласие на обработку персональных данных нельзя включать в текст
+  // пользовательского соглашения или оферты — оно оформляется отдельно.
+  // Одна общая галочка «принимаю всё» делала согласие недействительным,
+  // а за обработку без надлежащего согласия КоАП 13.11 предусматривает
+  // штраф до 700 тыс. ₽ для юрлица / ИП.
   const [consent, setConsent] = useState(false);
+  const [pdConsent, setPdConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [twofa, setTwofa] = useState<{ challengeId: string; emailHint: string; sent: boolean } | null>(null);
@@ -48,13 +55,13 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
 
   const submit = async () => {
     setError("");
-    if (mode === "register" && !consent) { setError(errText("consent")); return; }
+    if (mode === "register" && (!consent || !pdConsent)) { setError(errText("consent")); return; }
     setBusy(true);
     const res = mode === "login"
       ? await login(email.trim(), password, lang)
       : mode === "admin"
         ? await adminLogin(password, role, lang)
-        : await register(email.trim(), password, role, name.trim());
+        : await register(email.trim(), password, role, name.trim(), pdConsent);
     setBusy(false);
     if (res.need2fa && res.challengeId) {
       setTwofa({ challengeId: res.challengeId, emailHint: res.emailHint || email, sent: !!res.sent });
@@ -396,27 +403,23 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
             )}
 
             {mode === "register" && (
-              <label className="flex items-start gap-2.5 cursor-pointer select-none pt-1">
-                <button
-                  type="button"
-                  onClick={() => setConsent((v) => !v)}
-                  className={`mt-0.5 w-5 h-5 shrink-0 rounded-sm border flex items-center justify-center transition-all ${consent ? "gold-gradient border-gold" : "border-border bg-secondary"}`}
-                  aria-checked={consent}
-                  role="checkbox"
-                >
-                  {consent && <Icon name="Check" size={13} className="text-[hsl(28,20%,7%)]" />}
-                </button>
-                <span className="text-[11px] text-muted-foreground leading-relaxed" onClick={() => setConsent((v) => !v)}>
+              <div className="space-y-3 pt-1">
+                <ConsentCheck checked={consent} onToggle={() => setConsent((v) => !v)}>
                   {tr("consentIntro")}{" "}
-                  {([["consentPrivacy", "privacy"], ["consentTerms", "terms"], ["consentAgreement", "agreement"], ["consentOffer", "offer"]] as const).map(([k, sec], i) => (
+                  {([["consentTerms", "terms"], ["consentAgreement", "agreement"], ["consentOffer", "offer"]] as const).map(([k, sec], i) => (
                     <span key={k}>
                       {i > 0 && ", "}
                       <button type="button" onClick={(e) => { e.stopPropagation(); onOpenDoc(sec); }} className="text-gold hover:underline">{tr(k)}</button>
                     </span>
                   ))}
-                  {" — "}{tr("consentCookie")}
-                </span>
-              </label>
+                </ConsentCheck>
+                <ConsentCheck checked={pdConsent} onToggle={() => setPdConsent((v) => !v)}>
+                  {tr("consentPdIntro")}{" "}
+                  <button type="button" onClick={(e) => { e.stopPropagation(); onOpenDoc("consent"); }} className="text-gold hover:underline">{tr("consentPdLink")}</button>
+                  {" "}{tr("consentPdAnd")}{" "}
+                  <button type="button" onClick={(e) => { e.stopPropagation(); onOpenDoc("privacy"); }} className="text-gold hover:underline">{tr("consentPrivacy")}</button>
+                </ConsentCheck>
+              </div>
             )}
 
             {error && (
@@ -455,6 +458,25 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ConsentCheck({ checked, onToggle, children }: { checked: boolean; onToggle: () => void; children: ReactNode }) {
+  return (
+    <div className="flex items-start gap-2.5 select-none">
+      <button
+        type="button"
+        onClick={onToggle}
+        role="checkbox"
+        aria-checked={checked}
+        className={`tap-target mt-0.5 w-5 h-5 shrink-0 rounded-sm border flex items-center justify-center transition-all ${checked ? "gold-gradient border-gold" : "border-input bg-secondary"}`}
+      >
+        {checked && <Icon name="Check" size={13} className="text-[hsl(28,20%,7%)]" />}
+      </button>
+      <span className="text-[11px] text-muted-foreground leading-relaxed cursor-pointer" onClick={onToggle}>
+        {children}
+      </span>
     </div>
   );
 }

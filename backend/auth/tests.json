@@ -10,142 +10,243 @@
       "name": "Register weak password rejected",
       "method": "POST",
       "path": "/",
-      "body": {"action": "register", "email": "weaktest@example.com", "password": "123", "role": "client"},
+      "body": {
+        "action": "register",
+        "email": "weaktest@example.com",
+        "password": "123",
+        "role": "client"
+      },
       "expectedStatus": 400
     },
     {
       "name": "Register without consent rejected",
       "method": "POST",
       "path": "/",
-      "body": {"action": "register", "email": "noconsent@example.com", "password": "strongpass123", "role": "client"},
+      "body": {
+        "action": "register",
+        "email": "noconsent@example.com",
+        "password": "strongpass123",
+        "role": "client"
+      },
       "expectedStatus": 400,
-      "expectedBody": {"error": "consent"},
+      "expectedBody": {
+        "error": "consent"
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "Login invalid credentials",
       "method": "POST",
       "path": "/",
-      "body": {"action": "login", "email": "nouser@example.com", "password": "whatever123"},
+      "body": {
+        "action": "login",
+        "email": "nouser@example.com",
+        "password": "whatever123"
+      },
       "expectedStatus": 401
     },
     {
       "name": "Me without token",
       "method": "POST",
       "path": "/",
-      "body": {"action": "me"},
+      "body": {
+        "action": "me"
+      },
       "expectedStatus": 401
     },
     {
       "name": "Unknown action",
       "method": "POST",
       "path": "/",
-      "body": {"action": "foobar"},
+      "body": {
+        "action": "foobar"
+      },
       "expectedStatus": 400
     },
     {
       "name": "Admin login wrong password",
       "method": "POST",
       "path": "/",
-      "body": {"action": "admin_login", "password": "definitely-wrong-pass", "role": "client"},
+      "body": {
+        "action": "admin_login",
+        "password": "definitely-wrong-pass",
+        "role": "client"
+      },
       "expectedStatus": 401
     },
     {
       "name": "Verify 2fa invalid code format",
       "method": "POST",
       "path": "/",
-      "body": {"action": "verify_2fa", "challengeId": "x", "code": "12"},
+      "body": {
+        "action": "verify_2fa",
+        "challengeId": "x",
+        "code": "12"
+      },
       "expectedStatus": 400,
-      "expectedBody": {"error": "invalid_code"},
+      "expectedBody": {
+        "error": "invalid_code"
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "Verify 2fa unknown challenge",
       "method": "POST",
       "path": "/",
-      "body": {"action": "verify_2fa", "challengeId": "nonexistent_challenge_id", "code": "123456"},
+      "body": {
+        "action": "verify_2fa",
+        "challengeId": "nonexistent_challenge_id",
+        "code": "123456"
+      },
       "expectedStatus": 400,
-      "expectedBody": {"error": "challenge_not_found"},
+      "expectedBody": {
+        "error": "challenge_not_found"
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "Resend 2fa unknown challenge",
       "method": "POST",
       "path": "/",
-      "body": {"action": "resend_2fa", "challengeId": "nonexistent"},
+      "body": {
+        "action": "resend_2fa",
+        "challengeId": "nonexistent"
+      },
       "expectedStatus": 400
     },
     {
       "name": "Logout all without token rejected",
       "method": "POST",
       "path": "/",
-      "body": {"action": "logout_all"},
+      "body": {
+        "action": "logout_all"
+      },
       "expectedStatus": 401,
-      "expectedBody": {"error": "no_token"},
+      "expectedBody": {
+        "error": "no_token"
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "Me with forged token rejected",
       "method": "POST",
       "path": "/",
-      "headers": {"X-Auth-Token": "0000000000000000000000000000000000000000000000000000000000000000"},
-      "body": {"action": "me"},
+      "headers": {
+        "X-Auth-Token": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "body": {
+        "action": "me"
+      },
       "expectedStatus": 401,
-      "expectedBody": {"error": "invalid_session"},
+      "expectedBody": {
+        "error": "invalid_session"
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "Logout is idempotent and safe",
       "method": "POST",
       "path": "/",
-      "body": {"action": "logout"},
+      "body": {
+        "action": "logout"
+      },
       "expectedStatus": 200,
-      "expectedBody": {"ok": true},
+      "expectedBody": {
+        "ok": true
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "Сброс: несуществующая почта не раскрывается",
       "method": "POST",
       "path": "/",
-      "body": {"action": "reset_request", "email": "definitely-no-such-user@example.com"},
+      "body": {
+        "action": "reset_request",
+        "email": "definitely-no-such-user@example.com"
+      },
       "expectedStatus": 200,
-      "expectedBody": {"ok": true},
+      "expectedBody": {
+        "ok": true
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "Сброс: некорректная почта отвечает так же",
       "method": "POST",
       "path": "/",
-      "body": {"action": "reset_request", "email": "not-an-email"},
+      "body": {
+        "action": "reset_request",
+        "email": "not-an-email"
+      },
       "expectedStatus": 200,
-      "expectedBody": {"ok": true},
+      "expectedBody": {
+        "ok": true
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "Сброс: неверный формат кода отклоняется",
       "method": "POST",
       "path": "/",
-      "body": {"action": "reset_confirm", "email": "a@b.co", "code": "12", "password": "newpass123"},
+      "body": {
+        "action": "reset_confirm",
+        "email": "a@b.co",
+        "code": "12",
+        "password": "newpass123"
+      },
       "expectedStatus": 400,
-      "expectedBody": {"error": "invalid_code"},
+      "expectedBody": {
+        "error": "invalid_code"
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "Сброс: слабый пароль отклоняется",
       "method": "POST",
       "path": "/",
-      "body": {"action": "reset_confirm", "email": "a@b.co", "code": "123456", "password": "123"},
+      "body": {
+        "action": "reset_confirm",
+        "email": "a@b.co",
+        "code": "123456",
+        "password": "123"
+      },
       "expectedStatus": 400,
-      "expectedBody": {"error": "weak_password"},
+      "expectedBody": {
+        "error": "weak_password"
+      },
       "bodyMatcher": "partial"
     },
     {
       "name": "Сброс: подобранный код не проходит",
       "method": "POST",
       "path": "/",
-      "body": {"action": "reset_confirm", "email": "nouser-reset@example.com", "code": "123456", "password": "newpass123"},
+      "body": {
+        "action": "reset_confirm",
+        "email": "nouser-reset@example.com",
+        "code": "123456",
+        "password": "newpass123"
+      },
       "expectedStatus": 400,
-      "expectedBody": {"error": "invalid_code"},
+      "expectedBody": {
+        "error": "invalid_code"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Register with terms but without PD consent rejected",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "register",
+        "email": "nopd@example.com",
+        "password": "strongpass123",
+        "role": "client",
+        "consent": true
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "consent"
+      },
       "bodyMatcher": "partial"
     }
   ]

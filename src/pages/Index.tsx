@@ -552,6 +552,16 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background font-ibm" style={{ ["--header-h" as string]: `${headerH + secBarH}px` }}>
+      {/* Пропуск навигации (WCAG 2.4.1). Человек, который ходит по сайту
+          клавишей Tab или экранным диктором, без этой ссылки на каждой
+          странице проходил всю шапку и меню, прежде чем попасть к делу.
+          Ссылка невидима, пока на неё не попадёт фокус. */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-sm gold-gradient text-[hsl(28,20%,7%)] font-montserrat font-bold text-sm"
+      >
+        {tr("skipToContent")}
+      </a>
       {/* Fixed security strip at the very top */}
       {secBannerOpen && (
         <div className="fixed top-0 left-0 right-0 z-[55] h-9 bg-gradient-to-r from-[hsl(220,20%,9%)] via-[hsl(220,18%,12%)] to-[hsl(220,20%,9%)] border-b border-gold/30">
@@ -707,7 +717,7 @@ export default function Index() {
         </div>
       )}
 
-      <main style={active === "home" ? { paddingTop: 64 + secBarH } : undefined}>
+      <main id="main-content" tabIndex={-1} className="outline-none" style={active === "home" ? { paddingTop: 64 + secBarH } : undefined}>
         <div key={active} className="section-transition">
           {/* Кабинеты грузятся отдельным файлом — на время загрузки
               показываем спокойную заглушку, а не пустой экран. */}
@@ -775,6 +785,20 @@ export default function Index() {
               {([["fPrivacy", "privacy"], ["fConsent", "consent"], ["fTerms", "terms"], ["fAgreement", "agreement"], ["fOffer", "offer"]] as const).map(([l, sec]) => (
                 <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
               ))}
+              {/* Отозвать согласие должно быть так же просто, как дать (GDPR
+                  ст. 7(3), 152-ФЗ ст. 9 ч. 2). Раньше выбор фиксировался
+                  навсегда: передумавший человек мог лишь чистить браузер.
+                  Сбрасываем выбор и перезагружаем страницу — уже загруженный
+                  счётчик иначе продолжил бы работу до конца визита. */}
+              <button
+                onClick={() => {
+                  try { localStorage.removeItem(COOKIE_CONSENT_KEY); } catch { /* noop */ }
+                  window.location.reload();
+                }}
+                className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left"
+              >
+                {tr("fCookieSettings")}
+              </button>
             </div>
           </div>
           <div className="divider-gold mt-8 mb-6" />

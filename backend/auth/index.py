@@ -497,6 +497,11 @@ def handler(event: dict, context) -> dict:
             role = body.get('role') if body.get('role') in ('client', 'provider') else 'client'
             name = (body.get('name') or '').strip()[:200]
             consent = bool(body.get('consent'))
+            # Отдельное согласие на обработку персональных данных (152-ФЗ,
+            # ст. 9, ред. с 01.09.2025): его нельзя «упаковать» в принятие
+            # соглашения или оферты. Проверяем на сервере, а не только в форме:
+            # регистрация в обход интерфейса без согласия не пройдёт.
+            pd_consent = bool(body.get('pdConsent'))
             if not email or not EMAIL_RE.match(email):
                 return _resp(400, {'error': 'invalid_email'}, event)
             if _is_reserved_email(email):
@@ -506,7 +511,7 @@ def handler(event: dict, context) -> dict:
                 return _resp(400, {'error': 'weak_password'}, event)
             if not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
                 return _resp(400, {'error': 'weak_password'}, event)
-            if not consent:
+            if not consent or not pd_consent:
                 return _resp(400, {'error': 'consent'}, event)
             cur.execute(f"SELECT id FROM {SCHEMA}.users WHERE email = %s", (email,))
             if cur.fetchone():
@@ -515,8 +520,9 @@ def handler(event: dict, context) -> dict:
             consent_version = (str(body.get('consentVersion') or '1.0'))[:20]
             src_ip = client_ip
             cur.execute(
-                f"INSERT INTO {SCHEMA}.users (email, password_hash, role, name, consent_accepted_at, consent_version, consent_ip) "
-                f"VALUES (%s, %s, %s, %s, now(), %s, %s) RETURNING id",
+                f"INSERT INTO {SCHEMA}.users (email, password_hash, role, name, consent_accepted_at, consent_version, consent_ip, "
+                f"terms_accepted_at, pd_consent_separate) "
+                f"VALUES (%s, %s, %s, %s, now(), %s, %s, now(), true) RETURNING id",
                 (email, pwd_hash, role, name, consent_version, src_ip),
             )
             user_id = cur.fetchone()[0]

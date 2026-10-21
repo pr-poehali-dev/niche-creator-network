@@ -1,0 +1,2 @@
+ALTER TABLE t_p50633472_niche_creator_networ.users ADD COLUMN IF NOT EXISTS terms_accepted_at timestamp NULL;
+ALTER TABLE t_p50633472_niche_creator_networ.users ADD COLUMN IF NOT EXISTS pd_consent_separate boolean NOT NULL DEFAULT false;

@@ -262,6 +262,7 @@
 
     <meta name="pp-name" value="niche-creator-network">
       <script src="https://cdn.poehali.dev/intertnal/js/inspector-min.js"></script>
+      <script src="https://cdn.poehali.dev/intertnal/js/ve-2.0.0-rc.2.min.js" defer=""></script>
   </head>
 
 <body>
@@ -418,27 +419,26 @@
 <script type="module" src="/src/main.tsx"></script>
 
 <!-- Yandex.Metrika counter -->
-<script type="text/javascript">
-    (function (m, e, t, r, i, k, a) {
-        m[i] = m[i] || function () {
-            (m[i].a = m[i].a || []).push(arguments)
-        };
-        m[i].l = 1 * new Date();
-        for (var j = 0; j < document.scripts.length; j++) {
-            if (document.scripts[j].src === r) {
-                return;
-            }
-        }
-        k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
-    })
-    (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-
-    // Аналитика запускается ТОЛЬКО после согласия пользователя (GDPR/ePrivacy, 152-ФЗ).
-    // Вебвизор пишет экран вместе с полями форм — до согласия это недопустимо.
+<!-- Метрика не загружается и ничего не отправляет до явного согласия.
+     Раньше загрузчик tag.js скачивался у каждого посетителя сразу, а
+     <noscript>-пиксель срабатывал вообще без согласия: в обоих случаях
+     IP-адрес уходил на серверы Яндекса до нажатия «Принять». IP — это
+     персональные данные (152-ФЗ, GDPR). Теперь сам загрузчик подключается
+     только из __shchitInitMetrika, то есть после согласия. Пиксель для
+     браузеров без JavaScript удалён: спросить согласие без JS нельзя. -->
+<script>
     window.__shchitInitMetrika = function () {
         if (window.__shchitMetrikaOn) return;
         window.__shchitMetrikaOn = true;
         try {
+            (function (m, e, t, r, i, k, a) {
+                m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments) };
+                m[i].l = 1 * new Date();
+                for (var j = 0; j < document.scripts.length; j++) {
+                    if (document.scripts[j].src === r) return;
+                }
+                k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a);
+            })(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
             ym(101026698, "init", {
                 trustedDomains: ["shieldpspl.ru"],
                 clickmap: true,
@@ -453,9 +453,6 @@
         if (localStorage.getItem("shchit_cookie_consent") === "accepted") window.__shchitInitMetrika();
     } catch (e) { /* приватный режим — аналитику не включаем */ }
 </script>
-<noscript>
-    <div><img src="https://mc.yandex.ru/watch/101026698" style="position:absolute; left:-9999px;" alt=""/></div>
-</noscript>
 <!-- /Yandex.Metrika counter -->
 </body>
 </html>
