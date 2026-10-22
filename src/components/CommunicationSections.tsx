@@ -7,6 +7,7 @@ import { cleanText } from "@/lib/moderation";
 import { useAutoTranslate } from "@/lib/autotranslate";
 import { trackGoal, GOALS } from "@/lib/analytics";
 import { ReportModal } from "@/components/ReviewsAndReports";
+import { PresenceDot, PresenceText, type PresenceInfo } from "@/components/community/Presence";
 import { FaqAccordion } from "@/components/LandingSections";
 import { L, shortName } from "@/lib/shared";
 import { serviceCategories } from "@/lib/servicesCatalog";
@@ -44,6 +45,7 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
   const [menuFor, setMenuFor] = useState<number | null>(null);
   // Переписка закрыта: дружба не подтверждена или её разорвали.
   const [blocked, setBlocked] = useState(false);
+  const [presence, setPresence] = useState<PresenceInfo>(null);
   const dmEndRef = useRef<HTMLDivElement | null>(null);
   // Ссылка на актуальный список — нужна опросу, чтобы понять, пришло ли
   // что-то новое, не пересоздавая при этом сам цикл опроса.
@@ -68,6 +70,7 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
         // закрывает переписку, и человек должен понять почему.
         if (d.error === "not_friends") { setBlocked(true); return; }
         setBlocked(false);
+        setPresence(d.presence ?? null);
         if (Array.isArray(d.messages)) {
           const next: ChatMsg[] = d.messages.map((m: {
             id: number; fromId: string; fromName: string; text: string; createdAt: string | null;
@@ -224,18 +227,21 @@ export function DirectChatSection({ target, chatInput, setChatInput, onBack }: {
       </button>
       <div className="border border-border rounded-sm bg-card overflow-hidden flex flex-col" style={{ height: "600px" }}>
         <div className="p-4 border-b border-border flex items-center gap-3">
-          <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
-            {target.avatar ? <img src={target.avatar} alt={shortName(target.name)} loading="lazy" className="w-full h-full object-cover" /> : <span className="font-montserrat font-bold text-sm text-[hsl(28,20%,7%)]">{initial}</span>}
+          <div className="relative w-10 h-10 shrink-0">
+            <div className="w-full h-full rounded-full overflow-hidden gold-gradient flex items-center justify-center">
+              {target.avatar ? <img src={target.avatar} alt={shortName(target.name)} loading="lazy" className="w-full h-full object-cover" /> : <span className="font-montserrat font-bold text-sm text-[hsl(28,20%,7%)]">{initial}</span>}
+            </div>
+            <PresenceDot presence={presence} />
           </div>
           <div className="min-w-0">
             <div className="text-sm font-montserrat font-semibold text-foreground truncate">{shortName(target.name)}</div>
-            <div className="text-[11px] text-muted-foreground truncate">{target.title}</div>
+            {/* Раньше здесь всегда горело «в сети» — даже если человек не
+                заходил неделю. Человек ждал ответа, которого не будет.
+                Теперь статус настоящий; если собеседник его скрыл —
+                показываем специализацию, без намёков. */}
+            {presence ? <PresenceText presence={presence} /> : <div className="text-[11px] text-muted-foreground truncate">{target.title}</div>}
           </div>
           <div className="flex items-center gap-3 ms-auto">
-            <div className="flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              <span className="text-xs text-muted-foreground">{tr("online")}</span>
-            </div>
             <button onClick={() => setReportOpen(true)} className="text-muted-foreground hover:text-destructive transition-colors" title={tr("reportBtn")}>
               <Icon name="Flag" size={15} />
             </button>

@@ -150,13 +150,21 @@ def handler(event: dict, context) -> dict:
                     f"FROM {SCHEMA}.resumes WHERE is_published = true"
                 )
                 params = []
+                # LOWER() в этой базе не понижает кириллицу: запрос «охрана»
+                # не находил резюме «Охрана объектов». Приводим регистр
+                # явно через translate — не зависит от локали сервера.
+                up = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
+                lo = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
+
+                def low(col):
+                    return f"LOWER(TRANSLATE(COALESCE({col}, ''), '{up}', '{lo}'))"
                 if text:
-                    sql += " AND (LOWER(position) LIKE %s OR LOWER(skills) LIKE %s OR LOWER(about) LIKE %s)"
-                    like = f'%{text}%'
+                    sql += f" AND ({low('position')} LIKE %s OR {low('skills')} LIKE %s OR {low('about')} LIKE %s)"
+                    like = f'%{text.lower()}%'
                     params += [like, like, like]
                 if city:
-                    sql += " AND LOWER(city) LIKE %s"
-                    params.append(f'%{city}%')
+                    sql += f" AND {low('city')} LIKE %s"
+                    params.append(f'%{city.lower()}%')
                 if remote:
                     sql += " AND remote_ok = true"
                 if relocate:

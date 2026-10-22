@@ -107,12 +107,23 @@ def handler(event: dict, context) -> dict:
             )
             unread_messages = int((cur.fetchone() or [0])[0])
             email_enabled = _email_enabled(cur, user_id)
+            # Колокольчик опрашивается, пока вкладка открыта, — по нему и
+            # отмечаем, что человек на площадке. Отдельный опрос «я в сети»
+            # удвоил бы число вызовов. Пишем не чаще раза в минуту.
+            cur.execute(
+                f"UPDATE {SCHEMA}.users SET last_seen_at = now() "
+                f"WHERE id = %s AND (last_seen_at IS NULL OR last_seen_at < now() - interval '60 seconds')",
+                (user_id,),
+            )
+            cur.execute(f"SELECT show_online FROM {SCHEMA}.users WHERE id = %s", (user_id,))
+            so = cur.fetchone()
             conn.commit()
             return _resp(200, {
                 'notifications': items,
                 'unread': unread,
                 'unreadMessages': unread_messages,
                 'emailEnabled': email_enabled,
+                'showOnline': bool(so[0]) if so else True,
             })
 
         body = {}
@@ -148,6 +159,16 @@ def handler(event: dict, context) -> dict:
             )
             conn.commit()
             return _resp(200, {'success': True, 'emailEnabled': enabled})
+
+        if action == 'set_show_online':
+            # «Показывать, что я в сети». Специалисту по безопасности может
+            # быть важно, чтобы никто не видел, когда он активен: по этому
+            # легко вычислить распорядок дня. Выключил — собеседники не видят
+            # ни «в сети», ни «был недавно».
+            enabled = bool(body.get('enabled', True))
+            cur.execute(f"UPDATE {SCHEMA}.users SET show_online=%s WHERE id=%s", (enabled, user_id))
+            conn.commit()
+            return _resp(200, {'success': True, 'showOnline': enabled})
 
         if action == 'create':
             # Пользователь создаёт уведомление самому себе (тест/демо колокольчика).

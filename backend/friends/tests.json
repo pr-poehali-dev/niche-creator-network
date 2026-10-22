@@ -16,7 +16,37 @@
       "name": "POST request without token returns 401",
       "method": "POST",
       "path": "/",
-      "body": {"action": "request", "targetUserId": 1},
+      "body": {
+        "action": "request",
+        "targetUserId": 1
+      },
+      "expectedStatus": 401
+    },
+    {
+      "name": "Suggestions without token rejected",
+      "method": "GET",
+      "path": "/?action=suggest",
+      "expectedStatus": 401
+    },
+    {
+      "name": "Block without token rejected",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "block",
+        "targetUserId": 2
+      },
+      "expectedStatus": 401
+    },
+    {
+      "name": "Endorse without token rejected",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "endorse",
+        "targetUserId": 2,
+        "skill": "x"
+      },
       "expectedStatus": 401
     }
   ]

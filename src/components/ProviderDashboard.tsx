@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Icon from "@/components/ui/icon";
+import PeopleYouMayKnow from "@/components/community/PeopleYouMayKnow";
+import FriendCard from "@/components/community/FriendCard";
+import PrivacyControls from "@/components/community/PrivacyControls";
+import { PresenceDot, type PresenceInfo } from "@/components/community/Presence";
 import SessionsLog from "@/components/SessionsLog";
 import { useLang } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -364,7 +368,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
   const [friendsList, setFriendsList] = useState<FriendItem[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendReq[]>([]);
   // Список переписок с последним сообщением и счётчиком непрочитанных.
-  type Dialog = { userId: number; pairKey: string; name: LS | null; title: LS | null; avatar: string | null; lastText: string; lastFromMe: boolean; lastAt: string | null; unread: number };
+  type Dialog = { userId: number; pairKey: string; name: LS | null; title: LS | null; avatar: string | null; lastText: string; lastFromMe: boolean; lastAt: string | null; unread: number; presence?: PresenceInfo };
   const [dialogs, setDialogs] = useState<Dialog[]>([]);
   const [searchPublicId, setSearchPublicId] = useState("");
   // Поиск коллег теперь по имени, специализации или номеру — результатов может
@@ -372,6 +376,8 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
   type FoundPerson = { userId: number; publicId: number; role: string; name: string; provider: FriendItem["provider"]; friendStatus: string; incoming?: boolean };
   const [searchResults, setSearchResults] = useState<FoundPerson[] | null>(null);
   const [friendBusy, setFriendBusy] = useState(false);
+  // Меняется после блокировки — чтобы список заблокированных обновился.
+  const [privacyKey, setPrivacyKey] = useState(0);
 
   const loadFriends = useCallback(() => {
     fetch(func2url["friends"], { headers: authHeaders() })
@@ -1323,6 +1329,8 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                 )}
               </div>
 
+              <PeopleYouMayKnow onChanged={loadFriends} />
+
               {friendRequests.length > 0 && (
                 <div className="border border-border rounded-sm bg-card p-6">
                   <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-4">{tr("pdIncomingRequests")}</div>
@@ -1362,8 +1370,11 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                         onClick={() => openChat?.({ name: d.name ? L(d.name, lang) : `#${d.userId}`, title: d.title ? L(d.title, lang) : "", avatar: d.avatar, pairKey: d.pairKey })}
                         className={`w-full flex items-center gap-3 p-3 border rounded-sm text-left transition-colors ${d.unread > 0 ? "border-gold/40 bg-gold/[0.04]" : "border-border hover:border-gold/30"}`}
                       >
-                        <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
-                          {d.avatar ? <img src={d.avatar} alt="" loading="lazy" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(28,20%,7%)]" />}
+                        <div className="relative w-11 h-11 shrink-0">
+                          <div className="w-full h-full rounded-full overflow-hidden gold-gradient flex items-center justify-center">
+                            {d.avatar ? <img src={d.avatar} alt="" loading="lazy" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(28,20%,7%)]" />}
+                          </div>
+                          <PresenceDot presence={d.presence} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className={`text-sm font-montserrat truncate ${d.unread > 0 ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>
@@ -1396,36 +1407,24 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                   <div className="text-xs text-muted-foreground py-6 text-center border border-dashed border-border rounded-sm">{tr("pdNoFriends")}</div>
                 ) : (
                   <div className="space-y-3">
-                    {friendsList.map((f) => (
-                      <div key={f.friendshipId} className="flex items-center gap-3 p-3 border border-border rounded-sm">
-                        <div className="w-10 h-10 rounded-sm overflow-hidden gold-gradient flex items-center justify-center shrink-0">
-                          {f.provider?.avatar ? <img src={f.provider.avatar} alt="" className="w-full h-full object-cover" /> : <Icon name="User" size={18} className="text-[hsl(28,20%,7%)]" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-montserrat font-semibold text-foreground truncate">{f.provider ? L(f.provider.name, lang) : `#${f.userId}`}</div>
-                          {f.provider && <div className="text-[11px] text-muted-foreground truncate">{L(f.provider.title, lang)}</div>}
-                        </div>
-                        {openChat && (
-                          <button
-                            onClick={() => openChat({ name: f.provider ? L(f.provider.name, lang) : `#${f.userId}`, title: f.provider ? L(f.provider.title, lang) : "", avatar: f.provider?.avatar || null, pairKey: f.pairKey })}
-                            className="border border-gold/40 text-gold text-xs font-montserrat font-semibold px-3 py-1.5 rounded-sm shrink-0 hover:bg-gold/10 flex items-center gap-1.5"
-                          >
-                            <Icon name="MessageSquare" size={13} />{tr("pdMessage")}
-                          </button>
-                        )}
-                        <button
-                          onClick={() => removeFriend(f.userId)}
-                          aria-label={tr("pdRemoveFriend")}
-                          title={tr("pdRemoveFriend")}
-                          className="text-muted-foreground hover:text-destructive transition-colors shrink-0 p-1.5"
-                        >
-                          <Icon name="UserMinus" size={15} />
-                        </button>
-                      </div>
-                    ))}
+                    {friendsList.map((f) => {
+                      // Статус «в сети» берём из списка диалогов: он уже
+                      // загружен и считается сервером с учётом приватности.
+                      const presence = dialogs.find((d) => d.userId === f.userId)?.presence;
+                      return (
+                        <FriendCard
+                          key={f.friendshipId}
+                          f={{ userId: f.userId, pairKey: f.pairKey, provider: f.provider, presence }}
+                          onMessage={openChat ? () => openChat({ name: f.provider ? L(f.provider.name, lang) : `#${f.userId}`, title: f.provider ? L(f.provider.title, lang) : "", avatar: f.provider?.avatar || null, pairKey: f.pairKey }) : undefined}
+                          onRemove={() => removeFriend(f.userId)}
+                          onBlocked={() => { loadFriends(); setPrivacyKey((k) => k + 1); }}
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </div>
+              <PrivacyControls refreshKey={privacyKey} />
             </div>
           )}
 

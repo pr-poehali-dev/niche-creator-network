@@ -131,6 +131,39 @@ def _resp(status, payload):
     return {'statusCode': status, 'headers': CORS, 'body': json.dumps(payload, ensure_ascii=False)}
 
 
+def _touch_presence(cur, user_id: int) -> None:
+    '''Отмечаем, что человек сейчас на площадке. Пишем не чаще раза в минуту,
+    чтобы не нагружать базу на каждом опросе чата.'''
+    cur.execute(
+        f"UPDATE {SCHEMA}.users SET last_seen_at = now() "
+        f"WHERE id = %s AND (last_seen_at IS NULL OR last_seen_at < now() - interval '60 seconds')",
+        (user_id,),
+    )
+
+
+def _presence(cur, user_id: int):
+    '''Статус собеседника: «в сети» или когда был. Если человек скрыл свой
+    статус в настройках, отдаём None — как в Telegram, приватность сильнее
+    любопытства. Точное время дальше суток не раскрываем: «был недавно»
+    достаточно, чтобы понять, ждать ли ответа, и не позволяет следить
+    за распорядком дня человека, чья работа связана с риском.'''
+    cur.execute(f"SELECT last_seen_at, show_online FROM {SCHEMA}.users WHERE id = %s", (user_id,))
+    row = cur.fetchone()
+    if not row or not row[1] or not row[0]:
+        return None
+    cur.execute("SELECT EXTRACT(EPOCH FROM (now() - %s))", (row[0],))
+    ago = float(cur.fetchone()[0] or 0)
+    if ago < 180:
+        return {'status': 'online'}
+    if ago < 3600:
+        return {'status': 'recent', 'minutes': int(ago // 60)}
+    if ago < 86400:
+        return {'status': 'today'}
+    if ago < 7 * 86400:
+        return {'status': 'week'}
+    return {'status': 'long'}
+
+
 def handler(event: dict, context) -> dict:
     '''
     Business: хранилище переписок — профессиональные чаты по категориям и личные
@@ -191,6 +224,8 @@ def handler(event: dict, context) -> dict:
                     return _resp(403, {'error': 'forbidden'})
                 if not auth_utils.are_friends(user, pair):
                     return _resp(403, {'error': 'not_friends'})
+                _touch_presence(cur, user['id'])
+                other_uid = auth_utils.other_dm_user_id(user, pair)
                 cur.execute(
                     f"SELECT from_id, from_name, text, created_at, id, attachments, "
                     f"geo_lat, geo_lon, geo_label, reply_to, removed_at, edited_at, read_at "
@@ -237,7 +272,7 @@ def handler(event: dict, context) -> dict:
                     (pair, auth_utils.user_dm_id(user)),
                 )
                 conn.commit()
-                return _resp(200, {'messages': msgs})
+                return _resp(200, {'messages': msgs, 'presence': _presence(cur, other_uid) if other_uid else None})
 
             if kind == 'dialogs':
                 # Список переписок: собеседник, последнее сообщение и счётчик
@@ -248,6 +283,8 @@ def handler(event: dict, context) -> dict:
                     return _resp(401, {'error': 'unauthorized'})
                 me = auth_utils.user_dm_id(user)
                 my_id = user['id']
+                _touch_presence(cur, my_id)
+                conn.commit()
                 # Берём только переписки с подтверждёнными друзьями: расторгли
                 # дружбу — диалог исчезает из списка, как и доступ к нему.
                 cur.execute(
@@ -292,6 +329,7 @@ def handler(event: dict, context) -> dict:
                         'lastFromMe': bool(last and last[0] == me),
                         'lastAt': last[2].isoformat() if last and last[2] else None,
                         'unread': unread,
+                        'presence': _presence(cur, fid),
                     })
                 # Свежие переписки сверху; диалоги без сообщений — в конце.
                 dialogs.sort(key=lambda d: d['lastAt'] or '', reverse=True)
