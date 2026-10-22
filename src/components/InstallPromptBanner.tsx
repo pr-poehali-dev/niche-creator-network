@@ -81,7 +81,7 @@ function InstallPromptBanner({ setActive }: { setActive: (s: Section) => void })
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-[70] p-3 sm:hidden animate-rise" role="dialog" aria-label={tr("maTitle")}>
+    <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-[70] p-3 sm:hidden animate-rise" role="dialog" aria-label={tr("maTitle")}>
       <div className="max-w-md mx-auto bg-card border border-gold/40 rounded-lg shadow-2xl security-glow p-4 flex items-center gap-3">
         <div className="w-11 h-11 icon-tile flex items-center justify-center shrink-0">
           <Icon name="Smartphone" size={22} className="text-gold" />

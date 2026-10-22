@@ -251,6 +251,10 @@ export const t: Dict = {
   crumbDashboard: { ru: "Личный кабинет", en: "Dashboard" },
 
   // Nav
+  tabSpecialists: { ru: "Специалисты", en: "Experts" },
+  tabNewRequest: { ru: "Новая заявка", en: "New request" },
+  tabProfile: { ru: "Профиль", en: "Profile" },
+  tabBarLabel: { ru: "Основные разделы", en: "Main sections" },
   navHome: { ru: "Главная", en: "Home" },
   navProfile: { ru: "Профиль", en: "Profile" },
   navCases: { ru: "Кейсы", en: "Cases" },

@@ -15,6 +15,7 @@ import Brand from "@/components/Brand";
 import ShareButtons from "@/components/ShareButtons";
 import UrgencyBanner from "@/components/UrgencyBanner";
 import NotificationBell from "@/components/NotificationBell";
+import MobileTabBar from "@/components/MobileTabBar";
 import { applySeo, catSeo } from "@/lib/seoMeta";
 const AdminPanel = lazy(() => import("@/components/AdminPanel"));
 const ClientDashboard = lazy(() => import("@/components/ClientDashboard"));
@@ -185,7 +186,9 @@ function CookieBanner({ go }: { go: (s: Section) => void }) {
   return (
     /* Баннер прижат к углу и компактен: согласие на cookie — формальность,
        он не должен закрывать первый экран и мешать читать предложение. */
-    <div className="fixed inset-x-0 bottom-0 z-[90] p-2 sm:p-4 pointer-events-none">
+    /* На телефоне баннер стоит над нижней панелью вкладок, а не поверх неё:
+       иначе он закрывал навигацию, пока человек не сделает выбор. */
+    <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-0 z-[90] p-2 sm:p-4 pointer-events-none">
       <div role="region" aria-label={tr("cookieTitle")} className="max-w-md ms-auto me-0 bg-card/95 backdrop-blur-md border border-border rounded-sm shadow-2xl p-3 sm:p-4 flex flex-col gap-2 pointer-events-auto">
         {/* На телефоне — одна строка и кнопки рядом. Согласие на cookie
             это формальность, а баннер закрывал главную кнопку первого
@@ -551,7 +554,7 @@ export default function Index() {
   const headerH = scrolled ? 52 : 64;
 
   return (
-    <div className="min-h-screen bg-background font-ibm" style={{ ["--header-h" as string]: `${headerH + secBarH}px` }}>
+    <div className="min-h-screen bg-background font-ibm pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0" style={{ ["--header-h" as string]: `${headerH + secBarH}px` }}>
       {/* Пропуск навигации (WCAG 2.4.1). Человек, который ходит по сайту
           клавишей Tab или экранным диктором, без этой ссылки на каждой
           странице проходил всю шапку и меню, прежде чем попасть к делу.
@@ -824,6 +827,13 @@ export default function Index() {
       <CookieBanner go={go} />
 
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onOpenDoc={(s) => { setAuthOpen(false); go(s); }} />}
+      <MobileTabBar
+        active={active}
+        role={isAuthed ? role : null}
+        isAuthed={isAuthed}
+        onGo={(s) => go(s)}
+        onCabinet={openCabinet}
+      />
 
       {regGateOpen && (
         <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto overscroll-contain" onClick={() => setRegGateOpen(false)}>
