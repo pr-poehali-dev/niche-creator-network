@@ -248,6 +248,23 @@
         "error": "consent"
       },
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "Register with invite but no consent rejected",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "register",
+        "email": "inv@example.com",
+        "password": "strongpass123",
+        "role": "provider",
+        "invitedBy": "999999"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "consent"
+      },
+      "bodyMatcher": "partial"
     }
   ]
 }

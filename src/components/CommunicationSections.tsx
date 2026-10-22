@@ -36,7 +36,24 @@ type ChatMsg = {
 /** Быстрые реакции: то, что ставят в 90% случаев. */
 const QUICK_REACTIONS = ["👍", "🔥", "❤️", "😊", "🤝", "✅"];
 
-export function DirectChatSection({ target, chatInput, setChatInput, onBack }: { target: { name: string; title: string; avatar?: string | null; pairKey?: string }; chatInput: string; setChatInput: (v: string) => void; onBack: () => void }) {
+export function DirectChatSection({ target, onBack }: { target: { name: string; title: string; avatar?: string | null; pairKey?: string }; chatInput?: string; setChatInput?: (v: string) => void; onBack: () => void }) {
+  // Черновик — свой у каждой переписки, как в Telegram и WhatsApp.
+  // Раньше поле ввода было одно на все чаты: недописанное сообщение
+  // одному коллеге «переезжало» в переписку с другим, и его легко было
+  // отправить не тому человеку. Для людей, которые обсуждают в чате
+  // рабочие детали, это прямой риск утечки. Черновик хранится только в
+  // этой вкладке браузера (sessionStorage) и стирается после отправки.
+  const draftKey = `shchit_draft_${target.pairKey || target.name}`;
+  const [chatInput, setChatInputState] = useState<string>(() => {
+    try { return sessionStorage.getItem(draftKey) || ""; } catch { return ""; }
+  });
+  const setChatInput = useCallback((v: string) => {
+    setChatInputState(v);
+    try {
+      if (v) sessionStorage.setItem(draftKey, v);
+      else sessionStorage.removeItem(draftKey);
+    } catch { /* noop */ }
+  }, [draftKey]);
   const { lang, tr } = useLang();
   const { user } = useAuth();
   const [msgs, setMsgs] = useState<ChatMsg[]>([]);

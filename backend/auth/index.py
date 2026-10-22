@@ -539,8 +539,37 @@ def handler(event: dict, context) -> dict:
                     f"false, false, 'start') ON CONFLICT (slug) DO NOTHING",
                     (prov_slug, name or 'Специалист', name or 'Specialist'),
                 )
+            # Приглашение коллеги по личной ссылке. Пришедший по ней специалист
+            # сразу становится другом пригласившего: так в LinkedIn и
+            # Telegram первая связь появляется в момент регистрации, а не
+            # после поиска. Без этого новичок попадает в пустое сообщество.
+            # Только для исполнителей с обеих сторон: сообщество — профессиональное.
+            invite_from = None
+            try:
+                invite_pub = int(str(body.get('invitedBy') or '').strip() or 0)
+            except (TypeError, ValueError):
+                invite_pub = 0
+            if invite_pub and role == 'provider':
+                cur.execute(
+                    f"SELECT id FROM {SCHEMA}.users WHERE public_id = %s AND role = 'provider' AND is_admin = false",
+                    (invite_pub,),
+                )
+                inv = cur.fetchone()
+                if inv and inv[0] != user_id:
+                    invite_from = inv[0]
+                    ua, ub = (invite_from, user_id) if invite_from < user_id else (user_id, invite_from)
+                    cur.execute(
+                        f"INSERT INTO {SCHEMA}.friendships (user_id_a, user_id_b, status, requested_by, responded_at) "
+                        f"VALUES (%s, %s, 'accepted', %s, now()) ON CONFLICT (user_id_a, user_id_b) DO NOTHING",
+                        (ua, ub, invite_from),
+                    )
+                    cur.execute(
+                        f"INSERT INTO {SCHEMA}.notifications (user_id, type, title, body, link) VALUES (%s, 'community', %s, %s, 'community')",
+                        (invite_from, 'Коллега принял приглашение',
+                         f'{name or "Новый специалист"} зарегистрировался по вашей ссылке и уже в списке друзей. Напишите ему первым.'),
+                    )
             new_token = _create_session(cur, user_id, fingerprint, device_label, ip_masked, device_pubkey)
-            return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': email, 'role': role, 'name': name}}, event)
+            return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': email, 'role': role, 'name': name}, 'invitedBy': invite_from}, event)
 
         if action == 'login':
             email = (body.get('email') or '').strip().lower()[:200]

@@ -420,12 +420,27 @@ def handler(event: dict, context) -> dict:
                     what = 'отправил геолокацию'
                 else:
                     what = 'написал вам сообщение'
-                notify_utils.push(
-                    cur, recipient_uid, 'message',
-                    'Новое сообщение',
-                    f'{from_name or "Пользователь"} {what}. Откройте чат, чтобы ответить.',
-                    'chat',
+                # Одно уведомление на собеседника, а не на каждое сообщение.
+                # Коллега пишет мыслями по одной строке — пять сообщений
+                # подряд давали пять записей в колокольчике и пять писем на
+                # почту. Так уведомления быстро учатся игнорировать. Если
+                # непрочитанное уведомление от этого человека уже висит —
+                # обновляем его текст и время, не создавая нового.
+                tag = f'chat:{pair}'
+                cur.execute(
+                    f"UPDATE {SCHEMA}.notifications SET body = %s, created_at = now() "
+                    f"WHERE user_id = %s AND type = 'message' AND link = %s AND is_read = false "
+                    f"RETURNING id",
+                    (f'{from_name or "Пользователь"} {what}. Откройте чат, чтобы ответить.',
+                     recipient_uid, tag),
                 )
+                if not cur.fetchone():
+                    notify_utils.push(
+                        cur, recipient_uid, 'message',
+                        'Новое сообщение',
+                        f'{from_name or "Пользователь"} {what}. Откройте чат, чтобы ответить.',
+                        tag,
+                    )
                 conn.commit()
                 return _resp(200, {'success': True})
 

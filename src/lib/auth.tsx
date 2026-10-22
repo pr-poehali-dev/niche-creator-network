@@ -100,8 +100,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (email: string, password: string, role: AuthRole, name: string, pdConsent = false): Promise<AuthResult> => {
-      const { res, data } = await callAuth({ action: "register", email, password, role, name, consent: true, pdConsent, consentVersion: "2.0" });
+      // Номер пригласившего коллеги — из ссылки ?invite=123, сохранённой при
+      // первом заходе (человек мог погулять по сайту перед регистрацией).
+      let invitedBy: string | null = null;
+      try { invitedBy = sessionStorage.getItem("shchit_invite"); } catch { /* noop */ }
+      const { res, data } = await callAuth({ action: "register", email, password, role, name, consent: true, pdConsent, consentVersion: "2.0", invitedBy });
       if (res.ok && data.token) {
+        try { sessionStorage.removeItem("shchit_invite"); } catch { /* noop */ }
         localStorage.setItem(TOKEN_KEY, data.token);
         setUser(data.user);
         return { ok: true };

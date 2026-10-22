@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Icon from "@/components/ui/icon";
 import PeopleYouMayKnow from "@/components/community/PeopleYouMayKnow";
+import InviteColleague from "@/components/community/InviteColleague";
 import FriendCard from "@/components/community/FriendCard";
 import PrivacyControls from "@/components/community/PrivacyControls";
 import { PresenceDot, type PresenceInfo } from "@/components/community/Presence";
@@ -1271,14 +1272,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
 
           {tab === "friends" && (
             <div className="space-y-6">
-              <div className="border border-gold/30 rounded-sm glass-card p-6">
-                <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("pdMyIdTitle")}</div>
-                <p className="text-[11px] text-muted-foreground mb-3">{tr("pdMyIdHint")}</p>
-                <div className="inline-flex items-center gap-2 border border-gold/40 rounded-sm bg-background px-4 py-2.5">
-                  <Icon name="IdCard" size={16} className="text-gold" />
-                  <span className="font-montserrat font-bold text-lg text-gold">{user?.publicId ?? "—"}</span>
-                </div>
-              </div>
+              <InviteColleague publicId={user?.publicId} />
 
               <div className="border border-border rounded-sm bg-card p-6">
                 <div className="text-xs font-montserrat font-semibold text-foreground uppercase tracking-widest mb-1">{tr("pdFindFriendTitle")}</div>
@@ -1380,10 +1374,23 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                           <div className={`text-sm font-montserrat truncate ${d.unread > 0 ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>
                             {d.name ? L(d.name, lang) : `#${d.userId}`}
                           </div>
-                          <div className={`text-[11px] truncate ${d.unread > 0 ? "text-foreground/80" : "text-muted-foreground"}`}>
-                            {d.lastFromMe && <span className="text-muted-foreground">{tr("pdDialogYou")} </span>}
-                            {d.lastText}
-                          </div>
+                          {(() => {
+                            // Недописанное сообщение показываем вместо последнего —
+                            // красным словом «Черновик», как в Telegram: сразу
+                            // видно, где осталась незаконченная мысль.
+                            let draft = "";
+                            try { draft = sessionStorage.getItem(`shchit_draft_${d.pairKey}`) || ""; } catch { /* noop */ }
+                            return draft ? (
+                              <div className="text-[11px] truncate text-muted-foreground">
+                                <span className="text-destructive font-semibold">{tr("chatDraft")}: </span>{draft}
+                              </div>
+                            ) : (
+                              <div className={`text-[11px] truncate ${d.unread > 0 ? "text-foreground/80" : "text-muted-foreground"}`}>
+                                {d.lastFromMe && <span className="text-muted-foreground">{tr("pdDialogYou")} </span>}
+                                {d.lastText}
+                              </div>
+                            );
+                          })()}
                         </div>
                         <div className="flex flex-col items-end gap-1 shrink-0">
                           <span className="text-[10px] text-muted-foreground">

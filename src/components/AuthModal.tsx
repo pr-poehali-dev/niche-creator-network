@@ -9,11 +9,14 @@ import { type Section } from "@/lib/shared";
 export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void; onOpenDoc: (s: Section) => void }) {
   const { tr, lang } = useLang();
   const { login, verify2fa, resend2fa, register, adminLogin, resetRequest, resetConfirm } = useAuth();
-  const [mode, setMode] = useState<"login" | "register" | "admin">("login");
+  // Пришёл по приглашению коллеги — сразу открываем регистрацию специалиста:
+  // ссылку отправил исполнитель, и зовёт он тоже исполнителя.
+  const invited = (() => { try { return !!sessionStorage.getItem("shchit_invite"); } catch { return false; } })();
+  const [mode, setMode] = useState<"login" | "register" | "admin">(invited ? "register" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState<AuthRole>("client");
+  const [role, setRole] = useState<AuthRole>(invited ? "provider" : "client");
   // Два независимых согласия. С 1 сентября 2025 года (ред. 152-ФЗ, ст. 9)
   // согласие на обработку персональных данных нельзя включать в текст
   // пользовательского соглашения или оферты — оно оформляется отдельно.

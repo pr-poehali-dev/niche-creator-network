@@ -3,6 +3,20 @@ import App from './App'
 import './index.css'
 import { installSecureFetch } from '@/lib/secureFetch'
 
+// Приглашение коллеги: ?invite=123 — номер пригласившего специалиста.
+// Запоминаем на время визита и убираем из адреса, чтобы ссылку, которую
+// человек скопирует дальше, не засоряло чужое приглашение.
+try {
+  const u = new URL(window.location.href);
+  const inv = u.searchParams.get("invite");
+  if (inv && /^\d{1,12}$/.test(inv)) {
+    sessionStorage.setItem("shchit_invite", inv);
+    u.searchParams.delete("invite");
+    window.history.replaceState(null, "", u.pathname + (u.search ? u.search : "") + u.hash);
+  }
+} catch { /* noop */ }
+
+
 // Подпись запросов ключом устройства. Ставим до отрисовки приложения,
 // чтобы ни один запрос не ушёл без защиты.
 installSecureFetch();
