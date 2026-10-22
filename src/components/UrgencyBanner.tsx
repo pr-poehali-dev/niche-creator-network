@@ -34,7 +34,7 @@ export function UrgencyBanner({ onCta, sticky = false }: { onCta?: () => void; s
   const cell = (value: string, label: string) => (
     <div className="flex flex-col items-center min-w-[38px]">
       <span className="font-montserrat font-extrabold text-base sm:text-lg text-[hsl(28,20%,7%)] leading-none tabular-nums">{value}</span>
-      <span className="text-[8px] uppercase tracking-wider text-[hsl(28,20%,7%)]/70 mt-0.5">{label}</span>
+      <span className="text-[10px] uppercase tracking-wider text-[hsl(28,20%,7%)]/80 mt-0.5">{label}</span>
     </div>
   );
 

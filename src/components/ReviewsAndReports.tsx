@@ -104,7 +104,7 @@ export function ReportModal({ targetType, targetId, onClose }: { targetType: "pr
               <button onClick={onClose} className="flex-1 border border-border text-muted-foreground py-3 text-sm font-montserrat font-semibold rounded-sm hover:border-gold hover:text-gold transition-all">
                 {tr("cancel")}
               </button>
-              <button onClick={submit} disabled={busy} className="flex-1 bg-destructive text-white py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
+              <button onClick={submit} disabled={busy} className="flex-1 bg-destructive-solid text-white py-3 text-sm font-montserrat font-bold rounded-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2">
                 {busy ? <Icon name="Loader" size={16} className="animate-spin" /> : <Icon name="Send" size={16} />}
                 {tr("reportModalSubmit")}
               </button>

@@ -171,7 +171,7 @@ export default function AdminPanel() {
         >
           <Icon name="Flag" size={14} />{tr("adminTabComplaints")}
           {newComplaintsCount > 0 && (
-            <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center">{newComplaintsCount}</span>
+            <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-destructive-solid text-white text-[10px] font-bold flex items-center justify-center">{newComplaintsCount}</span>
           )}
         </button>
       </div>
@@ -297,7 +297,7 @@ export default function AdminPanel() {
                               {checks[p.slug].aiSummary}
                             </div>
                           )}
-                          <div className="mt-2.5 text-[10px] text-muted-foreground/70 flex items-start gap-1.5">
+                          <div className="mt-2.5 text-[10px] text-muted-foreground flex items-start gap-1.5">
                             <Icon name="Info" size={11} className="text-gold shrink-0 mt-0.5" />
                             {tr("acHumanNote")}
                           </div>

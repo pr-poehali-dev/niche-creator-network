@@ -230,7 +230,7 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
                 className={`relative py-2.5 text-xs font-montserrat font-bold rounded-sm transition-all ${period === "year" ? "gold-gradient text-[hsl(28,20%,7%)]" : "text-muted-foreground hover:text-foreground"}`}
               >
                 {tr("billYearly")}
-                <span className={`absolute -top-2 end-1 text-[9px] px-1.5 py-0.5 rounded-sm font-bold ${period === "year" ? "bg-[hsl(28,20%,7%)] text-gold" : "bg-gold text-[hsl(28,20%,7%)]"}`}>−17%</span>
+                <span className={`absolute -top-2 end-1 text-[10px] px-1.5 py-0.5 rounded-sm font-bold ${period === "year" ? "bg-[hsl(28,20%,7%)] text-gold" : "bg-gold text-[hsl(28,20%,7%)]"}`}>−17%</span>
               </button>
             </div>
 
@@ -332,7 +332,7 @@ export function PaymentModal({ plan, onClose, defaultEmail = "", slug = "" }: { 
               <Icon name="ShieldCheck" size={12} className="text-gold" />
               {tr("paySecure")}
             </div>
-            <div className="text-center text-[10px] text-muted-foreground/70 mt-1">{tr("payDemo")}</div>
+            <div className="text-center text-[10px] text-muted-foreground mt-1">{tr("payDemo")}</div>
           </div>
         )}
       </div>
@@ -398,7 +398,7 @@ function PricingCalculator({ plans, promoActive }: { plans: PricingPlan[]; promo
               type="range" min={2000} max={100000} step={1000}
               value={avgCheck}
               onChange={(e) => setAvgCheck(Number(e.target.value))}
-              className="w-full accent-gold"
+              className="w-full accent-gold h-8 cursor-pointer"
             />
           </div>
 
@@ -410,7 +410,7 @@ function PricingCalculator({ plans, promoActive }: { plans: PricingPlan[]; promo
               type="range" min={0} max={30} step={1}
               value={ordersMonth}
               onChange={(e) => setOrdersMonth(Number(e.target.value))}
-              className="w-full accent-gold"
+              className="w-full accent-gold h-8 cursor-pointer"
             />
           </div>
         </div>
@@ -667,7 +667,7 @@ export function PricingSection({ setActive }: { setActive: (s: Section) => void 
       {/* Ссылка на условия возврата обязательна рядом с оплатой:
           закон о защите прав потребителей требует показать её до платежа. */}
       <div className="mt-2 text-center">
-        <button onClick={() => setActive("offer")} className="text-[11px] text-muted-foreground hover:text-gold underline transition-colors">
+        <button onClick={() => setActive("offer")} className="text-[11px] text-muted-foreground hover:text-gold underline transition-colors min-h-[32px] px-2">
           {tr("planRefundLink")}
         </button>
       </div>

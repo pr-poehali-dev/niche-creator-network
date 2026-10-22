@@ -283,7 +283,7 @@ export function Composer({ value, onChange, onSend, replyTo, onCancelReply, disa
                 ? <img src={a.url} alt="" className="w-16 h-16 object-cover" />
                 : <div className="w-16 h-16 flex flex-col items-center justify-center gap-1 px-1">
                     <Icon name="FileText" size={18} className="text-gold" />
-                    <span className="text-[9px] text-muted-foreground truncate max-w-full">{a.ext?.toUpperCase()}</span>
+                    <span className="text-[10px] text-muted-foreground truncate max-w-full">{a.ext?.toUpperCase()}</span>
                   </div>}
               <button aria-label={tr("cancel")} onClick={() => setAtts((x) => x.filter((i) => i.url !== a.url))}
                 className="absolute top-0.5 end-0.5 w-5 h-5 rounded-full bg-background/90 text-foreground flex items-center justify-center hover:text-destructive">

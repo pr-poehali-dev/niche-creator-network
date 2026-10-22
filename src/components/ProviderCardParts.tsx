@@ -53,7 +53,7 @@ export function AvailabilityNote({ p }: { p: Provider }) {
   if (!p.quietStart || !p.quietEnd) return null;
   const quiet = isQuietNow(p);
   return (
-    <div className={`flex items-center gap-1.5 mb-3 text-[11px] font-montserrat font-semibold ${quiet ? "text-muted-foreground/70" : "text-foreground"}`}>
+    <div className={`flex items-center gap-1.5 mb-3 text-[11px] font-montserrat font-semibold ${quiet ? "text-muted-foreground" : "text-foreground"}`}>
       <Icon name={quiet ? "Moon" : "Clock"} size={12} className={quiet ? "" : "text-gold"} />
       {quiet ? tr("availSleeping") : `${tr("availCallFrom")} ${p.quietEnd}–${p.quietStart}`}
       {localTime && <span className="text-muted-foreground font-normal">· {localTime}</span>}
@@ -111,7 +111,7 @@ export function ContactButtons({ p, onChat, compact, onRequireAuth }: { p: Provi
     <div className={`grid ${compact ? "grid-cols-4" : "grid-cols-2"} gap-2`} onClick={(e) => e.stopPropagation()}>
       {c.phone && (
         quiet ? (
-          <div className={`${btn} ${pad} border border-border text-muted-foreground/60 cursor-not-allowed`} title={tr("quietHoursTip")} aria-disabled="true">
+          <div className={`${btn} ${pad} border border-border text-muted-foreground cursor-not-allowed`} title={tr("quietHoursTip")} aria-disabled="true">
             <Icon name="PhoneOff" size={size} />{!compact && tr("quietHoursBtn")}
           </div>
         ) : (

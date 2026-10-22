@@ -498,7 +498,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
               const tabLocked = locked && !ALLOWED_WHEN_LOCKED.includes(tb.id);
               return (
                 <button key={tb.id} onClick={() => handleTab(tb.id)}
-                  className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(28,20%,7%)]" : tabLocked ? "text-muted-foreground/50 hover:bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
+                  className={`flex items-center gap-2.5 px-4 py-3 rounded-sm text-xs font-montserrat font-semibold whitespace-nowrap transition-colors text-left ${tab === tb.id ? "gold-gradient text-[hsl(28,20%,7%)]" : tabLocked ? "text-muted-foreground hover:bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
                   <Icon name={tabLocked ? "Lock" : tb.icon} fallback="LayoutDashboard" size={15} />
                   {tr(tb.key)}
                   {/* Счётчик заявок и непрочитанных сообщений: иначе входящее
@@ -545,7 +545,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                       return (
                         <div key={d.date} className="flex-1 flex flex-col items-center gap-1.5">
                           <div className="w-full gold-gradient rounded-t-sm min-h-[3px]" style={{ height: `${(d.count / max) * 100}%` }} title={`${d.date}: ${d.count}`} />
-                          <span className="text-[9px] text-muted-foreground">{d.date.slice(8)}</span>
+                          <span className="text-[10px] text-muted-foreground tabular-nums">{d.date.slice(8)}</span>
                         </div>
                       );
                     })}
@@ -1254,7 +1254,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                       <option key={z} value={z}>{z}</option>
                     ))}
                   </select>
-                  <p className="text-[10px] text-muted-foreground/70 mt-1.5">{tr("pdTimezoneNote")}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1.5">{tr("pdTimezoneNote")}</p>
                 </div>
               </div>
 
@@ -1312,7 +1312,7 @@ export default function ProviderDashboard({ setActive, openChat, initialTab }: {
                             {p.provider?.verified && <Icon name="BadgeCheck" size={13} className="text-gold shrink-0" />}
                           </div>
                           {p.provider && <div className="text-[11px] text-muted-foreground truncate">{L(p.provider.title, lang)}</div>}
-                          <div className="text-[10px] text-muted-foreground/70">ID {p.publicId}</div>
+                          <div className="text-[10px] text-muted-foreground">ID {p.publicId}</div>
                         </div>
                         {p.friendStatus === "accepted" ? (
                           <span className="tag-security shrink-0 text-green-400 border-green-500/40">{tr("pdAlreadyFriends")}</span>

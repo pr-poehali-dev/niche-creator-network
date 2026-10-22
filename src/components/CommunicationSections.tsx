@@ -473,7 +473,7 @@ export function ChatSection({ chatInput, setChatInput }: { chatInput: string; se
                         {m.geo && <GeoView geo={m.geo} mine={false} />}
                         {m.text && <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">{trMsg(m.text)}</div>}
                         {m.text && isTranslated(m.text) && (
-                          <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-muted-foreground/70">
+                          <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
                             <Icon name="Languages" size={10} />
                             {tr("autoTranslated")}
                           </div>

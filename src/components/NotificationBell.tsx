@@ -130,7 +130,7 @@ export default function NotificationBell({ onOpenMessages }: { onOpenMessages?: 
           className="relative flex items-center justify-center border border-gold/50 text-gold w-9 h-9 rounded-sm hover:bg-gold/10 transition-all shrink-0"
         >
           <Icon name="MessageSquare" size={16} />
-          <span className="absolute -top-1.5 -end-1.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center leading-none">
+          <span className="absolute -top-1.5 -end-1.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive-solid text-white text-[10px] font-bold flex items-center justify-center leading-none">
             {unreadMessages > 9 ? "9+" : unreadMessages}
           </span>
         </button>
@@ -142,7 +142,7 @@ export default function NotificationBell({ onOpenMessages }: { onOpenMessages?: 
       >
         <Icon name="Bell" size={16} />
         {unread > 0 && (
-          <span className="absolute -top-1.5 -end-1.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center leading-none">
+          <span className="absolute -top-1.5 -end-1.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive-solid text-white text-[10px] font-bold flex items-center justify-center leading-none">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -181,7 +181,7 @@ export default function NotificationBell({ onOpenMessages }: { onOpenMessages?: 
                       {!n.isRead && <span className="w-2 h-2 rounded-full bg-gold shrink-0" />}
                     </div>
                     {n.body && <p className="text-[11px] text-muted-foreground leading-snug mt-0.5 line-clamp-2">{n.body}</p>}
-                    <span className="text-[10px] text-muted-foreground/70 mt-1 block">{timeAgo(n.createdAt)}</span>
+                    <span className="text-[10px] text-muted-foreground mt-1 block">{timeAgo(n.createdAt)}</span>
                   </div>
                 </button>
               ))

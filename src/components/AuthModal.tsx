@@ -451,7 +451,7 @@ export default function AuthModal({ onClose, onOpenDoc }: { onClose: () => void;
           </div>
 
           <div className="text-center mt-4 pt-4 border-t border-border">
-            <button onClick={() => { setMode("admin"); setError(""); setPassword(""); }} className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground/70 hover:text-gold transition-colors">
+            <button onClick={() => { setMode("admin"); setError(""); setPassword(""); }} className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-gold transition-colors">
               <Icon name="KeyRound" size={12} />
               {tr("authAdminLink")}
             </button>

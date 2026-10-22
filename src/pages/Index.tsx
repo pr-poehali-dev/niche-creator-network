@@ -198,7 +198,7 @@ function CookieBanner({ go }: { go: (s: Section) => void }) {
           <Icon name="Cookie" size={16} className="text-gold shrink-0 hidden sm:block" />
           <p className="text-[11px] sm:text-xs text-muted-foreground leading-snug flex-1 min-w-0 line-clamp-1 sm:line-clamp-none">
             {tr("cookieText")}{" "}
-            <button onClick={() => go("privacy")} className="text-gold hover:underline font-semibold whitespace-nowrap">{tr("cookieMore")}</button>
+            <button onClick={() => go("privacy")} className="text-gold hover:underline font-semibold whitespace-nowrap tap-target">{tr("cookieMore")}</button>
           </p>
           {/* min-h-[44px] — минимальная зона касания пальцем (стандарт Apple
               и Google). Сам баннер от этого не растёт: кнопки и так стоят
@@ -604,8 +604,8 @@ export default function Index() {
               <Brand className={`font-montserrat font-bold tracking-[0.2em] text-foreground transition-all duration-300 ${scrolled ? "text-base" : "text-lg"}`} />
               {!scrolled && (
                 <>
-                  <div className="hidden md:block lg:hidden xl:block text-[8px] text-muted-foreground font-montserrat tracking-wide uppercase leading-tight whitespace-nowrap">{tr("brandSub1")}</div>
-                  <div className="hidden md:block lg:hidden xl:block text-[8px] text-muted-foreground font-montserrat tracking-wide uppercase leading-tight whitespace-nowrap">{tr("brandSub2")}</div>
+                  <div className="hidden md:block lg:hidden xl:block text-[10px] text-muted-foreground font-montserrat tracking-wide uppercase leading-tight whitespace-nowrap">{tr("brandSub1")}</div>
+                  <div className="hidden md:block lg:hidden xl:block text-[10px] text-muted-foreground font-montserrat tracking-wide uppercase leading-tight whitespace-nowrap">{tr("brandSub2")}</div>
                 </>
               )}
             </div>
@@ -637,7 +637,7 @@ export default function Index() {
                     <Icon name="ShieldCheck" size={15} />
                     <span className="hidden xl:inline">{tr("adminPanelTitle")}</span>
                     {newComplaintsBadge > 0 && (
-                      <span className="absolute -top-1.5 -end-1.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center">{newComplaintsBadge}</span>
+                      <span className="absolute -top-1.5 -end-1.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive-solid text-white text-[10px] font-bold flex items-center justify-center">{newComplaintsBadge}</span>
                     )}
                   </button>
                 )}
@@ -681,7 +681,7 @@ export default function Index() {
                       <Icon name="ShieldCheck" size={16} />
                       {tr("adminPanelTitle")}
                       {newComplaintsBadge > 0 && (
-                        <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center">{newComplaintsBadge}</span>
+                        <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-destructive-solid text-white text-[10px] font-bold flex items-center justify-center">{newComplaintsBadge}</span>
                       )}
                     </button>
                   )}
@@ -709,7 +709,7 @@ export default function Index() {
         <div style={{ paddingTop: 64 + secBarH }}>
           <div className="border-b border-border bg-card/40">
             <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2 text-xs font-montserrat">
-              <button onClick={() => go("home")} className="text-muted-foreground hover:text-gold transition-colors flex items-center gap-1">
+              <button onClick={() => go("home")} className="text-muted-foreground hover:text-gold transition-colors flex items-center gap-1 min-h-[32px]">
                 <Icon name="Home" size={12} />
                 {tr("crumbHome")}
               </button>
@@ -756,7 +756,7 @@ export default function Index() {
                 ["fSafetyDeal", "policy"],
                 ["navContacts", "contacts"],
               ] as const).map(([l, sec]) => (
-                <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
+                <button key={l} onClick={() => go(sec)} className="block w-full md:w-auto text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors min-h-[32px] md:min-h-0 md:mb-2 text-left">{tr(l)}</button>
               ))}
             </div>
 
@@ -770,7 +770,7 @@ export default function Index() {
                 ["navChat", "chat"],
                 ["fSpecialistFaq", "policy"],
               ] as const).map(([l, sec]) => (
-                <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
+                <button key={l} onClick={() => go(sec)} className="block w-full md:w-auto text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors min-h-[32px] md:min-h-0 md:mb-2 text-left">{tr(l)}</button>
               ))}
             </div>
 
@@ -782,11 +782,11 @@ export default function Index() {
                 ["navMobileApp", "mobileapp"],
                 ["navPolicy", "policy"],
               ] as const).map(([l, sec]) => (
-                <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
+                <button key={l} onClick={() => go(sec)} className="block w-full md:w-auto text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors min-h-[32px] md:min-h-0 md:mb-2 text-left">{tr(l)}</button>
               ))}
               <div className="divider-gold my-3" />
               {([["fPrivacy", "privacy"], ["fConsent", "consent"], ["fTerms", "terms"], ["fAgreement", "agreement"], ["fOffer", "offer"]] as const).map(([l, sec]) => (
-                <button key={l} onClick={() => go(sec)} className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left">{tr(l)}</button>
+                <button key={l} onClick={() => go(sec)} className="block w-full md:w-auto text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors min-h-[32px] md:min-h-0 md:mb-2 text-left">{tr(l)}</button>
               ))}
               {/* Отозвать согласие должно быть так же просто, как дать (GDPR
                   ст. 7(3), 152-ФЗ ст. 9 ч. 2). Раньше выбор фиксировался
@@ -798,7 +798,7 @@ export default function Index() {
                   try { localStorage.removeItem(COOKIE_CONSENT_KEY); } catch { /* noop */ }
                   window.location.reload();
                 }}
-                className="block text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors mb-2 text-left"
+                className="block w-full md:w-auto text-xs text-muted-foreground hover:text-gold cursor-pointer transition-colors min-h-[32px] md:min-h-0 md:mb-2 text-left"
               >
                 {tr("fCookieSettings")}
               </button>
@@ -818,7 +818,7 @@ export default function Index() {
           </div>
           {/* Оговорка о чужих товарных знаках: мы упоминаем платёжные системы
               и мессенджеры, и обязаны указать, что права на них не наши. */}
-          <div className="text-[11px] text-muted-foreground/70 leading-relaxed mt-3 pt-3 border-t border-border/50">
+          <div className="text-[11px] text-muted-foreground leading-relaxed mt-3 pt-3 border-t border-border/50">
             {tr("trademarksNote")}
           </div>
         </div>
