@@ -9,6 +9,7 @@ import { authHeaders } from "@/lib/authToken";
 import { trackGoal, GOALS } from "@/lib/analytics";
 import { useRevealOnScroll } from "@/hooks/useRevealOnScroll";
 import { CLIENT_REVIEWS } from "@/lib/clientReviews";
+import { serviceCategories } from "@/lib/servicesCatalog";
 import { useAutoTranslate } from "@/lib/autotranslate";
 import Reveal from "@/components/Reveal";
 import Brand from "@/components/Brand";
@@ -895,7 +896,6 @@ function ClientReviewsSection() {
   };
 
   const trackRef = useRef<HTMLDivElement | null>(null);
-  const [paused, setPaused] = useState(false);
 
   // Прокрутка карусели на одну карточку в указанную сторону.
   const scrollByCard = (dir: 1 | -1) => {
@@ -906,20 +906,11 @@ function ClientReviewsSection() {
     el.scrollBy({ left: dir * step * (rtl ? -1 : 1), behavior: "smooth" });
   };
 
-  // Автопрокрутка карусели; на паузе при наведении/касании и в конце — цикл сначала.
-  useEffect(() => {
-    if (paused) return;
-    const el = trackRef.current;
-    if (!el) return;
-    const timer = setInterval(() => {
-      const card = el.querySelector<HTMLElement>("[data-review-card]");
-      const step = card ? card.offsetWidth + 20 : el.clientWidth * 0.8;
-      const atEnd = Math.abs(el.scrollLeft) + el.clientWidth >= el.scrollWidth - 8;
-      if (atEnd) el.scrollTo({ left: 0, behavior: "smooth" });
-      else el.scrollBy({ left: step * (rtl ? -1 : 1), behavior: "smooth" });
-    }, 3500);
-    return () => clearInterval(timer);
-  }, [paused, rtl]);
+  // Автопрокрутки нет. Карусель, которая сама уезжает каждые 3,5 секунды,
+  // уводит карточку из-под глаз на середине чтения: человек не успевает
+  // дочитать и теряет место. WCAG 2.2.2 требует, чтобы движущийся сам
+  // по себе контент можно было остановить, — проще и честнее не запускать
+  // его вовсе. Листают стрелками и пальцем.
 
   return (
     <section className="border-y border-border bg-card py-20 md:py-32 relative overflow-hidden">
@@ -954,9 +945,6 @@ function ClientReviewsSection() {
           {/* Лента карусели — все отзывы в одну строку */}
           <div
             ref={trackRef}
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-            onTouchStart={() => setPaused(true)}
             className="flex gap-5 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 no-scrollbar"
           >
             {CLIENT_REVIEWS.map((r) => (
@@ -1153,7 +1141,11 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
                 ? [
                     { n: "100%", l: "statSpecialists" as const },
                     { n: "0%", l: "statCases" as const },
-                    { n: "7", l: "statServices" as const },
+                    // Направлений в каталоге четыре — та же цифра, что в
+                    // блоке выше и в самом каталоге. Здесь стояло «7»: одна
+                    // страница называла два разных числа, а расхождение в
+                    // цифрах — первое, что подрывает доверие к остальным.
+                    { n: String(serviceCategories.length), l: "statServices" as const },
                     { n: "AES-256", l: "statClients" as const },
                   ]
                 : [

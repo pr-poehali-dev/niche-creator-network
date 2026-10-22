@@ -8,35 +8,31 @@ const PROMO_END = new Date("2026-12-01T00:00:00Z").getTime();
 function getRemaining() {
   const diff = PROMO_END - Date.now();
   if (diff <= 0) return null;
-  const days = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-  const mins = Math.floor((diff % 3600000) / 60000);
-  const secs = Math.floor((diff % 60000) / 1000);
-  return { days, hours, mins, secs };
+  return { days: Math.ceil(diff / 86400000) };
 }
 
 /**
- * Баннер срочности с обратным отсчётом (принцип дефицита).
- * Показывается вверху главной, мотивирует оформить подписку до конца акции.
+ * Баннер акции: срок указан честно — числом дней и датой окончания.
+ *
+ * Раньше здесь тикал секундомер. Он был законным: акция настоящая,
+ * скидка списывается на сервере и действительно заканчивается 1 декабря
+ * (регуляторы преследуют таймеры, которые сбрасываются или ведут к
+ * фиктивному сроку, — это не наш случай). Заменили по другой причине:
+ * бегущие секунды при сроке в несколько недель не дают информации, а
+ * баннер закреплён под шапкой, и это постоянное движение в поле зрения
+ * на каждой странице. Число дней и дата сообщают то же самое спокойно.
  */
 export function UrgencyBanner({ onCta, sticky = false }: { onCta?: () => void; sticky?: boolean }) {
   const { tr } = useLang();
   const [time, setTime] = useState(getRemaining());
 
+  // Обновляем раз в час — этого достаточно для счёта в днях.
   useEffect(() => {
-    const timer = setInterval(() => setTime(getRemaining()), 1000);
+    const timer = setInterval(() => setTime(getRemaining()), 3600000);
     return () => clearInterval(timer);
   }, []);
 
   if (!time) return null;
-
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const cell = (value: string, label: string) => (
-    <div className="flex flex-col items-center min-w-[38px]">
-      <span className="font-montserrat font-extrabold text-base sm:text-lg text-[hsl(28,20%,7%)] leading-none tabular-nums">{value}</span>
-      <span className="text-[10px] uppercase tracking-wider text-[hsl(28,20%,7%)]/80 mt-0.5">{label}</span>
-    </div>
-  );
 
   return (
     <div className={`${sticky ? "sticky top-[var(--header-h,64px)]" : "relative"} z-40 gold-gradient shadow-lg shadow-black/20`}>
@@ -45,20 +41,13 @@ export function UrgencyBanner({ onCta, sticky = false }: { onCta?: () => void; s
           <Icon name="BadgePercent" size={18} className="text-[hsl(28,20%,7%)] shrink-0" />
           <span className="font-montserrat font-bold text-xs sm:text-sm text-[hsl(28,20%,7%)]">{tr("urgencyPrefix")}</span>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {cell(String(time.days), tr("urgencyDays"))}
-          <span className="text-[hsl(28,20%,7%)]/50 font-bold">:</span>
-          {cell(pad(time.hours), tr("urgencyHours"))}
-          <span className="text-[hsl(28,20%,7%)]/50 font-bold">:</span>
-          {cell(pad(time.mins), tr("urgencyMins"))}
-          <span className="text-[hsl(28,20%,7%)]/50 font-bold">:</span>
-          {cell(pad(time.secs), tr("urgencySecs"))}
-          <span className="text-[10px] text-[hsl(28,20%,7%)]/70 ms-1 hidden sm:inline">{tr("urgencyEnds")}</span>
-        </div>
+        <span className="font-montserrat font-semibold text-xs sm:text-sm text-[hsl(28,20%,7%)] tabular-nums">
+          {tr("urgencyUntil")} · {tr("urgencyDaysLeft").replace("{n}", String(time.days))}
+        </span>
         {onCta && (
-          <button aria-label="Вперёд"
+          <button
             onClick={onCta}
-            className="shrink-0 bg-[hsl(28,20%,7%)] text-gold px-4 py-1.5 rounded-sm font-montserrat font-bold text-xs hover:opacity-90 transition-opacity inline-flex items-center gap-1.5"
+            className="shrink-0 bg-[hsl(28,20%,7%)] text-gold px-4 min-h-[36px] rounded-sm font-montserrat font-bold text-xs hover:opacity-90 transition-opacity inline-flex items-center gap-1.5"
           >
             {tr("urgencyCta")}
             <Icon name="ArrowRight" size={13} />

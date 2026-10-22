@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
+import { serviceCategories } from "@/lib/servicesCatalog";
 import { useLang, t } from "@/lib/i18n";
 import { useProviders } from "@/lib/providers";
 import { services } from "@/lib/servicesCatalog";
@@ -287,7 +288,7 @@ export function LandingStats() {
     { value: real ? String(real.cities) : "—", key: "lpStat1" as const, icon: "MapPin" },
     // В каталоге четыре направления — цифра должна совпадать с тем, что
     // человек увидит, перейдя в каталог. Раньше здесь стояло «5».
-    { value: "4", key: "lpStat2" as const, icon: "LayoutGrid" },
+    { value: String(serviceCategories.length), key: "lpStat2" as const, icon: "LayoutGrid" },
     { value: "7", key: "lpStat3" as const, icon: "Languages" },
     { value: real ? String(real.countries) : "—", key: "lpStat4" as const, icon: "Globe" },
   ];
