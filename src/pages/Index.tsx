@@ -1120,8 +1120,8 @@ function HomeSection({ setActive, role }: { setActive: (s: Section) => void; rol
 
             <div className="flex items-center gap-x-6 gap-y-2 mt-6 flex-wrap">
               {(isClient
-                ? [{ icon: "LayoutGrid", t: "heroClientBadgeAll" as const }, { icon: "Wallet", t: "heroNoFeeBig" as const }]
-                : [{ icon: "Megaphone", t: "heroProviderBadgeNoAds" as const }, { icon: "Users", t: "heroProviderBadgeCommunity" as const }]
+                ? [{ icon: "BadgeCheck", t: "heroClientBadgeAll" as const }, { icon: "Wallet", t: "heroNoFeeBig" as const }]
+                : [{ icon: "Percent", t: "heroProviderBadgeNoAds" as const }, { icon: "Users", t: "heroProviderBadgeCommunity" as const }]
               ).map((b) => (
                 <div key={b.t} className="flex items-center gap-2 text-xs text-muted-foreground font-montserrat">
                   <Icon name={b.icon} size={14} className="text-gold" />

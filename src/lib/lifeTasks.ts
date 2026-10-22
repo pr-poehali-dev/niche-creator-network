@@ -69,7 +69,7 @@ export const lifeTasks: LifeTask[] = [
     hint: { ru: "Кабинет, машина, квартира — поиск скрытых устройств", en: "Office, car or flat — finding hidden devices" },
     cat: "physical",
     services: ["TSCM specialist", "Acoustic protection specialist"],
-    keywords: ["прослушка", "жучок", "жучки", "слежка", "камера", "подслушивают", "шпион", "tscm", "закладка"],
+    keywords: ["прослушка", "жучок", "жучки", "слежка", "следят", "камера", "подслушивают", "шпион", "tscm", "закладка"],
   },
   {
     id: "hacked",

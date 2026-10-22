@@ -539,11 +539,18 @@ def handler(event: dict, context) -> dict:
                     f"false, false, 'start') ON CONFLICT (slug) DO NOTHING",
                     (prov_slug, name or 'Специалист', name or 'Specialist'),
                 )
-            # Приглашение коллеги по личной ссылке. Пришедший по ней специалист
-            # сразу становится другом пригласившего: так в LinkedIn и
-            # Telegram первая связь появляется в момент регистрации, а не
-            # после поиска. Без этого новичок попадает в пустое сообщество.
-            # Только для исполнителей с обеих сторон: сообщество — профессиональное.
+            # Приглашение коллеги по личной ссылке ?invite=<номер>.
+            #
+            # Раньше пришедший по ссылке сразу становился другом пригласившего.
+            # Это была уязвимость: номера специалистов видны в поиске, значит
+            # любой мог подставить чужой номер, зарегистрироваться и получить
+            # право писать человеку, который на это не соглашался. Для людей,
+            # которых могут искать, чтобы надавить, это недопустимо.
+            #
+            # Теперь создаётся входящая заявка от новичка к пригласившему.
+            # Пригласивший видит «Коллега пришёл по вашей ссылке» и принимает
+            # одним нажатием — согласие остаётся за ним. Если номер
+            # подставлен чужой, человек просто отклонит незнакомца.
             invite_from = None
             try:
                 invite_pub = int(str(body.get('invitedBy') or '').strip() or 0)
@@ -559,17 +566,18 @@ def handler(event: dict, context) -> dict:
                     invite_from = inv[0]
                     ua, ub = (invite_from, user_id) if invite_from < user_id else (user_id, invite_from)
                     cur.execute(
-                        f"INSERT INTO {SCHEMA}.friendships (user_id_a, user_id_b, status, requested_by, responded_at) "
-                        f"VALUES (%s, %s, 'accepted', %s, now()) ON CONFLICT (user_id_a, user_id_b) DO NOTHING",
-                        (ua, ub, invite_from),
+                        f"INSERT INTO {SCHEMA}.friendships (user_id_a, user_id_b, status, requested_by) "
+                        f"VALUES (%s, %s, 'pending', %s) ON CONFLICT (user_id_a, user_id_b) DO NOTHING",
+                        (ua, ub, user_id),
                     )
                     cur.execute(
                         f"INSERT INTO {SCHEMA}.notifications (user_id, type, title, body, link) VALUES (%s, 'community', %s, %s, 'community')",
-                        (invite_from, 'Коллега принял приглашение',
-                         f'{name or "Новый специалист"} зарегистрировался по вашей ссылке и уже в списке друзей. Напишите ему первым.'),
+                        (invite_from, 'Коллега пришёл по вашей ссылке',
+                         f'{name or "Новый специалист"} зарегистрировался по вашему приглашению. '
+                         f'Примите заявку в разделе «Сообщество» — и сможете переписываться.'),
                     )
             new_token = _create_session(cur, user_id, fingerprint, device_label, ip_masked, device_pubkey)
-            return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': email, 'role': role, 'name': name}, 'invitedBy': invite_from}, event)
+            return _resp(200, {'token': new_token, 'user': {'id': user_id, 'email': email, 'role': role, 'name': name}, 'invited': bool(invite_from)}, event)
 
         if action == 'login':
             email = (body.get('email') or '').strip().lower()[:200]
